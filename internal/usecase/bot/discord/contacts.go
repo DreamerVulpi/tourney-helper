@@ -44,7 +44,7 @@ func (dh *DiscordHandler) prepareContacts(ctx context.Context, s *discordgo.Sess
 
 			time.Sleep(1 * time.Second)
 			if usr.MessenagerID != "000000000000000000" && usr.MessenagerID != "N/D" {
-				err = s.GuildMemberRoleAdd(dh.cfg.guildID, usr.MessenagerID, dh.contacts.tourneyRole.ID)
+				err = s.GuildMemberRoleAdd(dh.params.guildID, usr.MessenagerID, dh.contacts.tourneyRole.ID)
 				if err != nil {
 					log.Printf("prepareContacts | discord API Error (RoleAdd) for %v: %v", nickname, err)
 					continue
@@ -99,13 +99,13 @@ func (dh *DiscordHandler) prepareContacts(ctx context.Context, s *discordgo.Sess
 				fields = append(fields, field)
 
 				if len(fields) == 25 {
-					sliceMessages = append(sliceMessages, msgEmbed("", fields, ColorSystem, &dh.cfg))
+					sliceMessages = append(sliceMessages, msgEmbed("", fields, ColorSystem, &dh.params))
 					fields = []*discordgo.MessageEmbedField{}
 				}
 			}
 
 			if len(fields) > 0 {
-				sliceMessages = append(sliceMessages, msgEmbed("", fields, ColorSystem, &dh.cfg))
+				sliceMessages = append(sliceMessages, msgEmbed("", fields, ColorSystem, &dh.params))
 			}
 
 			dh.contacts.embedContacts = sliceMessages

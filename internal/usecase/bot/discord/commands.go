@@ -12,10 +12,10 @@ import (
 func (s *DiscordHandler) commands() []*discordgo.ApplicationCommand {
 	dmPermission := false
 	var stages []*discordgo.ApplicationCommandOptionChoice
-	if s.cfg.tournament.Game.Name == "tekken" {
+	if s.params.tournament.Game.Name == "tekken" {
 		stages = choice(config.T8Stages)
 	}
-	if s.cfg.tournament.Game.Name == "sf6" {
+	if s.params.tournament.Game.Name == "sf6" {
 		stages = choice(config.SF6Stages)
 	}
 
@@ -587,7 +587,7 @@ func choice(list map[string]string) []*discordgo.ApplicationCommandOptionChoice 
 	return result
 }
 
-func (dh *DiscordHandler) InitCommands(appID string, session *discordgo.Session, tournament *config.ConfigTournament, cfg *config.Config) ([]*discordgo.ApplicationCommand, error) {
+func (dh *DiscordHandler) InitCommands(appID string, session *discordgo.Session, tournament *config.ConfigTournament, cfg *config.ConfigMessenger) ([]*discordgo.ApplicationCommand, error) {
 	commandHandlers := make(map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate))
 	commandHandlers["check"] = dh.viewData
 	commandHandlers["start-sending"] = dh.startSending
@@ -598,7 +598,7 @@ func (dh *DiscordHandler) InitCommands(appID string, session *discordgo.Session,
 	commandHandlers["edit-logo-tournament"] = dh.editLogoTournament
 
 	var trigger bool
-	discordContacts, err := usecaseSender.LoadCSV(config.GetAbsPath("config/" + tournament.Csv.NameFile))
+	discordContacts, err := usecaseSender.LoadCSV(config.GetAbsPath(tournament.Csv.NameFile))
 	dh.contacts.contacts = discordContacts
 	if err != nil {
 		log.Println("CSV file isn't loaded. Commands: contacts and roles unavailable. Autofill empty data unavailable.")

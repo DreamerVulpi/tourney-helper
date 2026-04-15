@@ -106,9 +106,10 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 			}
 		}
 
-		slug := p.Data.GetTournamentSlug()
-		if len(slug) < 3 {
+		slug, err := p.Data.GetTournamentSlug()
+		if err != nil {
 			slug = "N/D"
+			log.Printf("process | Warning - %v\n", err)
 		}
 
 		if notificationSent {

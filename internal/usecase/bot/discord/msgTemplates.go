@@ -34,11 +34,11 @@ type responseLocale struct {
 }
 
 func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Participant, set entitySender.SetData, local entityLocale.Lang) (*discordgo.MessageEmbed, error) {
-	format := s.cfg.rulesMatches.StandardFormat
+	format := s.params.rulesMatches.StandardFormat
 	embedColor := ColorDefault
 
 	if set.IsFinals {
-		format = s.cfg.rulesMatches.FinalsFormat
+		format = s.params.rulesMatches.FinalsFormat
 		embedColor = ColorFinal
 	}
 
@@ -84,16 +84,16 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 			{Name: local.InviteMessage.Discord, Value: discordDisplay, Inline: true},
 
 			{Name: local.InviteMessage.CheckIn, Value: set.FullInviteLink},
-			{Name: fmt.Sprintf(local.InviteMessage.Warning, s.cfg.rulesMatches.Waiting), Value: "\u200B"},
+			{Name: fmt.Sprintf(local.InviteMessage.Warning, s.params.rulesMatches.Waiting), Value: "\u200B"},
 
 			{Name: local.InviteMessage.SettingsHeader},
 			{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, format) + fmt.Sprintf(local.InviteMessage.FormatDescription, format), Inline: true},
-			{Name: local.InviteMessage.Stage, Value: fieldStage(local, s.cfg.rulesMatches.Stage), Inline: true},
-			{Name: local.InviteMessage.Rounds, Value: fmt.Sprintf("%v", s.cfg.rulesMatches.Rounds), Inline: true},
-			{Name: local.InviteMessage.Duration, Value: fmt.Sprintf(local.InviteMessage.DurationCount, s.cfg.rulesMatches.Duration), Inline: true},
-			{Name: local.InviteMessage.Crossplatform, Value: fieldCrossplay(local, s.cfg.rulesMatches.Crossplatform), Inline: true},
+			{Name: local.InviteMessage.Stage, Value: fieldStage(local, s.params.rulesMatches.Stage), Inline: true},
+			{Name: local.InviteMessage.Rounds, Value: fmt.Sprintf("%v", s.params.rulesMatches.Rounds), Inline: true},
+			{Name: local.InviteMessage.Duration, Value: fmt.Sprintf(local.InviteMessage.DurationCount, s.params.rulesMatches.Duration), Inline: true},
+			{Name: local.InviteMessage.Crossplatform, Value: fieldCrossplay(local, s.params.rulesMatches.Crossplatform), Inline: true},
 		}
-		message = msgEmbed(fmt.Sprintf(local.InviteMessage.Title, set.TournamentName), fields, embedColor, &s.cfg)
+		message = msgEmbed(fmt.Sprintf(local.InviteMessage.Title, set.TournamentName), fields, embedColor, &s.params)
 		message.Description = local.InviteMessage.Description
 	} else {
 		var stream string
@@ -106,17 +106,17 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 		fields := []*discordgo.MessageEmbedField{
 			{Name: local.StreamLobbyMessage.StreamLink, Value: stream},
 			{Name: local.StreamLobbyMessage.MessageHeader, Value: set.FullInviteLink},
-			{Name: fmt.Sprintf(local.StreamLobbyMessage.Warning, s.cfg.rulesMatches.Waiting), Value: "\u200B"},
+			{Name: fmt.Sprintf(local.StreamLobbyMessage.Warning, s.params.rulesMatches.Waiting), Value: "\u200B"},
 
 			{Name: local.StreamLobbyMessage.ParamsHeader},
 			{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, format) + fmt.Sprintf(local.InviteMessage.FormatDescription, format), Inline: true},
-			{Name: local.StreamLobbyMessage.Area, Value: fieldArea(local, s.cfg.streamLobby.Area), Inline: true},
-			{Name: local.StreamLobbyMessage.Language, Value: fieldLanguage(local, s.cfg.streamLobby.Language), Inline: true},
-			{Name: local.StreamLobbyMessage.TypeConnection, Value: fieldConnection(local, s.cfg.streamLobby.Conn), Inline: true},
-			{Name: local.StreamLobbyMessage.Crossplatform, Value: fieldCrossplay(local, s.cfg.rulesMatches.Crossplatform), Inline: true},
-			{Name: local.StreamLobbyMessage.Passcode, Value: fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, s.cfg.streamLobby.Passcode), Inline: true},
+			{Name: local.StreamLobbyMessage.Area, Value: fieldArea(local, s.params.streamLobby.Area), Inline: true},
+			{Name: local.StreamLobbyMessage.Language, Value: fieldLanguage(local, s.params.streamLobby.Language), Inline: true},
+			{Name: local.StreamLobbyMessage.TypeConnection, Value: fieldConnection(local, s.params.streamLobby.Conn), Inline: true},
+			{Name: local.StreamLobbyMessage.Crossplatform, Value: fieldCrossplay(local, s.params.rulesMatches.Crossplatform), Inline: true},
+			{Name: local.StreamLobbyMessage.Passcode, Value: fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, s.params.streamLobby.Passcode), Inline: true},
 		}
-		message = msgEmbed(fmt.Sprintf(local.StreamLobbyMessage.Title, set.TournamentName), fields, embedColor, &s.cfg)
+		message = msgEmbed(fmt.Sprintf(local.StreamLobbyMessage.Title, set.TournamentName), fields, embedColor, &s.params)
 		message.Description = local.StreamLobbyMessage.Description
 	}
 	return message, nil
@@ -173,13 +173,13 @@ func (dh *DiscordHandler) msgStreamLobby(language string, embedColor int) *disco
 
 	fields := []*discordgo.MessageEmbedField{
 		{Name: local.ViewDataMessage.MessageStreamHeader},
-		{Name: local.StreamLobbyMessage.Area, Value: fieldArea(local, dh.cfg.streamLobby.Area), Inline: true},
-		{Name: local.StreamLobbyMessage.Language, Value: fieldLanguage(local, dh.cfg.streamLobby.Language), Inline: true},
-		{Name: local.StreamLobbyMessage.TypeConnection, Value: fieldConnection(local, dh.cfg.streamLobby.Conn), Inline: true},
-		{Name: local.StreamLobbyMessage.Crossplatform, Value: fieldCrossplay(local, dh.cfg.rulesMatches.Crossplatform), Inline: true},
-		{Name: local.StreamLobbyMessage.Passcode, Value: fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, dh.cfg.streamLobby.Passcode), Inline: true},
+		{Name: local.StreamLobbyMessage.Area, Value: fieldArea(local, dh.params.streamLobby.Area), Inline: true},
+		{Name: local.StreamLobbyMessage.Language, Value: fieldLanguage(local, dh.params.streamLobby.Language), Inline: true},
+		{Name: local.StreamLobbyMessage.TypeConnection, Value: fieldConnection(local, dh.params.streamLobby.Conn), Inline: true},
+		{Name: local.StreamLobbyMessage.Crossplatform, Value: fieldCrossplay(local, dh.params.rulesMatches.Crossplatform), Inline: true},
+		{Name: local.StreamLobbyMessage.Passcode, Value: fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, dh.params.streamLobby.Passcode), Inline: true},
 	}
-	message := msgEmbed(local.ViewDataMessage.Title, fields, embedColor, &dh.cfg)
+	message := msgEmbed(local.ViewDataMessage.Title, fields, embedColor, &dh.params)
 	return message
 }
 
@@ -188,21 +188,21 @@ func (dh *DiscordHandler) msgRuleMatches(language string, embedColor int) *disco
 
 	fields := []*discordgo.MessageEmbedField{
 		{Name: local.ViewDataMessage.MessageRulesHeader},
-		{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, dh.cfg.rulesMatches.StandardFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, dh.cfg.rulesMatches.StandardFormat), Inline: true},
-		{Name: local.InviteMessage.FinalsFormat, Value: fmt.Sprintf(local.InviteMessage.FT, dh.cfg.rulesMatches.FinalsFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, dh.cfg.rulesMatches.FinalsFormat), Inline: true},
-		{Name: local.InviteMessage.Stage, Value: fieldStage(local, dh.cfg.rulesMatches.Stage), Inline: true},
-		{Name: local.InviteMessage.Rounds, Value: fmt.Sprintf("%v", dh.cfg.rulesMatches.Rounds), Inline: true},
-		{Name: local.InviteMessage.Duration, Value: fmt.Sprintf(local.InviteMessage.DurationCount, dh.cfg.rulesMatches.Duration), Inline: true},
-		{Name: local.InviteMessage.Crossplatform, Value: fieldCrossplay(local, dh.cfg.rulesMatches.Crossplatform), Inline: true},
+		{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, dh.params.rulesMatches.StandardFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, dh.params.rulesMatches.StandardFormat), Inline: true},
+		{Name: local.InviteMessage.FinalsFormat, Value: fmt.Sprintf(local.InviteMessage.FT, dh.params.rulesMatches.FinalsFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, dh.params.rulesMatches.FinalsFormat), Inline: true},
+		{Name: local.InviteMessage.Stage, Value: fieldStage(local, dh.params.rulesMatches.Stage), Inline: true},
+		{Name: local.InviteMessage.Rounds, Value: fmt.Sprintf("%v", dh.params.rulesMatches.Rounds), Inline: true},
+		{Name: local.InviteMessage.Duration, Value: fmt.Sprintf(local.InviteMessage.DurationCount, dh.params.rulesMatches.Duration), Inline: true},
+		{Name: local.InviteMessage.Crossplatform, Value: fieldCrossplay(local, dh.params.rulesMatches.Crossplatform), Inline: true},
 	}
-	message := msgEmbed(local.ViewDataMessage.Title, fields, embedColor, &dh.cfg)
+	message := msgEmbed(local.ViewDataMessage.Title, fields, embedColor, &dh.params)
 	return message
 }
 
 func (dh *DiscordHandler) msgViewData(language string) *discordgo.MessageEmbed {
 	local := dh.typeLocale(language)
 
-	slug := dh.slug
+	slug := dh.params.tournament.UrlToTournament
 	if len(slug) == 0 {
 		slug = local.ErrorMessage.NoData
 	}
@@ -213,42 +213,42 @@ func (dh *DiscordHandler) msgViewData(language string) *discordgo.MessageEmbed {
 
 		{Name: local.ViewDataMessage.MessageRulesHeader},
 		{Name: local.InviteMessage.StandardFormat,
-			Value:  fmt.Sprintf(local.InviteMessage.FT, dh.cfg.rulesMatches.StandardFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, dh.cfg.rulesMatches.StandardFormat),
+			Value:  fmt.Sprintf(local.InviteMessage.FT, dh.params.rulesMatches.StandardFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, dh.params.rulesMatches.StandardFormat),
 			Inline: true},
 		{Name: local.InviteMessage.FinalsFormat,
-			Value:  fmt.Sprintf(local.InviteMessage.FT, dh.cfg.rulesMatches.FinalsFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, dh.cfg.rulesMatches.FinalsFormat),
+			Value:  fmt.Sprintf(local.InviteMessage.FT, dh.params.rulesMatches.FinalsFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, dh.params.rulesMatches.FinalsFormat),
 			Inline: true},
 		{Name: local.InviteMessage.Stage,
-			Value:  fieldStage(local, dh.cfg.rulesMatches.Stage),
+			Value:  fieldStage(local, dh.params.rulesMatches.Stage),
 			Inline: true},
 		{Name: local.InviteMessage.Rounds,
-			Value:  fmt.Sprintf("%v", dh.cfg.rulesMatches.Rounds),
+			Value:  fmt.Sprintf("%v", dh.params.rulesMatches.Rounds),
 			Inline: true},
 		{Name: local.InviteMessage.Duration,
-			Value:  fmt.Sprintf(local.InviteMessage.DurationCount, dh.cfg.rulesMatches.Duration),
+			Value:  fmt.Sprintf(local.InviteMessage.DurationCount, dh.params.rulesMatches.Duration),
 			Inline: true},
 		{Name: local.InviteMessage.Crossplatform,
-			Value:  fieldCrossplay(local, dh.cfg.rulesMatches.Crossplatform),
+			Value:  fieldCrossplay(local, dh.params.rulesMatches.Crossplatform),
 			Inline: true},
 
 		{Name: local.ViewDataMessage.MessageStreamHeader},
 		{Name: local.StreamLobbyMessage.Area,
-			Value:  fieldArea(local, dh.cfg.streamLobby.Area),
+			Value:  fieldArea(local, dh.params.streamLobby.Area),
 			Inline: true},
 		{Name: local.StreamLobbyMessage.Language,
-			Value:  fieldLanguage(local, dh.cfg.streamLobby.Language),
+			Value:  fieldLanguage(local, dh.params.streamLobby.Language),
 			Inline: true},
 		{Name: local.StreamLobbyMessage.TypeConnection,
-			Value:  fieldConnection(local, dh.cfg.streamLobby.Conn),
+			Value:  fieldConnection(local, dh.params.streamLobby.Conn),
 			Inline: true},
 		{Name: local.StreamLobbyMessage.Crossplatform,
-			Value:  fieldCrossplay(local, dh.cfg.rulesMatches.Crossplatform),
+			Value:  fieldCrossplay(local, dh.params.rulesMatches.Crossplatform),
 			Inline: true},
 		{Name: local.StreamLobbyMessage.Passcode,
-			Value:  fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, dh.cfg.streamLobby.Passcode),
+			Value:  fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, dh.params.streamLobby.Passcode),
 			Inline: true},
 	}
-	message := msgEmbed(local.ViewDataMessage.Title, fields, ColorSystem, &dh.cfg)
+	message := msgEmbed(local.ViewDataMessage.Title, fields, ColorSystem, &dh.params)
 	return message
 }
 
@@ -276,7 +276,7 @@ func msgEmbed(title string, fields []*discordgo.MessageEmbedField, color int, cf
 }
 
 func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entitySender.SetData, local entityLocale.Lang, gameNickname string) {
-	if s.cfg.debugChannelID == "" {
+	if s.params.debugChannelID == "" {
 		log.Println("logSentMsgToDiscord | skip: debugChannelID is empty")
 		return
 	}
@@ -310,8 +310,8 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 		})
 	}
 
-	logEmbed := msgEmbed(fmt.Sprintf(local.LogMessage.Title, set.TournamentName), logFields, color, &s.cfg)
-	if _, err := s.session.ChannelMessageSendEmbed(s.cfg.debugChannelID, logEmbed); err != nil {
+	logEmbed := msgEmbed(fmt.Sprintf(local.LogMessage.Title, set.TournamentName), logFields, color, &s.params)
+	if _, err := s.session.ChannelMessageSendEmbed(s.params.debugChannelID, logEmbed); err != nil {
 		log.Printf("logToDiscord | error sending to debug channel: %v", err)
 	}
 }

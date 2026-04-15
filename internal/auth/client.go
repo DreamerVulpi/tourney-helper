@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/challonge"
@@ -11,7 +12,7 @@ import (
 func GetSessionDiscord() (*discordgo.Session, error) {
 	ctx := context.Background()
 	dsAuth := &AuthClient{
-		Config:    GetDiscordOauth2(),
+		Config:    GetDiscordOauth2(os.Getenv("DISCORD_CLIENT_ID"), os.Getenv("DISCORD_CLIENT_SECRET")),
 		TokenFile: "token_discord.json",
 	}
 	if err := dsAuth.Init(ctx); err != nil {
@@ -28,24 +29,16 @@ func GetSessionDiscord() (*discordgo.Session, error) {
 	}
 	return session, nil
 }
-func GetClientStartgg() (*startgg.Client, error) {
+func GetClientStartgg(stAuth *AuthClient) (*startgg.Client, error) {
 	ctx := context.Background()
-	stAuth := &AuthClient{
-		Config:    GetStartggOauth2(),
-		TokenFile: "token_startgg.json",
-	}
 	if err := stAuth.Init(ctx); err != nil {
 		return nil, err
 	}
 
 	return startgg.NewClient(stAuth.HTTPClient), nil
 }
-func GetClientChallonge() (*challonge.Client, error) {
+func GetClientChallonge(chAuth *AuthClient) (*challonge.Client, error) {
 	ctx := context.Background()
-	chAuth := &AuthClient{
-		Config:    GetChallongeOauth2(),
-		TokenFile: "token_challonge.json",
-	}
 	if err := chAuth.Init(ctx); err != nil {
 		return nil, err
 	}

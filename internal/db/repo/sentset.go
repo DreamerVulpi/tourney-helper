@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"database/sql"
+
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type SentSet struct {
-	Conn *pgxpool.Pool
+	Conn *sql.DB
 }
 
 func (s *SentSet) Exists(setId int64) (bool, error) {
@@ -19,7 +20,7 @@ func (s *SentSet) Exists(setId int64) (bool, error) {
 		(SELECT 1 FROM sent_sets WHERE set_id = $1)
 	`
 	var exists bool
-	err := s.Conn.QueryRow(context.Background(), sql, setId).Scan(&exists)
+	err := s.Conn.QueryRowContext(context.Background(), sql, setId).Scan(&exists)
 	return exists, err
 }
 
@@ -31,7 +32,7 @@ func (s *SentSet) Add(setId int64, tournamentPlatform string, messengerPlatform 
 		ON CONFLICT (set_id, tournament_platform, messenger_platform) DO NOTHING
 		RETURNING set_id`
 	var id int64
-	err := s.Conn.QueryRow(context.Background(), sql, setId, tournamentPlatform, messengerPlatform, tournamentSlug, sentAt).Scan(&id)
+	err := s.Conn.QueryRowContext(context.Background(), sql, setId, tournamentPlatform, messengerPlatform, tournamentSlug, sentAt).Scan(&id)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return 0, nil // todo: уже существует
@@ -47,7 +48,7 @@ func (s *SentSet) Get(setId int64) (entity.SentSet, error) {
 		FROM sent_sets s
 		WHERE set_id = $1`
 	var sentSet entity.SentSet
-	err := s.Conn.QueryRow(context.Background(), sql, setId).Scan(
+	err := s.Conn.QueryRowContext(context.Background(), sql, setId).Scan(
 		&sentSet.SetId,
 		&sentSet.TournamentPlatform,
 		&sentSet.MessengerPlatform,
@@ -64,12 +65,16 @@ func (s *SentSet) Del(setId int64) error {
 	const sql = `
 		DELETE FROM sent_sets
 		WHERE set_id = $1`
-	tag, err := s.Conn.Exec(context.Background(), sql, setId)
+	tag, err := s.Conn.ExecContext(context.Background(), sql, setId)
 	if err != nil {
 		return fmt.Errorf("don't deleted sentset from database, %w", err)
 	}
 
-	if tag.RowsAffected() == 0 {
+	rows, err := tag.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
 		return fmt.Errorf("sentset doesn't exist")
 	}
 
@@ -81,12 +86,16 @@ func (s *SentSet) Edit(id int64, sentAt time.Time) error {
 		UPDATE sent_sets
 		SET sent_at = $1
 		WHERE set_id = $2`
-	tag, err := s.Conn.Exec(context.Background(), sql, sentAt, id)
+	tag, err := s.Conn.ExecContext(context.Background(), sql, sentAt, id)
 	if err != nil {
 		return fmt.Errorf("don't edited sentset from database, %w", err)
 	}
 
-	if tag.RowsAffected() == 0 {
+	rows, err := tag.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
 		return fmt.Errorf("sentset doesn't exist")
 	}
 

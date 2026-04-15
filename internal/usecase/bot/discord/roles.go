@@ -14,7 +14,7 @@ func (dh *DiscordHandler) controlRole(s *discordgo.Session, arg string) []*disco
 				if usr.MessenagerID == "N/D" {
 					continue
 				}
-				err := s.GuildMemberRoleAdd(dh.cfg.guildID, usr.MessenagerID, dh.contacts.tourneyRole.ID)
+				err := s.GuildMemberRoleAdd(dh.params.guildID, usr.MessenagerID, dh.contacts.tourneyRole.ID)
 				if err != nil {
 					log.Println(err.Error())
 				}
@@ -24,7 +24,7 @@ func (dh *DiscordHandler) controlRole(s *discordgo.Session, arg string) []*disco
 				if usr.MessenagerID == "N/D" {
 					continue
 				}
-				err := s.GuildMemberRoleRemove(dh.cfg.guildID, usr.MessenagerID, dh.contacts.tourneyRole.ID)
+				err := s.GuildMemberRoleRemove(dh.params.guildID, usr.MessenagerID, dh.contacts.tourneyRole.ID)
 				if err != nil {
 					log.Println(err.Error())
 				}
@@ -32,17 +32,17 @@ func (dh *DiscordHandler) controlRole(s *discordgo.Session, arg string) []*disco
 		}
 		embed = append(embed, msgEmbed("Roles", []*discordgo.MessageEmbedField{
 			{Name: "Success!"},
-		}, 0x2ecc71, &dh.cfg))
+		}, 0x2ecc71, &dh.params))
 	} else {
 		embed = append(embed, msgEmbed("Roles", []*discordgo.MessageEmbedField{
 			{Name: "Error: Can't work with roles by commands", Value: "CSV file with data isn't loaded. Load file and restart bot."},
-		}, 0xe74c3c, &dh.cfg))
+		}, 0xe74c3c, &dh.params))
 	}
 	return embed
 }
 
 func (s *DiscordHandler) createTourneyRole(session *discordgo.Session) error {
-	rolesServer, err := session.GuildRoles(s.cfg.guildID)
+	rolesServer, err := session.GuildRoles(s.params.guildID)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (s *DiscordHandler) createTourneyRole(session *discordgo.Session) error {
 		mentionable := true
 		var prms int64 = 0x0000000000000800 | 0x0000000000000400
 
-		rslt, err := session.GuildRoleCreate(s.cfg.guildID, &discordgo.RoleParams{
+		rslt, err := session.GuildRoleCreate(s.params.guildID, &discordgo.RoleParams{
 			Name:        "Tourney Role",
 			Color:       &color,
 			Hoist:       &hoist,
@@ -85,7 +85,7 @@ func (s *DiscordHandler) createTourneyRole(session *discordgo.Session) error {
 }
 
 func (s *DiscordHandler) deleteTourneyRole(session *discordgo.Session) error {
-	rolesServer, err := session.GuildRoles(s.cfg.guildID)
+	rolesServer, err := session.GuildRoles(s.params.guildID)
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (s *DiscordHandler) deleteTourneyRole(session *discordgo.Session) error {
 	// check available role in guild (server) discord
 	for _, r := range rolesServer {
 		if r.Name == "Tourney Role" {
-			err := session.GuildRoleDelete(s.cfg.guildID, r.ID)
+			err := session.GuildRoleDelete(s.params.guildID, r.ID)
 			if err != nil {
 				return err
 			}

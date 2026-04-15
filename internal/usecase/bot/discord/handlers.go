@@ -34,13 +34,13 @@ func (dh *DiscordHandler) stopSending(s *discordgo.Session, i *discordgo.Interac
 		}
 	}()
 
-	dh.mutex.Lock()
+	dh.mtx.Lock()
 	if dh.cancel != nil {
 		dh.cancel()
 		dh.cancel = nil
 		log.Println("SUCCESS: Cancel function executed")
 	}
-	dh.mutex.Unlock()
+	dh.mtx.Unlock()
 
 	_, err := s.ChannelMessageSend(i.ChannelID, local.responseMsg.Stopped)
 	if err != nil {

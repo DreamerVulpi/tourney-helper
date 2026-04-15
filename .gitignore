@@ -13,3 +13,14 @@ token_challonge.json
 docker-compose.yaml
 Makefile
 *.log
+ui
+ui/wails.json
+build/bin
+node_modules
+frontend/dist
+wails.json
+build/README.md
+tourneyHelperProject.db
+tourneyHelperProject.db-shm
+tourneyHelperProject.db-wal
+frontend/wailsjs

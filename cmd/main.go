@@ -3,11 +3,8 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"path/filepath"
-	"time"
 
 	"runtime/debug"
 
@@ -15,31 +12,13 @@ import (
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
 	"github.com/dreamervulpi/tourneyBot/internal/db"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/bot/discord"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	"github.com/joho/godotenv"
 )
 
-func initLogger(logDir string) (*os.File, error) {
-	if err := os.MkdirAll(logDir, 0755); err != nil {
-		return nil, fmt.Errorf("could not create log directory: %v", err)
-	}
-
-	currentTime := time.Now().Format("02-01-2006_15-04-05")
-	logFilePath := filepath.Join(logDir, fmt.Sprintf("tourneyHelper_%s.log", currentTime))
-	file, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("could not open log file: %v", err)
-	}
-
-	multiWriter := io.MultiWriter(os.Stdout, file)
-	log.SetOutput(multiWriter)
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	log.Println("--- Logger initialized ---")
-	return file, nil
-}
-
 func main() {
-	logDir := "../logs"
-	f, err := initLogger(logDir)
+	logDir := "logs"
+	f, err := logger.Init(logDir)
 	if err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)
@@ -91,32 +70,34 @@ func main() {
 
 	// Для Discord
 	dsAuth := &auth.AuthClient{
-		Config:    auth.GetDiscordOauth2(),
-		TokenFile: "token_discord.json",
+		NamePlatform: "discord",
+		Config:       auth.GetDiscordOauth2(os.Getenv("DISCORD_CLIENT_ID"), os.Getenv("DISCORD_CLIENT_SECRET")),
+		TokenFile:    "token_discord.json",
 	}
 
 	ggAuth := &auth.AuthClient{
-		Config:    auth.GetStartggOauth2(),
-		TokenFile: "token_startgg.json",
+		NamePlatform: "startgg",
+		Config:       auth.GetStartggOauth2(os.Getenv("STARTGG_CLIENT_ID"), os.Getenv("STARTGG_CLIENT_SECRET")),
+		TokenFile:    "token_startgg.json",
 	}
 
 	log.Println("Запрашиваем данные профиля...")
 
-	cfg, err := config.LoadConfig(config.GetAbsPath("config/config.toml"))
+	cfg, err := config.LoadConfig(config.GetAbsPath("config.toml"))
 	if err != nil {
 		log.Println(errors.New("not loaded: ").Error() + err.Error())
 	} else {
-		pool, err := db.NewPool()
+		conn, err := db.NewPool()
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		tournament, err := config.LoadTournament(config.GetAbsPath("config/tournament.toml"))
+		tournament, err := config.LoadTournament(config.GetAbsPath("tournament.toml"))
 		if err != nil {
 			log.Println(errors.New("not loaded: ").Error() + err.Error())
 		} else {
 			dh := discord.DiscordHandler{}
-			if err := dh.Start(dsAuth, ggAuth, pool, cfg, tournament); err != nil {
+			if err := dh.Start(dsAuth, ggAuth, conn, cfg, tournament); err != nil {
 				log.Println(err.Error())
 			}
 		}

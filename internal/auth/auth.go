@@ -37,15 +37,16 @@ type Identity struct {
 }
 
 type AuthClient struct {
-	Config     *oauth2.Config
-	HTTPClient *http.Client
-	TokenFile  string
+	NamePlatform string
+	Config       *oauth2.Config
+	HTTPClient   *http.Client
+	TokenFile    string
 }
 
-func GetStartggOauth2() *oauth2.Config {
+func GetStartggOauth2(clientID, clientSecret string) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     os.Getenv("STARTGG_CLIENT_ID"),
-		ClientSecret: os.Getenv("STARTGG_CLIENT_SECRET"),
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
 		RedirectURL:  "http://127.0.0.1:7310/callback",
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  startggAuthURL,
@@ -63,10 +64,10 @@ func (a *AuthClient) GetAccessToken(filename string) (string, error) {
 	return token.AccessToken, nil
 }
 
-func GetDiscordOauth2() *oauth2.Config {
+func GetDiscordOauth2(clientID, clientSecret string) *oauth2.Config {
 	return &oauth2.Config{
-		ClientID:     os.Getenv("DISCORD_CLIENT_ID"),
-		ClientSecret: os.Getenv("DISCORD_CLIENT_SECRET"),
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
 		RedirectURL:  "http://127.0.0.1:7310/callback",
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  discordAuthURL,

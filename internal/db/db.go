@@ -1,32 +1,66 @@
 package db
 
 import (
-	"context"
-	"fmt"
-	"os"
+	"database/sql"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"fmt"
+
+	"os"
+	"path/filepath"
+
+	"embed"
+
+	"strings"
+
+	"github.com/pressly/goose/v3"
+	_ "modernc.org/sqlite"
 )
 
-func NewPool() (*pgxpool.Pool, error) {
-	dsn := os.Getenv("GOOSE_DBSTRING")
-	if dsn == "" {
-		return nil, fmt.Errorf("postgres | GOOSE_DBSTRING is empty")
-	}
+//go:embed migrations/*.sql
+var embedMigrations embed.FS
 
-	config, err := pgxpool.ParseConfig(dsn)
+func getAbsPath(fileName string) string {
+	ex, err := os.Executable()
 	if err != nil {
-		return nil, fmt.Errorf("postgres | failed to parse dsn: %w", err)
+		return fileName
 	}
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+	// folder
+	exPath := filepath.Dir(ex)
+
+	if strings.Contains(exPath, "Temp") || strings.Contains(exPath, "go-build") {
+		return fileName
+	}
+	return filepath.Join(exPath, fileName)
+}
+
+func isGoRun(path string) bool {
+	// Простая проверка, не находимся ли мы во временной папке компиляции Go
+	return filepath.Base(filepath.Dir(path)) == "go-build" ||
+		filepath.Base(path) == "b001" // b001 - типичная подпапка для go build
+}
+
+func NewPool() (*sql.DB, error) {
+	db, err := sql.Open("sqlite", getAbsPath("tourneyHelperProject.db")+"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)")
 	if err != nil {
-		return nil, fmt.Errorf("postgres | failed to create pool: %w", err)
+		return nil, fmt.Errorf("sqlite | failed to open db: %w", err)
 	}
 
-	if err := pool.Ping(context.Background()); err != nil {
-		return nil, fmt.Errorf("postgres | database unreachable: %w", err)
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("sqlite | database unreachable: %w", err)
 	}
 
-	return pool, nil
+	goose.SetBaseFS(embedMigrations)
+
+	if err := goose.SetDialect("sqlite3"); err != nil {
+		return nil, fmt.Errorf("sqlite | failed to set dialect: %w", err)
+	}
+
+	if err := goose.Up(db, getAbsPath("migrations")); err != nil {
+		return nil, fmt.Errorf("sqlite | migration failed: %w", err)
+	}
+
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	return db, nil
 }

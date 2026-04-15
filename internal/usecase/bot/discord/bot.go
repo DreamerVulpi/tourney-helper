@@ -9,6 +9,8 @@ import (
 
 	"context"
 
+	"database/sql"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
@@ -17,19 +19,17 @@ import (
 	usecaseDB "github.com/dreamervulpi/tourneyBot/internal/usecase/db"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 	usecaseSender "github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type params struct {
 	guildID        string
-	appID          string
 	logo           string
 	tournament     config.ConfigTournament
 	rulesMatches   config.RulesMatches
 	streamLobby    config.StreamLobby
-	rolesIdList    config.ConfigRolesIdDiscord
+	rolesIdList    config.RolesID
+	debugMode      bool
 	debugChannelID string
-	debugUser      entitySender.Participant
 }
 
 type DiscordHandler struct {
@@ -38,18 +38,16 @@ type DiscordHandler struct {
 	tournamentPlatform string
 	contacts           preparedContacts
 	cancel             context.CancelFunc
-	mutex              sync.Mutex
-	cfg                params
-	slug               string
-	debugMode          bool
+	mtx                sync.Mutex
+	params             params
 }
 
-func (dh *DiscordHandler) InitBot(dsAuth *auth.AuthClient, cfggg config.Config, tournament config.ConfigTournament) {
-	dh.tournamentPlatform = tournament.Platform.Platform
-	dh.cfg.guildID = cfggg.Discord.GuildID
-	dh.cfg.appID = dsAuth.Config.ClientID
-	dh.cfg.tournament = tournament
-	dh.cfg.rulesMatches = config.RulesMatches{
+func (dh *DiscordHandler) InitBot(dsAuth *auth.AuthClient, cfg config.ConfigMessenger, activeTournamentPlatform string, tournament config.ConfigTournament) {
+	dh.tournamentPlatform = activeTournamentPlatform
+	dh.params.guildID = cfg.Discord.GuildID
+	dh.params.debugMode = cfg.DebugMode.Mode
+	dh.params.tournament = tournament
+	dh.params.rulesMatches = config.RulesMatches{
 		StandardFormat: tournament.Rules.StandardFormat,
 		FinalsFormat:   tournament.Rules.FinalsFormat,
 		Rounds:         tournament.Rules.Rounds,
@@ -58,19 +56,20 @@ func (dh *DiscordHandler) InitBot(dsAuth *auth.AuthClient, cfggg config.Config, 
 		Stage:          tournament.Rules.Stage,
 		Waiting:        tournament.Rules.Waiting,
 	}
-	dh.cfg.streamLobby = config.StreamLobby{
+	dh.params.streamLobby = config.StreamLobby{
 		Area:          tournament.Stream.Area,
 		Language:      tournament.Stream.Language,
 		Crossplatform: tournament.Stream.Crossplatform,
 		Conn:          tournament.Stream.Conn,
 		Passcode:      tournament.Stream.Passcode,
 	}
-	dh.cfg.rolesIdList = cfggg.Roles
-	dh.cfg.logo = "https://i.imgur.com/n9SG5IL.png"
-	dh.cfg.debugChannelID = cfggg.Discord.DebugChannelID
+	dh.params.rolesIdList = cfg.Discord.Roles
+	dh.params.logo = "https://i.imgur.com/n9SG5IL.png"
+	dh.params.debugChannelID = cfg.Discord.DebugChannelID
+
 }
 
-func (dh *DiscordHandler) Start(dsAuth *auth.AuthClient, tourneyAuth *auth.AuthClient, conn *pgxpool.Pool, cfg config.Config, tournament config.ConfigTournament) error {
+func (dh *DiscordHandler) Start(dsAuth *auth.AuthClient, tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.ConfigMessenger, tournament config.ConfigTournament) error {
 	session, err := discordgo.New(cfg.Discord.Token)
 	if err != nil {
 		return err
@@ -82,17 +81,16 @@ func (dh *DiscordHandler) Start(dsAuth *auth.AuthClient, tourneyAuth *auth.AuthC
 		return err
 	}
 
-	dh.InitBot(dsAuth, cfg, tournament)
+	dh.InitBot(dsAuth, cfg, tourneyAuth.NamePlatform, tournament)
 	ctx := context.Background()
 
 	ds := &DiscordSender{
 		session:       session,
-		cfg:           dh.cfg,
+		params:        dh.params,
 		participantUC: usecaseDB.Participant{Repo: &repo.Participants{Conn: conn}},
-		debugMode:     cfg.DebugMode.Mode,
 	}
 
-	adapter, err := dh.GetAdapter()
+	adapter, err := dh.GetAdapter(tourneyAuth)
 	if err != nil {
 		return err
 	}
@@ -113,7 +111,6 @@ func (dh *DiscordHandler) Start(dsAuth *auth.AuthClient, tourneyAuth *auth.AuthC
 		return fmt.Errorf("Failed get ID")
 	}
 	log.Println(meTourneyPlatform.ID)
-	ds.adminIDTourneyPlatform = meTourneyPlatform.ID
 
 	if cfg.DebugMode.Mode {
 		meDiscordPlatform, err := dsAuth.GetDiscordMe(ctx)
@@ -131,10 +128,8 @@ func (dh *DiscordHandler) Start(dsAuth *auth.AuthClient, tourneyAuth *auth.AuthC
 
 	dh.auth = dsAuth
 	dh.ns = ns
-	dh.tournamentPlatform = tournament.Platform.Platform
-	dh.debugMode = cfg.DebugMode.Mode
 
-	registeredCommands, err := dh.InitCommands(dh.cfg.appID, session, &tournament, &cfg)
+	registeredCommands, err := dh.InitCommands(dsAuth.Config.ClientID, session, &tournament, &cfg)
 	if err != nil {
 		return err
 	}
@@ -152,7 +147,7 @@ func (dh *DiscordHandler) Start(dsAuth *auth.AuthClient, tourneyAuth *auth.AuthC
 	}
 
 	for _, v := range registeredCommands {
-		err := session.ApplicationCommandDelete(dh.cfg.appID, cfg.Discord.GuildID, v.ID)
+		err := session.ApplicationCommandDelete(dsAuth.Config.ClientID, cfg.Discord.GuildID, v.ID)
 		log.Printf("%v\n", v.Name)
 		if err != nil {
 			fmt.Printf("Cannot delete '%v' command: %v\n", v.Name, err)

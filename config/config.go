@@ -1,117 +1,131 @@
 package config
 
 import (
-	"errors"
-	"log"
+	"os"
 
 	"path/filepath"
 
-	"runtime"
+	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
-type ConfigDiscordBot struct {
-	Token          string `toml:"token"`
-	GuildID        string `toml:"guildID"`
-	DebugChannelID string `toml:"debugChannelID"`
+type MessengerPlatform struct {
+	Token          string  `toml:"token" json:"token"`
+	ClientID       string  `toml:"clientID" json:"clientID"`
+	SecretClient   string  `toml:"secretClient,omitempty" json:"secretClient,omitempty"`
+	GuildID        string  `toml:"guildID" json:"guildID"` // ID server/chat
+	DebugChannelID string  `toml:"debugChannelID" json:"debugChannelID"`
+	Roles          RolesID `toml:"roles" json:"roles"`
 }
 
-type ConfigGame struct {
-	Name string `toml:"name"`
-}
-
-type ConfigRolesIdDiscord struct {
-	Ru string `toml:"ru"`
+type RolesID struct {
+	Ru string `toml:"ru" json:"ru"`
+	En string `toml:"en" json:"en"`
 }
 
 type DebugMode struct {
-	Mode bool `toml:"mode"`
+	Mode bool `toml:"mode" json:"mode"`
 }
 
 type Database struct {
-	Dsn string `toml:"dsn"`
+	Dsn string `toml:"dsn" json:"dsn"`
 }
 
-type Config struct {
-	Discord   ConfigDiscordBot     `toml:"discordbot"`
-	Roles     ConfigRolesIdDiscord `toml:"roles"`
-	DebugMode DebugMode            `toml:"debug"`
-	Db        Database             `toml:"database"`
+type ConfigMessenger struct {
+	Discord   MessengerPlatform `toml:"discordbot" json:"discord"`
+	Telegram  MessengerPlatform `toml:"telegrambot" json:"telegram"`
+	DebugMode DebugMode         `toml:"debug" json:"debug"`
+	Db        Database          `toml:"database" json:"database"`
 }
 
 type RulesMatches struct {
-	StandardFormat int    `toml:"standardFormat"`
-	FinalsFormat   int    `toml:"finalsFormat"`
-	Stage          string `toml:"stage"`
-	Rounds         int    `toml:"rounds"`
-	Duration       int    `toml:"duration"`
-	Crossplatform  bool   `toml:"crossplatform"`
-	Waiting        int    `toml:"waiting"`
+	StandardFormat int    `toml:"standardFormat" json:"standardFormat"`
+	FinalsFormat   int    `toml:"finalsFormat" json:"finalsFormat"`
+	Stage          string `toml:"stage" json:"stage"`
+	Rounds         int    `toml:"rounds" json:"rounds"`
+	Duration       int    `toml:"duration" json:"duration"`
+	Crossplatform  bool   `toml:"crossplatform" json:"crossplatform"`
+	Waiting        int    `toml:"waiting" json:"waiting"`
 }
 
 type StreamLobby struct {
-	Area          string `toml:"area"`
-	Language      string `toml:"language"`
-	Conn          string `toml:"connection"`
-	Crossplatform bool   `toml:"crossplatform"`
-	Passcode      string `toml:"passcode"`
+	Area          string `toml:"area" json:"area"`
+	Language      string `toml:"language" json:"language"`
+	Conn          string `toml:"connection" json:"connection"`
+	Crossplatform bool   `toml:"crossplatform" json:"crossplatform"`
+	Passcode      string `toml:"passcode" json:"passcode"`
 }
 
 type Logo struct {
-	Img string `toml:"img"`
+	Img string `toml:"img" json:"img"`
 }
 
 type Csv struct {
-	NameFile string `toml:"nameFile"`
+	NameFile string `toml:"nameFile" json:"nameFile"`
 }
 
-type NamePlatform struct {
-	Platform string `toml:"platform"`
+type ConfigGame struct {
+	Name string `toml:"name" json:"name"`
+}
+
+type TournamentPlatform struct {
+	Name         string `toml:"name" json:"name"`
+	ClientID     string `toml:"clientID" json:"clientID"`
+	SecretClient string `toml:"secretClient" json:"secretClient,omitempty"`
 }
 
 type ConfigTournament struct {
-	Platform NamePlatform `toml:"tournamentPlatform"`
-	Rules    RulesMatches `toml:"rules"`
-	Stream   StreamLobby  `toml:"stream"`
-	Logo     Logo         `toml:"logo"`
-	Csv      Csv          `toml:"csv"`
-	Game     ConfigGame   `toml:"game"`
+	Startgg         TournamentPlatform `toml:"startggPlatform" json:"startggPlatform"`
+	Challonge       TournamentPlatform `toml:"challongePlatform" json:"challongePlatform"`
+	UrlToTournament string             `toml:"urlToTournament" json:"urlToTournament"`
+	Rules           RulesMatches       `toml:"rules" json:"rules"`
+	Stream          StreamLobby        `toml:"stream" json:"stream"`
+	Logo            Logo               `toml:"logo" json:"logo"`
+	Csv             Csv                `toml:"csv" json:"csv"`
+	Game            ConfigGame         `toml:"game" json:"game"`
 }
 
-func GetAbsPath(relativeToRoot string) string {
-	// path file
-	_, filename, _, _ := runtime.Caller(0)
-	// ../
-	root := filepath.Join(filepath.Dir(filename), "..")
+func GetAbsPath(fileName string) string {
+	ex, err := os.Executable()
+	if err != nil {
+		return fileName
+	}
 
-	absPath := filepath.Join(root, relativeToRoot)
-	return absPath
+	exPath := filepath.Dir(ex)
+
+	if strings.Contains(exPath, "Temp") || strings.Contains(exPath, "go-build") {
+		return fileName
+	}
+
+	return filepath.Join(exPath, fileName)
 }
 
-func LoadConfig(file string) (Config, error) {
-	var cfg Config
+func isGoRun(path string) bool {
+	// Простая проверка, не находимся ли мы во временной папке компиляции Go
+	return filepath.Base(filepath.Dir(path)) == "go-build" ||
+		filepath.Base(path) == "b001" // b001 - типичная подпапка для go build
+}
+
+func LoadConfig(file string) (ConfigMessenger, error) {
+	var cfg ConfigMessenger
 
 	err := cleanenv.ReadConfig(file, &cfg)
 	if err != nil {
-		return Config{}, err
+		return ConfigMessenger{}, err
 	}
 
-	switch {
-	case len(cfg.Discord.Token) == 0:
-		return Config{}, errors.New("discord: token is empty")
-	case len(cfg.Discord.GuildID) == 0:
-		return Config{}, errors.New("discord: guildID is empty")
-	case len(cfg.Discord.DebugChannelID) == 0:
-		return Config{}, errors.New("discord: debugChannelID is empty")
-	case len(cfg.Roles.Ru) == 0:
-		log.Println(errors.New("roles: ru locale is empty").Error())
-		return cfg, nil
-	case len(cfg.Db.Dsn) == 0:
-		return Config{}, errors.New("postgres: dsn string is empty")
-	default:
-		return cfg, nil
+	return cfg, nil
+}
+
+func SaveConfig(file string, cfg ConfigMessenger) error {
+	f, err := os.Create(file)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
+	return toml.NewEncoder(f).Encode(cfg)
 }
 
 func LoadTournament(file string) (ConfigTournament, error) {
@@ -122,38 +136,14 @@ func LoadTournament(file string) (ConfigTournament, error) {
 		return ConfigTournament{}, err
 	}
 
-	switch {
-	case len(l.Platform.Platform) == 0:
-		return ConfigTournament{}, errors.New("local: field platform is null")
-	case l.Rules.StandardFormat == 0:
-		return ConfigTournament{}, errors.New("local: field standardFormat is null")
-	case l.Rules.FinalsFormat == 0:
-		return ConfigTournament{}, errors.New("local: field finalsFormat is null")
-	case l.Rules.Rounds == 0:
-		return ConfigTournament{}, errors.New("local: field rounds is empty")
-	case len(l.Rules.Stage) == 0:
-		return ConfigTournament{}, errors.New("local: field stage is empty")
-	case l.Rules.Duration == 0:
-		return ConfigTournament{}, errors.New("local: field duration is empty")
-	case len(l.Stream.Area) == 0:
-		return ConfigTournament{}, errors.New("stream: field area is empty")
-	case len(l.Stream.Language) == 0:
-		return ConfigTournament{}, errors.New("stream: field language is empty")
-	case len(l.Stream.Conn) == 0:
-		return ConfigTournament{}, errors.New("stream: field connection is empty")
-	case len(l.Stream.Passcode) == 0:
-		return ConfigTournament{}, errors.New("stream: field passcode is empty")
-	case l.Rules.Waiting > 30 || l.Rules.Waiting <= 0:
-		return ConfigTournament{}, errors.New("waiting time: isn't correct")
-	case len(l.Game.Name) == 0:
-		return ConfigTournament{}, errors.New("game: name is empty")
-	case len(l.Csv.NameFile) == 0:
-		log.Println(errors.New("csv: nameFile field is empty").Error())
-		return l, nil
-	case len(l.Logo.Img) == 0:
-		log.Println(errors.New("tournament: logo link is empty").Error())
-		return l, nil
-	default:
-		return l, nil
+	return l, nil
+}
+
+func SaveTournament(file string, cfg ConfigTournament) error {
+	f, err := os.Create(file)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
+	return toml.NewEncoder(f).Encode(cfg)
 }

@@ -38,6 +38,6 @@ type NotificationSender interface {
 type NotificationData interface {
 	GetSetsData(ctx context.Context) ([]SetData, error)
 	GetPlatformTournamentName() string
-	GetTournamentSlug() string
+	GetTournamentSlug() (string, error)
 	GetMe(tourneyAuth *auth.AuthClient) (auth.Identity, error)
 }

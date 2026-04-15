@@ -14,10 +14,10 @@ import (
 )
 
 type ChallongeMatchAdapter struct {
-	Client         *challonge.Client
-	TournamentSlug string
-	DebugMode      bool
-	TestUser       entitySender.Participant
+	Client          *challonge.Client
+	UrlToTournament string
+	DebugMode       bool
+	TestUser        entitySender.Participant
 }
 
 func (_ ChallongeMatchAdapter) GetMe(tourneyAuth *auth.AuthClient) (auth.Identity, error) {
@@ -33,15 +33,15 @@ func (c ChallongeMatchAdapter) GetPlatformTournamentName() string {
 	return "challonge"
 }
 
-func (c ChallongeMatchAdapter) GetTournamentSlug() string {
-	return c.TournamentSlug
+func (c ChallongeMatchAdapter) GetTournamentSlug() (string, error) {
+	return c.UrlToTournament, nil
 }
 
 func (c ChallongeMatchAdapter) GetSetsData(ctx context.Context) ([]entitySender.SetData, error) {
 	// TODO: Complete method
 	// https://challonge.com/ru/tournamentdciii
 
-	tournament, err := c.Client.GetTournament(ctx, c.TournamentSlug)
+	tournament, err := c.Client.GetTournament(ctx, c.UrlToTournament)
 	if err != nil {
 		return nil, fmt.Errorf("GetSetsData | Challonge | get tournament error: %w", err)
 	}
@@ -51,7 +51,7 @@ func (c ChallongeMatchAdapter) GetSetsData(ctx context.Context) ([]entitySender.
 		states = []entityChallonge.State{entityChallonge.Open, entityChallonge.Pending, entityChallonge.Complete}
 	}
 
-	matches, err := c.Client.GetMatches(ctx, c.TournamentSlug, states)
+	matches, err := c.Client.GetMatches(ctx, c.UrlToTournament, states)
 	if err != nil {
 		return nil, fmt.Errorf("GetSetsData | Challonge | Can't get data of sets: %v", err)
 	}
@@ -64,11 +64,11 @@ func (c ChallongeMatchAdapter) GetSetsData(ctx context.Context) ([]entitySender.
 		}
 
 		// TODO: ConvertData for ChallongeContacts
-		rawP1, err := c.Client.GetParticipant(ctx, c.TournamentSlug, match.PointsByParticipant[0].ParticipantID)
+		rawP1, err := c.Client.GetParticipant(ctx, c.UrlToTournament, match.PointsByParticipant[0].ParticipantID)
 		if err != nil {
 			log.Printf("GetSetsData | Challonge | Can't get data of player 1 (%v) from match (%v): %v\n", match.PointsByParticipant[0].ParticipantID, match.Identifier, err)
 		}
-		rawP2, err := c.Client.GetParticipant(ctx, c.TournamentSlug, match.PointsByParticipant[1].ParticipantID)
+		rawP2, err := c.Client.GetParticipant(ctx, c.UrlToTournament, match.PointsByParticipant[1].ParticipantID)
 		if err != nil {
 			log.Printf("GetSetsData | Challonge | Can't get data of player 1 (%v) from match (%v): %v\n", match.PointsByParticipant[0].ParticipantID, match.Identifier, err)
 		}

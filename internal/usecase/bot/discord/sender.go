@@ -17,15 +17,13 @@ import (
 )
 
 type DiscordSender struct {
-	session                *discordgo.Session
-	cfg                    params
-	participantUC          usecaseDB.Participant
-	adminIDTourneyPlatform string
-	debugMode              bool
+	session       *discordgo.Session
+	params        params
+	participantUC usecaseDB.Participant
 }
 
 func (dh *DiscordHandler) Process(s *discordgo.Session) {
-	dh.mutex.Lock()
+	dh.mtx.Lock()
 
 	if dh.cancel != nil {
 		dh.cancel()
@@ -33,13 +31,13 @@ func (dh *DiscordHandler) Process(s *discordgo.Session) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	dh.cancel = cancel
-	dh.mutex.Unlock()
+	dh.mtx.Unlock()
 
 	defer func() {
 		cancel()
-		dh.mutex.Lock()
+		dh.mtx.Lock()
 		dh.cancel = nil
-		dh.mutex.Unlock()
+		dh.mtx.Unlock()
 	}()
 
 	if err := dh.SendingMessages(ctx); err != nil {
@@ -48,11 +46,6 @@ func (dh *DiscordHandler) Process(s *discordgo.Session) {
 }
 
 func (dh *DiscordHandler) SendingMessages(ctx context.Context) error {
-	adapter, err := dh.GetAdapter()
-	if err != nil {
-		return err
-	}
-	dh.ns.Data = adapter
 	if err := dh.ns.Process(ctx); err != nil {
 		return fmt.Errorf("sendingMessages | process failed: %w", err)
 	}
@@ -115,20 +108,20 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 	currentLocale := "default"
 
 	if p.MessenagerLogin == "" || p.MessenagerLogin == "N/D" {
-		if s.debugMode {
+		if s.params.debugMode {
 			log.Printf("findContact | %s has no login, using debug mock", p.GameNickname)
 			messengerID = "000000000000000000"
 			cleanNickname = "N/D"
-			currentLocale = s.cfg.rolesIdList.Ru
+			currentLocale = s.params.rolesIdList.Ru
 		} else {
 			return entitySender.Participant{}, fmt.Errorf("findContact | member %s not founded in guild (server)\n", cleanNickname)
 		}
 	} else {
-		members, err := s.session.GuildMembersSearch(s.cfg.guildID, cleanNickname, 1)
+		members, err := s.session.GuildMembersSearch(s.params.guildID, cleanNickname, 1)
 		if err != nil || len(members) != 1 {
-			if s.debugMode {
+			if s.params.debugMode {
 				messengerID = "000000000000000000"
-				currentLocale = s.cfg.rolesIdList.Ru
+				currentLocale = s.params.rolesIdList.Ru
 			} else {
 				return entitySender.Participant{}, fmt.Errorf("findContact | member %s not founded in guild (server)\n", cleanNickname)
 			}
@@ -138,7 +131,7 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 
 			for _, roleId := range targetMember.Roles {
 				// TODO: Change reconize locale in future (More languages)
-				if roleId == s.cfg.rolesIdList.Ru {
+				if roleId == s.params.rolesIdList.Ru {
 					currentLocale = roleId
 				}
 			}
@@ -184,24 +177,25 @@ func (s *DiscordSender) cleanDiscordLogin(login string) string {
 	return res
 }
 
-func (dh *DiscordHandler) GetAdapter() (entitySender.NotificationData, error) {
-	switch dh.tournamentPlatform {
+func (dh *DiscordHandler) GetAdapter(tourneyAuth *auth.AuthClient) (entitySender.NotificationData, error) {
+	switch tourneyAuth.NamePlatform {
 	case "startgg":
-		client, err := auth.GetClientStartgg()
+		client, err := auth.GetClientStartgg(tourneyAuth)
 		if err != nil {
 			return nil, err
 		}
 
+		// dh.params.tournament.Csv.NameFile
 		contacts, err := senderUC.LoadCSV("contacts.json")
 
 		return senderUC.StartggSetAdapter{
-			FullSlug:  dh.slug,
-			Client:    client,
-			DebugMode: dh.debugMode,
-			Contacts:  contacts,
+			UrlToEvent: dh.params.tournament.UrlToTournament,
+			Client:     client,
+			DebugMode:  dh.params.debugMode,
+			Contacts:   contacts,
 		}, nil
 	case "challonge":
-		client, err := auth.GetClientChallonge()
+		client, err := auth.GetClientChallonge(tourneyAuth)
 		if err != nil {
 			return nil, err
 		}
@@ -209,9 +203,9 @@ func (dh *DiscordHandler) GetAdapter() (entitySender.NotificationData, error) {
 		// TODO: Load contacts from file for challonge
 
 		return senderUC.ChallongeMatchAdapter{
-			TournamentSlug: dh.slug,
-			Client:         client,
-			DebugMode:      dh.debugMode,
+			UrlToTournament: dh.params.tournament.UrlToTournament,
+			Client:          client,
+			DebugMode:       dh.params.debugMode,
 		}, nil
 	default:
 		return nil, fmt.Errorf("getAdapter | Can't get adapter for platform called: %s", dh.tournamentPlatform)

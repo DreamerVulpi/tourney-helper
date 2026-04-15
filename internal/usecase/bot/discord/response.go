@@ -46,18 +46,18 @@ func (s *DiscordHandler) configResponseMsg(language string) responseLocale {
 	result.responseMsg = local.ResponseMessage
 
 	rulesCrossplatform := local.InviteMessage.CrossplatformStatusTrue
-	if !s.cfg.rulesMatches.Crossplatform {
+	if !s.params.rulesMatches.Crossplatform {
 		rulesCrossplatform = local.InviteMessage.CrossplatformStatusFalse
 	}
 
 	streamCrossplatform := local.StreamLobbyMessage.CrossplatformStatusTrue
-	if !s.cfg.streamLobby.Crossplatform {
+	if !s.params.streamLobby.Crossplatform {
 		streamCrossplatform = local.StreamLobbyMessage.CrossplatformStatusFalse
 	}
 
-	result.area = fieldArea(local, s.cfg.streamLobby.Area)
-	result.conn = fieldConnection(local, s.cfg.streamLobby.Conn)
-	result.lang = fieldLanguage(local, s.cfg.streamLobby.Language)
+	result.area = fieldArea(local, s.params.streamLobby.Area)
+	result.conn = fieldConnection(local, s.params.streamLobby.Conn)
+	result.lang = fieldLanguage(local, s.params.streamLobby.Language)
 	result.crossplayLobby = streamCrossplatform
 	result.crossplayRules = rulesCrossplatform
 

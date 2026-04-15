@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math"
+	"regexp"
 
 	"encoding/csv"
 	"errors"
@@ -27,14 +28,17 @@ type StartggFinalConfig struct {
 }
 
 type StartggSetAdapter struct {
-	Client    *startgg.Client
-	FullSlug  string
-	Game      string
-	Finals    StartggFinalConfig
-	DebugMode bool
-	TestUser  sender.Participant
-	Contacts  map[string]sender.Participant
+	Client     *startgg.Client
+	UrlToEvent string
+	Slug       string
+	Game       string
+	Finals     StartggFinalConfig
+	DebugMode  bool
+	TestUser   sender.Participant
+	Contacts   map[string]sender.Participant
 }
+
+var startggTemplateSlug = regexp.MustCompile(`tournament/[^/]+/event/[^/]+`)
 
 func (_ StartggSetAdapter) GetMe(tourneyAuth *auth.AuthClient) (auth.Identity, error) {
 	ctx := context.Background()
@@ -127,21 +131,28 @@ func (s StartggSetAdapter) GetPlatformTournamentName() string {
 	return "startgg"
 }
 
-func (s StartggSetAdapter) GetTournamentSlug() string {
-	return s.FullSlug
+func (s StartggSetAdapter) GetTournamentSlug() (string, error) {
+	slug := startggTemplateSlug.FindString(s.UrlToEvent)
+
+	if slug == "" {
+		return "", fmt.Errorf("GetTournamentSlug | Startgg | incorrect format url")
+	}
+
+	return slug, nil
 }
 
 func (s StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, error) {
-	fullSlug := s.FullSlug
-	log.Println("GetSetsData | " + fullSlug)
+	slug, err := s.GetTournamentSlug()
+	if err != nil {
+		return nil, err
+	}
 
-	tournamentSlug := strings.Split(fullSlug, "/event")[0]
-	tournament, err := s.Client.GetTournament(tournamentSlug)
+	tournament, err := s.Client.GetTournament(slug)
 	if err != nil {
 		return nil, fmt.Errorf("GetSetsData | Startgg | get tournament error: %w", err)
 	}
 
-	phaseGroups, err := s.Client.GetListGroups(fullSlug)
+	phaseGroups, err := s.Client.GetListGroups(slug)
 	if err != nil {
 		return nil, fmt.Errorf("GetSetsData | Startgg | get groups error: %w", err)
 	}
@@ -206,7 +217,7 @@ func (s StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, e
 					ContactPlayer1: p1,
 					ContactPlayer2: p2,
 					IsFinals:       isFinals,
-					FullInviteLink: fmt.Sprint("https://www.start.gg/", fullSlug, "/set/", set.Id),
+					FullInviteLink: fmt.Sprint("https://www.start.gg/", slug, "/set/", set.Id),
 				}
 				setsData = append(setsData, set)
 			}

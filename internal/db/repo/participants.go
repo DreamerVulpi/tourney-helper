@@ -2,15 +2,15 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Participants struct {
-	Conn *pgxpool.Pool
+	Conn *sql.DB
 }
 
 func (p *Participants) Add(gamerTag string, messenagerPlatform string, messenagerPlatformId string, messenagerPlatformLogin string, updatedAt time.Time, isFound bool, locale string) (string, string, error) {
@@ -28,7 +28,7 @@ func (p *Participants) Add(gamerTag string, messenagerPlatform string, messenage
 			is_found = EXCLUDED.is_found
 		RETURNING gamer_tag, platform`
 	var resGamerTag, resMessenagerPlatform string
-	err := p.Conn.QueryRow(context.Background(), sql, gamerTag, messenagerPlatform, messenagerPlatformId, messenagerPlatformLogin, updatedAt, isFound, locale).Scan(&resGamerTag, &resMessenagerPlatform)
+	err := p.Conn.QueryRowContext(context.Background(), sql, gamerTag, messenagerPlatform, messenagerPlatformId, messenagerPlatformLogin, updatedAt, isFound, locale).Scan(&resGamerTag, &resMessenagerPlatform)
 	if err != nil {
 		return "", "", fmt.Errorf("unable to create participants in database, %w", err)
 	}
@@ -41,12 +41,16 @@ func (p *Participants) Edit(gamerTag string, messenagerPlatform string, messenag
 		SET platform_id = $3, platform_login = $4, updated_at = $5, is_found = $6, locale = $7
 		WHERE gamer_tag = $1 AND platform = $2`
 
-	tag, err := p.Conn.Exec(context.Background(), sql, gamerTag, messenagerPlatform, messenagerPlatformId, messenagerPlatformLogin, updatedAt, locale)
+	tag, err := p.Conn.ExecContext(context.Background(), sql, gamerTag, messenagerPlatform, messenagerPlatformId, messenagerPlatformLogin, updatedAt, locale)
 	if err != nil {
 		return fmt.Errorf("don't edited participant from database, %w", err)
 	}
 
-	if tag.RowsAffected() == 0 {
+	rows, err := tag.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
 		return fmt.Errorf("participant doesn't exist")
 	}
 
@@ -60,7 +64,7 @@ func (p *Participants) Get(gamerTag, messenagerPlatform string) (entity.Particip
 		WHERE gamer_tag = $1 AND platform = $2`
 
 	var participant entity.Participant
-	err := p.Conn.QueryRow(context.Background(), sql, gamerTag, messenagerPlatform).Scan(
+	err := p.Conn.QueryRowContext(context.Background(), sql, gamerTag, messenagerPlatform).Scan(
 		&participant.GamerTag,
 		&participant.MessengerPlatform,
 		&participant.MessengerPlatformId,
@@ -79,12 +83,16 @@ func (p *Participants) Del(gamerTag, platform string) error {
 	const sql = `
 		DELETE FROM participants
 		WHERE gamer_tag = $1 AND platform = $2`
-	tag, err := p.Conn.Exec(context.Background(), sql, gamerTag, platform)
+	tag, err := p.Conn.ExecContext(context.Background(), sql, gamerTag, platform)
 	if err != nil {
 		return fmt.Errorf("don't deleted participant from database, %w", err)
 	}
 
-	if tag.RowsAffected() == 0 {
+	rows, err := tag.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
 		return fmt.Errorf("participant doesn't exist")
 	}
 
