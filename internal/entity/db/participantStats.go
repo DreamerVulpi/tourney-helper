@@ -1,6 +1,24 @@
 package db
 
-type ParticipantStats struct {
+import "time"
+
+type ParticipantStat struct {
+	Id            int       `json:"id"`
+	ParticipantId int       `json:"participant_id"`
+	GameName      string    `json:"gameName"`
+	GameId        string    `json:"gameId"`
+	Rating        int       `json:"rating"`
+	UpdatedAt     time.Time `json:"updateAt"`
+}
+
+type ParticipantStatAddRequest struct {
+	ParticipantId int    `json:"participant_id"`
+	GameName      string `json:"gameName"`
+	GameId        string `json:"gameId"`
+	Rating        int    `json:"rating"`
+}
+
+type ParticipantStatEditRequest struct {
 	Id            int    `json:"id"`
 	ParticipantId int    `json:"participant_id"`
 	GameName      string `json:"gameName"`
@@ -8,46 +26,37 @@ type ParticipantStats struct {
 	Rating        int    `json:"rating"`
 }
 
-type ParticipantStatsAddRequest struct {
-	ParticipantId int    `json:"participant_id"`
-	GameName      string `json:"gameName"`
-	GameId        string `json:"gameId"`
-	Rating        int    `json:"rating"`
-}
-
-type ParticipantStatsEditRequest struct {
-	Id            int    `json:"id"`
-	ParticipantId int    `json:"participant_id"`
-	GameName      string `json:"gameName"`
-	GameId        string `json:"gameId"`
-	Rating        int    `json:"rating"`
-}
-
-type ParticipantStatsDeleteRequest struct {
+type ParticipantStatDeleteRequestById struct {
 	Id int `json:"id"`
+}
+
+type ParticipantStatDeleteRequestByGame struct {
+	ParticipantId int    `json:"id"`
+	GameName      string `json:"gameName"`
 }
 
 type ParticipantStatsGetRequestById struct {
 	ParticipantId int `json:"id"`
 }
 
-type ParticipantStatsGetRequestByGame struct {
+type ParticipantStatGetRequestByGame struct {
 	ParticipantId int    `json:"id"`
 	GameName      string `json:"gameName"`
 }
 
-type ParticipantStatsAddResponse struct {
+type ParticipantStatAddResponse struct {
 	Id int `json:"id"`
 }
 
-type ParticipantStatsEditResponse struct{}
+type ParticipantStatEditResponse struct{}
 
-type ParticipantStatsDeleteResponse struct{}
+type ParticipantStatDeleteResponse struct{}
 
-type ParticipantStatsGetResponse struct {
-	Id            int    `json:"id"`
-	ParticipantId int    `json:"participantId"`
-	GameName      string `json:"gameName"`
-	GameId        string `json:"gameId"`
-	Rating        int    `json:"rating"`
+type ParticipantStatGetResponse struct {
+	Id            int       `json:"id"`
+	ParticipantId int       `json:"participantId"`
+	GameName      string    `json:"gameName"`
+	GameId        string    `json:"gameId"`
+	Rating        int       `json:"rating"`
+	UpdatedAt     time.Time `json:"updateAt"`
 }

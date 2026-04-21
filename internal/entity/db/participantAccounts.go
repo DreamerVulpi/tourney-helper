@@ -2,7 +2,7 @@ package db
 
 import "time"
 
-type ParticipantAccounts struct {
+type ParticipantAccount struct {
 	Id            int       `json:"id"`
 	ParticipantId int       `json:"participant_id"`
 	PlatformName  string    `json:"platform_name"`
@@ -12,45 +12,49 @@ type ParticipantAccounts struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
-type ParticipantAccountsAddRequest struct {
+type ParticipantAccountAddRequest struct {
+	ParticipantId int       `json:"participant_id"`
+	PlatformName  string    `json:"platform_name"`
+	PlatformId    string    `json:"platform_id"`
+	PlatformLogin string    `json:"platform_login"`
+	IsFound       bool      `json:"is_found"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type ParticipantAccountEditRequest struct {
+	Id            int       `json:"id"`
+	ParticipantId int       `json:"participant_id"`
+	PlatformName  string    `json:"platform_name"`
+	PlatformId    string    `json:"platform_id"`
+	PlatformLogin string    `json:"platform_login"`
+	IsFound       bool      `json:"is_found"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type ParticipantAccountDeleteRequestByPlatform struct {
 	ParticipantId int    `json:"participant_id"`
 	PlatformName  string `json:"platform_name"`
 	PlatformId    string `json:"platform_id"`
-	PlatformLogin string `json:"platform_login"`
-	IsFound       bool   `json:"is_found"`
-}
-
-type ParticipantAccountsEditRequest struct {
-	Id            int       `json:"id"`
-	ParticipantId int       `json:"participant_id"`
-	PlatformName  string    `json:"platform_name"`
-	PlatformId    string    `json:"platform_id"`
-	PlatformLogin string    `json:"platform_login"`
-	IsFound       bool      `json:"is_found"`
-	UpdatedAt     time.Time `json:"updated_at"`
-}
-
-type ParticipantAccountsDeleteRequest struct {
-	Id int `json:"id"`
 }
 
 type ParticipantAccountsGetRequestById struct {
 	ParticipantId int `json:"id"`
 }
-type ParticipantAccountsGetRequestByPlatform struct {
-	PlatformName string `json:"platform_name"`
-	PlatformId   string `json:"platform_id"`
+type ParticipantAccountGetRequestByPlatform struct {
+	ParticipantId int    `json:"participant_id"`
+	PlatformName  string `json:"platform_name"`
+	PlatformId    string `json:"platform_id"`
 }
 
-type ParticipantAccountsAddResponse struct {
+type ParticipantAccountAddResponse struct {
 	Id int `json:"id"`
 }
 
-type ParticipantAccountsEditResponse struct{}
+type ParticipantAccountEditResponse struct{}
 
-type ParticipantAccountsDeleteResponse struct{}
+type ParticipantAccountDeleteResponse struct{}
 
-type ParticipantAccountsGetResponse struct {
+type ParticipantAccountGetResponse struct {
 	Id            int       `json:"id"`
 	ParticipantId int       `json:"participant_id"`
 	PlatformName  string    `json:"platform_name"`

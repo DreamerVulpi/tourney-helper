@@ -1,5 +1,7 @@
 package db
 
+import "time"
+
 // type Participant struct {
 // 	GamerTag               string    `json:"gamerTag"`
 // 	MessengerPlatform      string    `json:"messengerPlatform"`
@@ -58,26 +60,29 @@ package db
 // }
 
 type Participant struct {
-	Id       int    `json:"id"`
-	Nickname string `json:"nickname"`
-	Region   string `json:"region"`
-	Locale   string `json:"locale"`
+	Id        int       `json:"id"`
+	Nickname  string    `json:"nickname"`
+	Region    string    `json:"region"`
+	Locale    string    `json:"locale"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ParticipantAddRequest struct {
-	Nickname string `json:"nickname"`
-	Region   string `json:"region"`
-	Locale   string `json:"locale"`
+	Nickname  string    `json:"nickname"`
+	Region    string    `json:"region"`
+	Locale    string    `json:"locale"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type ParticipantEditRequest struct {
-	Id       int    `json:"id"`
-	Nickname string `json:"nickname"`
-	Region   string `json:"region"`
-	Locale   string `json:"locale"`
+	Id        int       `json:"id"`
+	Nickname  string    `json:"nickname"`
+	Region    string    `json:"region"`
+	Locale    string    `json:"locale"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type ParticipantDelRequest struct {
+type ParticipantDeleteRequest struct {
 	Id int `json:"id"`
 }
 
@@ -95,11 +100,12 @@ type ParticipantAddResponse struct {
 
 type ParticipantEditResponse struct{}
 
-type ParticipantDelResponse struct{}
+type ParticipantDeleteResponse struct{}
 
 type ParticipantGetResponse struct {
-	Id       int    `json:"id"`
-	Nickname string `json:"nickname"`
-	Region   string `json:"region"`
-	Locale   string `json:"locale"`
+	Id        int       `json:"id"`
+	Nickname  string    `json:"nickname"`
+	Region    string    `json:"region"`
+	Locale    string    `json:"locale"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

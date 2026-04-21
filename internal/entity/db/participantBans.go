@@ -31,10 +31,14 @@ type ParticipantBansEditRequest struct {
 }
 
 type ParticipantBansDeleteRequest struct {
-	Id int `json:"id"`
+	ParticipantId int `json:"id"`
 }
 
 type ParticipantBansGetRequest struct {
+	ParticipantId int `json:"participant_id"`
+}
+
+type ParticipantIsBannedRequest struct {
 	ParticipantId int `json:"participant_id"`
 }
 
@@ -53,4 +57,8 @@ type ParticipantBansGetResponse struct {
 	Reason        string     `json:"reason"`
 	BannedAt      time.Time  `json:"banned_at"`
 	ExpiresAt     *time.Time `json:"expires_at"`
+}
+
+type ParticipantIsBannedResponse struct {
+	IsBanned bool `json:"is_banned"`
 }

@@ -4,7 +4,8 @@ CREATE TABLE IF NOT EXISTS participants (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nickname TEXT NOT NULL,
     region TEXT NOT NULL DEFAULT 'N/D',
-    locale TEXT NOT NULL DEFAULT 'en'
+    locale TEXT NOT NULL DEFAULT 'en',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(nickname)
 );
 
@@ -14,8 +15,9 @@ CREATE TABLE IF NOT EXISTS participant_stats (
     game_name TEXT NOT NULL, -- Tekken 8, SF6 and etc.
     game_id TEXT NOT NULL, -- Internal ID
     rating INTEGER DEFAULT 0,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE,
-    UNIQUE(participant_id, game_id) -- One player = 1 note stats for 1 game
+    UNIQUE(participant_id, game_name) -- One player = 1 note stats for 1 game
 );
 
 CREATE TABLE IF NOT EXISTS participant_accounts (
@@ -37,7 +39,8 @@ CREATE TABLE IF NOT EXISTS participant_bans (
     reason TEXT NOT NULL,
     banned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     expires_at DATETIME,
-    FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
+    FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE,
+    UNIQUE(participant_id)
 );
 
 CREATE TABLE IF NOT EXISTS sent_sets (
