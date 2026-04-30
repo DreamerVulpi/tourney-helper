@@ -51,7 +51,7 @@ func TestGetData(t *testing.T) {
 											{
 												GamerTag: "Pizzduk",
 												ConnectedAccounts: entity.ConnectedAccounts{
-													Tekken: entity.Tekken8{
+													Tekken: entity.Tekken{
 														TekkenID: "636h-F3rQ-Hqd2",
 													},
 												},
@@ -73,7 +73,7 @@ func TestGetData(t *testing.T) {
 											{
 												GamerTag: "Mr_Shadow_",
 												ConnectedAccounts: entity.ConnectedAccounts{
-													Tekken: entity.Tekken8{},
+													Tekken: entity.Tekken{},
 												},
 												User: entity.User{
 													Authorizations: []entity.Authorizations{
@@ -101,7 +101,7 @@ func TestGetData(t *testing.T) {
 											{
 												GamerTag: "Pizzduk",
 												ConnectedAccounts: entity.ConnectedAccounts{
-													Tekken: entity.Tekken8{
+													Tekken: entity.Tekken{
 														TekkenID: "636h-F3rQ-Hqd2",
 													},
 												},
@@ -123,7 +123,7 @@ func TestGetData(t *testing.T) {
 											{
 												GamerTag: "cleverdemon",
 												ConnectedAccounts: entity.ConnectedAccounts{
-													Tekken: entity.Tekken8{},
+													Tekken: entity.Tekken{},
 												},
 												User: entity.User{
 													Authorizations: nil,
@@ -147,7 +147,7 @@ func TestGetData(t *testing.T) {
 											{
 												GamerTag: "AlexSouls",
 												ConnectedAccounts: entity.ConnectedAccounts{
-													Tekken: entity.Tekken8{
+													Tekken: entity.Tekken{
 														TekkenID: "6624-jt93-MtEE",
 													},
 												},
@@ -169,7 +169,7 @@ func TestGetData(t *testing.T) {
 											{
 												GamerTag: "cleverdemon",
 												ConnectedAccounts: entity.ConnectedAccounts{
-													Tekken: entity.Tekken8{},
+													Tekken: entity.Tekken{},
 												},
 												User: entity.User{
 													Authorizations: nil,
@@ -193,7 +193,7 @@ func TestGetData(t *testing.T) {
 											{
 												GamerTag: "cleverdemon",
 												ConnectedAccounts: entity.ConnectedAccounts{
-													Tekken: entity.Tekken8{},
+													Tekken: entity.Tekken{},
 												},
 												User: entity.User{
 													Authorizations: nil,
@@ -209,7 +209,7 @@ func TestGetData(t *testing.T) {
 											{
 												GamerTag: "Pizzduk",
 												ConnectedAccounts: entity.ConnectedAccounts{
-													Tekken: entity.Tekken8{
+													Tekken: entity.Tekken{
 														TekkenID: "636h-F3rQ-Hqd2",
 													},
 												},

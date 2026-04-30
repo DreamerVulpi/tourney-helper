@@ -1,8 +1,37 @@
 package db
 
 import (
+	"context"
 	"time"
 )
+
+type ParticipantBansRepo interface {
+	Add(
+		ctx context.Context,
+		participantId int,
+		typeBan string,
+		reason string,
+		bannedAt time.Time,
+		expiresAt *time.Time) (int, error)
+	Edit(
+		ctx context.Context,
+		id int,
+		participantId int,
+		typeBan string,
+		reason string,
+		bannedAt time.Time,
+		expiresAt *time.Time) error
+	Delete(
+		ctx context.Context,
+		participantId int) error
+	Get(
+		ctx context.Context,
+		participantId int) (ParticipantBans, error)
+	IsBanned(
+		ctx context.Context,
+		id int) (bool, error)
+	WithTx(tx SQLHandler) ParticipantBansRepo
+}
 
 type ParticipantBans struct {
 	Id            int        `json:"id"`

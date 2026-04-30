@@ -79,7 +79,7 @@ const App = () => {
       waiting: 10,
     },
     stream: { area: "EU", language: "RU", connection: "Wired", passcode: "0000" }, // TODO: Add windows for editing values
-    game: { name: "Tekken" },
+    game: { name: "tekken" },
     logo: { img: "" },
     csv: { nameFile: "" },
   });

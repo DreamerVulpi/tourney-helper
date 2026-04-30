@@ -1,6 +1,10 @@
 package db
 
-import "time"
+import (
+	"context"
+	"database/sql"
+	"time"
+)
 
 // type Participant struct {
 // 	GamerTag               string    `json:"gamerTag"`
@@ -59,6 +63,36 @@ import "time"
 // 	Locale                 string    `json:"locale"`
 // }
 
+type SQLHandler interface {
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
+
+type ParticipantRepo interface {
+	Add(
+		ctx context.Context,
+		nickname string,
+		region string,
+		locale string) (int, error)
+	Edit(
+		ctx context.Context,
+		id int,
+		nickname string,
+		region string,
+		locale string) error
+	Del(
+		ctx context.Context,
+		id int) error
+	GetById(
+		ctx context.Context,
+		id int) (Participant, error)
+	GetByNickname(
+		ctx context.Context,
+		nickname string) (Participant, error)
+	WithTx(tx SQLHandler) ParticipantRepo
+}
+
 type Participant struct {
 	Id        int       `json:"id"`
 	Nickname  string    `json:"nickname"`
@@ -68,18 +102,16 @@ type Participant struct {
 }
 
 type ParticipantAddRequest struct {
-	Nickname  string    `json:"nickname"`
-	Region    string    `json:"region"`
-	Locale    string    `json:"locale"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Nickname string `json:"nickname"`
+	Region   string `json:"region"`
+	Locale   string `json:"locale"`
 }
 
 type ParticipantEditRequest struct {
-	Id        int       `json:"id"`
-	Nickname  string    `json:"nickname"`
-	Region    string    `json:"region"`
-	Locale    string    `json:"locale"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Id       int    `json:"id"`
+	Nickname string `json:"nickname"`
+	Region   string `json:"region"`
+	Locale   string `json:"locale"`
 }
 
 type ParticipantDeleteRequest struct {

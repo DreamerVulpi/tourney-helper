@@ -2,17 +2,23 @@ package repo
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 )
 
 type ParticipantStats struct {
-	Conn *sql.DB
+	Conn entity.SQLHandler
 }
 
-func (p *ParticipantStats) Add(participantId int, gameName string, gameId string, rating int) (int, error) {
+// Change type connection from usual to transaction
+func (p *ParticipantStats) WithTx(tx entity.SQLHandler) entity.ParticipantStatsRepo {
+	return &ParticipantStats{
+		Conn: tx,
+	}
+}
+
+func (p *ParticipantStats) Add(ctx context.Context, participantId int, gameName string, gameId string, rating int) (int, error) {
 	const sql = `
 		INSERT INTO participant_stats (
 			participant_id, game_name, game_id, rating
@@ -26,19 +32,19 @@ func (p *ParticipantStats) Add(participantId int, gameName string, gameId string
 		RETURNING id
 	`
 	var id int
-	err := p.Conn.QueryRowContext(context.Background(), sql, participantId, gameName, gameId, rating).Scan(&id)
+	err := p.Conn.QueryRowContext(ctx, sql, participantId, gameName, gameId, rating).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("unable to create stats for participant (ID: %v) in database, %w", participantId, err)
 	}
 	return id, nil
 }
 
-func (p *ParticipantStats) Edit(id int, participantId int, gameName string, gameId string, rating int) error {
+func (p *ParticipantStats) Edit(ctx context.Context, id int, participantId int, gameName string, gameId string, rating int) error {
 	const sql = `
 		UPDATE participant_stats
 		SET participant_id = $2, game_name = $3, game_id = $4, rating = $5, updated_at = CURRENT_TIMESTAMP
 		WHERE id = $1`
-	tag, err := p.Conn.ExecContext(context.Background(), sql, id, participantId, gameName, gameId, rating)
+	tag, err := p.Conn.ExecContext(ctx, sql, id, participantId, gameName, gameId, rating)
 	if err != nil {
 		return fmt.Errorf("don't edited participantStats from database, %w", err)
 	}
@@ -53,12 +59,12 @@ func (p *ParticipantStats) Edit(id int, participantId int, gameName string, game
 	return nil
 }
 
-func (p *ParticipantStats) DelByGame(participantId int, gameName string) error {
+func (p *ParticipantStats) DelByGame(ctx context.Context, participantId int, gameName string) error {
 	const sql = `
 		DELETE FROM participant_stats
 		WHERE participant_id = $1 AND game_name = $2
 	`
-	tag, err := p.Conn.ExecContext(context.Background(), sql, participantId, gameName)
+	tag, err := p.Conn.ExecContext(ctx, sql, participantId, gameName)
 	if err != nil {
 		return fmt.Errorf("don't deleted stats game %v of participant (ID: %v) from database, %w", gameName, participantId, err)
 	}
@@ -73,12 +79,12 @@ func (p *ParticipantStats) DelByGame(participantId int, gameName string) error {
 	return nil
 }
 
-func (p *ParticipantStats) GetById(participantId int) ([]entity.ParticipantStat, error) {
+func (p *ParticipantStats) GetById(ctx context.Context, participantId int) ([]entity.ParticipantStat, error) {
 	const sql = `
 		SELECT ps.id, ps.participant_id, ps.game_name, ps.game_id, ps.rating, ps.updated_at
 		FROM participant_stats ps
 		WHERE participant_id = $1`
-	rows, err := p.Conn.QueryContext(context.Background(), sql, participantId)
+	rows, err := p.Conn.QueryContext(ctx, sql, participantId)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %w", err)
 	}
@@ -107,14 +113,14 @@ func (p *ParticipantStats) GetById(participantId int) ([]entity.ParticipantStat,
 	return stats, nil
 }
 
-func (p *ParticipantStats) GetByGame(participantId int, gameName string) (entity.ParticipantStat, error) {
+func (p *ParticipantStats) GetByGame(ctx context.Context, participantId int, gameName string) (entity.ParticipantStat, error) {
 	const sql = `
 		SELECT ps.id, ps.participant_id, ps.game_name, ps.game_id, ps.rating, updated_at
 		FROM participant_stats ps
 		WHERE participant_id = $1 AND game_name = $2
 	`
 	var stat entity.ParticipantStat
-	err := p.Conn.QueryRowContext(context.Background(), sql, participantId, gameName).Scan(
+	err := p.Conn.QueryRowContext(ctx, sql, participantId, gameName).Scan(
 		&stat.Id,
 		&stat.ParticipantId,
 		&stat.GameName,

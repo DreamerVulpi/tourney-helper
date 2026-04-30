@@ -22,7 +22,7 @@ func responseMsg(s *discordgo.Session, i *discordgo.InteractionCreate, text stri
 	return nil
 }
 
-func (_ *DiscordHandler) responseEmbedMsg(s *discordgo.Session, i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
+func (_ *Handler) responseEmbedMsg(s *discordgo.Session, i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
 	err := s.InteractionRespond(
 		i.Interaction,
 		&discordgo.InteractionResponse{
@@ -35,7 +35,7 @@ func (_ *DiscordHandler) responseEmbedMsg(s *discordgo.Session, i *discordgo.Int
 	return err
 }
 
-func (s *DiscordHandler) configResponseMsg(language string) responseLocale {
+func (s *Handler) configResponseMsg(language string) responseLocale {
 	local := s.typeLocale(language)
 
 	var result responseLocale

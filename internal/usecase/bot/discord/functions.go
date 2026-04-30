@@ -15,7 +15,7 @@ import (
 )
 
 // method for start sending messages for players tournament
-func (dh *DiscordHandler) processSending(s *discordgo.Session, i *discordgo.InteractionCreate, local responseLocale) error {
+func (dh *Handler) processSending(s *discordgo.Session, i *discordgo.InteractionCreate, local responseLocale) error {
 	// Check values ID server (guildID) and URL to tournament (slug)
 	if dh.params.guildID != "" && dh.params.tournament.UrlToTournament != "" {
 		if err := responseMsg(s, i, local.responseMsg.Starting); err != nil {
@@ -27,7 +27,7 @@ func (dh *DiscordHandler) processSending(s *discordgo.Session, i *discordgo.Inte
 }
 
 // parse URL string for get slug value
-func (s *DiscordHandler) parseURL(i *discordgo.InteractionCreate, local responseLocale) ([]*discordgo.MessageEmbed, error) {
+func (s *Handler) parseURL(i *discordgo.InteractionCreate, local responseLocale) ([]*discordgo.MessageEmbed, error) {
 	embed := []*discordgo.MessageEmbed{}
 
 	// parse string with URL
@@ -56,7 +56,7 @@ func (s *DiscordHandler) parseURL(i *discordgo.InteractionCreate, local response
 	return embed, fmt.Errorf("%s", local.errorMsg.Input)
 }
 
-func (s *DiscordHandler) getRuleMatchesData(i *discordgo.InteractionCreate) []*discordgo.MessageEmbed {
+func (s *Handler) getRuleMatchesData(i *discordgo.InteractionCreate) []*discordgo.MessageEmbed {
 	args := i.ApplicationCommandData().Options
 	s.params.rulesMatches.StandardFormat = int(args[0].IntValue())
 	s.params.rulesMatches.FinalsFormat = int(args[1].IntValue())
@@ -69,7 +69,7 @@ func (s *DiscordHandler) getRuleMatchesData(i *discordgo.InteractionCreate) []*d
 	return []*discordgo.MessageEmbed{s.msgRuleMatches(i.Locale.String(), ColorSystem)}
 }
 
-func (s *DiscordHandler) getStreamLobbyData(i *discordgo.InteractionCreate, local responseLocale) ([]*discordgo.MessageEmbed, error) {
+func (s *Handler) getStreamLobbyData(i *discordgo.InteractionCreate, local responseLocale) ([]*discordgo.MessageEmbed, error) {
 	args := i.ApplicationCommandData().Options
 	embed := []*discordgo.MessageEmbed{}
 
@@ -92,7 +92,7 @@ func (s *DiscordHandler) getStreamLobbyData(i *discordgo.InteractionCreate, loca
 	return embed, nil
 }
 
-func (s *DiscordHandler) getLogoTournamnentURL(i *discordgo.InteractionCreate, local responseLocale) []*discordgo.MessageEmbed {
+func (s *Handler) getLogoTournamnentURL(i *discordgo.InteractionCreate, local responseLocale) []*discordgo.MessageEmbed {
 	arg := i.ApplicationCommandData().Options[0].StringValue()
 	s.params.tournament.Game.Name = arg
 
@@ -101,7 +101,7 @@ func (s *DiscordHandler) getLogoTournamnentURL(i *discordgo.InteractionCreate, l
 	}, ColorSystem, &s.params)}
 }
 
-func (dh *DiscordHandler) readCommandEmbedJSON(s *discordgo.Session, i *discordgo.InteractionCreate, local responseLocale) ([]*discordgo.MessageEmbed, error) {
+func (dh *Handler) readCommandEmbedJSON(s *discordgo.Session, i *discordgo.InteractionCreate, local responseLocale) ([]*discordgo.MessageEmbed, error) {
 	errRespond := func(embed []*discordgo.MessageEmbed) []*discordgo.MessageEmbed {
 		embed = append(embed, msgEmbed(local.vdMsg.Title, []*discordgo.MessageEmbedField{
 			{Name: "", Value: local.errorMsg.NoData},

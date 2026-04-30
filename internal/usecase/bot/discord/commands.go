@@ -6,10 +6,9 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourneyBot/config"
-	usecaseSender "github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 )
 
-func (s *DiscordHandler) commands() []*discordgo.ApplicationCommand {
+func (s *Handler) commands() []*discordgo.ApplicationCommand {
 	dmPermission := false
 	var stages []*discordgo.ApplicationCommandOptionChoice
 	if s.params.tournament.Game.Name == "tekken" {
@@ -587,7 +586,7 @@ func choice(list map[string]string) []*discordgo.ApplicationCommandOptionChoice 
 	return result
 }
 
-func (dh *DiscordHandler) InitCommands(appID string, session *discordgo.Session, tournament *config.ConfigTournament, cfg *config.ConfigMessenger) ([]*discordgo.ApplicationCommand, error) {
+func (dh *Handler) InitCommands(appID string, session *discordgo.Session, tournament *config.ConfigTournament, cfg *config.ConfigMessenger) ([]*discordgo.ApplicationCommand, error) {
 	commandHandlers := make(map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate))
 	commandHandlers["check"] = dh.viewData
 	commandHandlers["start-sending"] = dh.startSending
@@ -597,20 +596,13 @@ func (dh *DiscordHandler) InitCommands(appID string, session *discordgo.Session,
 	commandHandlers["edit-stream-lobby"] = dh.editStreamLobby
 	commandHandlers["edit-logo-tournament"] = dh.editLogoTournament
 
-	var trigger bool
-	discordContacts, err := usecaseSender.LoadCSV(config.GetAbsPath(tournament.Csv.NameFile))
-	dh.contacts.contacts = discordContacts
-	if err != nil {
-		log.Println("CSV file isn't loaded. Commands: contacts and roles unavailable. Autofill empty data unavailable.")
-		trigger = true
-	} else {
-		err = dh.createTourneyRole(session)
-		if err != nil {
-			return []*discordgo.ApplicationCommand{}, err
+	hasContacts := len(dh.contacts.contacts) > 0
+	if hasContacts {
+		if err := dh.createTourneyRole(session); err != nil {
+			return nil, err
 		}
-		err = dh.prepareContacts(context.Background(), session)
-		if err != nil {
-			return []*discordgo.ApplicationCommand{}, err
+		if err := dh.prepareContacts(context.Background(), session); err != nil {
+			return nil, err
 		}
 		commandHandlers["contacts"] = dh.viewContacts
 		commandHandlers["roles"] = dh.roles
@@ -629,7 +621,7 @@ func (dh *DiscordHandler) InitCommands(appID string, session *discordgo.Session,
 	commands := dh.commands()
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 	for i, command := range commands {
-		if command.Name == "roles" && trigger || command.Name == "contacts" && trigger {
+		if (command.Name == "roles" || command.Name == "contacts") && !hasContacts {
 			continue
 		}
 		cmd, err := session.ApplicationCommandCreate(appID, cfg.Discord.GuildID, command)

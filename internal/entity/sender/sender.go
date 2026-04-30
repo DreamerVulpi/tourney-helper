@@ -2,17 +2,19 @@ package sender
 
 import (
 	"context"
-
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
 )
 
 type Participant struct {
-	MessenagerID    string
-	MessenagerLogin string
-	MessenagerName  string
-	GameNickname    string
-	GameID          string
-	Locales         []string
+	MessenagerID           string
+	MessenagerLogin        string
+	MessenagerName         string
+	TournamentPlatformName string
+	TournamentPlatformID   string
+	GameName               string
+	GameNickname           string
+	GameID                 string
+	Locale                 string
+	IsFound                bool
 }
 
 type SetData struct {
@@ -39,5 +41,4 @@ type NotificationData interface {
 	GetSetsData(ctx context.Context) ([]SetData, error)
 	GetPlatformTournamentName() string
 	GetTournamentSlug() (string, error)
-	GetMe(tourneyAuth *auth.AuthClient) (auth.Identity, error)
 }

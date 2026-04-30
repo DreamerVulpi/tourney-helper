@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"regexp"
+	"strconv"
 
 	"encoding/csv"
 	"errors"
@@ -15,38 +16,25 @@ import (
 	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
-
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
 )
-
-type StartggFinalConfig struct {
-	FinalBracketId int64
-	MinRoundNumA   int
-	MinRoundNumB   int
-	MaxRoundNumA   int
-	MaxRoundNumB   int
-}
-
-type StartggSetAdapter struct {
-	Client     *startgg.Client
-	UrlToEvent string
-	Slug       string
-	Game       string
-	Finals     StartggFinalConfig
-	DebugMode  bool
-	TestUser   sender.Participant
-	Contacts   map[string]sender.Participant
-}
 
 var startggTemplateSlug = regexp.MustCompile(`tournament/[^/]+/event/[^/]+`)
 
-func (_ StartggSetAdapter) GetMe(tourneyAuth *auth.AuthClient) (auth.Identity, error) {
-	ctx := context.Background()
-	user, err := tourneyAuth.GetStartGGMe(ctx)
-	if err != nil {
-		return auth.Identity{}, err
+type StartggSetAdapter struct {
+	sender.StartggSetAdapter
+}
+
+// TODO: Check empty fields
+func NewStartggAdapter(client *startgg.Client, url string, debug bool, game string, contacts map[string]sender.Participant) *StartggSetAdapter {
+	return &StartggSetAdapter{
+		StartggSetAdapter: sender.StartggSetAdapter{
+			Client:     client,
+			UrlToEvent: url,
+			DebugMode:  debug,
+			Contacts:   contacts,
+			Game:       game,
+		},
 	}
-	return *user, nil
 }
 
 // Get discord contacts from CSV file Startgg
@@ -95,12 +83,12 @@ func LoadCSV(nameFile string) (map[string]sender.Participant, error) {
 			continue
 		}
 
-		discordLogin := "N/D"
+		var discordLogin string
 		if val := attendee[idxDiscordColumn]; val != "" {
 			discordLogin = val
 		}
 
-		gameID := "N/D"
+		var gameID string
 		if val := attendee[idxConnectColumn]; val != "" {
 			rawGameID := strings.Split(attendee[idxConnectColumn], " ")
 			if len(rawGameID) >= 2 {
@@ -108,16 +96,26 @@ func LoadCSV(nameFile string) (map[string]sender.Participant, error) {
 			}
 		}
 
-		gameNickname := "N/D"
+		var gameNickname string
 		if val := attendee[idxGamerTagColumn]; val != "" {
 			gameNickname = val
+		}
+
+		if gameID == "" {
+			gameID = "N/D"
+		}
+		if gameNickname == "" {
+			gameNickname = "N/D"
+		}
+		if discordLogin == "" {
+			discordLogin = "N/D"
 		}
 
 		key := attendee[idxGamerTagColumn]
 		if key != "" {
 			contacts[key] = sender.Participant{
 				MessenagerLogin: discordLogin,
-				MessenagerName:  "discord",
+				MessenagerName:  "Discord",
 				GameID:          gameID,
 				GameNickname:    gameNickname,
 			}
@@ -127,11 +125,13 @@ func LoadCSV(nameFile string) (map[string]sender.Participant, error) {
 	return contacts, nil
 }
 
-func (s StartggSetAdapter) GetPlatformTournamentName() string {
-	return "startgg"
+func (s *StartggSetAdapter) GetPlatformTournamentName() string {
+	log.Println("DEBUG: GetPlatformTournamentName CALLED")
+	return "Startgg"
 }
 
-func (s StartggSetAdapter) GetTournamentSlug() (string, error) {
+func (s *StartggSetAdapter) GetTournamentSlug() (string, error) {
+	log.Printf("DEBUG: GetTournamentSlug called with URL: '%s'", s.UrlToEvent)
 	slug := startggTemplateSlug.FindString(s.UrlToEvent)
 
 	if slug == "" {
@@ -141,7 +141,7 @@ func (s StartggSetAdapter) GetTournamentSlug() (string, error) {
 	return slug, nil
 }
 
-func (s StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, error) {
+func (s *StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, error) {
 	slug, err := s.GetTournamentSlug()
 	if err != nil {
 		return nil, err
@@ -207,6 +207,7 @@ func (s StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, e
 					}
 				}
 
+				log.Printf("GetSetsData | Startgg | Tournament name: %v", tournament.Name)
 				set := sender.SetData{
 					TournamentName: tournament.Name,
 					SetID:          set.Id,
@@ -229,9 +230,10 @@ func (s StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, e
 
 func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) sender.Participant {
 	p := sender.Participant{
-		MessenagerLogin: "N/D",
-		GameID:          "N/D",
-		GameNickname:    "N/D",
+		GameNickname:           data.GamerTag,
+		MessenagerName:         "Discord",
+		TournamentPlatformName: s.GetPlatformTournamentName(),
+		TournamentPlatformID:   strconv.FormatInt(data.User.ID, 10),
 	}
 
 	if len(data.User.Authorizations) > 0 {
@@ -240,35 +242,40 @@ func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) send
 		p.MessenagerLogin = "N/D"
 	}
 
-	// TODO: Support other games (SF6 and etc...)
-	// switch s.cfg.tournament.Game.Name {
-	// case "tekken":
-	// 	gameID = src.ConnectedAccounts.Tekken.TekkenID
-	// case "sf6":
-	// 	gameID = src.ConnectedAccounts.SF6.GameID
-	// }
-	gameID := data.ConnectedAccounts.Tekken.TekkenID
-	if gameID != "" {
-		p.GameID = gameID
-	} else {
-		if val, ok := s.Contacts[strings.ToLower(data.GamerTag)]; ok {
-			p.GameID = val.GameID
-		} else {
-			p.GameID = "N/D"
-		}
-
+	switch strings.ToLower(s.Game) {
+	case "tekken":
+		p.GameID = data.ConnectedAccounts.Tekken.TekkenID
+		p.GameName = "Tekken8"
+	case "sf6":
+		p.GameID = data.ConnectedAccounts.SF6.GameID
+		p.GameName = "SF6"
 	}
 
-	gameNickname := data.GamerTag
-	if gameNickname != "" {
-		p.GameNickname = gameNickname
-	} else {
+	if p.GameID == "" || p.MessenagerLogin == "" || p.GameNickname == "" {
 		if val, ok := s.Contacts[strings.ToLower(data.GamerTag)]; ok {
-			p.GameNickname = val.GameNickname
-		} else {
-			p.GameNickname = "N/D"
+			if p.GameID == "" {
+				p.GameID = val.GameID
+				p.GameName = val.GameName
+			}
+			if p.MessenagerLogin == "" {
+				p.MessenagerLogin = val.MessenagerLogin
+			}
+			if p.GameNickname == "" {
+				p.GameNickname = val.GameNickname
+			}
 		}
 	}
 
+	if p.GameID == "" {
+		p.GameID = "N/D"
+	}
+	if p.GameName == "" {
+		p.GameName = "N/D"
+	}
+	if p.MessenagerLogin == "" {
+		p.MessenagerLogin = "N/D"
+	}
+
+	log.Printf("ConvertContacts - Object: %v", p)
 	return p
 }

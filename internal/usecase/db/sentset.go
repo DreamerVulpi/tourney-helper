@@ -1,46 +1,42 @@
 package db
 
 import (
-	"time"
+	"context"
 
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 )
 
-type SentSetRepo interface {
-	Add(setId int64, tournamentPlatform string, messengerPlatform string, tournamentSlug string, sentAt time.Time) (int64, error)
-	Get(setId int64) (entity.SentSet, error)
-	Del(setId int64) error
-	Edit(setId int64, sentAt time.Time) error
-	Exists(setId int64) (bool, error)
-}
-
 type SentSet struct {
-	Repo SentSetRepo
+	Repo entity.SentSetRepo
 }
 
-func (s *SentSet) IsExists(request entity.SentSetCheckRequest) (entity.SentSetCheckResponse, error) {
-	state, err := s.Repo.Exists(request.SetId)
+func (p *SentSet) WithTx(tx entity.SQLHandler) *SentSet {
+	return &SentSet{Repo: p.Repo.WithTx(tx)}
+}
+
+func (s *SentSet) IsExists(ctx context.Context, request entity.SentSetCheckRequest) (entity.SentSetCheckResponse, error) {
+	state, err := s.Repo.Exists(ctx, request.SetId)
 	if err != nil {
 		return entity.SentSetCheckResponse{}, err
 	}
 	return entity.SentSetCheckResponse{State: state}, nil
 }
 
-func (s *SentSet) AddSentSet(request entity.SentSetAddRequest) (entity.SentSetAddResponse, error) {
-	setId, err := s.Repo.Add(request.SetId, request.TournamentPlatform, request.MessengerPlatform, request.TournamentSlug, request.SentAt)
+func (s *SentSet) AddSentSet(ctx context.Context, request entity.SentSetAddRequest) (entity.SentSetAddResponse, error) {
+	setId, err := s.Repo.Add(ctx, request.SetId, request.TournamentPlatform, request.MessengerPlatform, request.TournamentSlug, request.SentAtP1, request.SentAtP2)
 	if err != nil {
 		return entity.SentSetAddResponse{}, err
 	}
 	return entity.SentSetAddResponse{SetId: setId}, nil
 }
 
-func (s *SentSet) EditSentSet(request entity.SentSetEditRequest) (entity.SentSetEditResponse, error) {
-	_, err := s.Repo.Get(request.SetId)
+func (s *SentSet) EditSentSet(ctx context.Context, request entity.SentSetEditRequest) (entity.SentSetEditResponse, error) {
+	_, err := s.Repo.Get(ctx, request.SetId)
 	if err != nil {
 		return entity.SentSetEditResponse{}, err
 	}
 
-	err = s.Repo.Edit(request.SetId, request.SentAt)
+	err = s.Repo.Edit(ctx, request.SetId, request.TournamentPlatform, request.MessengerPlatform, request.TournamentSlug, request.SentAtP1, request.SentAtP2)
 	if err != nil {
 		return entity.SentSetEditResponse{}, err
 	}
@@ -48,13 +44,13 @@ func (s *SentSet) EditSentSet(request entity.SentSetEditRequest) (entity.SentSet
 	return entity.SentSetEditResponse{}, nil
 }
 
-func (s *SentSet) DeleteSentSet(id int64) (entity.SentSetDeleteResponse, error) {
-	_, err := s.Repo.Get(id)
+func (s *SentSet) DeleteSentSet(ctx context.Context, id int64) (entity.SentSetDeleteResponse, error) {
+	_, err := s.Repo.Get(ctx, id)
 	if err != nil {
 		return entity.SentSetDeleteResponse{}, err
 	}
 
-	err = s.Repo.Del(id)
+	err = s.Repo.Del(ctx, id)
 	if err != nil {
 		return entity.SentSetDeleteResponse{}, err
 	}
@@ -62,16 +58,20 @@ func (s *SentSet) DeleteSentSet(id int64) (entity.SentSetDeleteResponse, error) 
 	return entity.SentSetDeleteResponse{}, nil
 }
 
-func (s *SentSet) GetSentSet(setId int64) (entity.SentSetGetResponse, error) {
-	sentSet, err := s.Repo.Get(setId)
+func (s *SentSet) GetSentSet(ctx context.Context, setId int64) (*entity.SentSetGetResponse, error) {
+	sentSet, err := s.Repo.Get(ctx, setId)
 	if err != nil {
-		return entity.SentSetGetResponse{}, err
+		return nil, err
 	}
 
-	return entity.SentSetGetResponse{
+	var result entity.SentSetGetResponse
+	result = entity.SentSetGetResponse{
 		SetId:              sentSet.SetId,
 		TournamentPlatform: sentSet.TournamentPlatform,
 		MessengerPlatform:  sentSet.MessengerPlatform,
 		TournamentSlug:     sentSet.TournamentSlug,
-		SentAt:             sentSet.SentAt}, err
+		SentAtP1:           sentSet.SentAtP1,
+		SentAtP2:           sentSet.SentAtP2,
+	}
+	return &result, err
 }

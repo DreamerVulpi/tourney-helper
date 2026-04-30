@@ -1,59 +1,45 @@
 package db
 
 import (
-	"time"
+	"context"
 
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 )
 
-type ParticipantBansRepo interface {
-	Add(participantId int,
-		typeBan string,
-		reason string,
-		bannedAt time.Time,
-		expiresAt *time.Time) (int, error)
-	Edit(id int,
-		participantId int,
-		typeBan string,
-		reason string,
-		bannedAt time.Time,
-		expiresAt *time.Time) error
-	Del(
-		participantId int) error
-	Get(participantId int) (entity.ParticipantBans, error)
-	IsBanned(id int) (bool, error)
-}
-
 type ParticipantBans struct {
-	Repo ParticipantBansRepo
+	Repo entity.ParticipantBansRepo
 }
 
-func (p *ParticipantBans) AddParticipantBan(request entity.ParticipantBansAddRequest) (entity.ParticipantBansAddResponse, error) {
-	id, err := p.Repo.Add(request.ParticipantId, request.TypeBan, request.Reason, request.BannedAt, request.ExpiresAt)
+func (p *ParticipantBans) WithTx(tx entity.SQLHandler) *ParticipantBans {
+	return &ParticipantBans{Repo: p.Repo.WithTx(tx)}
+}
+
+func (p *ParticipantBans) AddParticipantBan(ctx context.Context, request entity.ParticipantBansAddRequest) (entity.ParticipantBansAddResponse, error) {
+	id, err := p.Repo.Add(ctx, request.ParticipantId, request.TypeBan, request.Reason, request.BannedAt, request.ExpiresAt)
 	if err != nil {
 		return entity.ParticipantBansAddResponse{}, err
 	}
 	return entity.ParticipantBansAddResponse{Id: id}, nil
 }
 
-func (p *ParticipantBans) EditParticipantBan(request entity.ParticipantBansEditRequest) (entity.ParticipantEditResponse, error) {
-	err := p.Repo.Edit(request.Id, request.ParticipantId, request.TypeBan, request.Reason, request.BannedAt, request.ExpiresAt)
+func (p *ParticipantBans) EditParticipantBan(ctx context.Context, request entity.ParticipantBansEditRequest) (entity.ParticipantEditResponse, error) {
+	err := p.Repo.Edit(ctx, request.Id, request.ParticipantId, request.TypeBan, request.Reason, request.BannedAt, request.ExpiresAt)
 	if err != nil {
 		return entity.ParticipantEditResponse{}, err
 	}
 	return entity.ParticipantEditResponse{}, nil
 }
 
-func (p *ParticipantBans) DeleteParticipantBanById(request entity.ParticipantBansDeleteRequest) (entity.ParticipantBansDeleteResponse, error) {
-	err := p.Repo.Del(request.ParticipantId)
+func (p *ParticipantBans) DeleteParticipantBanById(ctx context.Context, request entity.ParticipantBansDeleteRequest) (entity.ParticipantBansDeleteResponse, error) {
+	err := p.Repo.Delete(ctx, request.ParticipantId)
 	if err != nil {
 		return entity.ParticipantBansDeleteResponse{}, err
 	}
 	return entity.ParticipantBansDeleteResponse{}, nil
 }
 
-func (p *ParticipantBans) GetParticipantBan(request entity.ParticipantBansGetRequest) (entity.ParticipantBansGetResponse, error) {
-	ban, err := p.Repo.Get(request.ParticipantId)
+func (p *ParticipantBans) GetParticipantBan(ctx context.Context, request entity.ParticipantBansGetRequest) (entity.ParticipantBansGetResponse, error) {
+	ban, err := p.Repo.Get(ctx, request.ParticipantId)
 	if err != nil {
 		return entity.ParticipantBansGetResponse{}, err
 	}
@@ -67,8 +53,8 @@ func (p *ParticipantBans) GetParticipantBan(request entity.ParticipantBansGetReq
 	}, nil
 }
 
-func (p *ParticipantBans) IsBanned(request entity.ParticipantIsBannedRequest) (entity.ParticipantIsBannedResponse, error) {
-	state, err := p.Repo.IsBanned(request.ParticipantId)
+func (p *ParticipantBans) IsBanned(ctx context.Context, request entity.ParticipantIsBannedRequest) (entity.ParticipantIsBannedResponse, error) {
+	state, err := p.Repo.IsBanned(ctx, request.ParticipantId)
 	if err != nil {
 		return entity.ParticipantIsBannedResponse{}, err
 	}

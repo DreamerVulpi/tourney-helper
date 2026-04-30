@@ -78,11 +78,11 @@ type Participant struct {
 
 // Linked accounts
 type ConnectedAccounts struct {
-	Tekken Tekken8 `json:"tekken"`
-	SF6    SF6     `json:"capcom"`
+	Tekken Tekken `json:"tekken"`
+	SF6    SF6    `json:"capcom"`
 }
 
-type Tekken8 struct {
+type Tekken struct {
 	TekkenID string `json:"value"`
 }
 
@@ -92,6 +92,8 @@ type SF6 struct {
 
 // User authorizations (Discord and etc.)
 type User struct {
+	ID             int64            `json:"id"`
+	Slug           string           `json:"slug"`
 	Authorizations []Authorizations `json:"authorizations"`
 }
 

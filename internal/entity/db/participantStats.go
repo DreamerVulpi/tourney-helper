@@ -1,6 +1,42 @@
 package db
 
-import "time"
+import (
+	"context"
+	"time"
+)
+
+type ParticipantStatsRepo interface {
+	Add(
+		ctx context.Context,
+		participantId int,
+		gameName string,
+		gameId string,
+		rating int,
+	) (int, error)
+	Edit(
+		ctx context.Context,
+		id int,
+		participantId int,
+		gameName string,
+		gameId string,
+		rating int,
+	) error
+	DelByGame(
+		ctx context.Context,
+		participantId int,
+		gameName string,
+	) error
+	GetById(
+		ctx context.Context,
+		participantId int,
+	) ([]ParticipantStat, error)
+	GetByGame(
+		ctx context.Context,
+		participantId int,
+		gameName string,
+	) (ParticipantStat, error)
+	WithTx(tx SQLHandler) ParticipantStatsRepo
+}
 
 type ParticipantStat struct {
 	Id            int       `json:"id"`

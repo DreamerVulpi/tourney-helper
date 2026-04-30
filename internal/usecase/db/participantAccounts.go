@@ -1,66 +1,45 @@
 package db
 
 import (
-	"time"
+	"context"
 
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 )
 
-type ParticipantAccountsRepo interface {
-	Add(participantId int,
-		platformName string,
-		platformId string,
-		platformLogin string,
-		isFound bool,
-		updatedAt time.Time) (int, error)
-	Edit(Id int,
-		participantId int,
-		platformName string,
-		platformId string,
-		platformLogin string,
-		isFound bool,
-		updatedAt time.Time) error
-	DelByPlatform(
-		participantId int,
-		platformName string,
-		platformId string) error
-	GetById(id int) ([]entity.ParticipantAccount, error)
-	GetByPlatform(
-		participantId int,
-		platformName string,
-		platformId string) (entity.ParticipantAccount, error)
-}
-
 type ParticipantAccounts struct {
-	Repo ParticipantAccountsRepo
+	Repo entity.ParticipantAccountsRepo
 }
 
-func (p *ParticipantAccounts) AddParticipantAccount(request entity.ParticipantAccountAddRequest) (entity.ParticipantAccountAddResponse, error) {
-	id, err := p.Repo.Add(request.ParticipantId, request.PlatformName, request.PlatformId, request.PlatformLogin, request.IsFound, request.UpdatedAt)
+func (p *ParticipantAccounts) WithTx(tx entity.SQLHandler) *ParticipantAccounts {
+	return &ParticipantAccounts{Repo: p.Repo.WithTx(tx)}
+}
+
+func (p *ParticipantAccounts) AddParticipantAccount(ctx context.Context, request entity.ParticipantAccountAddRequest) (entity.ParticipantAccountAddResponse, error) {
+	id, err := p.Repo.Add(ctx, request.ParticipantId, request.PlatformName, request.PlatformId, request.PlatformLogin, request.IsFound)
 	if err != nil {
 		return entity.ParticipantAccountAddResponse{}, err
 	}
 	return entity.ParticipantAccountAddResponse{Id: id}, nil
 }
 
-func (p *ParticipantAccounts) EditParticipantAccount(request entity.ParticipantAccountEditRequest) (entity.ParticipantAccountEditResponse, error) {
-	err := p.Repo.Edit(request.Id, request.ParticipantId, request.PlatformName, request.PlatformId, request.PlatformLogin, request.IsFound, request.UpdatedAt)
+func (p *ParticipantAccounts) EditParticipantAccount(ctx context.Context, request entity.ParticipantAccountEditRequest) (entity.ParticipantAccountEditResponse, error) {
+	err := p.Repo.Edit(ctx, request.Id, request.ParticipantId, request.PlatformName, request.PlatformId, request.PlatformLogin, request.IsFound)
 	if err != nil {
 		return entity.ParticipantAccountEditResponse{}, err
 	}
 	return entity.ParticipantAccountEditResponse{}, nil
 }
 
-func (p *ParticipantAccounts) DeleteParticipantAccountByPlatform(request entity.ParticipantAccountDeleteRequestByPlatform) (entity.ParticipantAccountDeleteResponse, error) {
-	err := p.Repo.DelByPlatform(request.ParticipantId, request.PlatformName, request.PlatformId)
+func (p *ParticipantAccounts) DeleteParticipantAccountByPlatform(ctx context.Context, request entity.ParticipantAccountDeleteRequestByPlatform) (entity.ParticipantAccountDeleteResponse, error) {
+	err := p.Repo.DelByPlatform(ctx, request.ParticipantId, request.PlatformName, request.PlatformId)
 	if err != nil {
 		return entity.ParticipantAccountDeleteResponse{}, err
 	}
 	return entity.ParticipantAccountDeleteResponse{}, nil
 }
 
-func (p *ParticipantAccounts) GetParticipantAccountsByParticipantId(request entity.ParticipantAccountsGetRequestById) ([]entity.ParticipantAccountGetResponse, error) {
-	accounts, err := p.Repo.GetById(request.ParticipantId)
+func (p *ParticipantAccounts) GetParticipantAccountsByParticipantId(ctx context.Context, request entity.ParticipantAccountsGetRequestById) ([]entity.ParticipantAccountGetResponse, error) {
+	accounts, err := p.Repo.GetById(ctx, request.ParticipantId)
 	if err != nil {
 		return []entity.ParticipantAccountGetResponse{}, err
 	}
@@ -81,8 +60,8 @@ func (p *ParticipantAccounts) GetParticipantAccountsByParticipantId(request enti
 	return response, nil
 }
 
-func (p *ParticipantAccounts) GetParticipantAccountByPlatform(request entity.ParticipantAccountGetRequestByPlatform) (entity.ParticipantAccountGetResponse, error) {
-	account, err := p.Repo.GetByPlatform(request.ParticipantId, request.PlatformName, request.PlatformId)
+func (p *ParticipantAccounts) GetParticipantAccountByPlatform(ctx context.Context, request entity.ParticipantAccountGetRequestByPlatform) (entity.ParticipantAccountGetResponse, error) {
+	account, err := p.Repo.GetByPlatform(ctx, request.PlatformName, request.PlatformId)
 	if err != nil {
 		return entity.ParticipantAccountGetResponse{}, err
 	}

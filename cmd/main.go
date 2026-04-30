@@ -8,11 +8,18 @@ import (
 
 	"runtime/debug"
 
+	"context"
+
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
 	"github.com/dreamervulpi/tourneyBot/internal/db"
+	"github.com/dreamervulpi/tourneyBot/internal/db/repo"
+	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/bot/discord"
+	usecaseDB "github.com/dreamervulpi/tourneyBot/internal/usecase/db"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 	"github.com/joho/godotenv"
 )
 
@@ -96,9 +103,46 @@ func main() {
 		if err != nil {
 			log.Println(errors.New("not loaded: ").Error() + err.Error())
 		} else {
-			dh := discord.DiscordHandler{}
-			if err := dh.Start(dsAuth, ggAuth, conn, cfg, tournament); err != nil {
-				log.Println(err.Error())
+			db := dbManager.Database{
+				Conn:        conn,
+				Participant: usecaseDB.Participant{Repo: &repo.Participants{Conn: conn}},
+				Accounts:    usecaseDB.ParticipantAccounts{Repo: &repo.ParticipantAccounts{Conn: conn}},
+				Stats:       usecaseDB.ParticipantStats{Repo: &repo.ParticipantStats{Conn: conn}},
+				Bans:        usecaseDB.ParticipantBans{Repo: &repo.ParticipantBans{Conn: conn}},
+				SentSets:    usecaseDB.SentSet{Repo: &repo.SentSet{Conn: conn}},
+			}
+
+			contacts, err := sender.LoadCSV(config.GetAbsPath(tournament.Csv.NameFile))
+			if err != nil {
+				log.Printf("CSV isn't loaded: %v", err)
+			}
+
+			log.Printf("Check config: %v", tournament.UrlToTournament)
+			adapter, err := sender.GetTournamentAdapter(ggAuth, tournament.UrlToTournament, cfg.DebugMode.Mode, tournament.Game.Name, contacts)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+
+			dh := discord.Handler{Auth: dsAuth}
+			ctx := context.Background()
+			meDiscordPlatform, err := dh.Auth.GetDiscordMe(ctx)
+			if err != nil {
+				log.Printf("InitBot | Failed to get debug user: %v", err)
+			}
+			ns := sender.NewNotificationSystem(nil, adapter, &db, cfg.DebugMode.Mode, entitySender.Participant{
+				MessenagerID:    meDiscordPlatform.ID,
+				MessenagerLogin: meDiscordPlatform.Username,
+				Locale:          "ru",
+				GameName:        tournament.Game.Name,
+			})
+			dh.Ns = ns
+			dh.SetContacts(contacts)
+			if cfg.DebugMode.Mode {
+				log.Printf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord")
+			}
+			if err := dh.Start(ggAuth, conn, cfg, tournament); err != nil {
+				log.Println(err)
 			}
 		}
 	}

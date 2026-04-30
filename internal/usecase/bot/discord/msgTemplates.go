@@ -122,7 +122,7 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 	return message, nil
 }
 
-func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData, channel *discordgo.Channel) (*discordgo.MessageEmbed, entityLocale.Lang, entitySender.Participant) {
+func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*discordgo.MessageEmbed, entityLocale.Lang, entitySender.Participant) {
 	var recipient entitySender.Participant
 	var opponent entitySender.Participant
 	var sidePrefix string
@@ -139,7 +139,7 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData, cha
 
 	// TODO: Change reconize locale in future
 	local := entityLocale.En
-	if len(recipient.Locales) > 0 {
+	if len(recipient.Locale) > 0 {
 		local = entityLocale.Ru
 	}
 
@@ -157,7 +157,7 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData, cha
 	return message, local, recipient
 }
 
-func (_ *DiscordHandler) typeLocale(language string) locale.Lang {
+func (_ *Handler) typeLocale(language string) locale.Lang {
 	var local locale.Lang
 	switch language {
 	case "Russian":
@@ -168,7 +168,7 @@ func (_ *DiscordHandler) typeLocale(language string) locale.Lang {
 	return local
 }
 
-func (dh *DiscordHandler) msgStreamLobby(language string, embedColor int) *discordgo.MessageEmbed {
+func (dh *Handler) msgStreamLobby(language string, embedColor int) *discordgo.MessageEmbed {
 	local := dh.typeLocale(language)
 
 	fields := []*discordgo.MessageEmbedField{
@@ -183,7 +183,7 @@ func (dh *DiscordHandler) msgStreamLobby(language string, embedColor int) *disco
 	return message
 }
 
-func (dh *DiscordHandler) msgRuleMatches(language string, embedColor int) *discordgo.MessageEmbed {
+func (dh *Handler) msgRuleMatches(language string, embedColor int) *discordgo.MessageEmbed {
 	local := dh.typeLocale(language)
 
 	fields := []*discordgo.MessageEmbedField{
@@ -199,7 +199,7 @@ func (dh *DiscordHandler) msgRuleMatches(language string, embedColor int) *disco
 	return message
 }
 
-func (dh *DiscordHandler) msgViewData(language string) *discordgo.MessageEmbed {
+func (dh *Handler) msgViewData(language string) *discordgo.MessageEmbed {
 	local := dh.typeLocale(language)
 
 	slug := dh.params.tournament.UrlToTournament

@@ -6,7 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func (dh *DiscordHandler) controlRole(s *discordgo.Session, arg string) []*discordgo.MessageEmbed {
+func (dh *Handler) controlRole(s *discordgo.Session, arg string) []*discordgo.MessageEmbed {
 	var embed []*discordgo.MessageEmbed
 	if len(dh.contacts.contacts) != 0 {
 		if arg == "give" {
@@ -41,7 +41,7 @@ func (dh *DiscordHandler) controlRole(s *discordgo.Session, arg string) []*disco
 	return embed
 }
 
-func (s *DiscordHandler) createTourneyRole(session *discordgo.Session) error {
+func (s *Handler) createTourneyRole(session *discordgo.Session) error {
 	rolesServer, err := session.GuildRoles(s.params.guildID)
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func (s *DiscordHandler) createTourneyRole(session *discordgo.Session) error {
 	return nil
 }
 
-func (s *DiscordHandler) deleteTourneyRole(session *discordgo.Session) error {
+func (s *Handler) deleteTourneyRole(session *discordgo.Session) error {
 	rolesServer, err := session.GuildRoles(s.params.guildID)
 	if err != nil {
 		return err

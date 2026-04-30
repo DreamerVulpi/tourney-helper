@@ -102,12 +102,6 @@ func GetAbsPath(fileName string) string {
 	return filepath.Join(exPath, fileName)
 }
 
-func isGoRun(path string) bool {
-	// Простая проверка, не находимся ли мы во временной папке компиляции Go
-	return filepath.Base(filepath.Dir(path)) == "go-build" ||
-		filepath.Base(path) == "b001" // b001 - типичная подпапка для go build
-}
-
 func LoadConfig(file string) (ConfigMessenger, error) {
 	var cfg ConfigMessenger
 

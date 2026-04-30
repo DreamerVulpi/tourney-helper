@@ -6,7 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func (dh *DiscordHandler) viewData(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) viewData(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 
 	embed := []*discordgo.MessageEmbed{
@@ -18,14 +18,14 @@ func (dh *DiscordHandler) viewData(s *discordgo.Session, i *discordgo.Interactio
 	}
 }
 
-func (dh *DiscordHandler) startSending(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) startSending(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 	if err := dh.processSending(s, i, local); err != nil {
 		log.Println("processSending:", err)
 	}
 }
 
-func (dh *DiscordHandler) stopSending(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) stopSending(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 
 	go func() {
@@ -48,7 +48,7 @@ func (dh *DiscordHandler) stopSending(s *discordgo.Session, i *discordgo.Interac
 	}
 }
 
-func (dh *DiscordHandler) setEvent(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) setEvent(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 	embed, err := dh.parseURL(i, local)
 	if err != nil {
@@ -60,7 +60,7 @@ func (dh *DiscordHandler) setEvent(s *discordgo.Session, i *discordgo.Interactio
 	}
 }
 
-func (dh *DiscordHandler) editRuleMatches(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) editRuleMatches(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 
 	embed := dh.getRuleMatchesData(i)
@@ -69,7 +69,7 @@ func (dh *DiscordHandler) editRuleMatches(s *discordgo.Session, i *discordgo.Int
 	}
 }
 
-func (dh *DiscordHandler) editStreamLobby(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) editStreamLobby(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 
 	embed, err := dh.getStreamLobbyData(i, local)
@@ -82,7 +82,7 @@ func (dh *DiscordHandler) editStreamLobby(s *discordgo.Session, i *discordgo.Int
 	}
 }
 
-func (dh *DiscordHandler) editLogoTournament(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) editLogoTournament(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 
 	embed := dh.getLogoTournamnentURL(i, local)
@@ -91,7 +91,7 @@ func (dh *DiscordHandler) editLogoTournament(s *discordgo.Session, i *discordgo.
 	}
 }
 
-func (dh *DiscordHandler) viewContacts(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) viewContacts(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 
 	go func() {
@@ -107,7 +107,7 @@ func (dh *DiscordHandler) viewContacts(s *discordgo.Session, i *discordgo.Intera
 	}()
 }
 
-func (dh *DiscordHandler) roles(s *discordgo.Session, i *discordgo.InteractionCreate) {
+func (dh *Handler) roles(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	local := dh.configResponseMsg(i.Locale.String())
 	arg := i.ApplicationCommandData().Options[0].StringValue()
 

@@ -18,22 +18,32 @@ type preparedContacts struct {
 	tourneyRole   *discordgo.Role
 }
 
+func (dh *Handler) SetContacts(c map[string]entitySender.Participant) {
+	dh.mtx.Lock()
+	defer dh.mtx.Unlock()
+	dh.contacts.contacts = c
+}
+
 // Search users in server (Guild) discord from CSV file
-func (dh *DiscordHandler) prepareContacts(ctx context.Context, s *discordgo.Session) error {
+func (dh *Handler) prepareContacts(ctx context.Context, s *discordgo.Session) error {
 	contacts, err := os.ReadFile("contacts.json")
 	if err != nil {
 		log.Println("Prepare contacts from CSV...")
 		for nickname, dc := range dh.contacts.contacts {
 			time.Sleep(1 * time.Second)
 			contact := entitySender.Participant{
-				MessenagerID:    "N/D",
-				MessenagerLogin: dc.MessenagerLogin,
-				MessenagerName:  dh.ns.Messenger.GetPlatformMessenagerName(),
-				GameID:          dc.GameID,
-				GameNickname:    dc.GameNickname,
+				MessenagerID:           "",
+				MessenagerLogin:        dc.MessenagerLogin,
+				MessenagerName:         dh.Ns.Messenger.GetPlatformMessenagerName(),
+				GameID:                 dc.GameID,
+				GameName:               dc.GameName,
+				GameNickname:           dc.GameNickname,
+				TournamentPlatformName: dc.TournamentPlatformName,
+				TournamentPlatformID:   dc.TournamentPlatformID,
+				Locale:                 dc.Locale,
 			}
 
-			usr, err := dh.ns.Messenger.FindContactOfParticipant(ctx, contact)
+			usr, err := dh.Ns.Messenger.FindContactOfParticipant(ctx, contact)
 			if err != nil {
 				dh.contacts.contacts[nickname] = contact
 				log.Printf("can't find player: %v\n error: %v\n", nickname, err.Error())
@@ -43,7 +53,7 @@ func (dh *DiscordHandler) prepareContacts(ctx context.Context, s *discordgo.Sess
 			dh.contacts.contacts[nickname] = contact
 
 			time.Sleep(1 * time.Second)
-			if usr.MessenagerID != "000000000000000000" && usr.MessenagerID != "N/D" {
+			if usr.MessenagerID != "000000000000000000" && usr.MessenagerID != "" {
 				err = s.GuildMemberRoleAdd(dh.params.guildID, usr.MessenagerID, dh.contacts.tourneyRole.ID)
 				if err != nil {
 					log.Printf("prepareContacts | discord API Error (RoleAdd) for %v: %v", nickname, err)
@@ -83,7 +93,7 @@ func (dh *DiscordHandler) prepareContacts(ctx context.Context, s *discordgo.Sess
 			fields := []*discordgo.MessageEmbedField{}
 
 			for nickname, dc := range dh.contacts.contacts {
-				usr, err := dh.ns.Messenger.FindContactOfParticipant(ctx, dc)
+				usr, err := dh.Ns.Messenger.FindContactOfParticipant(ctx, dc)
 				time.Sleep(1 * time.Second)
 				field := &discordgo.MessageEmbedField{
 					Name:   nickname,

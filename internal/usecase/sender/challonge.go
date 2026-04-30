@@ -7,26 +7,25 @@ import (
 
 	"fmt"
 
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
 	entityChallonge "github.com/dreamervulpi/tourneyBot/internal/entity/challonge"
+	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/challonge"
 )
 
 type ChallongeMatchAdapter struct {
-	Client          *challonge.Client
-	UrlToTournament string
-	DebugMode       bool
-	TestUser        entitySender.Participant
+	sender.ChallongeMatchAdapter
 }
 
-func (_ ChallongeMatchAdapter) GetMe(tourneyAuth *auth.AuthClient) (auth.Identity, error) {
-	ctx := context.Background()
-	user, err := tourneyAuth.GetChallongeMe(ctx)
-	if err != nil {
-		return auth.Identity{}, err
+// TODO: Check empty fields
+func NewChallongeAdapter(client *challonge.Client, url string, debug bool, contacts map[string]sender.Participant) ChallongeMatchAdapter {
+	return ChallongeMatchAdapter{
+		ChallongeMatchAdapter: sender.ChallongeMatchAdapter{
+			Client:          client,
+			UrlToTournament: url,
+			DebugMode:       debug,
+		},
 	}
-	return *user, nil
 }
 
 func (c ChallongeMatchAdapter) GetPlatformTournamentName() string {

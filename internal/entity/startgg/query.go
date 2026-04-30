@@ -73,6 +73,8 @@ const (
 								gamerTag
 								connectedAccounts
 								user {
+									id
+									slug
 									authorizations(types: DISCORD) {
 										externalUsername
 									}

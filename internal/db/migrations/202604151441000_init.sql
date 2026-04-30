@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS participant_accounts (
     is_found BOOLEAN NOT NULL DEFAULT 0,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE,
-    UNIQUE(platform_name, platform_id)
+    UNIQUE(platform_name, platform_id, participant_id)
 );
 
 CREATE TABLE IF NOT EXISTS participant_bans (
@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS sent_sets (
     tournament_platform TEXT NOT NULL,
     messenger_platform TEXT NOT NULL,
     tournament_slug TEXT NOT NULL,
-    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    sent_at_p1 DATETIME,
+    sent_at_p2 DATETIME,
     UNIQUE(set_id, tournament_platform, messenger_platform)
 );
 -- +goose StatementEnd

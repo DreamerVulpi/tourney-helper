@@ -1,6 +1,8 @@
 package startgg
 
 import (
+	"log"
+
 	"github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 )
 
@@ -16,6 +18,8 @@ func (c *Client) GetSets(phaseGroupID int64, page int, perPage int, states []int
 	if err != nil {
 		return nil, err
 	}
+
+	log.Println(results.Data)
 
 	return results.Data.PhaseGroup.Sets.Nodes, nil
 }
