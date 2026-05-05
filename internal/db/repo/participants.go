@@ -63,7 +63,7 @@ func (p *Participants) Edit(ctx context.Context, id int, nickname string, region
 
 func (p *Participants) GetById(ctx context.Context, id int) (entity.Participant, error) {
 	const sql = `
-		SELECT p.id, p.nickname, p.region, p.locale, p.update_at
+		SELECT p.id, p.nickname, p.region, p.locale, p.updated_at
 		FROM participants p
 		WHERE id = $1`
 
@@ -83,7 +83,7 @@ func (p *Participants) GetById(ctx context.Context, id int) (entity.Participant,
 
 func (p *Participants) GetByNickname(ctx context.Context, nickname string) (entity.Participant, error) {
 	const sql = `
-		SELECT p.id, p.nickname, p.region, p.locale, p.update_at
+		SELECT p.id, p.nickname, p.region, p.locale, p.updated_at
 		FROM participants p
 		WHERE nickname = $1`
 

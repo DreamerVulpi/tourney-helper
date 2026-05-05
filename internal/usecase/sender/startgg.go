@@ -126,7 +126,6 @@ func LoadCSV(nameFile string) (map[string]sender.Participant, error) {
 }
 
 func (s *StartggSetAdapter) GetPlatformTournamentName() string {
-	log.Println("DEBUG: GetPlatformTournamentName CALLED")
 	return "Startgg"
 }
 
@@ -147,7 +146,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, 
 		return nil, err
 	}
 
-	tournament, err := s.Client.GetTournament(slug)
+	tournament, err := s.Client.GetTournament(strings.Split(slug, "/")[1])
 	if err != nil {
 		return nil, fmt.Errorf("GetSetsData | Startgg | get tournament error: %w", err)
 	}
@@ -251,7 +250,7 @@ func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) send
 		p.GameName = "SF6"
 	}
 
-	if p.GameID == "" || p.MessenagerLogin == "" || p.GameNickname == "" {
+	if p.GameID == "" || p.MessenagerLogin == "" || p.GameNickname == "" || p.MessenagerID == "" {
 		if val, ok := s.Contacts[strings.ToLower(data.GamerTag)]; ok {
 			if p.GameID == "" {
 				p.GameID = val.GameID
@@ -262,6 +261,9 @@ func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) send
 			}
 			if p.GameNickname == "" {
 				p.GameNickname = val.GameNickname
+			}
+			if p.MessenagerID == "" {
+				p.MessenagerID = val.MessenagerID
 			}
 		}
 	}
@@ -274,6 +276,9 @@ func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) send
 	}
 	if p.MessenagerLogin == "" {
 		p.MessenagerLogin = "N/D"
+	}
+	if p.MessenagerID == "" {
+		p.MessenagerID = "N/D"
 	}
 
 	log.Printf("ConvertContacts - Object: %v", p)

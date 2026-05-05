@@ -31,54 +31,58 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 		PlatformName: p.MessenagerName,
 		PlatformId:   p.MessenagerID,
 	}
-	responseMessenger, err := db.Accounts.GetParticipantAccountByPlatform(ctx, requestMessenger)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("db | failed to get participantAccount %v - %v | %v", requestMessenger.PlatformName, requestMessenger.PlatformId, err)
+	responseMessenger, errMessenger := db.Accounts.GetParticipantAccountByPlatform(ctx, requestMessenger)
+	if errMessenger != nil {
+		if errors.Is(errMessenger, sql.ErrNoRows) {
+			log.Printf("db | failed to get participantAccount %v - %v | %v", requestMessenger.PlatformName, requestMessenger.PlatformId, errMessenger)
 		} else {
-			return entitySender.Participant{}, fmt.Errorf("db | critical error: %w", err)
+			return entitySender.Participant{}, fmt.Errorf("db | critical error: %w", errMessenger)
 		}
 	}
 
-	// Request check game account from database
-	requestGameAccount := entityDB.ParticipantAccountGetRequestByPlatform{
-		PlatformName: p.GameName,
-		PlatformId:   p.GameID,
+	// Request check tournament account from database
+	requestTournamentAccount := entityDB.ParticipantAccountGetRequestByPlatform{
+		PlatformName: p.TournamentPlatformName,
+		PlatformId:   p.TournamentPlatformID,
 	}
-	responseGameAccount, err := db.Accounts.GetParticipantAccountByPlatform(ctx, requestGameAccount)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("db | failed to get participantAccount %v - %v | %v", requestGameAccount.PlatformName, requestGameAccount.PlatformId, err)
+	responseTournamentAccount, errTournament := db.Accounts.GetParticipantAccountByPlatform(ctx, requestTournamentAccount)
+	if errTournament != nil {
+		if errors.Is(errTournament, sql.ErrNoRows) {
+			log.Printf("db | failed to get participantAccount %v - %v | %v", requestTournamentAccount.PlatformName, requestTournamentAccount.PlatformId, errTournament)
 		} else {
-			return entitySender.Participant{}, fmt.Errorf("db | critical error: %w", err)
+			return entitySender.Participant{}, fmt.Errorf("db | critical error: %w", errTournament)
 		}
 	}
 
-	// Check tartgetParticipantId from database
-	var tartgetParticipantId int
+	// Check targetParticipantId from database
+	var targetParticipantId int
 	if responseMessenger.ParticipantId != 0 {
-		tartgetParticipantId = responseMessenger.ParticipantId
+		targetParticipantId = responseMessenger.ParticipantId
+		log.Printf("targetParticipantId -> %v", targetParticipantId)
 	} else {
-		tartgetParticipantId = responseGameAccount.ParticipantId
+		targetParticipantId = responseTournamentAccount.ParticipantId
+		log.Printf("targetParticipantId -> %v", targetParticipantId)
 	}
 
-	if tartgetParticipantId != 0 {
+	log.Printf("targetParticipantId = %v", targetParticipantId)
+	if targetParticipantId != 0 {
 		requestStatsGame := entityDB.ParticipantStatGetRequestByGame{
-			ParticipantId: tartgetParticipantId,
+			ParticipantId: targetParticipantId,
 			GameName:      p.GameName,
 		}
 		responseStats, err := db.Stats.GetParticipantStatsByGame(ctx, requestStatsGame)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
-				log.Printf("db | failed to get stats of participant of ID: %v | %v", requestStatsGame.ParticipantId, err)
+				log.Printf("db | failed to get participant stats %v - %v | %v", requestStatsGame.GameName, p.GameNickname, err)
 			} else {
 				return entitySender.Participant{}, fmt.Errorf("db | critical error: %w", err)
 			}
 		}
 
 		requestParticipant := entityDB.ParticipantGetRequestById{
-			Id: tartgetParticipantId,
+			Id: targetParticipantId,
 		}
+		log.Printf("GetParticipantById request: %v", requestParticipant.Id)
 		responseParticipant, err := db.Participant.GetParticipantById(ctx, requestParticipant)
 		if err != nil {
 			if errors.Is(err, sql.ErrNoRows) {
@@ -87,25 +91,62 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 				return entitySender.Participant{}, fmt.Errorf("db | critical error: %w", err)
 			}
 		}
+		log.Printf("GetParticipantById result: %v, error: %v", responseParticipant, err)
+
+		var messengerID string
+		if responseMessenger.PlatformId != "" {
+			messengerID = responseMessenger.PlatformId
+		} else {
+			messengerID = p.MessenagerID
+		}
+
+		var messengerLogin string
+		if responseMessenger.PlatformLogin != "" {
+			messengerLogin = responseMessenger.PlatformLogin
+		} else {
+			messengerLogin = p.MessenagerLogin
+		}
+
+		var tournamentPlatformID string
+		if responseTournamentAccount.PlatformId != "" {
+			tournamentPlatformID = responseTournamentAccount.PlatformId
+		} else {
+			tournamentPlatformID = p.TournamentPlatformID
+		}
+
+		var gameNickname string
+		if responseTournamentAccount.PlatformLogin != "" {
+			gameNickname = responseTournamentAccount.PlatformLogin
+		} else {
+			gameNickname = p.GameNickname
+		}
+
+		var gameID string
+		if responseStats.GameId != "" {
+			gameID = responseStats.GameId
+		} else {
+			gameID = p.GameID
+		}
 
 		if responseParticipant.Id != 0 {
+			log.Println("db | Successfully get information from database")
 			return entitySender.Participant{
-				MessenagerID:           responseMessenger.PlatformId,
-				MessenagerLogin:        responseMessenger.PlatformLogin,
-				MessenagerName:         responseMessenger.PlatformName,
-				TournamentPlatformName: responseGameAccount.PlatformName,
-				TournamentPlatformID:   responseGameAccount.PlatformId,
-				GameNickname:           responseGameAccount.PlatformLogin,
-				GameName:               responseStats.GameName,
-				GameID:                 responseStats.GameId,
+				MessenagerID:           messengerID,
+				MessenagerLogin:        messengerLogin,
+				MessenagerName:         p.MessenagerName,
+				TournamentPlatformName: p.TournamentPlatformName,
+				TournamentPlatformID:   tournamentPlatformID,
+				GameNickname:           gameNickname,
+				GameName:               p.GameName,
+				GameID:                 gameID,
 				Locale:                 responseParticipant.Locale,
-				IsFound:                responseMessenger.IsFound,
+				IsFound:                responseMessenger.IsFound || responseTournamentAccount.IsFound,
 			}, nil
 		} else {
 			return entitySender.Participant{}, fmt.Errorf("db | no information about locale participant of ID: %v", responseParticipant.Id)
 		}
 	} else {
-		return entitySender.Participant{}, fmt.Errorf("db | failed to get participant of ID: %v | %v", tartgetParticipantId, err)
+		return entitySender.Participant{}, fmt.Errorf("db | failed to get participant of ID: %v | %v", targetParticipantId, errMessenger)
 	}
 }
 

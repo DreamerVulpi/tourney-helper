@@ -61,7 +61,9 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 			continue
 		}
 
+		log.Printf("set.ContactPlayer1: %v", set.ContactPlayer1)
 		contactP1, err := p.Db.GetParticipant(ctx, set.ContactPlayer1)
+		log.Printf("contactP1: %v", contactP1)
 		if err != nil {
 			log.Printf("Process | P1 not found in DB, searching in %s...", set.ContactPlayer1.MessenagerName)
 			contactP1, err = p.Messenger.FindContactOfParticipant(ctx, set.ContactPlayer1)
@@ -73,7 +75,9 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 				}
 			}
 		}
+		log.Printf("set.ContactPlayer2: %v", set.ContactPlayer2)
 		contactP2, err := p.Db.GetParticipant(ctx, set.ContactPlayer2)
+		log.Printf("contactP2: %v", contactP2)
 		if err != nil {
 			log.Printf("Process | P2 not found in DB, searching in %s...", set.ContactPlayer2.MessenagerName)
 			contactP2, err = p.Messenger.FindContactOfParticipant(ctx, set.ContactPlayer2)
