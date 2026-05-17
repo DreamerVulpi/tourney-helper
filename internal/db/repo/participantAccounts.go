@@ -38,13 +38,13 @@ func (p *ParticipantAccounts) Add(ctx context.Context, participantId int, platfo
 	return id, nil
 }
 
-func (p *ParticipantAccounts) Edit(ctx context.Context, id int, participantId int, platformName string, platformId string, platformLogin string, isFound bool) error {
+func (p *ParticipantAccounts) Edit(ctx context.Context, participantId int, platformName string, platformId string, platformLogin string, isFound bool) error {
 	const sql = `
 		UPDATE participant_accounts 
-		SET participant_id = $2, platform_name = $3, platform_id = $4, platform_login = $5, is_found = $6, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $1`
+		SET platform_id = $3, platform_login = $4, is_found = $5, updated_at = CURRENT_TIMESTAMP
+		WHERE participant_id = $1 AND platform_name = $2`
 
-	tag, err := p.Conn.ExecContext(ctx, sql, id, participantId, platformName, platformId, platformLogin, isFound)
+	tag, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, platformId, platformLogin, isFound)
 	if err != nil {
 		return fmt.Errorf("don't edited participant account (PlatformName: %v) from database, %w", platformName, err)
 	}

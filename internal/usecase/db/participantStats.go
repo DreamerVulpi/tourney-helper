@@ -23,7 +23,15 @@ func (p ParticipantStats) AddParticipantStats(ctx context.Context, request entit
 }
 
 func (p ParticipantStats) EditParticipantStats(ctx context.Context, request entity.ParticipantStatEditRequest) (entity.ParticipantEditResponse, error) {
-	err := p.Repo.Edit(ctx, request.Id, request.ParticipantId, request.GameName, request.GameId, request.Rating)
+	err := p.Repo.Edit(ctx, request.ParticipantId, request.GameName, request.GameId, request.Rating)
+	if err != nil {
+		return entity.ParticipantEditResponse{}, err
+	}
+	return entity.ParticipantEditResponse{}, nil
+}
+
+func (p ParticipantStats) EditParticipantStatsRating(ctx context.Context, request entity.ParticipantStatEditRatingRequest) (entity.ParticipantEditResponse, error) {
+	err := p.Repo.EditRating(ctx, request.Id, request.Rating)
 	if err != nil {
 		return entity.ParticipantEditResponse{}, err
 	}

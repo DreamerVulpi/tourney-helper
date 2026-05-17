@@ -56,11 +56,11 @@ func NewPool() (*sql.DB, error) {
 		return nil, fmt.Errorf("sqlite | failed to set dialect: %w", err)
 	}
 
-	if err := goose.Up(db, getAbsPath("migrations")); err != nil {
+	if err := goose.Up(db, "migrations"); err != nil {
 		return nil, fmt.Errorf("sqlite | migration failed: %w", err)
 	}
 
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
+	db.SetMaxOpenConns(0)
+	db.SetMaxIdleConns(0)
 	return db, nil
 }

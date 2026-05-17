@@ -115,16 +115,17 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 				isFound = true
 			} else {
 				return entitySender.Participant{
-					MessenagerID:           messengerID,
-					MessenagerLogin:        cleanNickname,
-					MessenagerName:         s.GetPlatformMessenagerName(),
-					TournamentPlatformName: p.TournamentPlatformName,
-					TournamentPlatformID:   p.TournamentPlatformID,
-					GameNickname:           p.GameNickname,
-					GameName:               p.GameName,
-					GameID:                 p.GameID,
-					Locale:                 currentLocale,
-					IsFound:                false,
+					MessenagerID:            messengerID,
+					MessenagerLogin:         cleanNickname,
+					MessenagerName:          s.GetPlatformMessenagerName(),
+					TournamentPlatformName:  p.TournamentPlatformName,
+					TournamentPlatformID:    p.TournamentPlatformID,
+					TournamentPlatformLogin: p.TournamentPlatformLogin,
+					GameNickname:            p.GameNickname,
+					GameName:                p.GameName,
+					GameID:                  p.GameID,
+					Locale:                  currentLocale,
+					IsFound:                 false,
 				}, fmt.Errorf("findContact | member %s not founded in guild (server)\n", cleanNickname)
 			}
 		} else {
@@ -141,15 +142,16 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 	}
 
 	return entitySender.Participant{
-		MessenagerID:           messengerID,
-		MessenagerLogin:        cleanNickname,
-		MessenagerName:         s.GetPlatformMessenagerName(),
-		GameName:               p.GameName,
-		TournamentPlatformName: p.TournamentPlatformName,
-		TournamentPlatformID:   p.TournamentPlatformID,
-		GameNickname:           p.GameNickname,
-		GameID:                 p.GameID,
-		Locale:                 currentLocale,
-		IsFound:                isFound,
+		MessenagerID:            messengerID,
+		MessenagerLogin:         cleanNickname,
+		MessenagerName:          s.GetPlatformMessenagerName(),
+		GameName:                p.GameName,
+		TournamentPlatformName:  p.TournamentPlatformName,
+		TournamentPlatformID:    p.TournamentPlatformID,
+		TournamentPlatformLogin: p.TournamentPlatformLogin,
+		GameNickname:            p.GameNickname,
+		GameID:                  p.GameID,
+		Locale:                  currentLocale,
+		IsFound:                 isFound,
 	}, nil
 }

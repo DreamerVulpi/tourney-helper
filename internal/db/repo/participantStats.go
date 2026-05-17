@@ -39,12 +39,12 @@ func (p *ParticipantStats) Add(ctx context.Context, participantId int, gameName 
 	return id, nil
 }
 
-func (p *ParticipantStats) Edit(ctx context.Context, id int, participantId int, gameName string, gameId string, rating int) error {
+func (p *ParticipantStats) Edit(ctx context.Context, participantId int, gameName string, gameId string, rating int) error {
 	const sql = `
 		UPDATE participant_stats
-		SET participant_id = $2, game_name = $3, game_id = $4, rating = $5, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $1`
-	tag, err := p.Conn.ExecContext(ctx, sql, id, participantId, gameName, gameId, rating)
+		SET game_id = $3, rating = $4, updated_at = CURRENT_TIMESTAMP
+		WHERE participant_id = $1 AND game_name = $2`
+	tag, err := p.Conn.ExecContext(ctx, sql, participantId, gameName, gameId, rating)
 	if err != nil {
 		return fmt.Errorf("don't edited participantStats from database, %w", err)
 	}
@@ -54,7 +54,27 @@ func (p *ParticipantStats) Edit(ctx context.Context, id int, participantId int, 
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rows == 0 {
-		return fmt.Errorf("participant stats (ID: %v | GameName: %v) doesn't exist", id, gameName)
+		return fmt.Errorf("participant stats (ID: %v | GameName: %v) doesn't exist", participantId, gameName)
+	}
+	return nil
+}
+
+func (p *ParticipantStats) EditRating(ctx context.Context, participantId, rating int) error {
+	const sql = `
+		UPDATE participant_stats
+		SET rating = $2, updated_at = CURRENT_TIMESTAMP
+		WHERE participant_id = $1`
+	tag, err := p.Conn.ExecContext(ctx, sql, participantId, rating)
+	if err != nil {
+		return fmt.Errorf("don't edited rating from database, %w", err)
+	}
+
+	rows, err := tag.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("participant stats (ID: %v) doesn't exist", participantId)
 	}
 	return nil
 }

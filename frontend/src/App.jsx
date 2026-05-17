@@ -68,7 +68,7 @@ const App = () => {
   const [tourneyCfg, setTourneyCfg] = useState({
     startgg: { clientID: "", secretClient: "", name: "" },
     challonge: { clientID: "", secretClient: "", name: "" },
-    tournamentSlug: "",
+    urlToTournament: "",
     rules: {
       standardFormat: 2,
       finalsFormat: 3,
@@ -78,7 +78,7 @@ const App = () => {
       crossplatform: true, // TODO: Add field in windows of rules
       waiting: 10,
     },
-    stream: { area: "EU", language: "RU", connection: "Wired", passcode: "0000" }, // TODO: Add windows for editing values
+    stream: { area: "EU", language: "RU", connection: "Wired", passcode: "0000" },
     game: { name: "tekken" },
     logo: { img: "" },
     csv: { nameFile: "" },
@@ -165,16 +165,16 @@ const App = () => {
           setTourneyCfg(prev => ({
             ...prev,
             // Раскрываем вложенные структуры Go
-            tournamentSlug: tourney.tournamentSlug || "",
+            urlToTournament: tourney.urlToTournament || "",
             startgg: {
-              clientID: tourney.startggPlatform?.clientID || "",
-              secretClient: tourney.startggPlatform?.secretClient || "",
-              name: tourney.startggPlatform?.name || "startgg"
+              clientID: tourney.startgg?.clientID || "",
+              secretClient: tourney.startgg?.secretClient || "",
+              name: tourney.startgg?.name || "startgg"
             },
             challonge: {
-              clientID: tourney.challongePlatform?.clientID || "",
-              secretClient: tourney.challongePlatform?.secretClient || "",
-              name: tourney.challongePlatform?.name || "challonge"
+              clientID: tourney.challonge?.clientID || "",
+              secretClient: tourney.challonge?.secretClient || "",
+              name: tourney.challonge?.name || "challonge"
             },
             logo: {
               img: tourney.logo?.img || "" 
@@ -210,8 +210,8 @@ const App = () => {
     // Безопасное приведение типов перед отправкой в Go
     const dataToSend = {
       ...cfg,
-      startggPlatform: cfg.startgg || {},
-      challongePlatform: cfg.challonge || {},
+      startgg: cfg.startgg || {},
+      challonge: cfg.challonge || {},
       rules: {
         ...cfg.rules,
         standardFormat: parseInt(cfg.rules?.standardFormat) || 2,
@@ -257,11 +257,11 @@ const App = () => {
 
   const authStatus = useMemo(() => {
     return {
-      startgg: !!tourneyCfg.tournamentSlug, // Authorized, if len(slug) !=0  // TODO: need change to check token from file user
+      startgg: !!tourneyCfg.urlToTournament, // Authorized, if len(slug) !=0  // TODO: need change to check token from file user
       discord: !!systemCfg?.discord?.token, // Authorized, if len(token) !=0  // TODO: need change to check token from file user
       telegram: false,
     };
-  }, [systemCfg.discord?.token, tourneyCfg.tournamentSlug]);
+  }, [systemCfg.discord?.token, tourneyCfg.urlToTournament]);
 
   //////////////////
   // System statements

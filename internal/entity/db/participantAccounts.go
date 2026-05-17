@@ -15,7 +15,6 @@ type ParticipantAccountsRepo interface {
 		isFound bool) (int, error)
 	Edit(
 		ctx context.Context,
-		Id int,
 		participantId int,
 		platformName string,
 		platformId string,
@@ -53,7 +52,6 @@ type ParticipantAccountAddRequest struct {
 }
 
 type ParticipantAccountEditRequest struct {
-	Id            int    `json:"id"`
 	ParticipantId int    `json:"participant_id"`
 	PlatformName  string `json:"platform_name"`
 	PlatformId    string `json:"platform_id"`

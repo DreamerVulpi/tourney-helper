@@ -2,19 +2,25 @@ package sender
 
 import (
 	"context"
+	"time"
 )
 
 type Participant struct {
-	MessenagerID           string
-	MessenagerLogin        string
-	MessenagerName         string
-	TournamentPlatformName string
-	TournamentPlatformID   string
-	GameName               string
-	GameNickname           string
-	GameID                 string
-	Locale                 string
-	IsFound                bool
+	Id                      int       `json:"id"`
+	MessenagerID            string    `json:"messenagerId"`
+	MessenagerLogin         string    `json:"messenagerLogin"`
+	MessenagerName          string    `json:"messenagerName"`
+	TournamentPlatformName  string    `json:"tournamentPlatformName"`
+	TournamentPlatformLogin string    `json:"tournamentPlatformLogin"`
+	TournamentPlatformID    string    `json:"tournamentPlatformId"`
+	GameName                string    `json:"gameName"`
+	GameNickname            string    `json:"gameNickname"`
+	GameID                  string    `json:"gameId"`
+	Region                  string    `json:"region"`
+	Locale                  string    `json:"locale"`
+	Rating                  int       `json:"rating"`
+	IsFound                 bool      `json:"isFound"`
+	UpdatedAt               time.Time `json:"updatedAt"`
 }
 
 type SetData struct {

@@ -21,6 +21,38 @@ type Database struct {
 	SentSets    db.SentSet
 }
 
+func (db *Database) GetParticipants(ctx context.Context, messengerName, tournamentPlatformName, gameName string, limit, offset int, search string) (entityDB.ParticipantGetParticipantsListWithTotalCountResponse, error) {
+	if err := ctx.Err(); err != nil {
+		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
+	}
+	responseTc, err := db.Participant.GetTotalCount(ctx)
+	if err != nil {
+		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
+	}
+	log.Println(responseTc.TotalCount)
+
+	responseList, err := db.Participant.GetParticipantsList(ctx, entityDB.ParticipantGetParticipantsListRequest{
+		MessengerName:          messengerName,
+		TournamentPlatformName: tournamentPlatformName,
+		GameName:               gameName,
+		Limit:                  limit,
+		Offset:                 offset,
+		Search:                 search,
+	})
+	if err != nil {
+		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
+	}
+
+	log.Println(entityDB.ParticipantGetParticipantsListWithTotalCountResponse{
+		Items:      responseList.ListParticipants,
+		TotalCount: responseTc.TotalCount,
+	})
+	return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{
+		Items:      responseList.ListParticipants,
+		TotalCount: responseTc.TotalCount,
+	}, err
+}
+
 func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participant) (entitySender.Participant, error) {
 	if err := ctx.Err(); err != nil {
 		return entitySender.Participant{}, err
@@ -121,6 +153,13 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 			gameNickname = p.GameNickname
 		}
 
+		var tournamentNickname string
+		if responseTournamentAccount.PlatformLogin != "" {
+			tournamentNickname = responseTournamentAccount.PlatformLogin
+		} else {
+			tournamentNickname = "N/D"
+		}
+
 		var gameID string
 		if responseStats.GameId != "" {
 			gameID = responseStats.GameId
@@ -131,16 +170,17 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 		if responseParticipant.Id != 0 {
 			log.Println("db | Successfully get information from database")
 			return entitySender.Participant{
-				MessenagerID:           messengerID,
-				MessenagerLogin:        messengerLogin,
-				MessenagerName:         p.MessenagerName,
-				TournamentPlatformName: p.TournamentPlatformName,
-				TournamentPlatformID:   tournamentPlatformID,
-				GameNickname:           gameNickname,
-				GameName:               p.GameName,
-				GameID:                 gameID,
-				Locale:                 responseParticipant.Locale,
-				IsFound:                responseMessenger.IsFound || responseTournamentAccount.IsFound,
+				MessenagerID:            messengerID,
+				MessenagerLogin:         messengerLogin,
+				MessenagerName:          p.MessenagerName,
+				TournamentPlatformName:  p.TournamentPlatformName,
+				TournamentPlatformLogin: tournamentNickname,
+				TournamentPlatformID:    tournamentPlatformID,
+				GameNickname:            gameNickname,
+				GameName:                p.GameName,
+				GameID:                  gameID,
+				Locale:                  responseParticipant.Locale,
+				IsFound:                 responseMessenger.IsFound || responseTournamentAccount.IsFound,
 			}, nil
 		} else {
 			return entitySender.Participant{}, fmt.Errorf("db | no information about locale participant of ID: %v", responseParticipant.Id)
@@ -148,6 +188,136 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 	} else {
 		return entitySender.Participant{}, fmt.Errorf("db | failed to get participant of ID: %v | %v", targetParticipantId, errMessenger)
 	}
+}
+
+func (db *Database) EditParticipant(ctx context.Context, p entitySender.Participant) error {
+	log.Printf("Id: %v\n", p.Id)
+	log.Printf("MessengerID: %v\n", p.MessenagerID)
+	log.Printf("MessengerLogin: %v\n", p.MessenagerLogin)
+	log.Printf("MessengerName: %v\n", p.MessenagerName)
+	log.Printf("TournamentPlatformName: %v\n", p.TournamentPlatformName)
+	log.Printf("TournamentPlatformLogin: %v\n", p.TournamentPlatformLogin)
+	log.Printf("TournamentPlatformID: %v\n", p.TournamentPlatformID)
+	log.Printf("GameName: %v\n", p.GameName)
+	log.Printf("GameNickname: %v\n", p.GameNickname)
+	log.Printf("GameID: %v\n", p.GameID)
+	log.Printf("Region: %v\n", p.Region)
+	log.Printf("Locale: %v\n", p.Locale)
+	log.Printf("Rating: %v\n", p.Rating)
+	log.Printf("IsFound: %v\n", p.IsFound)
+	log.Printf("UpdatedAt: %v\n", p.UpdatedAt)
+
+	tx, err := db.Conn.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("db | failed to start transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	participantTxUc := db.Participant.WithTx(tx)
+	accountsTxUc := db.Accounts.WithTx(tx)
+	statsTxUc := db.Stats.WithTx(tx)
+
+	currentParticipant, err := participantTxUc.GetParticipantById(ctx, entityDB.ParticipantGetRequestById{Id: p.Id})
+	if err != nil {
+		return fmt.Errorf("db | failed to fetch current participant state: %w", err)
+	}
+
+	if p.GameNickname != "" && p.Region != "" && p.Locale != "" {
+		log.Printf("Сравнение для ID %d: БД ник '%s' vs Новый ник '%s'", p.Id, currentParticipant.Nickname, p.GameNickname)
+		log.Printf("Сравнение региона: БД '%s' vs Новый '%s'", currentParticipant.Region, p.Region)
+		log.Printf("Сравнение локали: БД '%s' vs Новый '%s'", currentParticipant.Locale, p.Locale)
+		if currentParticipant.Nickname != p.GameNickname || currentParticipant.Region != p.Region || currentParticipant.Locale != p.Locale {
+			log.Println("Бизнес-логика: Условия сошлись! Отправляем UPDATE запрос в репозиторий...")
+			pEditRequest := entityDB.ParticipantEditRequest{
+				Id:       p.Id,
+				Nickname: p.GameNickname,
+				Region:   p.Region,
+				Locale:   p.Locale,
+			}
+			_, err = participantTxUc.EditParticipant(ctx, pEditRequest)
+			if err != nil {
+				return err
+			}
+		} else {
+			log.Println("Бизнес-логика: Изменений не обнаружено, пропускаем UPDATE основной инфы.")
+		}
+	}
+
+	if p.MessenagerName != "" && p.MessenagerLogin != "" {
+		currentMessAccount, err := accountsTxUc.GetParticipantAccountByPlatform(ctx, entityDB.ParticipantAccountGetRequestByPlatform{
+			PlatformName: p.MessenagerName,
+			PlatformId:   p.MessenagerID,
+		})
+		if err != nil {
+			return fmt.Errorf("db | failed to fetch current participant account of %v state: %w", p.MessenagerName, err)
+		}
+
+		if currentMessAccount.PlatformLogin != p.MessenagerLogin {
+			aEditMessRequest := entityDB.ParticipantAccountEditRequest{
+				ParticipantId: p.Id,
+				PlatformName:  p.MessenagerName,
+				PlatformId:    p.MessenagerID,
+				PlatformLogin: p.MessenagerLogin,
+				IsFound:       p.IsFound,
+			}
+			_, err = accountsTxUc.EditParticipantAccount(ctx, aEditMessRequest)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if p.TournamentPlatformName != "" && p.TournamentPlatformID != "" {
+		currentTourAccount, err := accountsTxUc.GetParticipantAccountByPlatform(ctx, entityDB.ParticipantAccountGetRequestByPlatform{
+			PlatformName: p.TournamentPlatformName,
+			PlatformId:   p.TournamentPlatformID,
+		})
+		if err != nil {
+			return fmt.Errorf("db | failed to fetch current participant account of %v state: %w", p.MessenagerName, err)
+		}
+
+		if currentTourAccount.PlatformLogin != p.TournamentPlatformLogin {
+			aEditTourRequest := entityDB.ParticipantAccountEditRequest{
+				ParticipantId: p.Id,
+				PlatformName:  p.TournamentPlatformName,
+				PlatformId:    p.TournamentPlatformID,
+				PlatformLogin: p.TournamentPlatformLogin,
+				IsFound:       p.IsFound,
+			}
+			_, err = accountsTxUc.EditParticipantAccount(ctx, aEditTourRequest)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	currentStat, err := statsTxUc.GetParticipantStatsByGame(ctx, entityDB.ParticipantStatGetRequestByGame{
+		ParticipantId: p.Id,
+		GameName:      p.GameName,
+	})
+	if err != nil {
+		return err
+	}
+
+	if currentStat.GameId != p.GameID || currentStat.Rating != p.Rating {
+		sEditStatRequest := entityDB.ParticipantStatEditRequest{
+			ParticipantId: p.Id,
+			GameName:      p.GameName,
+			GameId:        p.GameID,
+			Rating:        p.Rating,
+		}
+		_, err = statsTxUc.EditParticipantStats(ctx, sEditStatRequest)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("db | failed to commit transaction: %w", err)
+	}
+	log.Printf("db | successfuly edited participant (ID: %v, Nickname: %v)", p.Id, p.GameNickname)
+
+	return nil
 }
 
 func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participant) error {
@@ -162,11 +332,33 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 	accountsTxUc := db.Accounts.WithTx(tx)
 	statsTxUc := db.Stats.WithTx(tx)
 
+	mainNickname := p.GameNickname
+	if len(mainNickname) == 0 || mainNickname == "N/D" {
+		if len(p.MessenagerLogin) == 0 || p.MessenagerLogin == "N/D" {
+			return fmt.Errorf("db | failed to add participant: both game nicknames are empty")
+		}
+		mainNickname = p.MessenagerLogin
+	}
+
+	tempGameID := p.GameID
+	if len(tempGameID) == 0 {
+		tempGameID = "N/D"
+	}
+
+	tempRegion := p.Region
+	if len(tempRegion) == 0 {
+		tempRegion = "N/D"
+	}
+
+	tempLocale := p.Locale
+	if len(tempLocale) == 0 {
+		tempLocale = "N/D"
+	}
+
 	pAddRequest := entityDB.ParticipantAddRequest{
-		Nickname: p.GameNickname,
-		// TODO: Add region
-		Region: "N/D",
-		Locale: p.Locale,
+		Nickname: mainNickname,
+		Region:   tempRegion,
+		Locale:   tempLocale,
 	}
 	log.Printf("Add request participant: %v", pAddRequest)
 
@@ -174,48 +366,55 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 	if err != nil {
 		return fmt.Errorf("db | failed to save participant %v: %v", p.MessenagerLogin, err)
 	} else {
-		log.Printf("db | successfully saved participant %v", p.MessenagerLogin)
+		log.Printf("db | successfully saved participant %v", mainNickname)
 	}
 
-	pAddMessengerRequest := entityDB.ParticipantAccountAddRequest{
-		ParticipantId: pAddResponse.Id,
-		PlatformName:  p.MessenagerName,
-		PlatformId:    p.MessenagerID,
-		PlatformLogin: p.MessenagerLogin,
-		IsFound:       p.IsFound,
-	}
-	log.Printf("Add request participant Account - Messenger: %v", pAddMessengerRequest)
+	if len(p.MessenagerLogin) != 0 {
+		pAddMessengerRequest := entityDB.ParticipantAccountAddRequest{
+			ParticipantId: pAddResponse.Id,
+			PlatformName:  p.MessenagerName,
+			PlatformId:    p.MessenagerID,
+			PlatformLogin: p.MessenagerLogin,
+			IsFound:       p.IsFound,
+		}
+		log.Printf("Add request participant Account - Messenger: %v", pAddMessengerRequest)
 
-	if p.MessenagerName == "" {
-		return fmt.Errorf("db | messenger name is empty")
+		if p.MessenagerName == "" {
+			return fmt.Errorf("db | messenger name is empty")
+		}
+
+		_, err = accountsTxUc.AddParticipantAccount(ctx, pAddMessengerRequest)
+		if err != nil {
+			return fmt.Errorf("db | failed to add participant account ID: %v - %v - %v | %v", pAddMessengerRequest.ParticipantId, pAddMessengerRequest.PlatformName, pAddMessengerRequest.PlatformLogin, err)
+		}
+	} else {
+		log.Printf("db | messenger login is empty | account messenger don't added")
 	}
 
-	_, err = accountsTxUc.AddParticipantAccount(ctx, pAddMessengerRequest)
-	if err != nil {
-		return fmt.Errorf("db | failed to add participant account ID: %v - %v - %v | %v", pAddMessengerRequest.ParticipantId, pAddMessengerRequest.PlatformName, pAddMessengerRequest.PlatformLogin, err)
-	}
+	log.Printf("tournamentPlatformLogin(%v) !=0 ?", p.TournamentPlatformLogin)
+	if len(p.TournamentPlatformLogin) != 0 {
+		pAddTournamentAccountRequest := entityDB.ParticipantAccountAddRequest{
+			ParticipantId: pAddResponse.Id,
+			PlatformName:  p.TournamentPlatformName,
+			PlatformId:    p.TournamentPlatformID,
+			PlatformLogin: p.TournamentPlatformLogin,
+			IsFound:       p.IsFound,
+		}
+		log.Printf("Add request participant Account - TournamentPlatform: %v", pAddTournamentAccountRequest)
 
-	pAddTournamentAccountRequest := entityDB.ParticipantAccountAddRequest{
-		ParticipantId: pAddResponse.Id,
-		PlatformName:  p.TournamentPlatformName,
-		PlatformId:    p.TournamentPlatformID,
-		PlatformLogin: p.GameNickname,
-		IsFound:       p.IsFound,
-	}
-	log.Printf("Add request participant Account - TournamentPlatform: %v", pAddTournamentAccountRequest)
-
-	if p.TournamentPlatformName == "" {
-		return fmt.Errorf("db | tournament platform name is empty")
-	}
-	_, err = accountsTxUc.AddParticipantAccount(ctx, pAddTournamentAccountRequest)
-	if err != nil {
-		return fmt.Errorf("db | failed to add participant account ID: %v - %v - %v | %v", pAddTournamentAccountRequest.ParticipantId, pAddTournamentAccountRequest.PlatformName, pAddTournamentAccountRequest.PlatformLogin, err)
+		if p.TournamentPlatformName == "" {
+			return fmt.Errorf("db | tournament platform name is empty")
+		}
+		_, err = accountsTxUc.AddParticipantAccount(ctx, pAddTournamentAccountRequest)
+		if err != nil {
+			return fmt.Errorf("db | failed to add participant account ID: %v - %v - %v | %v", pAddTournamentAccountRequest.ParticipantId, pAddTournamentAccountRequest.PlatformName, pAddTournamentAccountRequest.PlatformLogin, err)
+		}
 	}
 
 	pAddStatsRequest := entityDB.ParticipantStatAddRequest{
 		ParticipantId: pAddResponse.Id,
 		GameName:      p.GameName,
-		GameId:        p.GameID,
+		GameId:        tempGameID,
 		Rating:        0,
 	}
 	log.Printf("Add request participant Stats: %v", pAddStatsRequest)
@@ -228,7 +427,6 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("db | failed to commit transaction: %w", err)
 	}
-
-	log.Printf("db | successfuly added new participant (ID: %v, Nickname: %v)", pAddResponse.Id, p.MessenagerLogin)
+	log.Printf("db | successfuly added new participant (ID: %v, Nickname: %v)", pAddResponse.Id, mainNickname)
 	return nil
 }

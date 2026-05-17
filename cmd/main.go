@@ -118,7 +118,7 @@ func main() {
 			}
 
 			log.Printf("Check config: %v", tournament.UrlToTournament)
-			adapter, err := sender.GetTournamentAdapter(ggAuth, tournament.UrlToTournament, cfg.DebugMode.Mode, tournament.Game.Name, contacts)
+			adapter, err := sender.GetTournamentAdapter(ggAuth, "Discord", tournament.UrlToTournament, cfg.DebugMode.Mode, tournament.Game.Name, contacts)
 			if err != nil {
 				log.Println(err)
 				return

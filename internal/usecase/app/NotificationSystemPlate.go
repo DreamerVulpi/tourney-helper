@@ -6,6 +6,9 @@ import (
 
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
+	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/bot/discord"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 )
 
 func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
@@ -19,8 +22,9 @@ func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
 		return err
 	}
 
-	client.NamePlatform = "discord"
+	client.NamePlatform = "Discord"
 	a.MessengerClient = client
+	log.Printf("DiscordClient: %v", client)
 	return nil
 }
 
@@ -34,12 +38,42 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 		return err
 	}
 
-	client.NamePlatform = "startgg"
+	client.NamePlatform = "Startgg"
 	a.TournamentClient = client
+	log.Printf("StartggClient: %v", client)
 	return nil
 }
 
+func (a *App) InitSystemNotification() (discord.Handler, error) {
+	// TODO: Add load contacts from CSV and other
+	adapter, err := sender.GetTournamentAdapter(a.TournamentClient, "Discord", a.ConfigTournament.UrlToTournament, a.ConfigMessenger.DebugMode.Mode, a.ConfigTournament.Game.Name, nil)
+	if err != nil {
+		return discord.Handler{}, err
+	}
+
+	dh := discord.Handler{Auth: a.MessengerClient}
+	meDiscordPlatform, err := dh.Auth.GetDiscordMe(a.ctx)
+	if err != nil {
+		return discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
+	}
+	ns := sender.NewNotificationSystem(nil, adapter, a.Db, a.ConfigMessenger.DebugMode.Mode, entitySender.Participant{
+		MessenagerID:    meDiscordPlatform.ID,
+		MessenagerLogin: meDiscordPlatform.Username,
+		// TODO: Change to locale from UI
+		Locale:   "ru",
+		GameName: a.ConfigTournament.Game.Name,
+	})
+	dh.Ns = ns
+	// TODO: Add - dh.SetContacts(contacts)
+	if a.ConfigMessenger.DebugMode.Mode {
+		log.Printf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord")
+	}
+
+	return dh, nil
+}
+
 func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament) error {
+	// log.Printf("Messenger: %v, TournamentPlatform: %v, ConfigBot: %v, ConfigTournament: %v", messenger, tournamentPlatform, cfgBot, cfgTournament)
 	switch messenger {
 	case "discord":
 		if len(cfgBot.Discord.Token) == 0 {
@@ -74,8 +108,13 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 		}
 	}
 
-	log.Println(cfgBot)
-	log.Println(cfgTournament)
+	sn, err := a.InitSystemNotification()
+	if err != nil {
+		return err
+	}
+	if err := sn.Start(a.TournamentClient, a.Db.Conn, *a.ConfigMessenger, *a.ConfigTournament); err != nil {
+		log.Println(err)
+	}
 
 	return nil
 }

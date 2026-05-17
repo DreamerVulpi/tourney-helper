@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 
+	"fmt"
+
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 )
 
@@ -32,9 +34,11 @@ func (p *Participant) EditParticipant(ctx context.Context, request entity.Partic
 	if err != nil {
 		return entity.ParticipantEditResponse{}, err
 	}
-	_, err = p.Repo.GetByNickname(ctx, request.Nickname)
-	if err != nil {
-		return entity.ParticipantEditResponse{}, err
+	exists, err := p.Repo.GetByNickname(ctx, request.Nickname)
+	if err == nil {
+		if exists.Id != request.Id {
+			return entity.ParticipantEditResponse{}, fmt.Errorf("nickname '%s' is already taken by another participant", request.Nickname)
+		}
 	}
 
 	err = p.Repo.Edit(
@@ -61,6 +65,22 @@ func (p *Participant) DelParticipant(ctx context.Context, request entity.Partici
 		return entity.ParticipantDeleteResponse{}, err
 	}
 	return entity.ParticipantDeleteResponse{}, nil
+}
+
+func (p *Participant) GetTotalCount(ctx context.Context) (entity.ParticipantGetTotalCountResponse, error) {
+	totalCount, err := p.Repo.TotalCount(ctx)
+	if err != nil {
+		return entity.ParticipantGetTotalCountResponse{}, err
+	}
+	return entity.ParticipantGetTotalCountResponse{TotalCount: totalCount}, nil
+}
+
+func (p *Participant) GetParticipantsList(ctx context.Context, request entity.ParticipantGetParticipantsListRequest) (entity.ParticipantGetParticipantsListResponse, error) {
+	list, err := p.Repo.GetList(ctx, request.MessengerName, request.TournamentPlatformName, request.GameName, request.Limit, request.Offset, request.Search)
+	if err != nil {
+		return entity.ParticipantGetParticipantsListResponse{}, err
+	}
+	return entity.ParticipantGetParticipantsListResponse{ListParticipants: list}, err
 }
 
 func (p *Participant) GetParticipantById(ctx context.Context, request entity.ParticipantGetRequestById) (entity.ParticipantGetResponse, error) {

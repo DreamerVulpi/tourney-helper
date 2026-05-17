@@ -2,8 +2,20 @@ package main
 
 import (
 	"embed"
+	"fmt"
+	"log"
+	"os"
+	"runtime/debug"
 
+	"errors"
+
+	"github.com/dreamervulpi/tourneyBot/config"
+	"github.com/dreamervulpi/tourneyBot/internal/db"
+	"github.com/dreamervulpi/tourneyBot/internal/db/repo"
 	application "github.com/dreamervulpi/tourneyBot/internal/usecase/app"
+	usecaseDB "github.com/dreamervulpi/tourneyBot/internal/usecase/db"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/dbManager"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -13,9 +25,50 @@ import (
 var assets embed.FS
 
 func main() {
-	app := application.NewApp()
+	logDir := "logs"
+	f, err := logger.Init(logDir)
+	if err != nil {
+		fmt.Printf("Can't launch logging: %v\n", err)
+		os.Exit(1)
+	}
+	defer f.Close()
 
-	err := wails.Run(&options.App{
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("Critical error\n Why? %v\n Stack:\n%s", r, debug.Stack())
+			fmt.Println("Programm closed with error. More details in folder logs")
+		}
+	}()
+
+	app := application.NewApp()
+	conn, err := db.NewPool()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	db := dbManager.Database{
+		Conn:        conn,
+		Participant: usecaseDB.Participant{Repo: &repo.Participants{Conn: conn}},
+		Accounts:    usecaseDB.ParticipantAccounts{Repo: &repo.ParticipantAccounts{Conn: conn}},
+		Stats:       usecaseDB.ParticipantStats{Repo: &repo.ParticipantStats{Conn: conn}},
+		Bans:        usecaseDB.ParticipantBans{Repo: &repo.ParticipantBans{Conn: conn}},
+		SentSets:    usecaseDB.SentSet{Repo: &repo.SentSet{Conn: conn}},
+	}
+	app.Db = &db
+
+	cfgMessenger, err := config.LoadConfig(config.GetAbsPath("config/config2.toml"))
+	if err != nil {
+		log.Println(errors.New("not loaded messenger config: ").Error() + err.Error())
+	}
+	cfgTournament, err := config.LoadTournament(config.GetAbsPath("config/tournament2.toml"))
+	if err != nil {
+		log.Println(errors.New("not loaded tournament config: ").Error() + err.Error())
+	}
+
+	app.ConfigMessenger = &cfgMessenger
+	app.ConfigTournament = &cfgTournament
+
+	err = wails.Run(&options.App{
 		Title:     "TourneyHelper",
 		MinWidth:  1280,
 		MinHeight: 720,

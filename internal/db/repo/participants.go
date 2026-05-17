@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"database/sql"
+
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
+	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 )
 
 type Participants struct {
@@ -99,6 +102,116 @@ func (p *Participants) GetByNickname(ctx context.Context, nickname string) (enti
 		return entity.Participant{}, fmt.Errorf("unable to find participant in database using nickname: %v | %w", nickname, err)
 	}
 	return participant, nil
+}
+
+func (p *Participants) TotalCount(ctx context.Context) (int, error) {
+	const sql = `
+		SELECT COUNT(id) FROM participants;
+	`
+	var id int
+	err := p.Conn.QueryRowContext(ctx, sql).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("unable to count participants in database, %w", err)
+	}
+	return id, nil
+}
+
+func (p *Participants) GetList(ctx context.Context, nameMessengerPlatform, nameTournamentPlatform, nameGame string, limit, offset int, search string) ([]entitySender.Participant, error) {
+	const sql1 = `
+		SELECT
+			p.id,
+			a_mess.platform_id as messenger_id,
+			a_mess.platform_login as mess_nickname,
+			a_tour.platform_login as tour_nickname,
+			a_tour.platform_id as tourney_id,
+			s.game_name,
+			p.nickname,
+			s.game_id,
+			p.region,
+			p.locale,
+			s.rating,
+			a_mess.is_found,
+			s.updated_at as stats_updates_at
+		FROM participants p
+		LEFT JOIN participant_accounts a_mess ON p.id = a_mess.participant_id AND a_mess.platform_name = $1
+		LEFT JOIN participant_accounts a_tour ON p.id = a_tour.participant_id AND a_tour.platform_name = $2
+		LEFT JOIN participant_stats s ON p.id = s.participant_id AND s.game_name = $3
+		WHERE 
+			(s.game_name = $3 OR $3 = '' OR $3 IS NULL)
+			AND 
+			(
+				$6 IS NULL OR $6 = '' OR 
+				a_tour.platform_login LIKE '%' || $6 || '%' OR 
+				a_mess.platform_id LIKE '%' || $6 || '%' OR 
+				s.game_id LIKE '%' || $6 || '%' OR
+				s.game_name LIKE '%' || $6 || '%'
+			)
+		ORDER BY p.id
+		LIMIT $4 OFFSET $5
+	`
+	rows, err := p.Conn.QueryContext(ctx, sql1, nameMessengerPlatform, nameTournamentPlatform, nameGame, limit, offset, search)
+	if err != nil {
+		return nil, fmt.Errorf("query error: %w", err)
+	}
+	defer rows.Close()
+
+	list := make([]entitySender.Participant, 0, limit)
+	for rows.Next() {
+		var row entitySender.Participant
+		var (
+			tempID                 int
+			tempRegion             sql.NullString
+			tempMessID             sql.NullString
+			tempTourID             sql.NullString
+			tempNicknameMessenger  sql.NullString
+			tempNicknameTournament sql.NullString
+			tempGameID             sql.NullString
+			tempGameName           sql.NullString
+			tempGameNickname       sql.NullString
+			tempRating             sql.NullInt32
+			tempIsFound            sql.NullBool
+			tempUpdatedAt          sql.NullTime
+		)
+		err := rows.Scan(
+			&tempID,
+			&tempMessID,
+			&tempNicknameMessenger,
+			&tempNicknameTournament,
+			&tempTourID,
+			&tempGameName,
+			&tempGameNickname,
+			&tempGameID,
+			&tempRegion,
+			&row.Locale,
+			&tempRating,
+			&tempIsFound,
+			&tempUpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan error: %w", err)
+		}
+
+		row.Id = tempID
+		row.MessenagerID = tempMessID.String
+		row.MessenagerLogin = tempNicknameMessenger.String
+		row.TournamentPlatformLogin = tempNicknameTournament.String
+		row.TournamentPlatformID = tempTourID.String
+		row.GameName = tempGameName.String
+		row.GameNickname = tempGameNickname.String
+		row.GameID = tempGameID.String
+		row.Rating = int(tempRating.Int32)
+		row.Region = tempRegion.String
+		row.IsFound = tempMessID.Valid || tempNicknameTournament.Valid
+		row.UpdatedAt = tempUpdatedAt.Time
+		row.MessenagerName = nameMessengerPlatform
+		row.TournamentPlatformName = nameTournamentPlatform
+		list = append(list, row)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+	return list, nil
 }
 
 func (p *Participants) Del(ctx context.Context, id int) error {

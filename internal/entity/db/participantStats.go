@@ -15,10 +15,14 @@ type ParticipantStatsRepo interface {
 	) (int, error)
 	Edit(
 		ctx context.Context,
-		id int,
 		participantId int,
 		gameName string,
 		gameId string,
+		rating int,
+	) error
+	EditRating(
+		ctx context.Context,
+		participantId int,
 		rating int,
 	) error
 	DelByGame(
@@ -55,11 +59,15 @@ type ParticipantStatAddRequest struct {
 }
 
 type ParticipantStatEditRequest struct {
-	Id            int    `json:"id"`
 	ParticipantId int    `json:"participant_id"`
 	GameName      string `json:"gameName"`
 	GameId        string `json:"gameId"`
 	Rating        int    `json:"rating"`
+}
+
+type ParticipantStatEditRatingRequest struct {
+	Id     int `json:"id"`
+	Rating int `json:"rating"`
 }
 
 type ParticipantStatDeleteRequestById struct {

@@ -77,8 +77,8 @@ type TournamentPlatform struct {
 }
 
 type ConfigTournament struct {
-	Startgg         TournamentPlatform `toml:"startggPlatform" json:"startggPlatform"`
-	Challonge       TournamentPlatform `toml:"challongePlatform" json:"challongePlatform"`
+	Startgg         TournamentPlatform `toml:"startgg" json:"startgg"`
+	Challonge       TournamentPlatform `toml:"challonge" json:"challonge"`
 	UrlToTournament string             `toml:"urlToTournament" json:"urlToTournament"`
 	Rules           RulesMatches       `toml:"rules" json:"rules"`
 	Stream          StreamLobby        `toml:"stream" json:"stream"`

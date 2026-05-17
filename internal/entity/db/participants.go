@@ -4,64 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 )
-
-// type Participant struct {
-// 	GamerTag               string    `json:"gamerTag"`
-// 	MessengerPlatform      string    `json:"messengerPlatform"`
-// 	MessengerPlatformId    string    `json:"messengerPlatformId"`
-// 	MessengerPlatformLogin string    `json:"messengerPlatformLogin"`
-// 	UpdatedAt              time.Time `json:"updatedAt"`
-// 	IsFound                bool      `json:"isFound"`
-// 	Locale                 string    `json:"locale"`
-// }
-
-// type ParticipantAddRequest struct {
-// 	GamerTag               string    `json:"gamerTag"`
-// 	MessengerPlatform      string    `json:"messengerPlatform"`
-// 	MessengerPlatformId    string    `json:"messengerPlatformId"`
-// 	MessengerPlatformLogin string    `json:"messengerPlatformLogin"`
-// 	UpdatedAt              time.Time `json:"updatedAt"`
-// 	IsFound                bool      `json:"isFound"`
-// 	Locale                 string    `json:"locale"`
-// }
-
-// type ParticipantEditRequest struct {
-// 	GamerTag                string    `json:"gamerTag"`
-// 	MessenagerPlatform      string    `json:"messenagerPlatform"`
-// 	MessenagerPlatformId    string    `json:"messenagerPlatformId"`
-// 	MessenagerPlatformLogin string    `json:"messenagerPlatformLogin"`
-// 	UpdatedAt               time.Time `json:"updatedAt"`
-// 	IsFound                 bool      `json:"isFound"`
-// 	Locale                  string    `json:"locale"`
-// }
-
-// type ParticipantDeleteRequest struct {
-// 	GamerTag           string `json:"gamerTag"`
-// 	MessenagerPlatform string `json:"messenagerPlatform"`
-// }
-
-// type ParticipantGetRequest struct {
-// 	GamerTag           string `json:"gamerTag"`
-// 	MessenagerPlatform string `json:"messenagerPlatform"`
-// }
-
-// type ParticipantAddResponse struct {
-// 	GamerTag          string `json:"gamerTag"`
-// 	MessengerPlatform string `json:"messengerPlatform"`
-// }
-
-// type ParticipantEditResponse struct{}
-// type ParticipantDeleteResponse struct{}
-// type ParticipantGetResponse struct {
-// 	GamerTag               string    `json:"gamerTag"`
-// 	MessengerPlatform      string    `json:"messengerPlatform"`
-// 	MessengerPlatformId    string    `json:"messengerPlatformId"`
-// 	MessengerPlatformLogin string    `json:"messengerPlatformLogin"`
-// 	UpdatedAt              time.Time `json:"updatedAt"`
-// 	IsFound                bool      `json:"isFound"`
-// 	Locale                 string    `json:"locale"`
-// }
 
 type SQLHandler interface {
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
@@ -90,6 +35,8 @@ type ParticipantRepo interface {
 	GetByNickname(
 		ctx context.Context,
 		nickname string) (Participant, error)
+	GetList(ctx context.Context, nameMessengerPlatform, nameTournamentPlatform, nameGame string, offset, limit int, search string) ([]entitySender.Participant, error)
+	TotalCount(ctx context.Context) (int, error)
 	WithTx(tx SQLHandler) ParticipantRepo
 }
 
@@ -124,6 +71,28 @@ type ParticipantGetRequestById struct {
 
 type ParticipantGetRequestByNickname struct {
 	Nickname string `json:"nickname"`
+}
+
+type ParticipantGetParticipantsListRequest struct {
+	MessengerName          string `json:"messengerName"`
+	TournamentPlatformName string `json:"tournamentPlatformName"`
+	GameName               string `json:"gameName"`
+	Limit                  int    `json:"limit"`
+	Offset                 int    `json:"offset"`
+	Search                 string `json:"search"`
+}
+
+type ParticipantGetParticipantsListResponse struct {
+	ListParticipants []entitySender.Participant `json:"list"`
+}
+
+type ParticipantGetParticipantsListWithTotalCountResponse struct {
+	Items      []entitySender.Participant `json:"items"`
+	TotalCount int                        `json:"totalCount"`
+}
+
+type ParticipantGetTotalCountResponse struct {
+	TotalCount int `json:"totalCount"`
 }
 
 type ParticipantAddResponse struct {

@@ -25,14 +25,15 @@ type StartggSetAdapter struct {
 }
 
 // TODO: Check empty fields
-func NewStartggAdapter(client *startgg.Client, url string, debug bool, game string, contacts map[string]sender.Participant) *StartggSetAdapter {
+func NewStartggAdapter(client *startgg.Client, messengerName string, url string, debug bool, game string, contacts map[string]sender.Participant) *StartggSetAdapter {
 	return &StartggSetAdapter{
 		StartggSetAdapter: sender.StartggSetAdapter{
-			Client:     client,
-			UrlToEvent: url,
-			DebugMode:  debug,
-			Contacts:   contacts,
-			Game:       game,
+			Client:        client,
+			UrlToEvent:    url,
+			MessengerName: messengerName,
+			DebugMode:     debug,
+			Contacts:      contacts,
+			Game:          game,
 		},
 	}
 }
@@ -229,10 +230,11 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, 
 
 func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) sender.Participant {
 	p := sender.Participant{
-		GameNickname:           data.GamerTag,
-		MessenagerName:         "Discord",
-		TournamentPlatformName: s.GetPlatformTournamentName(),
-		TournamentPlatformID:   strconv.FormatInt(data.User.ID, 10),
+		GameNickname:            data.GamerTag,
+		MessenagerName:          s.MessengerName,
+		TournamentPlatformName:  s.GetPlatformTournamentName(),
+		TournamentPlatformID:    strconv.FormatInt(data.User.ID, 10),
+		TournamentPlatformLogin: data.GamerTag,
 	}
 
 	if len(data.User.Authorizations) > 0 {
@@ -241,11 +243,11 @@ func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) send
 		p.MessenagerLogin = "N/D"
 	}
 
-	switch strings.ToLower(s.Game) {
-	case "tekken":
+	gameLower := strings.ToLower(s.Game)
+	if strings.Contains(gameLower, "tekken") {
 		p.GameID = data.ConnectedAccounts.Tekken.TekkenID
 		p.GameName = "Tekken8"
-	case "sf6":
+	} else if strings.Contains(gameLower, "sf6") || strings.Contains(gameLower, "street") {
 		p.GameID = data.ConnectedAccounts.SF6.GameID
 		p.GameName = "SF6"
 	}

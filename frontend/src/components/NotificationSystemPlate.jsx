@@ -34,7 +34,7 @@ const PlatformBtn = ({
   disabled,
   sub,
   onClick,
-  onSettingsClick, // Новый пропс
+  onSettingsClick,
   themeClasses,
 }) => {
   return (
@@ -65,7 +65,7 @@ const PlatformBtn = ({
         </div>
       </button>
 
-      {/* Кнопка шестеренки */}
+      {/* Кнопка настроек параметров */}
       {!disabled && (
         <button
           onClick={(e) => {
@@ -239,8 +239,7 @@ const NotificationSystemPlate = ({
           : "Запуск обычной рассылки...",
         "success",
       );
-
-      await StartSendNotifications(systemCfg, tourneyCfg);
+      await StartSendNotifications(activeMessenger, activePlatform, systemCfg, tourneyCfg);
     } catch (err) {
       addLog("Ошибка при рассылке: " + err, "error");
       setIsStartedSending(false);

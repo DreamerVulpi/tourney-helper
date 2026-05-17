@@ -1,5 +1,6 @@
 -- +goose Up
 -- +goose StatementBegin
+PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS participants (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nickname TEXT NOT NULL,

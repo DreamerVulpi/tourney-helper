@@ -4,13 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/dbManager"
 )
 
 type App struct {
 	ctx              context.Context
+	ConfigTournament *config.ConfigTournament
+	ConfigMessenger  *config.ConfigMessenger
 	MessengerClient  *auth.AuthClient
 	TournamentClient *auth.AuthClient
+	Db               *dbManager.Database
 }
 
 func NewApp() *App {
@@ -19,12 +24,6 @@ func NewApp() *App {
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
-	// logDir := "../logs"
-	// _, err := logger.Init(logDir)
-	// if err != nil {
-	// 	fmt.Printf("Can't launch logging: %v\n", err)
-	// 	os.Exit(1)
-	// }
 }
 
 func (a *App) Shutdown(ctx context.Context) {

@@ -13,12 +13,13 @@ type StartggFinalConfig struct {
 }
 
 type StartggSetAdapter struct {
-	Client     *startgg.Client
-	UrlToEvent string
-	Slug       string
-	Game       string
-	Finals     StartggFinalConfig
-	DebugMode  bool
-	TestUser   Participant
-	Contacts   map[string]Participant
+	Client        *startgg.Client
+	UrlToEvent    string
+	Slug          string
+	Game          string
+	MessengerName string
+	Finals        StartggFinalConfig
+	DebugMode     bool
+	TestUser      Participant
+	Contacts      map[string]Participant
 }

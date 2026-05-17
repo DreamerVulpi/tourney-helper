@@ -23,7 +23,7 @@ func (p *ParticipantAccounts) AddParticipantAccount(ctx context.Context, request
 }
 
 func (p *ParticipantAccounts) EditParticipantAccount(ctx context.Context, request entity.ParticipantAccountEditRequest) (entity.ParticipantAccountEditResponse, error) {
-	err := p.Repo.Edit(ctx, request.Id, request.ParticipantId, request.PlatformName, request.PlatformId, request.PlatformLogin, request.IsFound)
+	err := p.Repo.Edit(ctx, request.ParticipantId, request.PlatformName, request.PlatformId, request.PlatformLogin, request.IsFound)
 	if err != nil {
 		return entity.ParticipantAccountEditResponse{}, err
 	}
