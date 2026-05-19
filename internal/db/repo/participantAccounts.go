@@ -24,8 +24,9 @@ func (p *ParticipantAccounts) Add(ctx context.Context, participantId int, platfo
 			participant_id, platform_name, platform_id, platform_login, is_found
 		)
 		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (platform_name, platform_id, participant_id) 
+		ON CONFLICT (platform_name, participant_id) 
 		DO UPDATE SET
+			platform_id = EXCLUDED.platform_id,
 			platform_login = EXCLUDED.platform_login,
 			is_found = EXCLUDED.is_found,
 			updated_at = CURRENT_TIMESTAMP 
@@ -40,23 +41,22 @@ func (p *ParticipantAccounts) Add(ctx context.Context, participantId int, platfo
 
 func (p *ParticipantAccounts) Edit(ctx context.Context, participantId int, platformName string, platformId string, platformLogin string, isFound bool) error {
 	const sql = `
-		UPDATE participant_accounts 
-		SET platform_id = $3, platform_login = $4, is_found = $5, updated_at = CURRENT_TIMESTAMP
-		WHERE participant_id = $1 AND platform_name = $2`
+		INSERT INTO participant_accounts (
+			participant_id, platform_name, platform_id, platform_login, is_found	
+		)
+		VALUES ($1, $2, $3, $4, $5)
+		ON CONFLICT (platform_name, participant_id)
+		DO UPDATE SET
+			platform_id = EXCLUDED.platform_id,
+			platform_login = EXCLUDED.platform_login,
+			is_found = EXCLUDED.is_found,
+			updated_at = CURRENT_TIMESTAMP
+		RETURNING id`
 
-	tag, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, platformId, platformLogin, isFound)
+	_, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, platformId, platformLogin, isFound)
 	if err != nil {
 		return fmt.Errorf("don't edited participant account (PlatformName: %v) from database, %w", platformName, err)
 	}
-
-	rows, err := tag.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-	if rows == 0 {
-		return fmt.Errorf("participant doesn't exist")
-	}
-
 	return nil
 }
 

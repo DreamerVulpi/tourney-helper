@@ -24,6 +24,7 @@ func NewApp() *App {
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
+	go a.StartBanCleaner(a.ctx)
 }
 
 func (a *App) Shutdown(ctx context.Context) {

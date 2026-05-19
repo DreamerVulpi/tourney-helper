@@ -41,20 +41,19 @@ func (p *ParticipantStats) Add(ctx context.Context, participantId int, gameName 
 
 func (p *ParticipantStats) Edit(ctx context.Context, participantId int, gameName string, gameId string, rating int) error {
 	const sql = `
-		UPDATE participant_stats
-		SET game_id = $3, rating = $4, updated_at = CURRENT_TIMESTAMP
-		WHERE participant_id = $1 AND game_name = $2`
-	tag, err := p.Conn.ExecContext(ctx, sql, participantId, gameName, gameId, rating)
+		INSERT INTO participant_stats (
+			participant_id, game_name, game_id, rating
+		)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (game_name, participant_id)
+		DO UPDATE SET
+			game_id = EXCLUDED.game_id,
+			rating = EXCLUDED.rating,
+			updated_at = CURRENT_TIMESTAMP
+		RETURNING id`
+	_, err := p.Conn.ExecContext(ctx, sql, participantId, gameName, gameId, rating)
 	if err != nil {
 		return fmt.Errorf("don't edited participantStats from database, %w", err)
-	}
-
-	rows, err := tag.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-	if rows == 0 {
-		return fmt.Errorf("participant stats (ID: %v | GameName: %v) doesn't exist", participantId, gameName)
 	}
 	return nil
 }

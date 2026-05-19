@@ -15,7 +15,7 @@ func (p *ParticipantBans) WithTx(tx entity.SQLHandler) *ParticipantBans {
 }
 
 func (p *ParticipantBans) AddParticipantBan(ctx context.Context, request entity.ParticipantBansAddRequest) (entity.ParticipantBansAddResponse, error) {
-	id, err := p.Repo.Add(ctx, request.ParticipantId, request.TypeBan, request.Reason, request.BannedAt, request.ExpiresAt)
+	id, err := p.Repo.Add(ctx, request.ParticipantId, request.TypeBan, request.Reason, request.ExpiresAt)
 	if err != nil {
 		return entity.ParticipantBansAddResponse{}, err
 	}
@@ -23,11 +23,19 @@ func (p *ParticipantBans) AddParticipantBan(ctx context.Context, request entity.
 }
 
 func (p *ParticipantBans) EditParticipantBan(ctx context.Context, request entity.ParticipantBansEditRequest) (entity.ParticipantEditResponse, error) {
-	err := p.Repo.Edit(ctx, request.Id, request.ParticipantId, request.TypeBan, request.Reason, request.BannedAt, request.ExpiresAt)
+	err := p.Repo.Edit(ctx, request.Id, request.ParticipantId, request.TypeBan, request.Reason, request.ExpiresAt)
 	if err != nil {
 		return entity.ParticipantEditResponse{}, err
 	}
 	return entity.ParticipantEditResponse{}, nil
+}
+
+func (p *ParticipantBans) DeleteExpiredBans(ctx context.Context) error {
+	err := p.Repo.DeleteExpired(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *ParticipantBans) DeleteParticipantBanById(ctx context.Context, request entity.ParticipantBansDeleteRequest) (entity.ParticipantBansDeleteResponse, error) {

@@ -1,13 +1,71 @@
 package application
 
 import (
+	"context"
 	"log"
+	"time"
 
+	"fmt"
+
+	"github.com/dreamervulpi/tourneyBot/internal/entity/app"
 	"github.com/dreamervulpi/tourneyBot/internal/entity/db"
 	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 )
 
 // REFACTOR
+
+func (a *App) DelParticipant(request app.DeleteParticipantRequest) error {
+	_, err := a.Db.Participant.DelParticipant(a.ctx, db.ParticipantDeleteRequest{Id: request.ParticipantId})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) StartBanCleaner(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			err := a.Db.RemoveExpiredBans(ctx)
+			if err != nil {
+				log.Printf("Ошибка при очистке просроченных банов: %v", err)
+			} else {
+				log.Println("Worker: проверка завершена, просроченные баны удалены")
+			}
+
+		case <-ctx.Done():
+			log.Printf("Фоновая очистка банов остановлена")
+			return
+		}
+	}
+}
+
+func (a *App) DelBanFromParticipant(request app.UnbanRequest) error {
+	log.Printf("Request: %v", request.ParticipantId)
+	err := a.Db.DeleteBan(a.ctx, request.ParticipantId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) AddBanToParticipant(request app.BanRequest) error {
+	log.Printf("Request: %v %v %v %v %v %v", request.Id, request.TypeBan, request.Reason, request.Duration, request.Unit, request.IsPermanent)
+	banUntil := a.Db.CalculateBanUntil(request.IsPermanent, request.Duration, request.Unit)
+	if banUntil != nil {
+		fmt.Printf("Участник с Id %v забанен до %s по причине: %v\n", request.Id, banUntil.Format("2006-01-02 15:04:05"), request.TypeBan)
+	} else {
+		fmt.Printf("Участник с Id %v  забанен навсегда по причине: %v\n", request.Id, request.TypeBan)
+	}
+	err := a.Db.AddBan(a.ctx, request.Id, request.TypeBan, request.Reason, banUntil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (a *App) AddParticipant(
 	nickname string,
@@ -91,15 +149,4 @@ func (a *App) EditParticipant(
 		return err
 	}
 	return err
-}
-
-// TODO:
-func (a *App) BanParticipant(id int, type_ban string, reason string) error {
-	return nil
-}
-
-// TODO:
-
-func (a *App) DeleteParticipant(id int) error {
-	return nil
 }

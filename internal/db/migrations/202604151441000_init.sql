@@ -1,6 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-PRAGMA journal_mode=WAL;
 CREATE TABLE IF NOT EXISTS participants (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nickname TEXT NOT NULL,
@@ -30,7 +29,7 @@ CREATE TABLE IF NOT EXISTS participant_accounts (
     is_found BOOLEAN NOT NULL DEFAULT 0,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE,
-    UNIQUE(platform_name, platform_id, participant_id)
+    UNIQUE(platform_name, participant_id)
 );
 
 CREATE TABLE IF NOT EXISTS participant_bans (

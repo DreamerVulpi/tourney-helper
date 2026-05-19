@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
@@ -19,6 +20,74 @@ type Database struct {
 	Stats       db.ParticipantStats
 	Bans        db.ParticipantBans
 	SentSets    db.SentSet
+}
+
+func (db *Database) RemoveExpiredBans(ctx context.Context) error {
+	err := db.Bans.DeleteExpiredBans(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *Database) DeleteBan(ctx context.Context, participantId int) error {
+	unbanRequest := entityDB.ParticipantBansDeleteRequest{
+		ParticipantId: participantId,
+	}
+	log.Println(unbanRequest)
+	_, err := db.Bans.DeleteParticipantBanById(ctx, unbanRequest)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (_ *Database) CalculateBanUntil(isPermanent bool, duration int, unit string) *time.Time {
+	if isPermanent || unit == "infinite" {
+		return nil
+	}
+
+	now := time.Now()
+	var banUntil time.Time
+	switch unit {
+	case "minutes":
+		banUntil = now.Add(time.Duration(duration) * time.Minute)
+	case "hours":
+		banUntil = now.Add(time.Duration(duration) * time.Hour)
+	case "days":
+		banUntil = now.AddDate(0, 0, duration)
+	case "months":
+		banUntil = now.AddDate(0, duration, 0)
+	default:
+		banUntil = now.AddDate(0, 0, 1)
+	}
+	return &banUntil
+}
+func (db *Database) AddBan(ctx context.Context, participantId int, typeBan string, reason string, expiresAt *time.Time) error {
+	banAddRequest := entityDB.ParticipantBansAddRequest{
+		ParticipantId: participantId,
+		TypeBan:       typeBan,
+		Reason:        reason,
+		ExpiresAt:     expiresAt,
+	}
+	log.Println(banAddRequest)
+	_, err := db.Bans.AddParticipantBan(ctx, banAddRequest)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *Database) DelParticipant(ctx context.Context, participantId int) error {
+	delRequest := entityDB.ParticipantDeleteRequest{
+		Id: participantId,
+	}
+	log.Println(delRequest)
+	_, err := db.Participant.DelParticipant(ctx, delRequest)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (db *Database) GetParticipants(ctx context.Context, messengerName, tournamentPlatformName, gameName string, limit, offset int, search string) (entityDB.ParticipantGetParticipantsListWithTotalCountResponse, error) {
@@ -227,7 +296,6 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 		log.Printf("Сравнение региона: БД '%s' vs Новый '%s'", currentParticipant.Region, p.Region)
 		log.Printf("Сравнение локали: БД '%s' vs Новый '%s'", currentParticipant.Locale, p.Locale)
 		if currentParticipant.Nickname != p.GameNickname || currentParticipant.Region != p.Region || currentParticipant.Locale != p.Locale {
-			log.Println("Бизнес-логика: Условия сошлись! Отправляем UPDATE запрос в репозиторий...")
 			pEditRequest := entityDB.ParticipantEditRequest{
 				Id:       p.Id,
 				Nickname: p.GameNickname,
@@ -244,72 +312,42 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 	}
 
 	if p.MessenagerName != "" && p.MessenagerLogin != "" {
-		currentMessAccount, err := accountsTxUc.GetParticipantAccountByPlatform(ctx, entityDB.ParticipantAccountGetRequestByPlatform{
-			PlatformName: p.MessenagerName,
-			PlatformId:   p.MessenagerID,
-		})
-		if err != nil {
-			return fmt.Errorf("db | failed to fetch current participant account of %v state: %w", p.MessenagerName, err)
-		}
-
-		if currentMessAccount.PlatformLogin != p.MessenagerLogin {
-			aEditMessRequest := entityDB.ParticipantAccountEditRequest{
-				ParticipantId: p.Id,
-				PlatformName:  p.MessenagerName,
-				PlatformId:    p.MessenagerID,
-				PlatformLogin: p.MessenagerLogin,
-				IsFound:       p.IsFound,
-			}
-			_, err = accountsTxUc.EditParticipantAccount(ctx, aEditMessRequest)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	if p.TournamentPlatformName != "" && p.TournamentPlatformID != "" {
-		currentTourAccount, err := accountsTxUc.GetParticipantAccountByPlatform(ctx, entityDB.ParticipantAccountGetRequestByPlatform{
-			PlatformName: p.TournamentPlatformName,
-			PlatformId:   p.TournamentPlatformID,
-		})
-		if err != nil {
-			return fmt.Errorf("db | failed to fetch current participant account of %v state: %w", p.MessenagerName, err)
-		}
-
-		if currentTourAccount.PlatformLogin != p.TournamentPlatformLogin {
-			aEditTourRequest := entityDB.ParticipantAccountEditRequest{
-				ParticipantId: p.Id,
-				PlatformName:  p.TournamentPlatformName,
-				PlatformId:    p.TournamentPlatformID,
-				PlatformLogin: p.TournamentPlatformLogin,
-				IsFound:       p.IsFound,
-			}
-			_, err = accountsTxUc.EditParticipantAccount(ctx, aEditTourRequest)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	currentStat, err := statsTxUc.GetParticipantStatsByGame(ctx, entityDB.ParticipantStatGetRequestByGame{
-		ParticipantId: p.Id,
-		GameName:      p.GameName,
-	})
-	if err != nil {
-		return err
-	}
-
-	if currentStat.GameId != p.GameID || currentStat.Rating != p.Rating {
-		sEditStatRequest := entityDB.ParticipantStatEditRequest{
+		aEditMessRequest := entityDB.ParticipantAccountEditRequest{
 			ParticipantId: p.Id,
-			GameName:      p.GameName,
-			GameId:        p.GameID,
-			Rating:        p.Rating,
+			PlatformName:  p.MessenagerName,
+			PlatformId:    p.MessenagerID,
+			PlatformLogin: p.MessenagerLogin,
+			IsFound:       p.IsFound,
 		}
-		_, err = statsTxUc.EditParticipantStats(ctx, sEditStatRequest)
+		_, err = accountsTxUc.EditParticipantAccount(ctx, aEditMessRequest)
 		if err != nil {
 			return err
 		}
+	}
+
+	if p.TournamentPlatformName != "" && p.TournamentPlatformLogin != "" {
+		aEditTourRequest := entityDB.ParticipantAccountEditRequest{
+			ParticipantId: p.Id,
+			PlatformName:  p.TournamentPlatformName,
+			PlatformId:    p.TournamentPlatformID,
+			PlatformLogin: p.TournamentPlatformLogin,
+			IsFound:       p.IsFound,
+		}
+		_, err = accountsTxUc.EditParticipantAccount(ctx, aEditTourRequest)
+		if err != nil {
+			return err
+		}
+	}
+
+	sEditStatRequest := entityDB.ParticipantStatEditRequest{
+		ParticipantId: p.Id,
+		GameName:      p.GameName,
+		GameId:        p.GameID,
+		Rating:        p.Rating,
+	}
+	_, err = statsTxUc.EditParticipantStats(ctx, sEditStatRequest)
+	if err != nil {
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -415,7 +453,7 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 		ParticipantId: pAddResponse.Id,
 		GameName:      p.GameName,
 		GameId:        tempGameID,
-		Rating:        0,
+		Rating:        p.Rating,
 	}
 	log.Printf("Add request participant Stats: %v", pAddStatsRequest)
 

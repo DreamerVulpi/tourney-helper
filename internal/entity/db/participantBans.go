@@ -11,7 +11,6 @@ type ParticipantBansRepo interface {
 		participantId int,
 		typeBan string,
 		reason string,
-		bannedAt time.Time,
 		expiresAt *time.Time) (int, error)
 	Edit(
 		ctx context.Context,
@@ -19,11 +18,12 @@ type ParticipantBansRepo interface {
 		participantId int,
 		typeBan string,
 		reason string,
-		bannedAt time.Time,
 		expiresAt *time.Time) error
 	Delete(
 		ctx context.Context,
 		participantId int) error
+	DeleteExpired(
+		ctx context.Context) error
 	Get(
 		ctx context.Context,
 		participantId int) (ParticipantBans, error)
@@ -46,7 +46,6 @@ type ParticipantBansAddRequest struct {
 	ParticipantId int        `json:"participant_id"`
 	TypeBan       string     `json:"type_ban"`
 	Reason        string     `json:"reason"`
-	BannedAt      time.Time  `json:"banned_at"`
 	ExpiresAt     *time.Time `json:"expires_at"`
 }
 
@@ -55,7 +54,6 @@ type ParticipantBansEditRequest struct {
 	ParticipantId int        `json:"participant_id"`
 	TypeBan       string     `json:"type_ban"`
 	Reason        string     `json:"reason"`
-	BannedAt      time.Time  `json:"banned_at"`
 	ExpiresAt     *time.Time `json:"expires_at"`
 }
 

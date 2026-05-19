@@ -6,21 +6,26 @@ import (
 )
 
 type Participant struct {
-	Id                      int       `json:"id"`
-	MessenagerID            string    `json:"messenagerId"`
-	MessenagerLogin         string    `json:"messenagerLogin"`
-	MessenagerName          string    `json:"messenagerName"`
-	TournamentPlatformName  string    `json:"tournamentPlatformName"`
-	TournamentPlatformLogin string    `json:"tournamentPlatformLogin"`
-	TournamentPlatformID    string    `json:"tournamentPlatformId"`
-	GameName                string    `json:"gameName"`
-	GameNickname            string    `json:"gameNickname"`
-	GameID                  string    `json:"gameId"`
-	Region                  string    `json:"region"`
-	Locale                  string    `json:"locale"`
-	Rating                  int       `json:"rating"`
-	IsFound                 bool      `json:"isFound"`
-	UpdatedAt               time.Time `json:"updatedAt"`
+	Id                      int        `json:"id"`
+	MessenagerID            string     `json:"messenagerId"`
+	MessenagerLogin         string     `json:"messenagerLogin"`
+	MessenagerName          string     `json:"messenagerName"`
+	TournamentPlatformName  string     `json:"tournamentPlatformName"`
+	TournamentPlatformLogin string     `json:"tournamentPlatformLogin"`
+	TournamentPlatformID    string     `json:"tournamentPlatformId"`
+	GameName                string     `json:"gameName"`
+	GameNickname            string     `json:"gameNickname"`
+	GameID                  string     `json:"gameId"`
+	Region                  string     `json:"region"`
+	Locale                  string     `json:"locale"`
+	Rating                  int        `json:"rating"`
+	IsFound                 bool       `json:"isFound"`
+	IsBanned                string     `json:"isBanned"`
+	UpdatedAt               time.Time  `json:"updatedAt"`
+	TypeBan                 string     `json:"typeBan"`
+	Reason                  string     `json:"reason"`
+	BannedAt                *time.Time `json:"bannedAt"`
+	ExpiresAt               *time.Time `json:"expiresAt"`
 }
 
 type SetData struct {

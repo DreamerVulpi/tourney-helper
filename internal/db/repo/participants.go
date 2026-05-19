@@ -131,8 +131,17 @@ func (p *Participants) GetList(ctx context.Context, nameMessengerPlatform, nameT
 			p.locale,
 			s.rating,
 			a_mess.is_found,
-			s.updated_at as stats_updates_at
+			s.updated_at as stats_updates_at,
+			CASE 
+				WHEN b.participant_id IS NOT NULL AND (b.expires_at IS NULL OR b.expires_at > DATETIME('now')) THEN 'banned'
+				ELSE 'active'
+			END as status,
+			b.type_ban,
+			b.reason,
+			b.banned_at,
+			b.expires_at
 		FROM participants p
+		LEFT JOIN participant_bans b ON p.id = b.participant_id
 		LEFT JOIN participant_accounts a_mess ON p.id = a_mess.participant_id AND a_mess.platform_name = $1
 		LEFT JOIN participant_accounts a_tour ON p.id = a_tour.participant_id AND a_tour.platform_name = $2
 		LEFT JOIN participant_stats s ON p.id = s.participant_id AND s.game_name = $3
@@ -171,6 +180,11 @@ func (p *Participants) GetList(ctx context.Context, nameMessengerPlatform, nameT
 			tempRating             sql.NullInt32
 			tempIsFound            sql.NullBool
 			tempUpdatedAt          sql.NullTime
+			tempStatus             sql.NullString
+			tempTypeBan            sql.NullString
+			tempReason             sql.NullString
+			tempBannedAt           sql.NullTime
+			tempExpiresAt          sql.NullTime
 		)
 		err := rows.Scan(
 			&tempID,
@@ -186,6 +200,11 @@ func (p *Participants) GetList(ctx context.Context, nameMessengerPlatform, nameT
 			&tempRating,
 			&tempIsFound,
 			&tempUpdatedAt,
+			&tempStatus,
+			&tempTypeBan,
+			&tempReason,
+			&tempBannedAt,
+			&tempExpiresAt,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan error: %w", err)
@@ -205,6 +224,21 @@ func (p *Participants) GetList(ctx context.Context, nameMessengerPlatform, nameT
 		row.UpdatedAt = tempUpdatedAt.Time
 		row.MessenagerName = nameMessengerPlatform
 		row.TournamentPlatformName = nameTournamentPlatform
+		row.IsBanned = tempStatus.String
+		row.TypeBan = tempTypeBan.String
+		row.Reason = tempReason.String
+		if tempBannedAt.Valid {
+			row.BannedAt = &tempBannedAt.Time
+		} else {
+			row.BannedAt = nil
+		}
+
+		if tempExpiresAt.Valid {
+			row.ExpiresAt = &tempExpiresAt.Time
+		} else {
+			row.ExpiresAt = nil
+		}
+
 		list = append(list, row)
 	}
 

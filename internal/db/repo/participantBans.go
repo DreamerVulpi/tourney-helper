@@ -19,10 +19,10 @@ func (p *ParticipantBans) WithTx(tx entity.SQLHandler) entity.ParticipantBansRep
 	}
 }
 
-func (p *ParticipantBans) Add(ctx context.Context, participantId int, typeBan string, reason string, bannedAt time.Time, expiresAt *time.Time) (int, error) {
+func (p *ParticipantBans) Add(ctx context.Context, participantId int, typeBan string, reason string, expiresAt *time.Time) (int, error) {
 	const sql = `INSERT INTO participant_bans (
 		participant_id, type_ban, reason, banned_at, expires_at
-	) VALUES ($1, $2, $3, $4, $5)
+	) VALUES ($1, $2, $3, CURRENT_TIMESTAMP, $4)
 		ON CONFLICT (participant_id) 
 		DO UPDATE SET
 			type_ban = EXCLUDED.type_ban,
@@ -31,18 +31,18 @@ func (p *ParticipantBans) Add(ctx context.Context, participantId int, typeBan st
 			expires_at = EXCLUDED.expires_at
 		RETURNING id`
 	var id int
-	err := p.Conn.QueryRowContext(ctx, sql, participantId, typeBan, reason, bannedAt, expiresAt).Scan(&id)
+	err := p.Conn.QueryRowContext(ctx, sql, participantId, typeBan, reason, expiresAt).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("unable to ban participant (ID: %v) in database, %w", participantId, err)
 	}
 	return id, nil
 }
-func (p *ParticipantBans) Edit(ctx context.Context, id int, participantId int, typeBan string, reason string, bannedAt time.Time, expiresAt *time.Time) error {
+func (p *ParticipantBans) Edit(ctx context.Context, id int, participantId int, typeBan string, reason string, expiresAt *time.Time) error {
 	const sql = `
 		UPDATE participant_bans
-		SET participant_id = $2, type_ban = $3, reason = $4, bannedAt = $5, expiresAt = $6
+		SET participant_id = $2, type_ban = $3, reason = $4, expiresAt = $5
 		WHERE id = $1`
-	tag, err := p.Conn.ExecContext(ctx, sql, id, participantId, participantId, typeBan, reason, bannedAt, expiresAt)
+	tag, err := p.Conn.ExecContext(ctx, sql, id, participantId, participantId, typeBan, reason, expiresAt)
 	if err != nil {
 		return fmt.Errorf("don't edited ban participant account (ID: %v) from database, %w", participantId, err)
 	}
@@ -57,13 +57,13 @@ func (p *ParticipantBans) Edit(ctx context.Context, id int, participantId int, t
 
 	return nil
 }
-func (p *ParticipantBans) Delete(ctx context.Context, id int) error {
+func (p *ParticipantBans) Delete(ctx context.Context, participant_id int) error {
 	const sql = `
 		DELETE FROM participant_bans
-		WHERE id = $1`
-	tag, err := p.Conn.ExecContext(ctx, sql, id)
+		WHERE participant_id = $1`
+	tag, err := p.Conn.ExecContext(ctx, sql, participant_id)
 	if err != nil {
-		return fmt.Errorf("don't deleted ban (ID: %v) from database, %w", id, err)
+		return fmt.Errorf("don't deleted ban (ID: %v) from database, %w", participant_id, err)
 	}
 
 	rows, err := tag.RowsAffected()
@@ -76,6 +76,19 @@ func (p *ParticipantBans) Delete(ctx context.Context, id int) error {
 
 	return nil
 }
+
+func (p *ParticipantBans) DeleteExpired(ctx context.Context) error {
+	now := time.Now()
+	const sql = `
+		DELETE FROM participant_bans WHERE expires_at < $1
+	`
+	_, err := p.Conn.ExecContext(ctx, sql, now)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (p *ParticipantBans) Get(ctx context.Context, id int) (entity.ParticipantBans, error) {
 	const sql = `
 		SELECT pb.id, pb_participant_id, pb.type_ban, pb.reason, pb.banned_at, pb.expires_at
