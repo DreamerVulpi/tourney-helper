@@ -146,14 +146,18 @@ func (p *Participants) GetList(ctx context.Context, nameMessengerPlatform, nameT
 		LEFT JOIN participant_accounts a_tour ON p.id = a_tour.participant_id AND a_tour.platform_name = $2
 		LEFT JOIN participant_stats s ON p.id = s.participant_id AND s.game_name = $3
 		WHERE 
-			(s.game_name = $3 OR $3 = '' OR $3 IS NULL)
+			(
+                s.game_name = $3 OR NOT EXISTS (SELECT 1 FROM participant_stats WHERE participant_id = p.id) OR $3 = '' OR $3 IS NULL
+            )
 			AND 
 			(
 				$6 IS NULL OR $6 = '' OR 
-				a_tour.platform_login LIKE '%' || $6 || '%' OR 
-				a_mess.platform_id LIKE '%' || $6 || '%' OR 
-				s.game_id LIKE '%' || $6 || '%' OR
-				s.game_name LIKE '%' || $6 || '%'
+				LOWER(p.nickname) LIKE '%' || LOWER($6) || '%' OR
+				LOWER(a_tour.platform_login) LIKE '%' || LOWER($6) || '%' OR 
+				LOWER(a_mess.platform_login) LIKE '%' || LOWER($6) || '%' OR 
+				LOWER(a_mess.platform_id) LIKE '%' || LOWER($6) || '%' OR 
+				LOWER(s.game_id) LIKE '%' || LOWER($6) || '%' OR
+				LOWER(p.region) LIKE '%' || LOWER($6) || '%'
 			)
 		ORDER BY p.id
 		LIMIT $4 OFFSET $5

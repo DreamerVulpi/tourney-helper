@@ -81,7 +81,7 @@ func (p *ParticipantStats) EditRating(ctx context.Context, participantId, rating
 func (p *ParticipantStats) DelByGame(ctx context.Context, participantId int, gameName string) error {
 	const sql = `
 		DELETE FROM participant_stats
-		WHERE participant_id = $1 AND game_name = $2
+		WHERE participant_id = $1 AND LOWER(game_name) = LOWER($2)
 	`
 	tag, err := p.Conn.ExecContext(ctx, sql, participantId, gameName)
 	if err != nil {
@@ -136,7 +136,7 @@ func (p *ParticipantStats) GetByGame(ctx context.Context, participantId int, gam
 	const sql = `
 		SELECT ps.id, ps.participant_id, ps.game_name, ps.game_id, ps.rating, updated_at
 		FROM participant_stats ps
-		WHERE participant_id = $1 AND game_name = $2
+		WHERE participant_id = $1 AND LOWER(game_name) = LOWER($2)
 	`
 	var stat entity.ParticipantStat
 	err := p.Conn.QueryRowContext(ctx, sql, participantId, gameName).Scan(
@@ -151,4 +151,25 @@ func (p *ParticipantStats) GetByGame(ctx context.Context, participantId int, gam
 		return entity.ParticipantStat{}, fmt.Errorf("unable to find participant in database using ID: %v | %w", participantId, err)
 	}
 	return stat, nil
+}
+
+func (p *ParticipantStats) ResetRaiting(ctx context.Context, gameName string) error {
+	const sql = `
+		UPDATE participant_stats
+		SET rating = 0
+		WHERE LOWER(game_name) = LOWER($1)
+	`
+	tag, err := p.Conn.ExecContext(ctx, sql, gameName)
+	if err != nil {
+		return fmt.Errorf("don't reset stats game %v from database, %w", gameName, err)
+	}
+
+	rows, err := tag.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("stats (Game: %v) doesn't exist ", gameName)
+	}
+	return nil
 }

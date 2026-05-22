@@ -90,6 +90,25 @@ func (db *Database) DelParticipant(ctx context.Context, participantId int) error
 	return nil
 }
 
+func (db *Database) GetBanned(ctx context.Context, gameName string, limit, offset int, search string) (entityDB.ParticipantGetListResponse, error) {
+	responseList, err := db.Bans.GetPartipantsListBans(ctx, entityDB.ParticipantBansGetListRequest{
+		GameName: gameName,
+		Limit:    limit,
+		Offset:   offset,
+		Search:   search,
+	})
+	if err != nil {
+		return entityDB.ParticipantGetListResponse{}, err
+	}
+
+	log.Println(entityDB.ParticipantGetListResponse{
+		ListBanned: responseList.ListBanned,
+	})
+	return entityDB.ParticipantGetListResponse{
+		ListBanned: responseList.ListBanned,
+	}, err
+}
+
 func (db *Database) GetParticipants(ctx context.Context, messengerName, tournamentPlatformName, gameName string, limit, offset int, search string) (entityDB.ParticipantGetParticipantsListWithTotalCountResponse, error) {
 	if err := ctx.Err(); err != nil {
 		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
@@ -358,11 +377,11 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 	return nil
 }
 
-func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participant) error {
+func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participant) (entityDB.ParticipantAddResponse, error) {
 	log.Printf("Participant data: %v", p)
 	tx, err := db.Conn.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("db | failed to start transaction: %w", err)
+		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to start transaction: %w", err)
 	}
 	defer tx.Rollback()
 
@@ -373,7 +392,7 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 	mainNickname := p.GameNickname
 	if len(mainNickname) == 0 || mainNickname == "N/D" {
 		if len(p.MessenagerLogin) == 0 || p.MessenagerLogin == "N/D" {
-			return fmt.Errorf("db | failed to add participant: both game nicknames are empty")
+			return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to add participant: both game nicknames are empty")
 		}
 		mainNickname = p.MessenagerLogin
 	}
@@ -402,7 +421,7 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 
 	pAddResponse, err := participantTxUc.AddParticipant(ctx, pAddRequest)
 	if err != nil {
-		return fmt.Errorf("db | failed to save participant %v: %v", p.MessenagerLogin, err)
+		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to save participant %v: %v", p.MessenagerLogin, err)
 	} else {
 		log.Printf("db | successfully saved participant %v", mainNickname)
 	}
@@ -418,12 +437,12 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 		log.Printf("Add request participant Account - Messenger: %v", pAddMessengerRequest)
 
 		if p.MessenagerName == "" {
-			return fmt.Errorf("db | messenger name is empty")
+			return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | messenger name is empty")
 		}
 
 		_, err = accountsTxUc.AddParticipantAccount(ctx, pAddMessengerRequest)
 		if err != nil {
-			return fmt.Errorf("db | failed to add participant account ID: %v - %v - %v | %v", pAddMessengerRequest.ParticipantId, pAddMessengerRequest.PlatformName, pAddMessengerRequest.PlatformLogin, err)
+			return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to add participant account ID: %v - %v - %v | %v", pAddMessengerRequest.ParticipantId, pAddMessengerRequest.PlatformName, pAddMessengerRequest.PlatformLogin, err)
 		}
 	} else {
 		log.Printf("db | messenger login is empty | account messenger don't added")
@@ -441,11 +460,11 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 		log.Printf("Add request participant Account - TournamentPlatform: %v", pAddTournamentAccountRequest)
 
 		if p.TournamentPlatformName == "" {
-			return fmt.Errorf("db | tournament platform name is empty")
+			return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | tournament platform name is empty")
 		}
 		_, err = accountsTxUc.AddParticipantAccount(ctx, pAddTournamentAccountRequest)
 		if err != nil {
-			return fmt.Errorf("db | failed to add participant account ID: %v - %v - %v | %v", pAddTournamentAccountRequest.ParticipantId, pAddTournamentAccountRequest.PlatformName, pAddTournamentAccountRequest.PlatformLogin, err)
+			return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to add participant account ID: %v - %v - %v | %v", pAddTournamentAccountRequest.ParticipantId, pAddTournamentAccountRequest.PlatformName, pAddTournamentAccountRequest.PlatformLogin, err)
 		}
 	}
 
@@ -459,12 +478,13 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 
 	_, err = statsTxUc.AddParticipantStats(ctx, pAddStatsRequest)
 	if err != nil {
-		return fmt.Errorf("db | failed to add game (%v) stats: %w", p.GameName, err)
+		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to add game (%v) stats: %w", p.GameName, err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("db | failed to commit transaction: %w", err)
+		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to commit transaction: %w", err)
 	}
 	log.Printf("db | successfuly added new participant (ID: %v, Nickname: %v)", pAddResponse.Id, mainNickname)
-	return nil
+	log.Printf("Return from AddParticipant - %v", pAddResponse.Id)
+	return pAddResponse, nil
 }

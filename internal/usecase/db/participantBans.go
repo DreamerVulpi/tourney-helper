@@ -61,6 +61,14 @@ func (p *ParticipantBans) GetParticipantBan(ctx context.Context, request entity.
 	}, nil
 }
 
+func (p *ParticipantBans) GetPartipantsListBans(ctx context.Context, request entity.ParticipantBansGetListRequest) (entity.ParticipantGetListResponse, error) {
+	list, err := p.Repo.GetList(ctx, request.GameName, request.Limit, request.Offset, request.Search)
+	if err != nil {
+		return entity.ParticipantGetListResponse{}, err
+	}
+	return entity.ParticipantGetListResponse{ListBanned: list}, err
+}
+
 func (p *ParticipantBans) IsBanned(ctx context.Context, request entity.ParticipantIsBannedRequest) (entity.ParticipantIsBannedResponse, error) {
 	state, err := p.Repo.IsBanned(ctx, request.ParticipantId)
 	if err != nil {

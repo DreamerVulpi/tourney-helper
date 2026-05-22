@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 	"time"
+
+	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 )
 
 type ParticipantBansRepo interface {
@@ -27,6 +29,10 @@ type ParticipantBansRepo interface {
 	Get(
 		ctx context.Context,
 		participantId int) (ParticipantBans, error)
+	GetList(
+		ctx context.Context,
+		nameGame string, offset, limit int, search string,
+	) ([]entitySender.Participant, error)
 	IsBanned(
 		ctx context.Context,
 		id int) (bool, error)
@@ -63,6 +69,17 @@ type ParticipantBansDeleteRequest struct {
 
 type ParticipantBansGetRequest struct {
 	ParticipantId int `json:"participant_id"`
+}
+
+type ParticipantBansGetListRequest struct {
+	GameName string `json:"gameName"`
+	Limit    int    `json:"limit"`
+	Offset   int    `json:"offset"`
+	Search   string `json:"search"`
+}
+
+type ParticipantGetListResponse struct {
+	ListBanned []entitySender.Participant `json:"list"`
 }
 
 type ParticipantIsBannedRequest struct {

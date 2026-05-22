@@ -2,10 +2,12 @@ package repo
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
+	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 )
 
 type ParticipantBans struct {
@@ -120,4 +122,92 @@ func (p *ParticipantBans) IsBanned(ctx context.Context, participantId int) (bool
 	var isBanned bool
 	err := p.Conn.QueryRowContext(ctx, sql, participantId).Scan(&isBanned)
 	return isBanned, err
+}
+
+func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, offset int, search string) ([]entitySender.Participant, error) {
+	const sql1 = `SELECT
+			p.id,
+			p.nickname,
+			s.game_id,
+			'banned' as status,
+			b.type_ban,
+			b.reason,
+			b.banned_at,
+			b.expires_at
+		FROM participants p
+		INNER JOIN participant_bans b ON p.id = b.participant_id AND (b.expires_at IS NULL OR b.expires_at > DATETIME('now')) 
+		LEFT JOIN participant_stats s ON p.id = s.participant_id AND s.game_name = $1
+		WHERE 
+			(
+                s.game_name = $1
+				OR NOT EXISTS (SELECT 1 FROM participant_stats WHERE participant_id = p.id)
+				OR $1 = ''
+				OR $1 IS NULL
+            )
+			AND 
+			(
+				$4 IS NULL OR $4 = '' OR 
+				LOWER(p.nickname) LIKE '%' || LOWER($4) || '%' OR
+				LOWER(s.game_id) LIKE '%' || LOWER($4) || '%'
+			)
+		ORDER BY b.banned_at DESC
+		LIMIT $2 OFFSET $3;`
+
+	rows, err := p.Conn.QueryContext(ctx, sql1, nameGame, limit, offset, search)
+	if err != nil {
+		return nil, fmt.Errorf("query error: %w", err)
+	}
+	defer rows.Close()
+
+	list := make([]entitySender.Participant, 0, limit)
+	for rows.Next() {
+		var row entitySender.Participant
+		var (
+			tempID        int
+			tempNickname  sql.NullString
+			tempGameID    sql.NullString
+			tempStatus    sql.NullString
+			tempTypeBan   sql.NullString
+			tempReason    sql.NullString
+			tempBannedAt  sql.NullTime
+			tempExpiresAt sql.NullTime
+		)
+		err := rows.Scan(
+			&tempID,
+			&tempNickname,
+			&tempGameID,
+			&tempStatus,
+			&tempTypeBan,
+			&tempReason,
+			&tempBannedAt,
+			&tempExpiresAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan error: %w", err)
+		}
+		row.Id = tempID
+		row.GameNickname = tempNickname.String
+		row.GameID = tempGameID.String
+		row.IsBanned = tempStatus.String
+		row.TypeBan = tempTypeBan.String
+		row.Reason = tempReason.String
+		if tempBannedAt.Valid {
+			row.BannedAt = &tempBannedAt.Time
+		} else {
+			row.BannedAt = nil
+		}
+
+		if tempExpiresAt.Valid {
+			row.ExpiresAt = &tempExpiresAt.Time
+		} else {
+			row.ExpiresAt = nil
+		}
+
+		list = append(list, row)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("rows iteration error: %w", err)
+	}
+	return list, nil
 }

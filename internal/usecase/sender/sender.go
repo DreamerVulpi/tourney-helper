@@ -70,7 +70,7 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 			if err != nil {
 				log.Printf("Process | P1 not found in %s...", set.ContactPlayer1.MessenagerName)
 			} else {
-				if err := p.Db.AddParticipant(ctx, contactP1); err != nil {
+				if _, err := p.Db.AddParticipant(ctx, contactP1); err != nil {
 					log.Printf("Process | failed to save P1 (%v) to DB: %v", set.ContactPlayer1.MessenagerName, err)
 				}
 			}
@@ -84,7 +84,7 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 			if err != nil {
 				log.Printf("Process | P2 not found in %s...", set.ContactPlayer2.MessenagerName)
 			} else {
-				if err := p.Db.AddParticipant(ctx, contactP2); err != nil {
+				if _, err := p.Db.AddParticipant(ctx, contactP2); err != nil {
 					log.Printf("Process | failed to save P2 (%v) to DB: %v", set.ContactPlayer2.MessenagerName, err)
 				}
 			}

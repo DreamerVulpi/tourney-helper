@@ -14,8 +14,20 @@ import (
 
 // REFACTOR
 
-func (a *App) DelParticipant(request app.DeleteParticipantRequest) error {
-	_, err := a.Db.Participant.DelParticipant(a.ctx, db.ParticipantDeleteRequest{Id: request.ParticipantId})
+func (a *App) LoadFile(path string) error {
+	return nil
+}
+
+func (a *App) ResetRaiting(request db.ParticipantStatResetRequest) error {
+	err := a.Db.Stats.ResetRaiting(a.ctx, request)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *App) DelParticipant(request db.ParticipantDeleteRequest) error {
+	_, err := a.Db.Participant.DelParticipant(a.ctx, request)
 	if err != nil {
 		return err
 	}
@@ -77,7 +89,7 @@ func (a *App) AddParticipant(
 	messengerName string,
 	messengerLogin string,
 	tournamentPlatformName string,
-	tournamentPlatformLogin string) error {
+	tournamentPlatformLogin string) (int, error) {
 	log.Printf("Request: %v %v %v %v %v | Rating: %v | %v %v %v %v", nickname, gameId, gameName, region, locale, rating, messengerName, messengerLogin, tournamentPlatformName, tournamentPlatformLogin)
 	p := sender.Participant{
 		GameNickname:            nickname,
@@ -92,11 +104,11 @@ func (a *App) AddParticipant(
 		Rating:                  rating,
 	}
 
-	err := a.Db.AddParticipant(a.ctx, p)
+	response, err := a.Db.AddParticipant(a.ctx, p)
 	if err != nil {
-		return err
+		return 0, err
 	}
-	return nil
+	return response.Id, nil
 }
 
 func (a *App) GetParticipants(messengerName, tournamentPlatformName, gameName string, limit, offset int, search string) (db.ParticipantGetParticipantsListWithTotalCountResponse, error) {
@@ -104,6 +116,15 @@ func (a *App) GetParticipants(messengerName, tournamentPlatformName, gameName st
 	result, err := a.Db.GetParticipants(a.ctx, messengerName, tournamentPlatformName, gameName, limit, offset, search)
 	if err != nil {
 		return db.ParticipantGetParticipantsListWithTotalCountResponse{}, err
+	}
+	return result, nil
+}
+
+func (a *App) GetBanned(gameName string, limit, offset int, search string) (db.ParticipantGetListResponse, error) {
+	log.Printf("Request: GameName = %v Limit = %v, Offset = %v, Search = \"%v\"", gameName, limit, offset, search)
+	result, err := a.Db.GetBanned(a.ctx, gameName, limit, offset, search)
+	if err != nil {
+		return db.ParticipantGetListResponse{}, err
 	}
 	return result, nil
 }

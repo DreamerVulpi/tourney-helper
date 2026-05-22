@@ -39,6 +39,10 @@ type ParticipantStatsRepo interface {
 		participantId int,
 		gameName string,
 	) (ParticipantStat, error)
+	ResetRaiting(
+		ctx context.Context,
+		gameName string,
+	) error
 	WithTx(tx SQLHandler) ParticipantStatsRepo
 }
 
@@ -63,6 +67,10 @@ type ParticipantStatEditRequest struct {
 	GameName      string `json:"gameName"`
 	GameId        string `json:"gameId"`
 	Rating        int    `json:"rating"`
+}
+
+type ParticipantStatResetRequest struct {
+	GameName string `json:"gameName"`
 }
 
 type ParticipantStatEditRatingRequest struct {
