@@ -39,22 +39,15 @@ func (p *ParticipantBans) Add(ctx context.Context, participantId int, typeBan st
 	}
 	return id, nil
 }
-func (p *ParticipantBans) Edit(ctx context.Context, id int, participantId int, typeBan string, reason string, expiresAt *time.Time) error {
+func (p *ParticipantBans) Edit(ctx context.Context, participantId int, typeBan string, reason string, expiresAt *time.Time) error {
 	const sql = `
-		UPDATE participant_bans
-		SET participant_id = $2, type_ban = $3, reason = $4, expiresAt = $5
-		WHERE id = $1`
-	tag, err := p.Conn.ExecContext(ctx, sql, id, participantId, participantId, typeBan, reason, expiresAt)
+		INSERT INTO participant_bans (participant_id, type_ban, reason, expires_at)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (participant_id)
+		DO UPDATE SET type_ban = EXCLUDED.type_ban, reason = EXCLUDED.reason, expires_at = EXCLUDED.expires_at`
+	_, err := p.Conn.ExecContext(ctx, sql, participantId, typeBan, reason, expiresAt)
 	if err != nil {
 		return fmt.Errorf("don't edited ban participant account (ID: %v) from database, %w", participantId, err)
-	}
-
-	rows, err := tag.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("failed to get rows affected: %w", err)
-	}
-	if rows == 0 {
-		return fmt.Errorf("ban doesn't exist")
 	}
 
 	return nil

@@ -138,36 +138,70 @@ func (a *App) EditParticipantStatsRating(id, rating int) (db.ParticipantEditResp
 	return result, nil
 }
 
-func (a *App) EditParticipant(
-	id int,
-	nickname string,
-	gameId string,
-	gameName string,
-	region string,
-	locale string,
-	rating int,
-	messengerName string,
-	messengerLogin string,
-	tournamentPlatformName string,
-	tournamentPlatformLogin string) error {
-	log.Printf("Request: %v %v %v %v %v | Rating: %v | %v %v %v %v", nickname, gameId, gameName, region, locale, rating, messengerName, messengerLogin, tournamentPlatformName, tournamentPlatformLogin)
+func (a *App) EditParticipant(request app.EditParticipantRequest) error {
 	p := sender.Participant{
-		Id:                      id,
-		MessenagerLogin:         messengerLogin,
-		MessenagerName:          messengerName,
-		TournamentPlatformName:  tournamentPlatformName,
-		TournamentPlatformLogin: tournamentPlatformLogin,
-		GameName:                gameName,
-		GameNickname:            nickname,
-		GameID:                  gameId,
-		Region:                  region,
-		Locale:                  locale,
-		Rating:                  rating,
+		Id:                      request.Id,
+		MessenagerLogin:         request.MessengerLogin,
+		MessenagerName:          request.MessengerName,
+		TournamentPlatformName:  request.TournamentPlatformName,
+		TournamentPlatformLogin: request.TournamentPlatformLogin,
+		GameName:                request.GameName,
+		GameNickname:            request.Nickname,
+		GameID:                  request.GameId,
+		Region:                  request.Region,
+		Locale:                  request.Locale,
+		Rating:                  request.Rating,
 	}
 
-	err := a.Db.EditParticipant(a.ctx, p)
+	var ban *app.BanRequest
+	if request.BanInfo != nil {
+		ban = &app.BanRequest{
+			Id:          request.Id,
+			TypeBan:     request.BanInfo.TypeBan,
+			Reason:      request.BanInfo.Reason,
+			Duration:    request.BanInfo.Duration,
+			Unit:        request.BanInfo.Unit,
+			IsPermanent: request.BanInfo.IsPermanent,
+		}
+	}
+
+	err := a.Db.EditParticipant(a.ctx, p, ban)
 	if err != nil {
 		return err
 	}
 	return err
 }
+
+// func (a *App) EditParticipant(
+// 	id int,
+// 	nickname string,
+// 	gameId string,
+// 	gameName string,
+// 	region string,
+// 	locale string,
+// 	rating int,
+// 	messengerName string,
+// 	messengerLogin string,
+// 	tournamentPlatformName string,
+// 	tournamentPlatformLogin string) error {
+// 	log.Printf("Request: %v %v %v %v %v | Rating: %v | %v %v %v %v", nickname, gameId, gameName, region, locale, rating, messengerName, messengerLogin, tournamentPlatformName, tournamentPlatformLogin)
+// 	p := sender.Participant{
+// 		Id:                      id,
+// 		MessenagerLogin:         messengerLogin,
+// 		MessenagerName:          messengerName,
+// 		TournamentPlatformName:  tournamentPlatformName,
+// 		TournamentPlatformLogin: tournamentPlatformLogin,
+// 		GameName:                gameName,
+// 		GameNickname:            nickname,
+// 		GameID:                  gameId,
+// 		Region:                  region,
+// 		Locale:                  locale,
+// 		Rating:                  rating,
+// 	}
+
+// 	err := a.Db.EditParticipant(a.ctx, p)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return err
+// }

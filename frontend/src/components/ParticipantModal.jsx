@@ -12,8 +12,15 @@ const ParticipantModal = ({
 }) => {
     // Режим определяется наличием переданных данных
     const isEditMode = !!initialData;
+    
+    // Проверяем, редактируем ли мы игрока, который УЖЕ забанен
+    const isEditingBannedPlayer = isEditMode && (initialData.isBanned === "banned" || initialData.status === "banned");
+    
     // Режим создания игрока сразу в бан-лист
     const isBanMode = activeFilter === 'banned' && !isEditMode;
+    
+    // Показывать блок бана, если это создание в бан-листе ИЛИ редактирование уже забаненного
+    const showBanFields = isBanMode || isEditingBannedPlayer;
 
     const [formData, setFormData] = useState({
         nickname: '',
@@ -47,7 +54,7 @@ const ParticipantModal = ({
             if (initialData) {
                 setFormData({
                     nickname: initialData.gameNickname || initialData.nickname || '',
-                    gameId: initialData.gameId || '',
+                    gameId: initialData.gameId || initialData.game_id || '', // Учитываем регистр с бэкенда
                     region: initialData.region || 'Europe',
                     locale: initialData.locale || 'RU',
                     rating: initialData.rating || 0,
@@ -62,6 +69,17 @@ const ParticipantModal = ({
                         login: initialData.tournamentPlatformLogin || '' 
                     }
                 });
+
+                const isPlayerBanned = initialData.isBanned === "banned" || initialData.status === "banned";
+                if (isPlayerBanned) {
+                    setBanData({
+                        typeBan: initialData.type_ban || initialData.typeBan || 'software/cheats',
+                        reason: initialData.reason || '', // Описание нарушения
+                        duration: initialData.duration || 30, // Срок бана
+                        unit: initialData.unit || 'days',
+                        isPermanent: initialData.isPermanent || (initialData.expires_at === null) || false
+                    });
+                }
             } else {
                 setFormData({
                     nickname: '', gameId: '', region: 'Europe', locale: 'RU', rating: 0,
@@ -107,33 +125,38 @@ const ParticipantModal = ({
             return;
         }
 
-        // Если это прямая блокировка, прикрепляем данные о бане нарушителя
-        if (isBanMode) {
+        // Проверяем, забанен ли уже этот игрок (для режима редактирования)
+        const isAlreadyBanned = initialData && (initialData.isBanned === "banned" || initialData.status === "banned");
+
+        // Базовый объект, который отправляется в обоих случаях (сохраняем id, если редактируем)
+        const basePayload = {
+            ...formData,
+            id: initialData?.id || null,
+            nickname: trimmedNickname,
+            gameId: trimmedGameId,
+            messenger: { ...formData.messenger, login: formData.messenger.login.trim() },
+            tournament: { ...formData.tournament, login: formData.tournament.login.trim() }
+        };
+
+        // Если это создание сразу в бан-лист ИЛИ редактирование уже забаненного игрока
+        if (isBanMode || isAlreadyBanned) {
             onSave({
-                ...formData,
-                nickname: trimmedNickname,
-                gameId: trimmedGameId,
-                messenger: { ...formData.messenger, login: formData.messenger.login.trim() },
-                tournament: { ...formData.tournament, login: formData.tournament.login.trim() },
-                isDirectBan: true,
+                ...basePayload,
+                isDirectBan: isBanMode, // true только если создаем новую запись сразу в бан
                 banInfo: {
                     ...banData,
-                    reason: banData.reason.trim() || "Причина не указана администратором"
+                    reason: banData.reason.trim() || "Причина не указана администратором",
+                    duration: banData.isPermanent ? 0 : Number(banData.duration) // При перманентном бане ставим 0
                 }
             });
         } else {
-            onSave({
-                ...formData,
-                nickname: trimmedNickname,
-                gameId: trimmedGameId,
-                messenger: { ...formData.messenger, login: formData.messenger.login.trim() },
-                tournament: { ...formData.tournament, login: formData.tournament.login.trim() }
-            });
+            // Обычное создание или редактирование активного игрока
+            onSave(basePayload);
         }
     };
 
-    // Динамический подбор классов фокуса (Красный для бана, Синий для обычного, Янтарный для редактирования)
-    const focusRingClass = isBanMode
+    // Динамический подбор классов фокуса (Красный для бана/нарушителя, Янтарный для обычного редактирования, Синий для создания)
+    const focusRingClass = (isBanMode || isEditingBannedPlayer)
         ? 'focus:border-red-500/50 focus:ring-2 focus:ring-red-500/10'
         : isEditMode
         ? 'focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10'
@@ -154,26 +177,27 @@ const ParticipantModal = ({
     const sectionBtnClasses = `flex items-center gap-2 p-3 rounded-xl border text-[10px] font-black uppercase tracking-tight transition-all mb-4 ${
         isDark 
         ? 'bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10' 
-        : `bg-slate-50 border-slate-200 text-slate-500 ${isBanMode ? 'hover:text-red-600 hover:border-red-200' : 'hover:text-blue-600 hover:border-blue-200'}`
+        : `bg-slate-50 border-slate-200 text-slate-500 ${(isBanMode || isEditingBannedPlayer) ? 'hover:text-red-600 hover:border-red-200' : 'hover:text-blue-600 hover:border-blue-200'}`
     }`;
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={!loading ? onClose : undefined} />
 
+            {/* Главный контейнер с динамическим оформлением под забаненного игрока */}
             <div className={`relative w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border transition-colors duration-300 ${
                 isDark 
-                    ? isBanMode ? 'bg-[#0f0a0a] border-red-500/20' : 'bg-[#121212] border-white/10' 
-                    : isBanMode ? 'bg-red-50/[0.02] border-red-200' : 'bg-white border-slate-200'
+                    ? (isBanMode || isEditingBannedPlayer) ? 'bg-[#0f0a0a] border-red-500/20' : 'bg-[#121212] border-white/10' 
+                    : (isBanMode || isEditingBannedPlayer) ? 'bg-red-50/[0.02] border-red-200' : 'bg-white border-slate-200'
             }`}>
                 
                 {/* Header */}
                 <div className={`flex items-center justify-between px-6 py-4 border-b ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
                     <div className="flex items-center gap-3">
                         <div className={`p-2 rounded-lg transition-colors ${
-                            isBanMode ? 'bg-red-500/20' : isEditMode ? 'bg-amber-500/20' : 'bg-blue-600/20'
+                            (isBanMode || isEditingBannedPlayer) ? 'bg-red-500/20' : isEditMode ? 'bg-amber-500/20' : 'bg-blue-600/20'
                         }`}>
-                            {isBanMode ? (
+                            {(isBanMode || isEditingBannedPlayer) ? (
                                 <UserPlus size={18} className="text-red-500" />
                             ) : isEditMode ? (
                                 <Edit3 size={18} className="text-amber-500" />
@@ -182,7 +206,14 @@ const ParticipantModal = ({
                             )}
                         </div>
                         <h2 className={`text-sm font-black uppercase italic tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-                            {isBanMode ? 'Внести нарушителя в бан-лист' : isEditMode ? 'Изменить данные участника' : 'Добавить участника'}
+                            {isBanMode 
+                                ? 'Внести нарушителя в бан-лист' 
+                                : isEditingBannedPlayer 
+                                ? 'Редактировать данные нарушителя' 
+                                : isEditMode 
+                                ? 'Изменить данные участника' 
+                                : 'Добавить участника'
+                            }
                         </h2>
                     </div>
                     
@@ -337,8 +368,8 @@ const ParticipantModal = ({
                         )}
                     </div>
 
-                    {/* СТРОГИЙ КРАСНЫЙ БЛОК ПАРАМЕТРОВ БАНА */}
-                    {isBanMode && (
+                    {/* Параметры бана нарушителя */}
+                    {showBanFields && (
                         <div className={`space-y-4 pt-5 border-t ${isDark ? 'border-red-500/10' : 'border-red-200'}`}>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2 sm:col-span-1">
@@ -419,13 +450,13 @@ const ParticipantModal = ({
                     )}
                 </div>
 
-                {/* Footer Buttons */}
+                {/* Footer Buttons с динамическим переключением на красный цвет для забаненного */}
                 <div className={`p-6 border-t ${isDark ? 'border-white/5' : 'border-slate-100'}`}>
                     <button 
                         onClick={handleSave}
                         disabled={loading}
                         className={`w-full flex items-center justify-center gap-3 h-[56px] rounded-xl font-black uppercase italic tracking-wider transition-all text-white ${
-                            isBanMode 
+                            (isBanMode || isEditingBannedPlayer)
                                 ? 'bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/10' 
                                 : isEditMode 
                                 ? 'bg-amber-600 hover:bg-amber-500' 
@@ -433,7 +464,16 @@ const ParticipantModal = ({
                         } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <Save size={18} />
-                        {loading ? 'Обработка...' : isBanMode ? 'Забанить и сохранить' : isEditMode ? 'Сохранить изменения' : 'Создать запись'}
+                        {loading 
+                            ? 'Обработка...' 
+                            : isBanMode 
+                            ? 'Забанить и сохранить' 
+                            : isEditingBannedPlayer 
+                            ? 'Сохранить изменения нарушителя' 
+                            : isEditMode 
+                            ? 'Сохранить изменения' 
+                            : 'Создать запись'
+                        }
                     </button>
                 </div>
             </div>

@@ -16,7 +16,6 @@ type ParticipantBansRepo interface {
 		expiresAt *time.Time) (int, error)
 	Edit(
 		ctx context.Context,
-		id int,
 		participantId int,
 		typeBan string,
 		reason string,
@@ -56,7 +55,6 @@ type ParticipantBansAddRequest struct {
 }
 
 type ParticipantBansEditRequest struct {
-	Id            int        `json:"id"`
 	ParticipantId int        `json:"participant_id"`
 	TypeBan       string     `json:"type_ban"`
 	Reason        string     `json:"reason"`

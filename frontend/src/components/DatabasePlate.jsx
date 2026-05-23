@@ -193,18 +193,20 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
     }
   };
 
-  const triggerParticipantAction = (participant, action) => {
-    if (participant) {
-      setSelectedParticipantForAction({
-        id: participant.id,
-        nickname: participant.gameNickname || participant.nickname,
-      });
-    } else {
-      setSelectedParticipantForAction(null);
-    }
-    setActionModalType(action);
-    setIsActionModalOpen(true);
-  };
+ const triggerParticipantAction = (participant, action) => {
+  if (participant) {
+    // Проверяем все возможные варианты написания ID
+    const realId = participant.id ?? participant.Id ?? 0;
+    setSelectedParticipantForAction({
+      id: realId,
+      nickname: participant.gameNickname || participant.nickname || "Неизвестный",
+    });
+  } else {
+    setSelectedParticipantForAction(null);
+  }
+  setActionModalType(action);
+  setIsActionModalOpen(true);
+};
 
   const handleConfirmAction = async (data) => {
     setActionLoading(true);
@@ -225,7 +227,7 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
         await DelBanFromParticipant(unbanRequest);
         addLog(`Игрок ${selectedParticipantForAction.nickname} разбанен`, "info");
       } else if (data.action === "delete") {
-        const deleteRequest = { participantId: selectedParticipantForAction.id };
+        const deleteRequest = { id: selectedParticipantForAction.id };
         await DelParticipant(deleteRequest);
         addLog(`Игрок ${selectedParticipantForAction.nickname} полностью удален из базы`, "error");
       } else if (data.action === "reset_rating_all") {
@@ -252,11 +254,36 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
   setModalLoading(true);
   try {
     if (editingParticipant) {
+      const updateRequest = {
+        id: editingParticipant.id,
+        nickname: data.nickname,
+        gameId: data.gameId,
+        gameName: selectedGame,
+        region: data.region,
+        locale: data.locale,
+        rating: Number(data.rating),
+        messengerName: data.messenger.platform,
+        messengerLogin: data.messenger.login,
+        tournamentPlatformName: data.tournament.platform,
+        tournamentPlatformLogin: data.tournament.login,
+        
+        // Если есть данные о бане (например, редактируем забаненного или добавляем бан),
+        // передаем объект. В противном случае — null (на бэкенде будет nil)
+        banInfo: data.banInfo ? {
+          id: editingParticipant.id,
+          typeBan: data.banInfo.typeBan,
+          reason: data.banInfo.reason,
+          duration: Number(data.banInfo.duration),
+          unit: data.banInfo.unit,
+          isPermanent: data.banInfo.isPermanent
+        } : null
+      };
       // Редактирование существующего игрока
       await EditParticipant(
-        editingParticipant.id, data.nickname, data.gameId, selectedGame,
-        data.region, data.locale, data.rating, data.messenger.platform,
-        data.messenger.login, data.tournament.platform, data.tournament.login,
+        // editingParticipant.id, data.nickname, data.gameId, selectedGame,
+        // data.region, data.locale, data.rating, data.messenger.platform,
+        // data.messenger.login, data.tournament.platform, data.tournament.login,
+        updateRequest
       );
       setIsModalOpen(false);
       await fetchData(false, searchQuery);
@@ -367,12 +394,15 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
           currentOffset,
           trimmedSearch
         );
-
         if (response) {
-          // Твоя Go-структура возвращает массив в поле `list`
-          items = response.list || [];
-          // Если на бэкенде пока нет totalCount для банов, временно берем длину массива или захардкодь
-          total = response.totalCount || items.length; 
+          const rawList = response.list || [];
+          items = rawList.map((b) => ({
+            ...b,
+            id: b.id !== undefined ? b.id : b.Id, // Проверяем обе буквы, записываем строго в id
+            nickname: b.gameNickname || b.nickname,
+            gameId: b.gameId || b.gameID
+          }));
+          total = response.totalCount || items.length;
         }
       } else {
         // Стандартный запрос для вкладок "Все" и "Рейтинг"
@@ -400,7 +430,6 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
       setTotalCount(total);
 
     } catch (err) {
-      console.error("Ошибка загрузки данных:", err);
       if (typeof addLog === 'function') {
         addLog(`Ошибка при получении списка: ${err.message || err}`, "error");
       }
@@ -683,6 +712,9 @@ const filteredPlayers = useMemo(() => {
                             </td>
                             <td className="p-4" style={{ width: `${sizeColumnOfControl}px` }}>
                               <div className="flex flex-col gap-1.5 py-2">
+                                <button onClick={() => handleOpenEditModal(p)} className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[8px] font-black uppercase">
+                                  <Edit2 size={11} /> Изменить
+                                </button>
                                 <button onClick={() => triggerParticipantAction(p, "unban")} className="flex items-center justify-center gap-1.5 px-2 py-2 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white rounded-lg font-black uppercase text-[8px] transition-all w-full">
                                   <ShieldCheck size={11} /> Разбанить
                                 </button>

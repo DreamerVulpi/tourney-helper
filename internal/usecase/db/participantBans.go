@@ -23,7 +23,7 @@ func (p *ParticipantBans) AddParticipantBan(ctx context.Context, request entity.
 }
 
 func (p *ParticipantBans) EditParticipantBan(ctx context.Context, request entity.ParticipantBansEditRequest) (entity.ParticipantEditResponse, error) {
-	err := p.Repo.Edit(ctx, request.Id, request.ParticipantId, request.TypeBan, request.Reason, request.ExpiresAt)
+	err := p.Repo.Edit(ctx, request.ParticipantId, request.TypeBan, request.Reason, request.ExpiresAt)
 	if err != nil {
 		return entity.ParticipantEditResponse{}, err
 	}

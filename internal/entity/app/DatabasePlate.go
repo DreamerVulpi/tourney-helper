@@ -1,5 +1,20 @@
 package app
 
+type EditParticipantRequest struct {
+	Id                      int         `json:"id"`
+	Nickname                string      `json:"nickname"`
+	GameId                  string      `json:"gameId"`
+	GameName                string      `json:"gameName"`
+	Region                  string      `json:"region"`
+	Locale                  string      `json:"locale"`
+	Rating                  int         `json:"rating"`
+	MessengerName           string      `json:"messengerName"`
+	MessengerLogin          string      `json:"messengerLogin"`
+	TournamentPlatformName  string      `json:"tournamentPlatformName"`
+	TournamentPlatformLogin string      `json:"tournamentPlatformLogin"`
+	BanInfo                 *BanRequest `json:"banInfo"`
+}
+
 type BanRequest struct {
 	Id          int    `json:"id"`
 	TypeBan     string `json:"typeBan"`

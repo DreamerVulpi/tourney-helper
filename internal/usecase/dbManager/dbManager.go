@@ -8,6 +8,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/dreamervulpi/tourneyBot/internal/entity/app"
 	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/db"
@@ -278,7 +279,7 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 	}
 }
 
-func (db *Database) EditParticipant(ctx context.Context, p entitySender.Participant) error {
+func (db *Database) EditParticipant(ctx context.Context, p entitySender.Participant, ban *app.BanRequest) error {
 	log.Printf("Id: %v\n", p.Id)
 	log.Printf("MessengerID: %v\n", p.MessenagerID)
 	log.Printf("MessengerLogin: %v\n", p.MessenagerLogin)
@@ -304,6 +305,7 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 	participantTxUc := db.Participant.WithTx(tx)
 	accountsTxUc := db.Accounts.WithTx(tx)
 	statsTxUc := db.Stats.WithTx(tx)
+	banTxUc := db.Bans.WithTx(tx)
 
 	currentParticipant, err := participantTxUc.GetParticipantById(ctx, entityDB.ParticipantGetRequestById{Id: p.Id})
 	if err != nil {
@@ -367,6 +369,20 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 	_, err = statsTxUc.EditParticipantStats(ctx, sEditStatRequest)
 	if err != nil {
 		return err
+	}
+
+	if ban != nil {
+		banUntil := db.CalculateBanUntil(ban.IsPermanent, ban.Duration, ban.Unit)
+		banRequest := entityDB.ParticipantBansEditRequest{
+			ParticipantId: ban.Id,
+			TypeBan:       ban.TypeBan,
+			Reason:        ban.Reason,
+			ExpiresAt:     banUntil,
+		}
+		_, err := banTxUc.EditParticipantBan(ctx, banRequest)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
