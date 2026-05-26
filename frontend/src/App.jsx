@@ -255,13 +255,11 @@ const App = () => {
     }
   };
 
-  const authStatus = useMemo(() => {
-    return {
-      startgg: !!tourneyCfg.urlToTournament, // Authorized, if len(slug) !=0  // TODO: need change to check token from file user
-      discord: !!systemCfg?.discord?.token, // Authorized, if len(token) !=0  // TODO: need change to check token from file user
-      telegram: false,
-    };
-  }, [systemCfg.discord?.token, tourneyCfg.urlToTournament]);
+const [authStatus, setAuthStatus] = useState({
+  startgg: false,
+  discord: false,
+  telegram: false,
+});
 
   //////////////////
   // System statements
@@ -329,6 +327,7 @@ const App = () => {
                   systemCfg={systemCfg}
                   tourneyCfg={tourneyCfg}
                   authStatus={authStatus}
+                  setAuthStatus={setAuthStatus}
                   updateConfig={updateConfig}
                   addLog={addLog}
                   handleAuth={handleAuth}

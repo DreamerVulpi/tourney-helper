@@ -28,9 +28,10 @@ import {
   DelBanFromParticipant,
   DelParticipant,
   ResetRaiting,
+  LoadListPlayers,
 } from "../../wailsjs/go/application/App";
 import { debounce } from "../hooks/debounce.jsx";
-import ImportJsonModal from './ImportJsonModal.jsx';
+import ImportFileModal from './ImportFileModal.jsx';
 import ParticipantModal from "./ParticipantModal.jsx";
 import ParticipantActionModal from "./ParticipantActionModal.jsx";
 
@@ -62,7 +63,7 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
   const [players, setPlayers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [importedJsonData, setImportedJsonData] = useState(null);
+  const [importedFileData, setImportedFileData] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFileType, setImportFileType] = useState(null); // 'json' или 'csv'
 
@@ -103,93 +104,58 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
   const handleImportFile = (file) => {
     if (!file) return;
 
-    const isJson = file.type === "application/json" || file.name.endsWith(".json");
-    const isCsv = file.type === "text/csv" || file.name.endsWith(".csv");
+    // Вытаскиваем полный системный путь к файлу на диске ОС из объекта Wails File
+    const systemFilePath = file.path || file.name;
+
+    const isJson = file.name.endsWith(".json");
+    const isCsv = file.name.endsWith(".csv");
 
     if (!isJson && !isCsv) {
       addLog("Допустимы только файлы форматов .json и .csv", "error");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const fileContent = event.target.result;
-
-      if (isJson) {
-        try {
-          const parsedData = JSON.parse(fileContent);
-          setImportedJsonData(parsedData);
-          setImportFileType("json");
-          setIsImportModalOpen(true);
-          addLog("Файл JSON успешно считан", "success");
-        } catch (error) {
-          addLog("Ошибка парсинга JSON. Проверьте структуру файла.", "error");
-        }
-      } else if (isCsv) {
-        try {
-          const parsedData = parseCsvToObjects(fileContent);
-          
-          if (parsedData.length === 0) {
-            addLog("CSV файл пуст или некорректен", "warn");
-            return;
-          }
-
-          setImportedJsonData(parsedData);
-          setImportFileType("csv");
-          setIsImportModalOpen(true);
-          addLog("Файл CSV успешно считан и преобразован", "success");
-        } catch (error) {
-          addLog("Ошибка парсинга CSV. Проверьте разделители.", "error");
-        }
-      }
-    };
-    reader.readAsText(file);
+    // Сохраняем системный путь в стейт вместо контента данных
+    setImportedFileData(systemFilePath); 
+    setImportFileType(isJson ? "json" : "csv");
+    setIsImportModalOpen(true);
+    
+    addLog(`Файл ${file.name} верифицирован и готов к отправке на бэкенд`, "info");
   };
 
-  const parseCsvToObjects = (text) => {
-    const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line.length > 0);
-    if (lines.length < 2) return [];
-
-    const firstLine = lines[0];
-    const delimiter = firstLine.includes(";") ? ";" : ",";
-    const headers = firstLine.split(delimiter).map(h => h.replace(/^["']|["']$/g, '').trim());
-
-    const result = [];
-    for (let i = 1; i < lines.length; i++) {
-      const currentLine = lines[i];
-      const regex = new RegExp(`${delimiter}(?=(?:(?:[^"]*"){2})*[^"]*$)`);
-      const values = currentLine.split(regex).map(v => v.replace(/^["']|["']$/g, '').trim());
-
-      if (values.length === headers.length) {
-        const obj = {};
-        headers.forEach((header, index) => {
-          obj[header] = values[index];
-        });
-        result.push(obj);
-      }
-    }
-    return result;
-  };
-
-  const handleConfirmJsonImport = async (data) => {
+  const handleConfirmJsonImport = async (filePath) => {
+    setLoading(true);
     try {
-      if (activeFilter === "banned") {
-        // ЛОГИКА: Импорт списка игроков сразу в бан-лист
-        // Здесь вызывай нужный метод Go-бэкенда, например:
-        // await AddBansFromJson(data, selectedGame);
-        addLog(`Успешно импортировано в БАН-ЛИСТ записей: ${data.length}`, "warn");
+      const isBanChecked = activeFilter === "banned";
+      const result = await LoadListPlayers(
+        filePath,
+        nameTournamentPlatform,
+        selectedGame,
+        isBanChecked
+      );
+      const successCount = result?.r1 ?? result?.s ?? 0;
+      const totalCount = result?.r2 ?? result?.t ?? 0;
+      
+      if (isBanChecked) {
+        addLog(`Успешно добавлено в БАН-ЛИСТ записей: ${successCount} из ${totalCount}`, "warn");
       } else {
-        // Стандартная логика импорта обычных игроков
-        // await AddParticipantsFromJson(data, selectedGame); 
-        addLog(`Успешно импортировано участников: ${data.length}`, "success");
+        addLog(`Успешно импортировано участников: ${successCount} из ${totalCount}`, "success");
       }
 
       setIsImportModalOpen(false);
-      setImportedJsonData(null);
+      setImportedFileData(null);
       setImportFileType(null);
-      fetchData(false); 
+      
+      // Даем небольшую паузу SQLite для очистки дескрипторов транзакции перед SELECT'ом
+      setTimeout(() => {
+        fetchData(false);
+      }, 300);
+
     } catch (err) {
-      addLog("Ошибка при сохранении импортированных данных в БД", "error");
+      console.error("Критическая ошибка импорта:", err);
+      addLog(`Ошибка импорта данных бэкендом: ${err}`, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -844,15 +810,15 @@ const filteredPlayers = useMemo(() => {
         theme={theme}
         activeFilter={activeFilter}
       />
-      <ImportJsonModal 
+      <ImportFileModal 
         isOpen={isImportModalOpen}
         onClose={() => {
           setIsImportModalOpen(false);
-          setImportedJsonData(null);
+          setImportedFileData(null);
           setImportFileType(null);
         }}
         onConfirm={handleConfirmJsonImport}
-        jsonData={importedJsonData}
+        filePath={importedFileData}
         fileType={importFileType}
         theme={theme}
         activeFilter={activeFilter}

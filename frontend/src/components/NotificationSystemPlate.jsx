@@ -24,8 +24,9 @@ import {
   Zap,
   Cpu,
 } from "lucide-react";
-import { AuthorizeDiscord } from "../../wailsjs/go/application/App";
+import { AuthorizeDiscord, AuthorizeStartgg } from "../../wailsjs/go/application/App";
 import { StartSendNotifications } from "../../wailsjs/go/application/App";
+import ValidationAlertModal from "./ValidationAlertModal.jsx";
 
 const PlatformBtn = ({
   label,
@@ -155,6 +156,7 @@ const NotificationSystemPlate = ({
   statusNotificationSystem,
   addLog,
   authStatus,
+  setAuthStatus,
   systemCfg,
   tourneyCfg,
   updateConfig,
@@ -214,6 +216,10 @@ const NotificationSystemPlate = ({
     textMuted: isDark ? "text-slate-500" : "text-slate-400",
     btnBg: isDark ? "bg-black/20" : "bg-slate-100",
   };
+  const [validationAlert, setValidationAlert] = useState({
+    isOpen: false,
+    message: "",
+  });
   /////////////
 
   /////////////
@@ -258,6 +264,73 @@ const NotificationSystemPlate = ({
     setTimeout(() => setCopied(false), 2000);
   };
   /////////////
+
+  const handleMessengerClick = async (messengerName) => {
+    const nextMessenger = activeMessenger === messengerName ? "" : messengerName;
+    setActiveMessenger(nextMessenger);
+
+    if (nextMessenger === "discord") {
+      // 1. Валидация обязательных полей с использованием динамического ключа
+      const token = systemCfg[nextMessenger]?.token;
+      const clientID = systemCfg[nextMessenger]?.clientID;
+      const secretClient = systemCfg[nextMessenger]?.secretClient;
+
+      if (!token || !clientID || !secretClient) {
+        // Сбрасываем выбор мессенджера в UI, если обязательные поля пустые
+        setActiveMessenger("");
+        setValidationAlert({
+          isOpen: true,
+          message: "Для авторизации Discord необходимо заполнить обязательные поля: Application Client ID, Client Secret Token и Bot Token Authorization.",
+        });
+        return;
+      }
+
+      // 2. Инициализация на бэкенде
+      addLog("Запуск предварительной авторизации Discord...", "info");
+      try {
+        await AuthorizeDiscord(clientID, secretClient);
+        setAuthStatus((prev) => ({ ...prev, discord: true }));
+        addLog("Бот Discord успешно авторизован в системе", "success");
+      } catch (err) {
+        console.error(err);
+        setAuthStatus((prev) => ({ ...prev, discord: false }));
+        addLog(`Ошибка авторизации Discord: ${err}`, "error");
+      }
+    }
+  };
+
+  const handleTournamentPlatformClick = async (platformName) => {
+    const nextPlatform = activePlatform === platformName ? "" : platformName;
+    setActivePlatform(nextPlatform);
+
+    if (nextPlatform === "startgg") {
+      // 1. Валидация полей с использованием динамического ключа
+      const clientID = tourneyCfg[nextPlatform]?.clientID;
+      const secretClient = tourneyCfg[nextPlatform]?.secretClient;
+
+      if (!clientID || !secretClient) {
+        // Сбрасываем выбор платформы в UI, если поля пустые
+        setActivePlatform("");
+        setValidationAlert({
+          isOpen: true,
+          message: "Для авторизации Start.gg необходимо заполнить поля: Developer Client ID и Authentication Secret token в настройках платформы.",
+        });
+        return;
+      }
+
+      // 2. Инициализация на бэкенде
+      addLog("Инициализация клиента Start.gg...", "info");
+      try {
+        await AuthorizeStartgg(clientID, secretClient);
+        setAuthStatus((prev) => ({ ...prev, startgg: true }));
+        addLog("Клиент Start.gg успешно сконфигурирован", "success");
+      } catch (err) {
+        console.error(err);
+        setAuthStatus((prev) => ({ ...prev, startgg: false }));
+        addLog(`Ошибка инициализации Start.gg: ${err}`, "error");
+      }
+    }
+  };
 
   return (
     <div
@@ -309,11 +382,7 @@ const NotificationSystemPlate = ({
                     label="Start.gg"
                     active={activePlatform === "startgg"}
                     auth={authStatus?.startgg}
-                    onClick={() =>
-                      setActivePlatform(
-                        activePlatform === "startgg" ? "" : "startgg",
-                      )
-                    }
+                    onClick={() => handleTournamentPlatformClick("startgg")}
                     onSettingsClick={() => toggleSettings("startgg")}
                     themeClasses={themeClasses}
                   />
@@ -321,11 +390,7 @@ const NotificationSystemPlate = ({
                     label="Challonge"
                     active={activePlatform === "challonge"}
                     auth={authStatus?.challonge}
-                    onClick={() =>
-                      setActivePlatform(
-                        activePlatform === "challonge" ? "" : "challonge",
-                      )
-                    }
+                    onClick={() => handleTournamentPlatformClick("challonge")}
                     onSettingsClick={() => toggleSettings("challonge")}
                     themeClasses={themeClasses}
                   />
@@ -338,12 +403,9 @@ const NotificationSystemPlate = ({
                     label="Discord"
                     active={activeMessenger === "discord"}
                     auth={authStatus?.discord}
-                    onClick={() => {
-                      handleAuth("discord");
-                      setActiveMessenger(
-                        activeMessenger === "discord" ? "" : "discord",
-                      );
-                    }}
+                    onClick={
+                      () => handleMessengerClick("discord")
+                    }
                     onSettingsClick={() => toggleSettings("discord")}
                     themeClasses={themeClasses}
                   />
@@ -351,10 +413,7 @@ const NotificationSystemPlate = ({
                     label="Telegram"
                     active={activeMessenger === "telegram"}
                     auth={authStatus?.telegram}
-                    onClick={() =>
-                      setActiveMessenger(
-                        activeMessenger === "telegram" ? "" : "telegram",
-                      )
+                    onClick={() => handleMessengerClick("telegram")
                     }
                     onSettingsClick={() => toggleSettings("telegram")}
                     themeClasses={themeClasses}
@@ -389,15 +448,19 @@ const NotificationSystemPlate = ({
                       <input
                         type="text"
                         value={tourneyCfg[activeSettings]?.clientID || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setAuthStatus((prev) => ({
+                            ...prev,
+                            [activeSettings]: false,
+                          }));
                           updateConfig("tournament", {
                             ...tourneyCfg,
                             [activeSettings]: {
                               ...tourneyCfg[activeSettings],
                               clientID: e.target.value,
                             },
-                          })
-                        }
+                          });
+                        }}
                         className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                         placeholder="ID приложения"
                       />
@@ -412,7 +475,11 @@ const NotificationSystemPlate = ({
                       <input
                         type="password"
                         value={tourneyCfg[activeSettings]?.secretClient || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setAuthStatus((prev) => ({
+                            ...prev,
+                            [activeSettings]: false,
+                          }));
                           updateConfig("tournament", {
                             ...tourneyCfg,
                             [activeSettings]: {
@@ -420,7 +487,7 @@ const NotificationSystemPlate = ({
                               secretClient: e.target.value,
                             },
                           })
-                        }
+                        }}
                         className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                         placeholder="••••••••"
                       />
@@ -483,7 +550,11 @@ const NotificationSystemPlate = ({
                       <input
                         type="password"
                         value={systemCfg[activeSettings]?.token}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setAuthStatus((prev) => ({
+                            ...prev,
+                            [activeSettings]: false,
+                          }));
                           updateConfig("system", {
                             ...systemCfg,
                             [activeSettings]: {
@@ -491,7 +562,7 @@ const NotificationSystemPlate = ({
                               token: e.target.value,
                             },
                           })
-                        }
+                        }}
                         className={`w-full rounded-lg pl-8 pr-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                       />
                     </div>
@@ -510,7 +581,7 @@ const NotificationSystemPlate = ({
                           <input
                             type="text"
                             value={systemCfg?.[activeSettings]?.guildID}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               updateConfig("system", {
                                 ...systemCfg,
                                 [activeSettings]: {
@@ -518,7 +589,7 @@ const NotificationSystemPlate = ({
                                   guildID: e.target.value,
                                 },
                               })
-                            }
+                            }}
                             className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                           />
                         </div>
@@ -531,7 +602,7 @@ const NotificationSystemPlate = ({
                           <input
                             type="text"
                             value={systemCfg?.[activeSettings]?.debugChannelID}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               updateConfig("system", {
                                 ...systemCfg,
                                 [activeSettings]: {
@@ -539,7 +610,7 @@ const NotificationSystemPlate = ({
                                   debugChannelID: e.target.value,
                                 },
                               })
-                            }
+                            }}
                             className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                           />
                         </div>
@@ -552,7 +623,11 @@ const NotificationSystemPlate = ({
                           <input
                             type="text"
                             value={systemCfg?.[activeSettings]?.clientID}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              setAuthStatus((prev) => ({
+                                ...prev,
+                                [activeSettings]: false,
+                              }));
                               updateConfig("system", {
                                 ...systemCfg,
                                 [activeSettings]: {
@@ -560,6 +635,7 @@ const NotificationSystemPlate = ({
                                   clientID: e.target.value,
                                 },
                               })
+                            }
                             }
                             className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                           />
@@ -573,7 +649,11 @@ const NotificationSystemPlate = ({
                           <input
                             type="password"
                             value={systemCfg?.[activeSettings]?.secretClient}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              setAuthStatus((prev) => ({
+                                ...prev,
+                                [activeSettings]: false,
+                              }));
                               updateConfig("system", {
                                 ...systemCfg,
                                 [activeSettings]: {
@@ -581,7 +661,7 @@ const NotificationSystemPlate = ({
                                   secretClient: e.target.value,
                                 },
                               })
-                            }
+                            }}
                             className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                           />
                         </div>
@@ -1071,6 +1151,12 @@ const NotificationSystemPlate = ({
           </button>
         </div>
       </div>
+      <ValidationAlertModal
+          isOpen={validationAlert.isOpen}
+          message={validationAlert.message}
+          theme={theme}
+          onClose={() => setValidationAlert({ isOpen: false, message: "" })}
+      />
     </div>
   );
 };

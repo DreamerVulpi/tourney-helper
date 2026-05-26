@@ -17,6 +17,10 @@ func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
 		TokenFile: "token_discord.json",
 	}
 
+	if err := client.Init(a.ctx); err != nil {
+		return fmt.Errorf("failed to initialize discord client: %w", err)
+	}
+
 	_, err := client.GetAccessToken(client.TokenFile)
 	if err != nil {
 		return err
@@ -33,6 +37,11 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 		Config:    auth.GetStartggOauth2(clientID, clientSecret),
 		TokenFile: "token_startgg.json",
 	}
+
+	if err := client.Init(a.ctx); err != nil {
+		return fmt.Errorf("failed to initialize startgg client: %w", err)
+	}
+
 	_, err := client.GetAccessToken(client.TokenFile)
 	if err != nil {
 		return err
@@ -40,6 +49,7 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 
 	client.NamePlatform = "Startgg"
 	a.TournamentClient = client
+
 	log.Printf("StartggClient: %v", client)
 	return nil
 }

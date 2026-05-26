@@ -1,6 +1,23 @@
 package startgg
 
 const (
+	GetUserBySlug = `
+	query getUserBySlug($userSlug: String!) {
+		user(slug: $userSlug) {
+			id
+			slug
+			authorizations(types: [DISCORD]) {
+				id
+				type
+				externalUsername
+			}
+			player {
+				id
+				gamerTag
+			}
+		}
+	}
+	`
 	GetListPhaseGroups = `
 	query getListPhaseGroups($slug: String) {
 		event(slug: $slug) {
@@ -10,7 +27,7 @@ const (
 				id
 			}
 		}
-	},
+	}
 	`
 	GetTournament = `
 	query getTournament($tourneySlug:String!) {
@@ -21,7 +38,6 @@ const (
 		}
 	}
 	`
-
 	GetPagesCount = `
 	query getPagesCount($phaseGroupId: ID!, $states: [Int]){
 		phaseGroup(id:$phaseGroupId){
@@ -42,8 +58,8 @@ const (
 			id
 			state
 		}
-	}`
-
+	}
+	`
 	GetPhaseGroupSets = `
 	query getSets($phaseGroupId: ID!, $page:Int!, $perPage:Int!, $states: [Int]){
 		phaseGroup(id:$phaseGroupId){
@@ -85,5 +101,6 @@ const (
 				}
 			}
 		}
-	}`
+	}
+	`
 )

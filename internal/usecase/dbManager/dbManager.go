@@ -8,9 +8,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/dreamervulpi/tourneyBot/internal/entity/app"
+	entityApp "github.com/dreamervulpi/tourneyBot/internal/entity/app"
 	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/db"
 )
 
@@ -21,14 +22,6 @@ type Database struct {
 	Stats       db.ParticipantStats
 	Bans        db.ParticipantBans
 	SentSets    db.SentSet
-}
-
-func (db *Database) RemoveExpiredBans(ctx context.Context) error {
-	err := db.Bans.DeleteExpiredBans(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 func (db *Database) DeleteBan(ctx context.Context, participantId int) error {
@@ -43,27 +36,6 @@ func (db *Database) DeleteBan(ctx context.Context, participantId int) error {
 	return nil
 }
 
-func (_ *Database) CalculateBanUntil(isPermanent bool, duration int, unit string) *time.Time {
-	if isPermanent || unit == "infinite" {
-		return nil
-	}
-
-	now := time.Now()
-	var banUntil time.Time
-	switch unit {
-	case "minutes":
-		banUntil = now.Add(time.Duration(duration) * time.Minute)
-	case "hours":
-		banUntil = now.Add(time.Duration(duration) * time.Hour)
-	case "days":
-		banUntil = now.AddDate(0, 0, duration)
-	case "months":
-		banUntil = now.AddDate(0, duration, 0)
-	default:
-		banUntil = now.AddDate(0, 0, 1)
-	}
-	return &banUntil
-}
 func (db *Database) AddBan(ctx context.Context, participantId int, typeBan string, reason string, expiresAt *time.Time) error {
 	banAddRequest := entityDB.ParticipantBansAddRequest{
 		ParticipantId: participantId,
@@ -279,7 +251,7 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 	}
 }
 
-func (db *Database) EditParticipant(ctx context.Context, p entitySender.Participant, ban *app.BanRequest) error {
+func (db *Database) EditParticipant(ctx context.Context, p entitySender.Participant, ban *entityApp.BanRequest) error {
 	log.Printf("Id: %v\n", p.Id)
 	log.Printf("MessengerID: %v\n", p.MessenagerID)
 	log.Printf("MessengerLogin: %v\n", p.MessenagerLogin)
@@ -401,6 +373,20 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 	}
 	defer tx.Rollback()
 
+	response, err := db.addParticipantWithTx(ctx, tx, p, false)
+	if err != nil {
+		return entityDB.ParticipantAddResponse{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to commit transaction: %w", err)
+	}
+	return response, nil
+}
+
+func (db *Database) addParticipantWithTx(ctx context.Context, tx *sql.Tx, p entitySender.Participant, isBan bool) (entityDB.ParticipantAddResponse, error) {
+	log.Printf("Participant data: %v", p)
+
 	participantTxUc := db.Participant.WithTx(tx)
 	accountsTxUc := db.Accounts.WithTx(tx)
 	statsTxUc := db.Stats.WithTx(tx)
@@ -497,10 +483,59 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to add game (%v) stats: %w", p.GameName, err)
 	}
 
-	if err := tx.Commit(); err != nil {
-		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to commit transaction: %w", err)
-	}
 	log.Printf("db | successfuly added new participant (ID: %v, Nickname: %v)", pAddResponse.Id, mainNickname)
 	log.Printf("Return from AddParticipant - %v", pAddResponse.Id)
+
+	if isBan {
+		bansTxUc := db.Bans.WithTx(tx)
+		expiresAt := db.CalculateBanUntil(false, 30, "days")
+		pAddBanRequest := entityDB.ParticipantBansAddRequest{
+			ParticipantId: pAddResponse.Id,
+			TypeBan:       "other",
+			// TODO: Add to locale
+			Reason:    "Массовый импорт из списка",
+			ExpiresAt: expiresAt,
+		}
+		log.Printf("db | Adding participant ID %v to ban list", pAddResponse.Id)
+		_, err := bansTxUc.AddParticipantBan(ctx, pAddBanRequest)
+		if err != nil {
+			return entityDB.ParticipantAddResponse{}, fmt.Errorf("failed to apply ban for participant: %w", err)
+		}
+	}
+
 	return pAddResponse, nil
+}
+
+func (db *Database) AddParticipants(ctx context.Context, list []entityStartgg.ImportedParticipantContact, isBan bool) (int, int, error) {
+	if len(list) == 0 {
+		return 0, 0, nil
+	}
+
+	tx, err := db.Conn.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, 0, fmt.Errorf("db | bulk: failed to start transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	successful := 0
+	for _, data := range list {
+		participant := db.ConvertData(data)
+		_, err := db.addParticipantWithTx(ctx, tx, participant, isBan)
+		if err != nil {
+			log.Printf("db | bulk: skipping participant %s due to error: %w", data.Nickname, err)
+			continue
+		}
+		successful++
+	}
+
+	if successful > 0 {
+		if err := tx.Commit(); err != nil {
+			return 0, 0, fmt.Errorf("db | bulk: failed to commit transaction: %w", err)
+		}
+	}
+
+	total := len(list)
+	log.Printf("db | Bulk insert successful. %d participants added", successful)
+
+	return successful, total, nil
 }

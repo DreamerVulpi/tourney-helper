@@ -35,16 +35,20 @@ func getAbsPath(fileName string) string {
 }
 
 func isGoRun(path string) bool {
-	// Простая проверка, не находимся ли мы во временной папке компиляции Go
 	return filepath.Base(filepath.Dir(path)) == "go-build" ||
-		filepath.Base(path) == "b001" // b001 - типичная подпапка для go build
+		filepath.Base(path) == "b001"
 }
 
 func NewPool() (*sql.DB, error) {
-	db, err := sql.Open("sqlite", getAbsPath("tourneyHelperProject.db")+"?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)")
+	db, err := sql.Open("sqlite", getAbsPath("tourneyHelperProject.db"))
 	if err != nil {
 		return nil, fmt.Errorf("sqlite | failed to open db: %w", err)
 	}
+	_, err = db.Exec(`
+		PRAGMA foreign_keys = ON;
+		PRAGMA journal_mode = WAL;
+		PRAGMA busy_timeout = 5000;
+	`)
 
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("sqlite | database unreachable: %w", err)
@@ -60,7 +64,8 @@ func NewPool() (*sql.DB, error) {
 		return nil, fmt.Errorf("sqlite | migration failed: %w", err)
 	}
 
-	db.SetMaxOpenConns(0)
-	db.SetMaxIdleConns(0)
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxLifetime(0)
 	return db, nil
 }

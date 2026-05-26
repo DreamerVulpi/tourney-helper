@@ -39,14 +39,14 @@ func NewStartggAdapter(client *startgg.Client, messengerName string, url string,
 }
 
 // Get discord contacts from CSV file Startgg
-func LoadCSV(nameFile string) (map[string]sender.Participant, error) {
-	if nameFile == "" {
+func LoadCSV(path string) (map[string]sender.Participant, error) {
+	if path == "" {
 		return nil, errors.New("loadCSV: filename is empty")
 	}
 
-	log.Println(nameFile)
+	log.Println(path)
 
-	f, err := os.Open(nameFile)
+	f, err := os.Open(path)
 	if err != nil {
 		return map[string]sender.Participant{}, fmt.Errorf("loadCSV: open file, %v", err)
 	}

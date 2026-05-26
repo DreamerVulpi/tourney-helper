@@ -5,9 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 	"io"
+	"log"
 	"net/http"
+	"os"
+
+	"encoding/csv"
+	"strconv"
+	"strings"
+
+	"github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 )
 
 type Client struct {
@@ -91,4 +98,237 @@ func GetData[T any](c *Client, rawQuery string, variables map[string]any) (*T, e
 	}
 
 	return &results, nil
+}
+
+func (c *Client) LoadDataFromJSON(path string, gameName string) ([]startgg.ImportedParticipantContact, error) {
+	if path == "" {
+		return nil, errors.New("loadJSON: filename is empty")
+	}
+
+	f, err := os.ReadFile(path)
+	if err != nil {
+		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadCSV: open file, %v", err)
+	}
+
+	var rows []startgg.ParticipantImportContact
+	if err := json.Unmarshal(f, &rows); err != nil {
+		var row startgg.ParticipantImportContact
+		if err2 := json.Unmarshal(f, &row); err2 == nil {
+			rows = append(rows, row)
+		} else {
+			return nil, fmt.Errorf("loadJSON: unmarshal error: %w", err)
+		}
+	}
+
+	participants := make([]startgg.ImportedParticipantContact, 0, len(rows))
+	for _, row := range rows {
+		nickname := row.GameNickname
+		if nickname == "" {
+			if row.MessenagerLogin != "" {
+				nickname = row.MessenagerLogin
+			} else {
+				nickname = "N/D"
+			}
+		}
+
+		activeGameName := row.GameName
+		if activeGameName == "" {
+			activeGameName = gameName
+		}
+
+		gameID := row.GameID
+		if gameID == "" {
+			gameID = "N/D"
+		}
+
+		messengerName := row.MessenagerName
+		if messengerName == "" {
+			messengerName = "N/D"
+		}
+
+		messengerLogin := row.MessenagerLogin
+		if messengerLogin == "" {
+			messengerLogin = "N/D"
+		}
+
+		locale := row.Locale
+		if locale == "" {
+			locale = "en"
+		}
+
+		participants = append(participants, startgg.ImportedParticipantContact{
+			Nickname:                nickname,
+			GameId:                  gameID,
+			GameName:                activeGameName,
+			Region:                  "N/D",
+			Locale:                  locale,
+			Rating:                  0,
+			MessengerName:           messengerName,
+			MessengerLogin:          messengerLogin,
+			TournamentPlatformName:  "Startgg",
+			TournamentPlatformLogin: "N/D",
+			TournamentPlatformId:    "N/D",
+			Discriminator:           "N/D",
+		})
+
+	}
+
+	return participants, nil
+}
+
+func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.ImportedParticipantContact, error) {
+	if path == "" {
+		return nil, errors.New("loadCSV: filename is empty")
+	}
+	log.Println(path)
+
+	f, err := os.Open(path)
+	if err != nil {
+		log.Printf("loadCSV: can't open file %v - %v", path, err)
+		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadCSV: open file, %v", err)
+	}
+	defer f.Close() //nolint:errcheck
+
+	log.Println("test")
+
+	csvReader := csv.NewReader(f)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadCSV: read CSV, %v", err)
+	}
+
+	if len(records) == 0 {
+		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadCSV: 0 records CSV, %v", err)
+	}
+
+	log.Printf("CSV Read complete. Total rows: %d. First row column count: %d. First row layout: %v", len(records), len(records[0]), records[0])
+
+	// Search index for get data
+	var idxDiscordColumn, idxGamerTagColumn, idxConnectColumn, idxDiscriminatorColumn, idxDiscordIDColumn int
+	for index, column := range records[0] {
+		if column == "Discord ID" {
+			idxDiscordIDColumn = index
+		}
+		if column == "Discriminator" {
+			idxDiscriminatorColumn = index
+		}
+		if strings.Contains(column, "Discord!") {
+			idxDiscordColumn = index
+		}
+		if column == "Short GamerTag" {
+			idxGamerTagColumn = index
+		}
+		if column == "Connect" {
+			idxConnectColumn = index
+		}
+	}
+
+	participants := make([]startgg.ImportedParticipantContact, 0, len(records)-1)
+	for i := 1; i < len(records); i++ {
+		attendee := records[i]
+		log.Println(attendee)
+		if len(attendee) <= idxGamerTagColumn {
+			log.Printf("loadCSV: very short data (no column GamerTag)")
+			continue
+		}
+
+		var gameNickname string
+		if val := attendee[idxGamerTagColumn]; val != "" {
+			gameNickname = val
+		} else {
+			log.Printf("String #%d is skipped: empty GamerTag", i)
+			continue
+		}
+
+		var discordLogin string
+		if idxDiscordColumn < len(attendee) && attendee[idxDiscordColumn] != "" {
+			discordLogin = attendee[idxDiscordColumn]
+		}
+
+		var discordId string
+		if val := attendee[idxDiscordIDColumn]; val != "" {
+			discordId = val
+		}
+
+		var discriminator string
+		var UserStartgg startgg.UserData
+		if val := attendee[idxDiscriminatorColumn]; val != "" {
+			if len(val) != 0 {
+				discriminator = val
+				UserStartgg, err = c.GetUserBySlug(discriminator)
+				if err != nil {
+					log.Printf("loadCSV: can't get user data for slug %v - %v", discriminator, err)
+				}
+			} else {
+				discriminator = "N/D"
+			}
+		}
+
+		var gameID string
+		if val := attendee[idxConnectColumn]; val != "" {
+			rawGameID := strings.Split(attendee[idxConnectColumn], " ")
+			if len(rawGameID) >= 2 {
+				gameID = strings.ReplaceAll(rawGameID[1], ",", "")
+			} else {
+				gameID = strings.ReplaceAll(val, ",", "")
+			}
+		}
+
+		if gameID == "" {
+			gameID = "N/D"
+		}
+		if gameNickname == "" {
+			if len(UserStartgg.User.Player.GamerTag) != 0 {
+				gameNickname = UserStartgg.User.Player.GamerTag
+			} else {
+				gameNickname = "N/D"
+			}
+		}
+		if discordLogin == "" {
+			if len(UserStartgg.User.Authorizations) != 0 {
+				discordLogin = UserStartgg.User.Authorizations[0].Discord
+			} else {
+				discordLogin = "N/D"
+			}
+		}
+
+		if discordId == "" {
+			discordId = "N/D"
+		}
+
+		var tournamentPlatformLogin string
+		if len(UserStartgg.User.Player.GamerTag) != 0 {
+			tournamentPlatformLogin = UserStartgg.User.Player.GamerTag
+		} else {
+			tournamentPlatformLogin = "N/D"
+		}
+
+		var tournamentPlatformId string
+		if UserStartgg.User.ID != 0 {
+			tournamentPlatformId = strconv.FormatInt(UserStartgg.User.ID, 10)
+		} else {
+			tournamentPlatformId = "N/D"
+		}
+		log.Printf("CSV Headers parsed. Discord: %d, GamerTag: %d, Connect: %d, Discriminator: %d",
+			idxDiscordColumn, idxGamerTagColumn, idxConnectColumn, idxDiscriminatorColumn)
+		if attendee[idxGamerTagColumn] != "" {
+			participants = append(participants, startgg.ImportedParticipantContact{
+				Nickname:                gameNickname,
+				GameId:                  gameID,
+				GameName:                gameName,
+				Region:                  "N/D",
+				Locale:                  "N/D",
+				Rating:                  0,
+				MessengerName:           "Discord",
+				MessengerLogin:          discordLogin,
+				MessengerID:             discordId,
+				TournamentPlatformName:  "Startgg",
+				TournamentPlatformLogin: tournamentPlatformLogin,
+				TournamentPlatformId:    tournamentPlatformId,
+				Discriminator:           discriminator,
+			})
+		}
+	}
+
+	return participants, nil
 }
