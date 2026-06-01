@@ -24,3 +24,4 @@ tourneyHelperProject.db
 tourneyHelperProject.db-shm
 tourneyHelperProject.db-wal
 frontend/wailsjs
+test.json

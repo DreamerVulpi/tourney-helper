@@ -17,6 +17,7 @@ import {
   ChevronDown,
   RefreshCcw,
   SearchX,
+  Copy,
 } from "lucide-react";
 import {
   AddParticipant,
@@ -31,6 +32,7 @@ import {
   LoadListPlayers,
 } from "../../wailsjs/go/application/App";
 import { debounce } from "../hooks/debounce.jsx";
+import ImportProgressModal from './ImportProgressModal.jsx';
 import ImportFileModal from './ImportFileModal.jsx';
 import ParticipantModal from "./ParticipantModal.jsx";
 import ParticipantActionModal from "./ParticipantActionModal.jsx";
@@ -78,6 +80,10 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
   const [selectedParticipantForAction, setSelectedParticipantForAction] =
     useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
+  const [importStatus, setImportStatus] = useState("idle"); // "idle" | "loading" | "success"
+  const [importError, setImportError] = useState(null);    // Сюда пишем текст ошибки
+  const [importResult, setImportResult] = useState(null);  // Сюда сохраняем ответ бэкенда
 
   // Динамическая конфигурация для кнопки управления в зависимости от выбранного фильтра (Вариант 1)
   const addButtonConfig = useMemo(() => {
@@ -123,41 +129,96 @@ const DatabasePlate = ({ theme, statusDatabase }) => {
     addLog(`Файл ${file.name} верифицирован и готов к отправке на бэкенд`, "info");
   };
 
-  const handleConfirmJsonImport = async (filePath) => {
-    setLoading(true);
-    try {
-      const isBanChecked = activeFilter === "banned";
-      const result = await LoadListPlayers(
-        filePath,
-        nameTournamentPlatform,
-        selectedGame,
-        isBanChecked
-      );
-      const successCount = result?.r1 ?? result?.s ?? 0;
-      const totalCount = result?.r2 ?? result?.t ?? 0;
+  // const handleConfirmFileImport = async (filePath) => {
+  //   setLoading(true);
+  //   try {
+  //     const isBanChecked = activeFilter === "banned";
+  //     const result = await LoadListPlayers(
+  //       filePath,
+  //       nameTournamentPlatform,
+  //       selectedGame,
+  //       isBanChecked
+  //     );
+  //     const successCount = result?.r1 ?? result?.s ?? 0;
+  //     const totalCount = result?.r2 ?? result?.t ?? 0;
       
-      if (isBanChecked) {
-        addLog(`Успешно добавлено в БАН-ЛИСТ записей: ${successCount} из ${totalCount}`, "warn");
-      } else {
-        addLog(`Успешно импортировано участников: ${successCount} из ${totalCount}`, "success");
-      }
+  //     if (isBanChecked) {
+  //       addLog(`Успешно добавлено в БАН-ЛИСТ записей: ${successCount} из ${totalCount}`, "warn");
+  //     } else {
+  //       addLog(`Успешно импортировано участников: ${successCount} из ${totalCount}`, "success");
+  //     }
 
-      setIsImportModalOpen(false);
-      setImportedFileData(null);
-      setImportFileType(null);
+  //     setIsImportModalOpen(false);
+  //     setImportedFileData(null);
+  //     setImportFileType(null);
       
-      // Даем небольшую паузу SQLite для очистки дескрипторов транзакции перед SELECT'ом
-      setTimeout(() => {
-        fetchData(false);
-      }, 300);
+  //     // Даем небольшую паузу SQLite для очистки дескрипторов транзакции перед SELECT'ом
+  //     setTimeout(() => {
+  //       fetchData(false);
+  //     }, 300);
 
-    } catch (err) {
-      console.error("Критическая ошибка импорта:", err);
-      addLog(`Ошибка импорта данных бэкендом: ${err}`, "error");
-    } finally {
-      setLoading(false);
+  //   } catch (err) {
+  //     console.error("Критическая ошибка импорта:", err);
+  //     addLog(`Ошибка импорта данных бэкендом: ${err}`, "error");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+const handleConfirmFileImport = async (filePath) => {
+  setIsImportModalOpen(false); 
+  setImportError(null);
+  setImportResult(null);
+  setImportStatus("loading");
+  setIsProgressModalOpen(true);
+
+  try {
+    const isBanChecked = activeFilter === "banned";
+    
+    // Вызываем бэкенд (он вернет объект структуры)
+    const result = await LoadListPlayers(
+      filePath,
+      nameTournamentPlatform,
+      selectedGame,
+      isBanChecked
+    );
+    
+    console.log("Ответ от бэкенда Wails (структура):", result);
+
+    // Проверяем, что объект физически пришел
+    if (!result) {
+      throw new Error("Бэкенд вернул пустой ответ (null).");
     }
-  };
+
+    // Достаем переменные по именам JSON-тегов из Go
+    const successCount = result.success ?? 0;
+    const totalCount = result.total ?? 0;
+
+    // Форматируем для ImportProgressModal (чтобы там отобразилось r1 / r2 строк)
+    setImportResult({ r1: successCount, r2: totalCount });
+    setImportStatus("success");
+    
+    if (isBanChecked) {
+      addLog(`Успешно добавлено в БАН-ЛИСТ записей: ${successCount} из ${totalCount}`, "warn");
+    } else {
+      addLog(`Успешно импортировано участников: ${successCount} из ${totalCount}`, "success");
+    }
+
+    setImportedFileData(null);
+    setImportFileType(null);
+    
+    setTimeout(() => {
+      fetchData(false);
+    }, 300);
+
+  } catch (err) {
+    console.error("Критическая ошибка импорта:", err);
+    const errorText = err?.message || err?.toString() || "Неизвестная ошибка бэкенда";
+    setImportError(errorText);
+    setImportStatus("idle");
+    addLog(`Ошибка импорта данных бэкендом: ${errorText}`, "error");
+  }
+};
 
  const triggerParticipantAction = (participant, action) => {
   if (participant) {
@@ -464,6 +525,27 @@ const filteredPlayers = useMemo(() => {
   const themeClasses =
     theme === "dark" ? "bg-[#050505] text-white border-white/5" : "bg-slate-50 text-slate-900 border-slate-200";
 
+  const handleCopyText = (participant) => {
+  console.log(participant)
+  // 1. Проверяем валидность турнирного логина
+  const isTournamentValid = participant.tournamentPlatformLogin && participant.tournamentPlatformLogin !== "N/D";
+  const tournamentLine = isTournamentValid 
+    ? `${nameTournamentPlatform} | Login: ${participant.tournamentPlatformLogin}` 
+    : `${nameTournamentPlatform} | Login: "N/D"`;
+
+  // 2. Проверяем валидность мессенджер логина
+  const isMessengerValid = participant.messenagerLogin && participant.messenagerLogin !== "N/D";
+  const messengerLine = isMessengerValid 
+    ? `${nameMessengerPlatform} | Login: ${participant.messenagerLogin}` 
+    : `${nameMessengerPlatform} | Login: "N/D"`;
+
+  // 3. Собираем строку с переносом \n
+  const fullText = `${tournamentLine}\n${messengerLine}`;
+  
+  // 4. Записываем в буфер обмена
+  navigator.clipboard.writeText(fullText);
+};
+
   const getRelativeTime = (dateString) => {
     if (!dateString || dateString.startsWith("0001")) return "—";
     const date = new Date(dateString);
@@ -475,6 +557,8 @@ const filteredPlayers = useMemo(() => {
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} ч. назад`;
     return date.toLocaleDateString("ru-RU");
   };
+
+  const [copiedPlayerId, setCopiedPlayerId] = useState(null);
 
   return (
     <div className={`min-h-screen p-4 md:p-8 lg:p-1 transition-all font-sans ${themeClasses}`}>
@@ -673,7 +757,7 @@ const filteredPlayers = useMemo(() => {
                                   {new Date(p.expiresAt).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                                 </span>
                               ) : (
-                                <span className="text-red-600 uppercase font-black tracking-wider text-[9px] bg-red-600/10 px-1.5 py-0.5 rounded border border-red-600/20">Пермач</span>
+                                <span className="text-red-600 uppercase font-black tracking-wider text-[9px] bg-red-600/10 px-1.5 py-0.5 rounded border border-red-600/20">Никогда</span>
                               )}
                             </td>
                             <td className="p-4" style={{ width: `${sizeColumnOfControl}px` }}>
@@ -718,13 +802,49 @@ const filteredPlayers = useMemo(() => {
                               </div>
                             </td>
                             <td className="p-4" style={{ width: `${sizeColumnOfPlatforms}px` }}>
-                              <div className="flex flex-col text-[9px] font-bold whitespace-nowrap leading-tight">
-                                <span className="truncate text-blue-500 uppercase font-black">{nameTournamentPlatform}</span>
-                                {p.tournamentPlatformId && <span className="opacity-60 text-[8px] truncate">ID: {p.tournamentPlatformId}</span>}
-                                {p.tournamentPlatformLogin && <span className="opacity-60 text-[8px] truncate">Login: {p.tournamentPlatformLogin}</span>}
-                                <span className="opacity-40 text-[8px] truncate mt-1">{nameMessengerPlatform}: {p.messenagerID || "—"}</span>
-                              </div>
-                            </td>
+  <div className="flex flex-row items-center justify-between gap-2">
+    
+    {/* Блок с текстом: увеличиваем шрифты до text-xs (12px) и text-[10px] */}
+    <div className="flex flex-col text-xs font-bold whitespace-nowrap leading-tight min-w-0">
+      
+      {/* 2.1 Первая строка: Название турнирной платформы */}
+      <span className="truncate text-blue-500 font-black">
+        {nameTournamentPlatform}
+      </span>
+      
+      {/* 2.2 Вторая строка: Шаблон "Логин: %v" или "Логин: "N/D"" */}
+      <span className="opacity-60 text-[10px] truncate">
+        {p.tournamentPlatformLogin && p.tournamentPlatformLogin !== "N/D"
+          ? `Логин: ${p.tournamentPlatformLogin}`
+          : 'Логин: "N/D"'
+        }
+      </span>
+      
+      {/* 2.3 Третья строка: Название мессенджера */}
+      <span className="text-purple-500 font-black mt-1">
+        {nameMessengerPlatform}
+      </span>
+      
+      {/* 2.4 Четвертая строка: Шаблон "Логин: %v" или "Логин: "N/D"" */}
+      <span className="opacity-60 text-[10px] truncate">
+        {p.messenagerLogin && p.messenagerLogin !== "N/D"
+          ? `Логин: ${p.messenagerLogin}`
+          : 'Логин: "N/D"'
+        }
+      </span>
+    </div>
+
+    {/* 2.5 Кнопка с иконкой, куда мы пробрасываем локальную переменную p */}
+    <button 
+      onClick={() => handleCopyText(p)}
+      className="p-1.5 rounded-md border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+      title="Скопировать контакт"
+    >
+      {<Copy size={12} />}
+    </button>
+
+  </div>
+</td>
                             <td className="p-4 opacity-60 italic text-[10px] whitespace-nowrap" style={{ width: `${sizeColumnOfUpdateDate}px` }}>{getRelativeTime(p.updatedAt)}</td>
                             <td className="p-4" style={{ width: `${sizeColumnOfControl}px` }}>
                               <div className="flex flex-col gap-1.5">
@@ -769,6 +889,7 @@ const filteredPlayers = useMemo(() => {
 
             {/* Footer Metadata & Global Actions */}
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase italic px-2">
+              {activeFilter === "rating" && (
               <button
                 onClick={() => triggerParticipantAction(null, "reset_rating_all")}
                 className={`group flex items-center gap-2 h-[46px] px-5 border transition-all rounded-xl text-[10px] font-black uppercase italic tracking-wider ${
@@ -777,11 +898,26 @@ const filteredPlayers = useMemo(() => {
               >
                 <RotateCcw size={14} className="transform group-hover:rotate-[-180deg] transition-transform duration-500 shrink-0" />
                 <span>Сброс рейтинга всех игроков</span>
-              </button>
+              </button>)}
+              <div className="hidden sm:block" />
               <div className={`flex items-center h-[46px] px-5 border rounded-xl text-[10px] font-black uppercase italic tracking-wider ${
                 theme === "dark" ? "bg-blue-600/5 border-blue-500/10 text-slate-400" : "bg-blue-50/50 border-blue-200 text-slate-600"
               }`}>
-                <span>Всего игроков в базе данных: <span className={`ml-1 font-mono text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}>{totalCount}</span></span>
+                {activeFilter === "banned" ? (
+  <span>
+    Всего игроков в бан-листе:{" "}
+    <span className={`ml-1 font-mono text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}>
+      {totalCount}
+    </span>
+  </span>
+) : (
+  <span>
+    Всего игроков в базе данных:{" "}
+    <span className={`ml-1 font-mono text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}>
+      {totalCount}
+    </span>
+  </span>
+)}
               </div>
             </div>
 
@@ -817,11 +953,30 @@ const filteredPlayers = useMemo(() => {
           setImportedFileData(null);
           setImportFileType(null);
         }}
-        onConfirm={handleConfirmJsonImport}
+        onConfirm={handleConfirmFileImport}
         filePath={importedFileData}
         fileType={importFileType}
         theme={theme}
         activeFilter={activeFilter}
+      />
+      <ImportProgressModal 
+        isOpen={isProgressModalOpen}
+        status={importStatus}
+        errorData={importError}
+        resultData={importResult}
+        theme={theme}
+        onClose={() => {
+          setIsProgressModalOpen(false);
+          // Сбрасываем стейты окна после закрытия
+          setImportError(null);
+          setImportStatus("idle");
+          setImportResult(null);
+          
+          // Делаем рефетч таблицы
+          setTimeout(() => {
+            fetchData(false);
+          }, 100);
+        }}
       />
     </div>
   );

@@ -1,5 +1,10 @@
 package app
 
+type ImportListPlayersResponse struct {
+	Success int `json:"success"`
+	Total   int `json:"total"`
+}
+
 type EditParticipantRequest struct {
 	Id                      int         `json:"id"`
 	Nickname                string      `json:"nickname"`

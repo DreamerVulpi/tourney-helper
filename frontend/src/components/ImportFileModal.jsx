@@ -128,7 +128,7 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
                 isDark ? 'bg-blue-500/5 border-blue-500/20 text-blue-400' : 'bg-blue-500/[0.02] border-blue-200 text-blue-700'
               }`}>
                 <p className="text-[11px] font-semibold leading-relaxed">
-                  Если вы собираете JSON вручнfую, убедитесь, что структура строго соответствует схеме ключей бэкенда.
+                  Если вы собираете JSON вручную, убедитесь, что структура строго соответствует схеме полей.
                 </p>
               </div>
 

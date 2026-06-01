@@ -19,18 +19,17 @@ import (
 
 // REFACTOR
 
-func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, gameName string, isBan bool) (int, int, error) {
+func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, gameName string, isBan bool) (*app.ImportListPlayersResponse, error) {
 	switch strings.ToLower(selectedTournamentPlatform) {
 	case "startgg":
 		if a.TournamentClient == nil || a.TournamentClient.HTTPClient == nil {
 			log.Printf("app | tournament client or http client isn't inittialized (nil)")
 			log.Printf("StartggClient: %v", a.TournamentClient)
 			log.Printf("StartggClient: %v", a.MessengerClient)
-
+			return nil, fmt.Errorf("tournament client or http client isn't inittialized (nil)")
 		}
-		// FIXME: BUG - nil pointer
-		client := startgg.NewClient(a.TournamentClient.HTTPClient)
 
+		client := startgg.NewClient(a.TournamentClient.HTTPClient)
 		var list []entityStartgg.ImportedParticipantContact
 		var err error
 		ext := strings.ToLower(filepath.Ext(path))
@@ -42,15 +41,15 @@ func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, ga
 			list, err = client.LoadDataFromJSON(path, gameName)
 			log.Println(list)
 		default:
-			return 0, 0, fmt.Errorf("unsupported file extension: %s. Only .csv and .json", ext)
+			return nil, fmt.Errorf("unsupported file extension: %s. Only .csv and .json", ext)
 		}
 		if err != nil {
-			return 0, 0, err
+			return nil, err
 		}
 
 		s, t, err := a.Db.AddParticipants(a.ctx, list, isBan)
 		if err != nil {
-			return 0, 0, err
+			return nil, err
 		}
 
 		// TODO: Add to locale
@@ -61,10 +60,10 @@ func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, ga
 
 		report := fmt.Sprintf("Успешно %s %d из %d записей", actionText, s, t)
 		log.Println("app | " + report)
-		return s, t, nil
+		return &app.ImportListPlayersResponse{Success: s, Total: t}, nil
 
 	default:
-		return 0, 0, fmt.Errorf("no support selected platform: %v", selectedTournamentPlatform)
+		return nil, fmt.Errorf("no support selected platform: %v", selectedTournamentPlatform)
 	}
 }
 
