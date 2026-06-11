@@ -9,7 +9,7 @@ import {
   LayoutGrid
 } from "lucide-react";
 
-const NavItem = ({ icon, label, active, onClick, theme }) => (
+const NavItem = ({ icon, label, active, onClick, theme, locale}) => (
   <button
     onClick={onClick}
     className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 relative group overflow-hidden mb-1 ${
@@ -20,7 +20,6 @@ const NavItem = ({ icon, label, active, onClick, theme }) => (
           : "text-slate-600 hover:bg-blue-600/10 hover:text-blue-600"
     }`}
   >
-    {/* Активный индикатор (полоска слева) */}
     {active && (
       <div className="absolute left-0 top-2 bottom-2 w-1 bg-white rounded-r-full shadow-[2px_0_10px_rgba(255,255,255,0.5)] z-20" />
     )}
@@ -35,7 +34,6 @@ const NavItem = ({ icon, label, active, onClick, theme }) => (
       {label}
     </span>
 
-    {/* Эффект блика при наведении для активной кнопки */}
     {active && (
       <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent pointer-events-none animate-pulse" />
     )}
@@ -49,13 +47,14 @@ const SidePanel = ({
   statusDatabase, 
   statusSender, 
   statusWidgetBracket, 
-  statusWidgetScoreboard
+  statusWidgetScoreboard,
+  locale,
 }) => {
   const statuses = [
-    { label: "Рассылка уведомлений", active: statusSender },
-    { label: "База данных игроков", active: statusDatabase },
-    { label: "Оверлей турнирной сетки", active: statusWidgetBracket },
-    { label: "Оверлей Scoreboard", active: statusWidgetScoreboard }
+    { label: locale.NotificationSystemLabel, active: statusSender },
+    { label: locale.DatabaseLabel, active: statusDatabase },
+    { label: locale.WidgetOfBracketLabel, active: statusWidgetBracket },
+    { label: locale.WidgetOfScoreboardLabel, active: statusWidgetScoreboard }
   ];
 
   return (
@@ -70,32 +69,33 @@ const SidePanel = ({
           active={activeTab === "notifications"}
           onClick={() => setActiveTab("notifications")}
           icon={<Send size={20} />}
-          label="Рассылка уведомлений"
+          label= {locale.NotificationSystemLabel}
         />
         <NavItem
           theme={theme}
           active={activeTab === "database"}
           onClick={() => setActiveTab("database")}
           icon={<Users size={20} />}
-          label="База данных игроков"
+          label={locale.DatabaseLabel}
         />
-        <NavItem
+        {/* In future updates */}
+        {/* <NavItem
           theme={theme}
           active={activeTab === "bracket"}
           onClick={() => setActiveTab("bracket")}
           icon={<Trophy size={20} />}
-          label="Виджет сетки"
+          label={locale.WidgetOfBracketLabel}
         />
         <NavItem
           theme={theme}
           active={activeTab === "scoreboard"}
           onClick={() => setActiveTab("scoreboard")}
           icon={<Monitor size={20} />}
-          label="Виджет Scoreboard"
-        />
+          label={locale.WidgetOfScoreboardLabel}
+        /> */}
       </div>
 
-      Version: 0.3.0
+      {locale.VersionLabel} 0.3.0
     </nav>
   );
 };

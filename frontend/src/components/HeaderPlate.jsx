@@ -23,7 +23,7 @@ const AuthIndicator = ({ label, active }) => (
   </div>
 );
 
-const HeaderPlate = ({theme, setTheme, lang, setLang}) => {
+const HeaderPlate = ({theme, setTheme, lang, setLang, locale}) => {
   const [isLangOpen, setIsLangOpen] = useState(false);
 
   const fontStyle = (
@@ -84,7 +84,7 @@ const HeaderPlate = ({theme, setTheme, lang, setLang}) => {
               theme === "dark" ? "bg-[#121212] border-white/10 text-white" : "bg-white border-slate-200 text-slate-900"
             }`}>
               {/* TODO: Need add support EN language for UI */}
-              {["RU"].map((l) => (
+              {["RU", "EN"].map((l) => (
                 <button
                   key={l}
                   onClick={() => {
@@ -139,14 +139,14 @@ const HeaderPlate = ({theme, setTheme, lang, setLang}) => {
               style={{ width: "0.875rem", height: "0.875rem" }}
               className="group-hover:rotate-12 transition-transform"
             />
-            <span className="translate-y-[0.05rem]">Помощь</span>
+            <span className="translate-y-[0.05rem]">{locale.HelpLabel}</span>
           </button>
           <button className="hover:text-blue-500 transition-colors flex items-center gap-[0.25rem] group">
             <Info
               style={{ width: "0.875rem", height: "0.875rem" }}
               className="group-hover:scale-110 transition-transform"
             />
-            <span className="translate-y-[0.05rem]">О программе</span>
+            <span className="translate-y-[0.05rem]">{locale.AboutLabel}</span>
           </button>
         </div>
       </div>

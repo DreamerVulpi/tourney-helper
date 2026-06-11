@@ -8,7 +8,8 @@ const ParticipantModal = ({
     initialData = null, 
     loading = false,
     theme = 'dark',
-    activeFilter = 'all' // Проп для отслеживания текущей вкладки бан-листа
+    activeFilter = 'all',
+    locale,
 }) => {
     // Режим определяется наличием переданных данных
     const isEditMode = !!initialData;
@@ -42,11 +43,11 @@ const ParticipantModal = ({
     });
 
     const banReasons = [
-        { value: 'software/cheats', label: 'Использование стороннего ПО / Читы' },
-        { value: 'toxic/insults', label: 'Оскорбления участников / Токсичное поведение' },
-        { value: 'rules/violation', label: 'Нарушение регламента турнира' },
-        { value: 'match/sabotage', label: 'Саботаж матчей / Намеренный проигрыш' },
-        { value: 'smurfing', label: 'Смурфинг / Игра с чужого аккаунта' }
+        { value: 'software/cheats', label: locale.AddBanFields.ListViolationCategories.UsingSoftwareOrCheats },
+        { value: 'toxic/insults', label: locale.AddBanFields.ListViolationCategories.ToxicBehavior },
+        { value: 'rules/violation', label: locale.AddBanFields.ListViolationCategories.ViolationOfRules },
+        { value: 'match/sabotage', label: locale.AddBanFields.ListViolationCategories.SabotageMatches },
+        { value: 'smurfing', label: locale.AddBanFields.ListViolationCategories.Smurfing }
     ];
 
     useEffect(() => {
@@ -207,12 +208,12 @@ const ParticipantModal = ({
                         </div>
                         <h2 className={`text-sm font-black uppercase italic tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
                             {isBanMode 
-                                ? 'Внести нарушителя в бан-лист' 
+                                ? locale.AddBanTitle
                                 : isEditingBannedPlayer 
-                                ? 'Редактировать данные нарушителя' 
+                                ? locale.EditBanTitle 
                                 : isEditMode 
-                                ? 'Изменить данные участника' 
-                                : 'Добавить участника'
+                                ? locale.EditTitle
+                                : locale.Label
                             }
                         </h2>
                     </div>
@@ -234,10 +235,10 @@ const ParticipantModal = ({
                     {/* Основные инпуты */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2 sm:col-span-1">
-                            <label className={labelClasses}>Никнейм *</label>
+                            <label className={labelClasses}>{locale.AddModalWindow.Nickname} *</label>
                             <input 
                                 type="text"
-                                placeholder="Headache"
+                                placeholder="Nickname"
                                 value={formData.nickname}
                                 onChange={e => setFormData({...formData, nickname: e.target.value})}
                                 className={inputClasses}
@@ -245,7 +246,7 @@ const ParticipantModal = ({
                         </div>
 
                         <div className="col-span-2 sm:col-span-1">
-                            <label className={labelClasses}>Игровой ID *</label>
+                            <label className={labelClasses}>{locale.AddModalWindow.GameID} *</label>
                             <input 
                                 type="text"
                                 placeholder="12345678"
@@ -256,20 +257,23 @@ const ParticipantModal = ({
                         </div>
 
                         <div className="col-span-2 sm:col-span-1">
-                            <label className={labelClasses}>Регион</label>
+                            <label className={labelClasses}>{locale.AddModalWindow.Region}</label>
                             <select 
                                 value={formData.region}
                                 onChange={e => setFormData({...formData, region: e.target.value})}
                                 className={inputClasses}
                             >
-                                <option value="Europe" className={isDark ? 'bg-[#121212]' : 'bg-white'}>Europe</option>
-                                <option value="Asia" className={isDark ? 'bg-[#121212]' : 'bg-white'}>Asia</option>
-                                <option value="Africa" className={isDark ? 'bg-[#121212]' : 'bg-white'}>Africa</option>
+                                <option value="Europe" className={isDark ? 'bg-[#121212]' : 'bg-white'}>{locale.AddModalWindow.ListRegions.Europe}</option>
+                                <option value="Asia" className={isDark ? 'bg-[#121212]' : 'bg-white'}>{locale.AddModalWindow.ListRegions.Asia}</option>
+                                <option value="Africa" className={isDark ? 'bg-[#121212]' : 'bg-white'}>{locale.AddModalWindow.ListRegions.Africa}</option>
+                                <option value="NorthAmerica" className={isDark ? 'bg-[#121212]' : 'bg-white'}>{locale.AddModalWindow.ListRegions.NorthAmerica}</option>
+                                <option value="SouthAmerica" className={isDark ? 'bg-[#121212]' : 'bg-white'}>{locale.AddModalWindow.ListRegions.SouthAmerica}</option>
+                                <option value="Other" className={isDark ? 'bg-[#121212]' : 'bg-white'}>{locale.AddModalWindow.ListRegions.Other}</option>
                             </select>
                         </div>
 
                         <div className="col-span-2 sm:col-span-1">
-                            <label className={labelClasses}>Язык</label>
+                            <label className={labelClasses}>{locale.AddModalWindow.Language}</label>
                             <select 
                                 value={formData.locale}
                                 onChange={e => setFormData({...formData, locale: e.target.value})}
@@ -281,7 +285,7 @@ const ParticipantModal = ({
                         </div>
 
                         <div className="col-span-2">
-                            <label className={labelClasses}>MMR Рейтинг</label>
+                            <label className={labelClasses}>{locale.AddModalWindow.Rating}</label>
                             <div className="relative">
                                 <input 
                                     type="number"
@@ -300,11 +304,10 @@ const ParticipantModal = ({
                         {formData.messenger.active ? (
                             <div className={`p-4 rounded-xl border relative ${isDark ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200'}`}>
                                 <div className="flex justify-between items-center mb-2">
-                                    <label className={labelClasses}>Контакт мессенджера</label>
+                                    <label className={labelClasses}>{locale.AddModalWindow.ContactOfMessengerLabel}</label>
                                     <button 
                                         onClick={() => setFormData({...formData, messenger: {...formData.messenger, active: false, login: ''}})}
                                         className="text-slate-500 hover:text-red-500 transition-colors"
-                                        title="Убрать поле"
                                     >
                                         <X size={14} />
                                     </button>
@@ -328,14 +331,14 @@ const ParticipantModal = ({
                             </div>
                         ) : (
                             <button onClick={() => setFormData({...formData, messenger: {...formData.messenger, active: true}})} className={sectionBtnClasses}>
-                                <Plus size={14} /> Добавить контакт мессенджера
+                                <Plus size={14} /> {locale.AddModalWindow.AddContactOfMessenger}
                             </button>
                         )}
 
                         {formData.tournament.active ? (
                             <div className={`p-4 rounded-xl border relative ${isDark ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200'}`}>
                                 <div className="flex justify-between items-center mb-2">
-                                    <label className={labelClasses}>Турнирная платформа</label>
+                                    <label className={labelClasses}>{locale.AddModalWindow.DataOfTourneyPlatformLabel}</label>
                                     <button 
                                         onClick={() => setFormData({...formData, tournament: {...formData.tournament, active: false, login: ''}})}
                                         className="text-slate-500 hover:text-red-500 transition-colors"
@@ -363,7 +366,7 @@ const ParticipantModal = ({
                             </div>
                         ) : (
                             <button onClick={() => setFormData({...formData, tournament: {...formData.tournament, active: true}})} className={sectionBtnClasses}>
-                                <Plus size={14} /> Добавить данные платформы
+                                <Plus size={14} /> {locale.AddModalWindow.AddDataOfTourneyPlatform}
                             </button>
                         )}
                     </div>
@@ -373,7 +376,7 @@ const ParticipantModal = ({
                         <div className={`space-y-4 pt-5 border-t ${isDark ? 'border-red-500/10' : 'border-red-200'}`}>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="col-span-2 sm:col-span-1">
-                                    <label className={labelClasses}>Категория нарушения</label>
+                                    <label className={labelClasses}>{locale.AddBanFields.ViolationCategoryLabel}</label>
                                     <select 
                                         className={inputClasses} 
                                         value={banData.typeBan}
@@ -401,7 +404,7 @@ const ParticipantModal = ({
                                             <X size={12} className="text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
                                         </div>
                                         <span className="text-[10px] font-black uppercase tracking-wider text-slate-400">
-                                            Перманентный бан
+                                            {locale.AddBanFields.PermanentBanLabel}
                                         </span>
                                     </label>
                                 </div>
@@ -409,7 +412,7 @@ const ParticipantModal = ({
                                 {!banData.isPermanent && (
                                     <>
                                         <div className="col-span-2 sm:col-span-1">
-                                            <label className={labelClasses}>Срок действия</label>
+                                            <label className={labelClasses}>{locale.AddBanFields.ValidityPeriodLabel}</label>
                                             <input 
                                                 type="number" 
                                                 min="1" 
@@ -419,23 +422,23 @@ const ParticipantModal = ({
                                             />
                                         </div>
                                         <div className="col-span-2 sm:col-span-1">
-                                            <label className={labelClasses}>Единица времени</label>
+                                            <label className={labelClasses}>{locale.AddBanFields.UnitOfMeasurementLabel}</label>
                                             <select 
                                                 className={inputClasses}
                                                 value={banData.unit}
                                                 onChange={e => setBanData({...banData, unit: e.target.value})}
                                             >
-                                                <option value="days" className={isDark ? 'bg-[#121212]' : 'bg-white'}>Дней</option>
-                                                <option value="months" className={isDark ? 'bg-[#121212]' : 'bg-white'}>Месяцев</option>
+                                                <option value="days" className={isDark ? 'bg-[#121212]' : 'bg-white'}>{locale.AddBanFields.ListUnitsOfMeasurement.Days}</option>
+                                                <option value="months" className={isDark ? 'bg-[#121212]' : 'bg-white'}>{locale.AddBanFields.ListUnitsOfMeasurement.Months}</option>
                                             </select>
                                         </div>
                                     </>
                                 )}
 
                                 <div className="col-span-2">
-                                    <label className={labelClasses}>Описание нарушения / Доказательства</label>
+                                    <label className={labelClasses}>{locale.AddBanFields.DescriptionViolationLabel}</label>
                                     <textarea 
-                                        placeholder="Укажите причину блокировки или ссылку на медиафайлы инцидента..."
+                                        placeholder={locale.AddBanFields.DescriptionTip}
                                         value={banData.reason}
                                         onChange={e => setBanData({...banData, reason: e.target.value})}
                                         className={`w-full h-24 p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${focusRingClass} ${
@@ -465,14 +468,14 @@ const ParticipantModal = ({
                     >
                         <Save size={18} />
                         {loading 
-                            ? 'Обработка...' 
+                            ? locale.AddModalWindow.ProcessingButtonLabel
                             : isBanMode 
-                            ? 'Забанить и сохранить' 
+                            ? locale.AddModalWindow.BanAndSaveButtonLabel
                             : isEditingBannedPlayer 
-                            ? 'Сохранить изменения нарушителя' 
+                            ? locale.AddModalWindow.EditBanNoteButtonLabel
                             : isEditMode 
-                            ? 'Сохранить изменения' 
-                            : 'Создать запись'
+                            ? locale.AddModalWindow.SaveChangesButtonLabel
+                            : locale.AddModalWindow.CreateNoteButtonLabel
                         }
                     </button>
                 </div>

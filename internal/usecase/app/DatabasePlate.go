@@ -67,8 +67,8 @@ func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, ga
 	}
 }
 
-func (a *App) ResetRaiting(request db.ParticipantStatResetRequest) error {
-	err := a.Db.Stats.ResetRaiting(a.ctx, request)
+func (a *App) ResetRating(request db.ParticipantStatResetRequest) error {
+	err := a.Db.Stats.ResetRating(a.ctx, request)
 	if err != nil {
 		return err
 	}

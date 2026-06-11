@@ -32,15 +32,12 @@ import {
   Palette,
 } from "lucide-react";
 import SidePanel from "./components/SidePanel.jsx";
-import NotificationSystemPlate from "./components/NotificationSystemPlate.jsx";
-import DatabasePlate from "./components/DatabasePlate.jsx";
-import { AuthorizeStartgg, LoadSystemConfig } from "../wailsjs/go/application/App.js";
-import { LoadTournamentConfig } from "../wailsjs/go/application/App.js";
-import { SaveSystemConfig } from "../wailsjs/go/application/App.js";
-import { SaveTournamentConfig } from "../wailsjs/go/application/App.js";
+import NotificationSystemPanel from "./components/NotificationSystemPanel.jsx";
+import DatabasePanel from "./components/DatabasePanel.jsx";
+import { AuthorizeStartgg, LoadSystemConfig, LoadTournamentConfig, SaveSystemConfig, SaveTournamentConfig, GetUiLocale } from "../wailsjs/go/application/App.js";
 import { debounce } from './hooks/debounce.jsx';
-import WidgetBracketPlate from "./components/WidgetBracketPlate.jsx";
-import WidgetScoreboardPlate from "./components/WidgetScoreboardPlate.jsx";
+import WidgetBracketPanel from "./components/WidgetBracketPanel.jsx";
+import WidgetScoreboardPanel from "./components/WidgetScoreboardPanel.jsx";
 import LoggerPlate from "./components/LoggerPlate.jsx";
 
 const App = () => {
@@ -261,10 +258,27 @@ const [authStatus, setAuthStatus] = useState({
   telegram: false,
 });
 
+
+
   //////////////////
   // System statements
   const [theme, setTheme] = useState("dark");
-  const [lang, setLang] = useState("RU");
+  const [lang, setLang] = useState("EN");
+
+const [locale, setLocale] = useState(null)
+useEffect(() => {
+    const loadLocalization = async () => {
+      try {
+        const data = await GetUiLocale(lang);
+        setLocale(data);
+        console.log(`Локаль ${lang} успешно загружена`, data);
+      } catch (err) {
+        console.error("Не удалось загрузить локализацию с бэкенда:", err);
+      }
+    };
+
+    loadLocalization();
+}, [lang]); // Как только lang изменился (RU <-> EN) — срабатывает этот код
 
   const [activeTab, setActiveTab] = useState("notifications");
   //////////////////
@@ -279,77 +293,92 @@ const [authStatus, setAuthStatus] = useState({
 
 
   // Themes
-  const themeClasses =
-    theme === "dark"
-      ? "bg-[#050505] text-slate-300"
-      : "bg-[#f8fafc] text-slate-800";
-  const cardClasses =
-    theme === "dark"
-      ? "bg-[#0c0c0c] border-white/5"
-      : "bg-white border-slate-200 shadow-sm";
-  const inputClasses =
-    theme === "dark"
-      ? "bg-black border-white/10 text-white"
-      : "bg-slate-50 border-slate-200 text-slate-900";
+  const themeClasses = {
+  card: theme === "dark" ? "bg-[#111111] border-white/10 text-white" : "bg-white border-slate-200 text-slate-800",
+  bg: theme === "dark" ? "bg-black" : "bg-slate-50",
+  input: theme === "dark" ? "bg-transparent border-white/10 text-white focus:border-purple-500/50" : "bg-transparent border-slate-200 text-slate-700 focus:border-blue-500/50",
+  label: theme === "dark" ? "text-slate-400" : "text-slate-500",
+  section: theme === "dark" ? "bg-black/20 border-white/5" : "bg-slate-50/50 border-slate-100",
+  textMuted: theme === "dark" ? "text-slate-500" : "text-slate-400",
+  btnBg: theme === "dark" ? "bg-black/20" : "bg-slate-100"
+};
 
   return (
     <div
       className={`flex flex-col h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${
-        theme === "dark"
-          ? "bg-[#050505] text-white"
-          : "bg-slate-50 text-slate-900"
+        theme === "dark" ? "bg-[#050505] text-white" : "bg-slate-50 text-slate-900"
       }`}
     >
-      <HeaderPlate
-        theme={theme}
-        setTheme={setTheme}
-        lang={lang}
-        setLang={setLang}
-      />
-
-      <div className="flex flex-1 overflow-hidden">
-        <SidePanel
-          theme={theme}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          statusDatabase={setStatusDatabase}
-          statusSender={setStatusSender}
-          statusWidgetBracket={setStatusWidgetBracket}
-          statusWidgetScoreboard={setStatusWidgetScoreboard}
-        />
-
-        {/* MainWindow */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <main className="flex-1 overflow-y-auto p-8 relative">
-              {activeTab === "notifications" && (
-                <NotificationSystemPlate
-                  theme={theme}
-                  systemCfg={systemCfg}
-                  tourneyCfg={tourneyCfg}
-                  authStatus={authStatus}
-                  setAuthStatus={setAuthStatus}
-                  updateConfig={updateConfig}
-                  addLog={addLog}
-                  handleAuth={handleAuth}
-                />
-              )}
-
-              {activeTab === "database" && (
-                <DatabasePlate theme={theme} statusDatabase={statusDatabase} />
-              )}
-
-              {activeTab === "bracket" && (
-                <WidgetBracketPlate theme={theme} statusWidgetBracket={statusWidgetBracket}/>
-              )}
-
-              {activeTab === "scoreboard" && (
-                <WidgetScoreboardPlate theme={theme} statusWidgetScoreboard={statusWidgetScoreboard}/>
-              )}
-          </main>
-
-          <LoggerPlate logs={logs} setLogs={setLogs} theme={theme}/>
+      {/* ИСПРАВЛЕНО: Если локаль еще грузится — показываем красивый полноэкранный лоадер */}
+      {!locale ? (
+        <div className="h-screen w-screen bg-[#050505] flex flex-col items-center justify-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="font-mono text-xs text-slate-400">Loading localization...</span>
         </div>
-      </div>
+      ) : (
+        <>
+          <HeaderPlate
+            theme={theme}
+            setTheme={setTheme}
+            lang={lang}
+            setLang={setLang}
+            locale={locale.HeaderPanel} // Передаем конкретный узел локали
+          />
+
+          <div className="flex flex-1 overflow-hidden">
+            <SidePanel
+              theme={theme}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              statusDatabase={setStatusDatabase}
+              statusSender={setStatusSender}
+              statusWidgetBracket={setStatusWidgetBracket}
+              statusWidgetScoreboard={setStatusWidgetScoreboard}
+              locale={locale.SidePanel}
+            />
+
+            {/* MainWindow */}
+            <div className="flex-1 flex flex-col min-w-0">
+              <main className="flex-1 overflow-y-auto p-8 relative">
+                  {activeTab === "notifications" && (
+                    <NotificationSystemPanel
+                      theme={theme}
+                      systemCfg={systemCfg}
+                      tourneyCfg={tourneyCfg}
+                      authStatus={authStatus}
+                      setAuthStatus={setAuthStatus}
+                      updateConfig={updateConfig}
+                      addLog={addLog}
+                      handleAuth={handleAuth}
+                      locale={locale.NotificationSystemPanel}
+                      themeClasses={themeClasses}
+                    />
+                  )}
+
+                  {activeTab === "database" && (
+                    <DatabasePanel 
+                      theme={theme} 
+                      statusDatabase={statusDatabase} 
+                      locale={locale.DatabasePanel}
+                      lang={lang}
+                      themeClasses={themeClasses}
+                    />
+                  )}
+                  {/* In future updates */}
+                  {/* {activeTab === "bracket" && (
+                    <WidgetBracketPanel theme={theme} statusWidgetBracket={statusWidgetBracket}/>
+                  )}
+
+                  {activeTab === "scoreboard" && (
+                    <WidgetScoreboardPanel theme={theme} statusWidgetScoreboard={statusWidgetScoreboard}/>
+                  )} */}
+              </main>
+
+              <LoggerPlate logs={logs} setLogs={setLogs} theme={theme} locale={locale.LogPanel}/>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

@@ -14,8 +14,8 @@ func (p *ParticipantStats) WithTx(tx entity.SQLHandler) *ParticipantStats {
 	return &ParticipantStats{Repo: p.Repo.WithTx(tx)}
 }
 
-func (p ParticipantStats) ResetRaiting(ctx context.Context, request entity.ParticipantStatResetRequest) error {
-	err := p.Repo.ResetRaiting(ctx, request.GameName)
+func (p ParticipantStats) ResetRating(ctx context.Context, request entity.ParticipantStatResetRequest) error {
+	err := p.Repo.ResetRating(ctx, request.GameName)
 	if err != nil {
 		return err
 	}

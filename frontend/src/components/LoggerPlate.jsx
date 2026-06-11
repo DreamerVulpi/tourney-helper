@@ -2,7 +2,7 @@ import React from "react";
 import { Database } from "lucide-react";
 
 // Добавляем пропсы: logs, setLogs и theme
-const LoggerPlate = ({ logs = [], setLogs, theme }) => {
+const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
   return (
     <footer
       className={`h-40 border-t backdrop-blur-xl z-40 overflow-hidden flex flex-col ${
@@ -15,7 +15,7 @@ const LoggerPlate = ({ logs = [], setLogs, theme }) => {
         <div className="flex items-center gap-2">
           <Database size={12} className="text-blue-500" />
           <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">
-            Logs
+            {locale.Label}
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -26,7 +26,7 @@ const LoggerPlate = ({ logs = [], setLogs, theme }) => {
             onClick={() => setLogs([])}
             className="text-[8px] font-black uppercase text-slate-600 hover:text-blue-500 transition-colors"
           >
-            Очистить
+            {locale.ClearButtonLabel}
           </button>
         </div>
       </div>

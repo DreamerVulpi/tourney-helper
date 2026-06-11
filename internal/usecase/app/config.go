@@ -1,8 +1,22 @@
 package application
 
 import (
+	"strings"
+
 	"github.com/dreamervulpi/tourneyBot/config"
+	"github.com/dreamervulpi/tourneyBot/internal/entity/locale/ui"
 )
+
+func (a *App) GetUiLocale(lang string) ui.Ui {
+	switch strings.ToUpper(lang) {
+	case "EN":
+		return ui.En
+	case "RU":
+		return ui.Ru
+	default:
+		return ui.Ru
+	}
+}
 
 func (a *App) LoadSystemConfig() (config.ConfigMessenger, error) {
 	path := config.GetAbsPath("config/config2.toml")

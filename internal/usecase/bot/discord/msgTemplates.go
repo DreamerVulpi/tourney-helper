@@ -6,8 +6,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/locale"
-	entityLocale "github.com/dreamervulpi/tourneyBot/internal/entity/locale"
+	entityLocale "github.com/dreamervulpi/tourneyBot/internal/entity/locale/bot"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 )
 
@@ -21,11 +20,11 @@ const (
 )
 
 type responseLocale struct {
-	errorMsg       locale.ErrorMessage
-	vdMsg          locale.ViewDataMessage
-	invMsg         locale.InviteMessage
-	streamMsg      locale.StreamLobbyMessage
-	responseMsg    locale.ResponseMessage
+	errorMsg       entityLocale.ErrorMessage
+	vdMsg          entityLocale.ViewDataMessage
+	invMsg         entityLocale.InviteMessage
+	streamMsg      entityLocale.StreamLobbyMessage
+	responseMsg    entityLocale.ResponseMessage
 	crossplayRules string
 	crossplayLobby string
 	area           string
@@ -157,13 +156,13 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*d
 	return message, local, recipient
 }
 
-func (_ *Handler) typeLocale(language string) locale.Lang {
-	var local locale.Lang
+func (_ *Handler) typeLocale(language string) entityLocale.Lang {
+	var local entityLocale.Lang
 	switch language {
 	case "Russian":
-		local = locale.Ru
+		local = entityLocale.Ru
 	default:
-		local = locale.En
+		local = entityLocale.En
 	}
 	return local
 }

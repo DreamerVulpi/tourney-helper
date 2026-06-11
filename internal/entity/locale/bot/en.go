@@ -1,4 +1,4 @@
-package locale
+package bot
 
 var En = Lang{
 	LogMessage: LogMessage{

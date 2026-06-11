@@ -13,7 +13,6 @@ token_challonge.json
 docker-compose.yaml
 Makefile
 *.log
-ui
 ui/wails.json
 build/bin
 node_modules

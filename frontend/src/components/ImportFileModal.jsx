@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { X, Copy, Check, FileUp, AlertTriangle } from "lucide-react";
 
-const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme = 'dark', activeFilter = 'all' }) => {
+const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme = 'dark', activeFilter = 'all', locale }) => {
   if (!isOpen || !filePath) return null;
 
   const [copied, setCopied] = useState(false);
   const isDark = theme === 'dark';
   const isBanImport = activeFilter === "banned";
 
-  // Базовый шаблон для обычных участников
   const defaultTemplate = `{
   "MessenagerLogin": "",
   "MessenagerName": "",
@@ -19,7 +18,6 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
   "Locale": ""
 }`;
 
-  // Расширенный шаблон для импорта сразу в бан-лист
   const banListTemplate = `{
   "MessenagerLogin": "",
   "MessenagerName": "",
@@ -49,18 +47,17 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
   // Извлекаем чистое имя файла из полного пути для отображения в интерфейсе
   const fileName = filePath.split(/[/\\]/).pop();
   const isFromCsv = fileType === "csv";
-  
-  // Корректное определение формата файла на основе реальных данных
-  let fileFormat = "";
-  if (isFromCsv) {
-    fileFormat = isBanImport ? "CSV Список Блокировок" : "CSV Таблица Участников";
-  } else {
-    fileFormat = isBanImport ? "JSON Список Блокировок" : "JSON Пакет Данных";
-  }
+ 
+  const typeStr = isFromCsv ? "CSV" : "JSON";
+  const fileFormat = isBanImport
+    ? (locale.FileBanFormat).replace("%v", typeStr)
+    : (locale.FileFormat).replace("%v", typeStr);
 
   const labelClasses = `block text-[10px] font-black uppercase tracking-widest mb-2 ${
     isDark ? 'text-slate-500' : 'text-slate-400'
   }`;
+
+  const parts = locale.DescriptionCSV.split("%v");
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -77,7 +74,7 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
               <FileUp size={18} className={isBanImport ? 'text-red-500' : 'text-blue-500'} />
             </div>
             <h2 className={`text-sm font-black uppercase italic tracking-tight ${isDark ? 'text-white' : 'text-slate-800'}`}>
-              {isBanImport ? "Импорт файла блокировок" : "Импорт участников турнира"}
+              {isBanImport ? locale.BanTitle : locale.Title}
             </h2>
           </div>
           <button onClick={onClose} className="p-2 rounded-lg transition-all hover:bg-red-500/10 text-slate-500 hover:text-red-500">
@@ -88,7 +85,7 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
         {/* Content */}
         <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-6">
           <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Файл успешно подготовлен к обработке бэкендом. Пожалуйста, подтвердите операцию:
+            {locale.DescriptionImport}
           </p>
 
           {/* Информационная плашка параметров */}
@@ -96,17 +93,17 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
             isDark ? 'bg-white/5 border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
           }`}>
             <div className="flex justify-between gap-4">
-              <span className="opacity-50 min-w-[80px]">Имя файла:</span>
+              <span className="opacity-50 min-w-[80px]">{locale.NameFile}</span>
               <span className="font-bold truncate text-right">{fileName}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-50">Тип файла:</span>
+              <span className="opacity-50">{locale.TypeFile}</span>
               <span className={`font-bold ${isBanImport ? 'text-red-500' : 'text-blue-500'}`}>{fileFormat}</span>
             </div>
             <div className="flex justify-between">
-              <span className="opacity-50">Целевой реестр:</span>
+              <span className="opacity-50">{locale.TargetRegistry}</span>
               <span className={`font-bold uppercase ${isBanImport ? 'text-red-400' : 'text-green-500'}`}>
-                {isBanImport ? "Бан-лист (Блокировка)" : "Основная база игроков"}
+                {isBanImport ? locale.TargetBanList : locale.TargetDatabase}
               </span>
             </div>
           </div>
@@ -117,9 +114,9 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
               isDark ? 'bg-amber-500/5 border-amber-500/20 text-amber-400' : 'bg-amber-500/[0.02] border-amber-200 text-amber-700'
             }`}>
               <AlertTriangle size={24} className="mb-2 text-amber-500" />
-              <span className="font-black block uppercase tracking-wide text-[10px] mb-1">Требования к CSV</span>
+              <span className="font-black block uppercase tracking-wide text-[10px] mb-1">{locale.RequirementsCSV}</span>
               <p className="text-[11px] font-semibold leading-relaxed max-w-sm">
-                Программа ожидает валидный CSV-файл (экспорт участников с платформы <a href="https://start.gg" target="_blank" rel="noopener noreferrer" className="underline font-bold">start.gg</a>). Кодировка файла должна быть UTF-8.
+                {parts[0]} <a href="https://start.gg" target="_blank" rel="noopener noreferrer" className="underline font-bold">start.gg</a> {parts[1]}
               </p>
             </div>
           ) : (
@@ -128,20 +125,20 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
                 isDark ? 'bg-blue-500/5 border-blue-500/20 text-blue-400' : 'bg-blue-500/[0.02] border-blue-200 text-blue-700'
               }`}>
                 <p className="text-[11px] font-semibold leading-relaxed">
-                  Если вы собираете JSON вручную, убедитесь, что структура строго соответствует схеме полей.
+                  {locale.DescriptionJSON}
                 </p>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className={labelClasses}>{isBanImport ? "Схема полей Бан-Листа" : "Схема полей участников"}</label>
+                  <label className={labelClasses}>{isBanImport ? locale.SchemaFieldsBanJsonLabel : locale.SchemaFieldsJSONLabel}</label>
                   <button
                     onClick={handleCopy}
                     className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase border transition-all ${
                       copied ? 'bg-green-600/10 border-green-500/30 text-green-500' : isDark ? 'bg-white/5 border-white/5 text-slate-400 hover:text-white' : 'bg-slate-50 border-slate-200 text-slate-600'
                     }`}
                   >
-                    {copied ? <><Check size={10} /> Скопировано</> : <><Copy size={10} /> Копировать схему</>}
+                    {copied ? <><Check size={10} /> {locale.SchemaCopiedButtonLabel}</> : <><Copy size={10} /> {locale.SchemaCopyButtonLabel}</>}
                   </button>
                 </div>
                 <textarea
@@ -165,7 +162,7 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
             }`}
           >
             <Check size={18} />
-            {isBanImport ? "Запустить импорт в бан-лист" : "Запустить импорт в базу"}
+            {isBanImport ? locale.StartImportBanListButtonLabel : locale.StartImportButtonLabel}
           </button>
         </div>
 

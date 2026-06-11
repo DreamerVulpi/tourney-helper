@@ -1,6 +1,8 @@
 package discord
 
-import "github.com/dreamervulpi/tourneyBot/internal/entity/locale"
+import (
+	locale "github.com/dreamervulpi/tourneyBot/internal/entity/locale/bot"
+)
 
 func fieldCrossplay(local locale.Lang, state bool) string {
 	crossplay := local.InviteMessage.CrossplatformStatusTrue

@@ -39,7 +39,7 @@ type ParticipantStatsRepo interface {
 		participantId int,
 		gameName string,
 	) (ParticipantStat, error)
-	ResetRaiting(
+	ResetRating(
 		ctx context.Context,
 		gameName string,
 	) error

@@ -153,7 +153,7 @@ func (p *ParticipantStats) GetByGame(ctx context.Context, participantId int, gam
 	return stat, nil
 }
 
-func (p *ParticipantStats) ResetRaiting(ctx context.Context, gameName string) error {
+func (p *ParticipantStats) ResetRating(ctx context.Context, gameName string) error {
 	const sql = `
 		UPDATE participant_stats
 		SET rating = 0

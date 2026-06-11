@@ -1,7 +1,7 @@
 import React from "react";
 import { RefreshCw, CheckCircle2, AlertCircle } from "lucide-react";
 
-const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorData, resultData }) => {
+const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorData, resultData, locale }) => {
   if (!isOpen) return null;
 
   const isDark = theme === "dark";
@@ -10,16 +10,18 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
   const isError = !!errorData;
   const isCompleted = status === "success";
 
+  const SuccessImportMsgParts = locale.LoadingImportFileModalWindows.SuccessImportMsg.split("%v");
+
   // Текст статуса в зависимости от этапа
-  let statusText = "Инициализация импорта и парсинг...";
-  if (status === "loading") statusText = "Запись участников в базу данных SQLite...";
+  let statusText = locale.LoadingImportFileModalWindows.InitImportFileMsg;
+  if (status === "loading") statusText = locale.LoadingImportFileModalWindows.WriteParticipantsInDBMsg;
   if (isCompleted) {
     const successCount = resultData?.r1 ?? resultData?.s ?? 0;
     const totalCount = resultData?.r2 ?? resultData?.t ?? 0;
-    statusText = `Импорт успешно завершен! Обработано записей: ${successCount} из ${totalCount}`;
+    statusText = `${SuccessImportMsgParts[0]} ${successCount} ${SuccessImportMsgParts[1]} ${totalCount}`;
   }
   if (isError) {
-    statusText = `Ошибка импорта: ${errorData}`;
+    statusText = `${locale.LoadingImportFileModalWindows.ErrorImportFileMsg} ${errorData}`;
   }
 
   // Прогресс-бар (пока нет эмиттера, сделаем 0%, 50% во время работы и 100% в конце)
@@ -53,7 +55,7 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
           {/* Текстовый Статус */}
           <div className="space-y-1 w-full">
             <h3 className="text-[10px] font-black uppercase tracking-wider italic text-slate-500">
-              {isError ? "Критический сбой" : "Выполнение операции"}
+              {isError ? locale.LoadingImportFileModalWindows.CriticalFailureStatus : locale.LoadingImportFileModalWindows.StatusInProcess}
             </h3>
             <p className={`text-xs font-bold min-h-[20px] px-2 break-words ${isError ? "text-red-400" : ""}`}>
               {statusText}
@@ -89,7 +91,7 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
                   : "bg-green-600 hover:bg-green-500 shadow-lg shadow-green-600/20"
               }`}
             >
-              {isError ? "Закрыть" : "Готово"}
+              {isError ? locale.LoadingImportFileModalWindows.CloseButtonLabel : locale.LoadingImportFileModalWindows.DoneButtonLabel}
             </button>
           )}
 

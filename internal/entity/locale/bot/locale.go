@@ -1,4 +1,4 @@
-package locale
+package bot
 
 type LogMessage struct {
 	Title                  string

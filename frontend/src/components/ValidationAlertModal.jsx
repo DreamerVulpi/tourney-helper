@@ -1,7 +1,7 @@
 import React from "react";
 import { X, Check, AlertTriangle } from "lucide-react";
 
-const ValidationAlertModal = ({ isOpen, message, onClose, theme = 'dark' }) => {
+const ValidationAlertModal = ({ isOpen, message, onClose, theme = 'dark', locale}) => {
   // Если окно закрыто — ничего не рендерим
   if (!isOpen) return null;
 
@@ -28,7 +28,7 @@ const ValidationAlertModal = ({ isOpen, message, onClose, theme = 'dark' }) => {
             <h2 className={`text-sm font-black uppercase italic tracking-tight ${
               isDark ? 'text-white' : 'text-slate-800'
             }`}>
-              Ошибка заполнения параметров
+              {locale.ErrorFillParams}
             </h2>
           </div>
           {/* Кнопка закрытия "Крестик" */}
@@ -45,7 +45,7 @@ const ValidationAlertModal = ({ isOpen, message, onClose, theme = 'dark' }) => {
           <p className={`text-xs leading-relaxed ${
             isDark ? 'text-slate-400' : 'text-slate-500'
           }`}>
-            Для продолжения работы и запуска предварительной проверки авторизации необходимо исправить конфигурацию приложения:
+            {locale.NeedCorrectConfig}
           </p>
 
           {/* Информационная плашка с текстом ошибки в стиле исходного модального окна */}
@@ -69,7 +69,7 @@ const ValidationAlertModal = ({ isOpen, message, onClose, theme = 'dark' }) => {
             className="w-full flex items-center justify-center gap-3 h-[56px] rounded-xl font-black uppercase italic tracking-wider transition-all text-white bg-red-600 hover:bg-red-500 active:scale-[0.98]"
           >
             <Check size={18} />
-            Понятно, исправить поля
+            {locale.OkButtonLabel}
           </button>
         </div>
 

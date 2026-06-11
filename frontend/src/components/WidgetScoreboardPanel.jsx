@@ -8,7 +8,7 @@ import {
   Eye,
   FileCode,
   Save,
-  Wrench // Иконка для WIP
+  Wrench
 } from "lucide-react";
 
 // Вспомогательные компоненты (предполагается, что они есть в проекте)
