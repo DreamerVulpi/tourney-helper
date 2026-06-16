@@ -10,7 +10,8 @@ const ParticipantActionModal = ({
     currentGame,
     loading = false,
     theme = 'dark',
-    locale
+    locale,
+    addLog
 }) => {
     // Важно: для reset_rating_all participantData будет null, поэтому убираем жесткую блокировку
     if (!isOpen || (!participantData && actionType !== 'reset_rating_all')) return null;
@@ -90,7 +91,7 @@ const ParticipantActionModal = ({
     const handleConfirm = () => {
         if (actionType === 'ban') {
             if (!isPermanent && (!duration || parseInt(duration) <= 0)) {
-                alert("Ошибка: Укажите корректный срок бана или выберите вариант 'Навсегда'!");
+                addLog(locale.AddButton.ConfirmDurationBan, "error");
                 return;
             }
             
@@ -292,7 +293,7 @@ const ParticipantActionModal = ({
                         }`}
                     >
                         {config.confirmIcon}
-                        {loading ? 'Обработка...' : config.btnText}
+                        {loading ? locale.AddButton.AddModalWindow.ProcessingButtonLabel : config.btnText}
                     </button>
                 </div>
             </div>

@@ -83,7 +83,6 @@ const HeaderPlate = ({theme, setTheme, lang, setLang, locale}) => {
             <div className={`absolute right-0 mt-[0.5rem] w-[7rem] border rounded-[0.5rem] shadow-xl py-[0.25rem] z-[100] ${
               theme === "dark" ? "bg-[#121212] border-white/10 text-white" : "bg-white border-slate-200 text-slate-900"
             }`}>
-              {/* TODO: Need add support EN language for UI */}
               {["RU", "EN"].map((l) => (
                 <button
                   key={l}

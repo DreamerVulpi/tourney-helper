@@ -10,17 +10,11 @@ const ParticipantModal = ({
     theme = 'dark',
     activeFilter = 'all',
     locale,
+    addLog
 }) => {
-    // Режим определяется наличием переданных данных
     const isEditMode = !!initialData;
-    
-    // Проверяем, редактируем ли мы игрока, который УЖЕ забанен
     const isEditingBannedPlayer = isEditMode && (initialData.isBanned === "banned" || initialData.status === "banned");
-    
-    // Режим создания игрока сразу в бан-лист
     const isBanMode = activeFilter === 'banned' && !isEditMode;
-    
-    // Показывать блок бана, если это создание в бан-листе ИЛИ редактирование уже забаненного
     const showBanFields = isBanMode || isEditingBannedPlayer;
 
     const [formData, setFormData] = useState({
@@ -33,7 +27,6 @@ const ParticipantModal = ({
         tournament: { active: false, platform: 'Startgg', login: '' }
     });
 
-    // Стейты для полей бана
     const [banData, setBanData] = useState({
         typeBan: 'software/cheats',
         reason: '',
@@ -107,29 +100,26 @@ const ParticipantModal = ({
         const trimmedGameId = formData.gameId.trim();
 
         if (!trimmedNickname) {
-            alert("Ошибка: Никнейм игрока не может быть пустым!"); 
+            addLog(locale.AddModalWindow.ErrEmptyNickname, "error"); 
             return;
         }
 
         if (!trimmedGameId) {
-            alert("Ошибка: Игровой ID не может быть пустым!");
+            addLog(locale.AddModalWindow.ErrEmptyGameID, "error");
             return;
         }
 
         if (formData.messenger.active && !formData.messenger.login.trim()) {
-            alert("Ошибка: Вы активировали поле мессенджера, но не указали логин!");
+            addLog(locale.AddModalWindow.ErrActivateMessengerNoLogin, "error");
             return;
         }
 
         if (formData.tournament.active && !formData.tournament.login.trim()) {
-            alert("Ошибка: Вы активировали поле турнирной платформы, но не указали логин!");
+            addLog(locale.AddModalWindow.ErrActivateTourneyNoLogin, "error");
             return;
         }
 
-        // Проверяем, забанен ли уже этот игрок (для режима редактирования)
         const isAlreadyBanned = initialData && (initialData.isBanned === "banned" || initialData.status === "banned");
-
-        // Базовый объект, который отправляется в обоих случаях (сохраняем id, если редактируем)
         const basePayload = {
             ...formData,
             id: initialData?.id || null,
@@ -139,11 +129,10 @@ const ParticipantModal = ({
             tournament: { ...formData.tournament, login: formData.tournament.login.trim() }
         };
 
-        // Если это создание сразу в бан-лист ИЛИ редактирование уже забаненного игрока
         if (isBanMode || isAlreadyBanned) {
             onSave({
                 ...basePayload,
-                isDirectBan: isBanMode, // true только если создаем новую запись сразу в бан
+                isDirectBan: isBanMode,
                 banInfo: {
                     ...banData,
                     reason: banData.reason.trim() || "Причина не указана администратором",
@@ -151,12 +140,10 @@ const ParticipantModal = ({
                 }
             });
         } else {
-            // Обычное создание или редактирование активного игрока
             onSave(basePayload);
         }
     };
 
-    // Динамический подбор классов фокуса (Красный для бана/нарушителя, Янтарный для обычного редактирования, Синий для создания)
     const focusRingClass = (isBanMode || isEditingBannedPlayer)
         ? 'focus:border-red-500/50 focus:ring-2 focus:ring-red-500/10'
         : isEditMode

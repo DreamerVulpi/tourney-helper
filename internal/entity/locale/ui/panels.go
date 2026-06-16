@@ -35,17 +35,25 @@ type NotificationSystemPanel struct {
 	LobbyLiveBroadcast   LobbyLiveBroadcast
 	ConfigurationLogo    ConfigurationLogo
 	Mailing              Mailing
+	Logs                 NspLogs
 }
 
 type LogPanel struct {
-	Label            string
-	ClearButtonLabel string
+	Label                            string
+	ClearButtonLabel                 string
+	LocaleLoaded                     string
+	LocaleNotLoaded                  string
+	MainConfigSuccessfulLoaded       string
+	TournamentConfigSuccessfulLoaded string
+	ErrorLoadingConfig               string
+	NoLogs                           string
 }
+
 type DatabasePanel struct {
 	AddButton                      AddButton
 	SearchLineLabel                string
 	Filters                        Filters
-	HeaderTable                    HeaderTable
+	Table                          Table
 	ResetRatingButton              ResetRatingModal
 	TotalCountNotesInDBLabel       string
 	TotalCountBannedNotesInDBLabel string

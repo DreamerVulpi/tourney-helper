@@ -1,7 +1,7 @@
 import "./App.css";
 import HeaderPlate from "./components/HeaderPlate.jsx";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Send,
   Users,
@@ -34,8 +34,15 @@ import {
 import SidePanel from "./components/SidePanel.jsx";
 import NotificationSystemPanel from "./components/NotificationSystemPanel.jsx";
 import DatabasePanel from "./components/DatabasePanel.jsx";
-import { AuthorizeStartgg, LoadSystemConfig, LoadTournamentConfig, SaveSystemConfig, SaveTournamentConfig, GetUiLocale } from "../wailsjs/go/application/App.js";
-import { debounce } from './hooks/debounce.jsx';
+import {
+  AuthorizeStartgg,
+  LoadSystemConfig,
+  LoadTournamentConfig,
+  SaveSystemConfig,
+  SaveTournamentConfig,
+  GetUiLocale,
+} from "../wailsjs/go/application/App.js";
+import { debounce } from "./hooks/debounce.jsx";
 import WidgetBracketPanel from "./components/WidgetBracketPanel.jsx";
 import WidgetScoreboardPanel from "./components/WidgetScoreboardPanel.jsx";
 import LoggerPlate from "./components/LoggerPlate.jsx";
@@ -72,10 +79,15 @@ const App = () => {
       stage: "Any", // TODO: Add field in windows of rules
       rounds: 3,
       duration: 60,
-      crossplatform: true, // TODO: Add field in windows of rules
+      crossplatform: true,
       waiting: 10,
     },
-    stream: { area: "EU", language: "RU", connection: "Wired", passcode: "0000" },
+    stream: {
+      area: "EU",
+      language: "EN",
+      connection: "Wired",
+      passcode: "0000",
+    },
     game: { name: "tekken" },
     logo: { img: "" },
     csv: { nameFile: "" },
@@ -114,17 +126,48 @@ const App = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Init load configuration
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [logs, setLogs] = useState([{ time: new Date().toLocaleTimeString(), msg: "Программа TourneyHelper запущена", type: "info" }]);
+  const isConfigLoadedRef = useRef(false); // Флаг: загружена ли конфигурация
+  const [lang, setLang] = useState("EN");
+  const [locale, setLocale] = useState(null);
+  const [logs, setLogs] = useState([]); // Изначально пусто
 
   useEffect(() => {
+    const loadLocalization = async () => {
+      try {
+        const data = await GetUiLocale(lang);
+        setLocale(data);
+        console.log(`${lang} - ${data.LogPanel.LocaleLoaded}`, data);
+
+        // Добавляем приветственный лог, используя только что пришедшие данные data
+        if (data?.LogPanel?.LocaleLoaded) {
+          setLogs([
+            {
+              time: new Date().toLocaleTimeString(),
+              msg: `${lang} - ${data.LogPanel.LocaleLoaded}`,
+              type: "info",
+            },
+          ]);
+        }
+      } catch (err) {
+        console.error(`${data.LogPanel.LocaleNotLoaded}:`, err);
+        addLog(`${data.LogPanel.LocaleNotLoaded}: ${err}`, "error");
+      }
+    };
+    loadLocalization();
+  }, [lang]);
+
+  // Init load configuration
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!locale) return;
+    if (isConfigLoadedRef.current) return;
     const initApp = async () => {
       try {
         const sys = await LoadSystemConfig();
         if (sys) {
           // Используем функциональный апдейт и spread, чтобы ничего не потерять
-          setSystemCfg(prev => ({
+          setSystemCfg((prev) => ({
             ...prev,
             // 1. Обработка Discord (теперь роли внутри платформы)
             discord: {
@@ -133,8 +176,8 @@ const App = () => {
               token: sys.discord?.token || "",
               roles: {
                 ru: sys.discord?.roles?.ru || "",
-                en: sys.discord?.roles?.en || ""
-              }
+                en: sys.discord?.roles?.en || "",
+              },
             },
             // 2. Добавляем Telegram (на будущее, по той же логике)
             telegram: {
@@ -142,39 +185,39 @@ const App = () => {
               ...(sys.telegram || {}),
               roles: {
                 ru: sys.telegram?.roles?.ru || "",
-                en: sys.telegram?.roles?.en || ""
-              }
+                en: sys.telegram?.roles?.en || "",
+              },
             },
             // 3. Отладочный режим
             debug: {
-              mode: sys.debug?.mode ?? sys.Debug?.mode ?? false
+              mode: sys.debug?.mode ?? sys.Debug?.mode ?? false,
             },
             // 4. База данных (в Go у тебя поле Db)
             database: {
-              dsn: sys.database?.dsn || sys.db?.dsn || ""
-            }
-        }));
-          addLog("Основная конфигурация успешно загружена", "success");
+              dsn: sys.database?.dsn || sys.db?.dsn || "",
+            },
+          }));
+          addLog(locale.LogPanel.MainConfigSuccessfulLoaded, "success");
         }
 
         const tourney = await LoadTournamentConfig();
         if (tourney) {
-          setTourneyCfg(prev => ({
+          setTourneyCfg((prev) => ({
             ...prev,
             // Раскрываем вложенные структуры Go
             urlToTournament: tourney.urlToTournament || "",
             startgg: {
               clientID: tourney.startgg?.clientID || "",
               secretClient: tourney.startgg?.secretClient || "",
-              name: tourney.startgg?.name || "startgg"
+              name: tourney.startgg?.name || "startgg",
             },
             challonge: {
               clientID: tourney.challonge?.clientID || "",
               secretClient: tourney.challonge?.secretClient || "",
-              name: tourney.challonge?.name || "challonge"
+              name: tourney.challonge?.name || "challonge",
             },
             logo: {
-              img: tourney.logo?.img || "" 
+              img: tourney.logo?.img || "",
             },
             rules: {
               // Здесь маппинг по тегам json из Go
@@ -188,50 +231,61 @@ const App = () => {
             },
             // Не забываем про остальные вложенные объекты, если они нужны
             stream: tourney.stream || {},
-            game: tourney.game || { name: "" }
+            game: tourney.game || { name: "" },
           }));
-          addLog("Конфигурация турнира успешно загружена", "success");
+          addLog(locale.LogPanel.TournamentConfigSuccessfulLoaded, "success");
         }
-        
+
         setIsLoaded(true);
       } catch (err) {
         console.error("Ошибка загрузки:", err);
-        addLog(err, "error");
+        addLog(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
       }
     };
     initApp();
-  }, []);
+  }, [locale]);
 
-  const debouncedSaveSystem = useMemo(() => debounce((cfg) => SaveSystemConfig(cfg), 1000), []);
-  const debouncedSaveTourney = useMemo(() => debounce((cfg) => {
-    // Безопасное приведение типов перед отправкой в Go
-    const dataToSend = {
-      ...cfg,
-      startgg: cfg.startgg || {},
-      challonge: cfg.challonge || {},
-      rules: {
-        ...cfg.rules,
-        standardFormat: parseInt(cfg.rules?.standardFormat) || 2,
-        finalsFormat: parseInt(cfg.rules?.finalsFormat) || 3,
-        rounds: parseInt(cfg.rules?.rounds) || 3,
-        duration: parseInt(cfg.rules?.duration) || 60,
-        waiting: parseInt(cfg.rules?.waiting) || 10,
-      },
-    };
-    SaveTournamentConfig(dataToSend);
-  }, 1000), []);
+  const debouncedSaveSystem = useMemo(
+    () => debounce((cfg) => SaveSystemConfig(cfg), 1000),
+    [],
+  );
+  const debouncedSaveTourney = useMemo(
+    () =>
+      debounce((cfg) => {
+        // Безопасное приведение типов перед отправкой в Go
+        const dataToSend = {
+          ...cfg,
+          startgg: cfg.startgg || {},
+          challonge: cfg.challonge || {},
+          rules: {
+            ...cfg.rules,
+            standardFormat: parseInt(cfg.rules?.standardFormat) || 2,
+            finalsFormat: parseInt(cfg.rules?.finalsFormat) || 3,
+            rounds: parseInt(cfg.rules?.rounds) || 3,
+            duration: parseInt(cfg.rules?.duration) || 60,
+            waiting: parseInt(cfg.rules?.waiting) || 10,
+          },
+        };
+        SaveTournamentConfig(dataToSend);
+      }, 1000),
+    [],
+  );
 
   const updateConfig = (type, data) => {
     if (!isLoaded) return; // Не сохраняем, пока не загрузились старые данные
-    
+
     if (type === "system") {
       setSystemCfg((prev) => {
         const newCfg = {
           ...prev,
           ...data,
-          discord: data.discord ? { ...prev.discord, ...data.discord } : prev.discord,
+          discord: data.discord
+            ? { ...prev.discord, ...data.discord }
+            : prev.discord,
           debug: data.debug ? { ...prev.debug, ...data.debug } : prev.debug,
-          database: data.database ? { ...prev.database, ...data.database } : prev.database,
+          database: data.database
+            ? { ...prev.database, ...data.database }
+            : prev.database,
         };
         debouncedSaveSystem(newCfg);
         return newCfg;
@@ -241,9 +295,15 @@ const App = () => {
         const newCfg = {
           ...prev,
           ...data,
-          stream: data.stream ? {...prev.stream, ...data.stream} : prev.stream,
-          startgg: data.startgg ? {...prev.startgg, ...data.startgg} : prev.startgg,
-          challonge: data.challonge ? {...prev.challonge, ...data.challonge} : prev.challonge,
+          stream: data.stream
+            ? { ...prev.stream, ...data.stream }
+            : prev.stream,
+          startgg: data.startgg
+            ? { ...prev.startgg, ...data.startgg }
+            : prev.startgg,
+          challonge: data.challonge
+            ? { ...prev.challonge, ...data.challonge }
+            : prev.challonge,
           rules: data.rules ? { ...prev.rules, ...data.rules } : prev.rules,
         };
         debouncedSaveTourney(newCfg);
@@ -252,34 +312,15 @@ const App = () => {
     }
   };
 
-const [authStatus, setAuthStatus] = useState({
-  startgg: false,
-  discord: false,
-  telegram: false,
-});
-
-
+  const [authStatus, setAuthStatus] = useState({
+    startgg: false,
+    discord: false,
+    telegram: false,
+  });
 
   //////////////////
   // System statements
   const [theme, setTheme] = useState("dark");
-  const [lang, setLang] = useState("EN");
-
-const [locale, setLocale] = useState(null)
-useEffect(() => {
-    const loadLocalization = async () => {
-      try {
-        const data = await GetUiLocale(lang);
-        setLocale(data);
-        console.log(`Локаль ${lang} успешно загружена`, data);
-      } catch (err) {
-        console.error("Не удалось загрузить локализацию с бэкенда:", err);
-      }
-    };
-
-    loadLocalization();
-}, [lang]); // Как только lang изменился (RU <-> EN) — срабатывает этот код
-
   const [activeTab, setActiveTab] = useState("notifications");
   //////////////////
 
@@ -291,29 +332,40 @@ useEffect(() => {
   const [statusWidgetScoreboard, setStatusWidgetScoreboard] = useState(false);
   //////////////////
 
-
   // Themes
   const themeClasses = {
-  card: theme === "dark" ? "bg-[#111111] border-white/10 text-white" : "bg-white border-slate-200 text-slate-800",
-  bg: theme === "dark" ? "bg-black" : "bg-slate-50",
-  input: theme === "dark" ? "bg-transparent border-white/10 text-white focus:border-purple-500/50" : "bg-transparent border-slate-200 text-slate-700 focus:border-blue-500/50",
-  label: theme === "dark" ? "text-slate-400" : "text-slate-500",
-  section: theme === "dark" ? "bg-black/20 border-white/5" : "bg-slate-50/50 border-slate-100",
-  textMuted: theme === "dark" ? "text-slate-500" : "text-slate-400",
-  btnBg: theme === "dark" ? "bg-black/20" : "bg-slate-100"
-};
+    card:
+      theme === "dark"
+        ? "bg-[#111111] border-white/10 text-white"
+        : "bg-white border-slate-200 text-slate-800",
+    bg: theme === "dark" ? "bg-black" : "bg-slate-50",
+    input:
+      theme === "dark"
+        ? "bg-transparent border-white/10 text-white focus:border-purple-500/50"
+        : "bg-transparent border-slate-200 text-slate-700 focus:border-blue-500/50",
+    label: theme === "dark" ? "text-slate-400" : "text-slate-500",
+    section:
+      theme === "dark"
+        ? "bg-black/20 border-white/5"
+        : "bg-slate-50/50 border-slate-100",
+    textMuted: theme === "dark" ? "text-slate-500" : "text-slate-400",
+    btnBg: theme === "dark" ? "bg-black/20" : "bg-slate-100",
+  };
 
   return (
     <div
       className={`flex flex-col h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${
-        theme === "dark" ? "bg-[#050505] text-white" : "bg-slate-50 text-slate-900"
+        theme === "dark"
+          ? "bg-[#050505] text-white"
+          : "bg-slate-50 text-slate-900"
       }`}
     >
-      {/* ИСПРАВЛЕНО: Если локаль еще грузится — показываем красивый полноэкранный лоадер */}
       {!locale ? (
         <div className="h-screen w-screen bg-[#050505] flex flex-col items-center justify-center gap-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="font-mono text-xs text-slate-400">Loading localization...</span>
+          <span className="font-mono text-xs text-slate-400">
+            Loading localization...
+          </span>
         </div>
       ) : (
         <>
@@ -322,7 +374,7 @@ useEffect(() => {
             setTheme={setTheme}
             lang={lang}
             setLang={setLang}
-            locale={locale.HeaderPanel} // Передаем конкретный узел локали
+            locale={locale.HeaderPanel}
           />
 
           <div className="flex flex-1 overflow-hidden">
@@ -340,32 +392,34 @@ useEffect(() => {
             {/* MainWindow */}
             <div className="flex-1 flex flex-col min-w-0">
               <main className="flex-1 overflow-y-auto p-8 relative">
-                  {activeTab === "notifications" && (
-                    <NotificationSystemPanel
-                      theme={theme}
-                      systemCfg={systemCfg}
-                      tourneyCfg={tourneyCfg}
-                      authStatus={authStatus}
-                      setAuthStatus={setAuthStatus}
-                      updateConfig={updateConfig}
-                      addLog={addLog}
-                      handleAuth={handleAuth}
-                      locale={locale.NotificationSystemPanel}
-                      themeClasses={themeClasses}
-                    />
-                  )}
+                {activeTab === "notifications" && (
+                  <NotificationSystemPanel
+                    theme={theme}
+                    systemCfg={systemCfg}
+                    tourneyCfg={tourneyCfg}
+                    authStatus={authStatus}
+                    setAuthStatus={setAuthStatus}
+                    updateConfig={updateConfig}
+                    addLog={addLog}
+                    handleAuth={handleAuth}
+                    locale={locale.NotificationSystemPanel}
+                    localeValidation={locale.ValidationAlertModal}
+                    themeClasses={themeClasses}
+                  />
+                )}
 
-                  {activeTab === "database" && (
-                    <DatabasePanel 
-                      theme={theme} 
-                      statusDatabase={statusDatabase} 
-                      locale={locale.DatabasePanel}
-                      lang={lang}
-                      themeClasses={themeClasses}
-                    />
-                  )}
-                  {/* In future updates */}
-                  {/* {activeTab === "bracket" && (
+                {activeTab === "database" && (
+                  <DatabasePanel
+                    theme={theme}
+                    statusDatabase={statusDatabase}
+                    locale={locale.DatabasePanel}
+                    lang={lang}
+                    addLog={addLog}
+                    themeClasses={themeClasses}
+                  />
+                )}
+                {/* In future updates */}
+                {/* {activeTab === "bracket" && (
                     <WidgetBracketPanel theme={theme} statusWidgetBracket={statusWidgetBracket}/>
                   )}
 
@@ -374,7 +428,12 @@ useEffect(() => {
                   )} */}
               </main>
 
-              <LoggerPlate logs={logs} setLogs={setLogs} theme={theme} locale={locale.LogPanel}/>
+              <LoggerPlate
+                logs={logs}
+                setLogs={setLogs}
+                theme={theme}
+                locale={locale.LogPanel}
+              />
             </div>
           </div>
         </>
@@ -383,43 +442,56 @@ useEffect(() => {
   );
 };
 
-// --- Вспомогательные компоненты ---
-
 const handleAuth = async (platform) => {
   try {
-    addLog(`Попытка авторизации в ${platform}...`, "info");
+    addLog(
+      `${locale.NotificationSystemPanel.Platform.LaunchMsg} ${platform}...`,
+      "info",
+    );
 
     let success = false;
 
     if (platform === "discord") {
       const { clientID, secretClient } = systemCfg.discord;
-      if (!clientID || !secretClient) throw new Error("Не заполнены Client ID или Secret для Discord");
-      
+      if (!clientID || !secretClient)
+        throw new Error(
+          `${locale.NotificationSystemPanel.Platform.RequireMsg} - ${platform}`,
+        );
+
       success = await AuthorizeDiscord(clientID, secretClient);
-      
     } else if (platform === "startgg") {
       const { clientID, secretClient } = tourneyCfg.startgg;
-      if (!clientID || !secretClient) throw new Error("Не заполнены данные для Start.gg");
-      
+      if (!clientID || !secretClient)
+        throw new Error(
+          `${locale.NotificationSystemPanel.Platform.RequireMsg} - ${platform}`,
+        );
+
       success = await AuthorizeStartgg(clientID, secretClient);
-      
     } else if (platform === "challonge") {
       const { clientID, secretClient } = tourneyCfg.challonge;
-      if (!clientID || !secretClient) throw new Error("Не заполнены данные для Challonge");
-      
+      if (!clientID || !secretClient)
+        throw new Error(
+          `${locale.NotificationSystemPanel.Platform.RequireMsg} - ${platform}`,
+        );
+
       success = await AuthorizeChallonge(clientID, secretClient);
     }
 
     if (success) {
-      setAuthStatus(prev => ({ ...prev, [platform]: true }));
-      addLog(`Авторизация в ${platform} успешна!`, "success");
+      setAuthStatus((prev) => ({ ...prev, [platform]: true }));
+      addLog(
+        `${locale.NotificationSystemPanel.Platform.SuccessMsg} ${platform}`,
+        "success",
+      );
     } else {
-      addLog(`Авторизация в ${platform} отклонена. Проверьте правильность ключей.`, "error");
+      addLog(
+        `${locale.NotificationSystemPanel.Platform.SuccessMsg} ${platform}`,
+        "error",
+      );
     }
   } catch (err) {
-    // Выводим конкретную ошибку (например, "Не заполнены данные")
-    addLog(`Ошибка [${platform}]: ${err.message || err}`, "error");
-    setAuthStatus(prev => ({ ...prev, [platform]: false }));
+    addLog(`[${platform}]: ${err.message || err}`, "error");
+    setAuthStatus((prev) => ({ ...prev, [platform]: false }));
   }
 };
 

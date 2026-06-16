@@ -10,7 +10,7 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
   const isError = !!errorData;
   const isCompleted = status === "success";
 
-  const SuccessImportMsgParts = locale.LoadingImportFileModalWindows.SuccessImportMsg.split("%v");
+  const SuccessImportMsgParts = locale.LoadingImportFileModalWindows.SuccessImportDBMsg.split("%v");
 
   // Текст статуса в зависимости от этапа
   let statusText = locale.LoadingImportFileModalWindows.InitImportFileMsg;
@@ -24,7 +24,7 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
     statusText = `${locale.LoadingImportFileModalWindows.ErrorImportFileMsg} ${errorData}`;
   }
 
-  // Прогресс-бар (пока нет эмиттера, сделаем 0%, 50% во время работы и 100% в конце)
+ 
   let progress = 0;
   if (status === "loading") progress = 50;
   if (isCompleted) progress = 100;

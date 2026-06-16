@@ -40,7 +40,7 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Не удалось скопировать шаблон: ", err);
+      console.error("Can't copy: ", err);
     }
   };
 

@@ -18,6 +18,7 @@ import {
   RefreshCcw,
   SearchX,
   Copy,
+  Check
 } from "lucide-react";
 import {
   AddParticipant,
@@ -38,7 +39,7 @@ import ParticipantModal from "./ParticipantModal.jsx";
 import PanelTemplate from "./PanelTemplate.jsx";
 import ParticipantActionModal from "./ParticipantActionModal.jsx";
 
-const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) => {
+const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClasses }) => {
   const [selectedGame, setSelectedGame] = useState("Tekken8");
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -83,10 +84,9 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
   const [actionLoading, setActionLoading] = useState(false);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
   const [importStatus, setImportStatus] = useState("idle"); // "idle" | "loading" | "success"
-  const [importError, setImportError] = useState(null); // Сюда пишем текст ошибки
-  const [importResult, setImportResult] = useState(null); // Сюда сохраняем ответ бэкенда
+  const [importError, setImportError] = useState(null);
+  const [importResult, setImportResult] = useState(null);
 
-  // Динамическая конфигурация для кнопки управления в зависимости от выбранного фильтра (Вариант 1)
   const addButtonConfig = useMemo(() => {
     const configs = {
       all: {
@@ -110,15 +110,13 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
 
   const handleImportFile = (file) => {
     if (!file) return;
-
-    // Вытаскиваем полный системный путь к файлу на диске ОС из объекта Wails File
     const systemFilePath = file.path || file.name;
 
     const isJson = file.name.endsWith(".json");
     const isCsv = file.name.endsWith(".csv");
 
     if (!isJson && !isCsv) {
-      addLog("Допустимы только файлы форматов .json и .csv", "error");
+      addLog(locale.AddButton.ImportFile.OnlyJsonCSV, "error");
       return;
     }
 
@@ -126,11 +124,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
     setImportedFileData(systemFilePath);
     setImportFileType(isJson ? "json" : "csv");
     setIsImportModalOpen(true);
-
-    addLog(
-      `Файл ${file.name} верифицирован и готов к отправке на бэкенд`,
-      "info",
-    );
   };
 
   const handleConfirmFileImport = async (filePath) => {
@@ -143,7 +136,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
     try {
       const isBanChecked = activeFilter === "banned";
 
-      // Вызываем бэкенд (он вернет объект структуры)
       const result = await LoadListPlayers(
         filePath,
         nameTournamentPlatform,
@@ -151,11 +143,8 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
         isBanChecked,
       );
 
-      console.log("Ответ от бэкенда Wails (структура):", result);
-
-      // Проверяем, что объект физически пришел
       if (!result) {
-        throw new Error("Бэкенд вернул пустой ответ (null).");
+        throw new Error("null answer from backend");
       }
 
       // Достаем переменные по именам JSON-тегов из Go
@@ -165,15 +154,16 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
       // Форматируем для ImportProgressModal (чтобы там отобразилось r1 / r2 строк)
       setImportResult({ r1: successCount, r2: totalCount });
       setImportStatus("success");
-
+      const successImportDBMsgParts = locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportDBMsg.split("%v")
+      const successImportBanListMsgParts = locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportBanListMsg.split("%v")
       if (isBanChecked) {
         addLog(
-          `Успешно добавлено в БАН-ЛИСТ записей: ${successCount} из ${totalCount}`,
-          "warn",
+          `${successImportBanListMsgParts[0]} ${successCount} ${successImportBanListMsgParts[1]} ${totalCount} ${successImportBanListMsgParts[2]}`,
+          "success",
         );
       } else {
         addLog(
-          `Успешно импортировано участников: ${successCount} из ${totalCount}`,
+          `${successImportDBMsgParts[0]} ${successCount} ${successImportDBMsgParts[1]} ${totalCount} ${successImportDBMsgParts[2]}`,
           "success",
         );
       }
@@ -185,23 +175,21 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
         fetchData(false);
       }, 300);
     } catch (err) {
-      console.error("Критическая ошибка импорта:", err);
       const errorText =
-        err?.message || err?.toString() || "Неизвестная ошибка бэкенда";
+        err?.message || err?.toString() || "Unknown error";
       setImportError(errorText);
       setImportStatus("idle");
-      addLog(`Ошибка импорта данных бэкендом: ${errorText}`, "error");
+      addLog(`${locale.AddButton.ImportFile.LoadingImportFileModalWindows.ErrorImportFileMsg} ${errorText}`, "error");
     }
   };
 
   const triggerParticipantAction = (participant, action) => {
     if (participant) {
-      // Проверяем все возможные варианты написания ID
       const realId = participant.id ?? participant.Id ?? 0;
       setSelectedParticipantForAction({
         id: realId,
         nickname:
-          participant.gameNickname || participant.nickname || "Неизвестный",
+          participant.gameNickname || participant.nickname || "Unknown",
       });
     } else {
       setSelectedParticipantForAction(null);
@@ -212,6 +200,11 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
 
   const handleConfirmAction = async (data) => {
     setActionLoading(true);
+    const logActionBanParts = locale.Table.LogsActions.Ban.split("%v");
+    const logActionUnbanParts = locale.Table.LogsActions.Unban.split("%v");
+    const logActionDeleteParts = locale.Table.LogsActions.Delete.split("%v");
+    const logActionRatingParts = locale.Table.LogsActions.Rating.split("%v");
+    const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
     try {
       if (data.action === "ban") {
         const banRequest = {
@@ -224,29 +217,29 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
         };
         await AddBanToParticipant(banRequest);
         addLog(
-          `Игрок ${selectedParticipantForAction.nickname} успешно забанен`,
-          "warn",
+          `${logActionBanParts[0]} ${selectedParticipantForAction.nickname} ${logActionBanParts[1]}`,
+          "success",
         );
       } else if (data.action === "unban") {
         const unbanRequest = { participantId: selectedParticipantForAction.id };
         await DelBanFromParticipant(unbanRequest);
         addLog(
-          `Игрок ${selectedParticipantForAction.nickname} разбанен`,
-          "info",
+           `${logActionUnbanParts[0]} ${selectedParticipantForAction.nickname} ${logActionUnbanParts[1]}`,
+          "success",
         );
       } else if (data.action === "delete") {
         const deleteRequest = { id: selectedParticipantForAction.id };
         await DelParticipant(deleteRequest);
         addLog(
-          `Игрок ${selectedParticipantForAction.nickname} полностью удален из базы`,
-          "error",
+           `${logActionDeleteParts[0]} ${selectedParticipantForAction.nickname} ${logActionDeleteParts[1]}`,
+          "success",
         );
       } else if (data.action === "reset_rating_all") {
         const resetRatingRequest = { gameName: selectedGame };
         await ResetRating(resetRatingRequest);
         addLog(
-          `Рейтинг игроков игры ${selectedGame} полностью сброшен`,
-          "info",
+           `${logActionRatingParts[0]} ${selectedGame} ${logActionRatingParts[1]}`,
+          "success",
         );
       }
 
@@ -254,6 +247,10 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
       fetchData(false);
     } catch (err) {
       console.error("Ошибка при выполнении действия над участником:", err);
+      addLog(
+           `${logActionErrParts[0]} ${selectedParticipantForAction.nickname} ${logActionErrParts[1]} ${err}`,
+          "error",
+        );
     } finally {
       setActionLoading(false);
     }
@@ -266,6 +263,10 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
 
   const handleSaveParticipant = async (data) => {
     setModalLoading(true);
+    const logActionAddParts = locale.Table.LogsActions.Add.split("%v")
+    const logActionAddBanParts = locale.Table.LogsActions.AddBan.split("%v")
+    const logActionEditParts = locale.Table.LogsActions.Edit.split("%v")
+    const logActionErrParts = locale.Table.LogsActions.Err.split("%v")
     try {
       if (editingParticipant) {
         const updateRequest = {
@@ -294,16 +295,11 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
               }
             : null,
         };
-        // Редактирование существующего игрока
-        await EditParticipant(
-          // editingParticipant.id, data.nickname, data.gameId, selectedGame,
-          // data.region, data.locale, data.rating, data.messenger.platform,
-          // data.messenger.login, data.tournament.platform, data.tournament.login,
-          updateRequest,
-        );
+ 
+        await EditParticipant(updateRequest);
         setIsModalOpen(false);
         await fetchData(false, searchQuery);
-        addLog(`Данные игрока ${data.nickname} успешно изменены`, "success");
+        addLog(`${logActionEditParts[0]} ${data.nickname} ${logActionEditParts[1]}`, "success");
       } else {
         // Добавление нового игрока
         const response = await AddParticipant(
@@ -336,31 +332,25 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
             gameName: selectedGame,
           };
 
-          // 1. Сначала дожидаемся сохранения бана
           await AddBanToParticipant(banRequest);
-
-          // 2. Закрываем модалку
           setIsModalOpen(false);
-
-          // 3. Делаем ЕДИНСТВЕННЫЙ вызов обновления с задержкой, чтобы БД успела зафиксировать статус
           setTimeout(async () => {
             await fetchData(false);
             addLog(
-              `Игрок ${data.nickname} добавлен и сразу внесен в бан-лист`,
-              "warn",
+              `${logActionAddBanParts[0]} ${data.nickname} ${logActionAddBanParts[1]}`,
+              "success",
             );
           }, 300);
         } else {
-          // Обычный сценарий без бана
           setIsModalOpen(false);
           await fetchData(false);
-          addLog(`Игрок ${data.nickname} успешно добавлен`, "success");
+          addLog(`${logActionAddParts[0]} ${data.nickname} ${logActionAddParts[1]}`, "success");
         }
       }
     } catch (err) {
-      console.error("Ошибка при сохранении участника:", err);
+      console.error(`${logActionErrParts[0]} ${data.nickname} ${logActionErrParts[1]} ${err}`, err);
       if (typeof addLog === "function") {
-        addLog(`Ошибка при сохранении: ${err.message || err}`, "error");
+        addLog(`${logActionErrParts[0]} ${data.nickname} ${logActionErrParts[1]} ${err.message || err}`, "error");
       }
     } finally {
       setModalLoading(false);
@@ -371,38 +361,41 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
     setIsModalOpen(true);
   };
 
-  const handleLocalRatingChange = (participantId, val) => {
-    setPlayers((prev) =>
-      prev.map((p) => (p.id === participantId ? { ...p, rating: val } : p)),
-    );
-    debouncedRatingUpdate(participantId, val);
-  };
+  const handleLocalRatingChange = (participantId, val, nickname) => {
+  setPlayers((prev) =>
+    prev.map((p) => (p.id === participantId ? { ...p, rating: val } : p)),
+  );
+  debouncedRatingUpdate(participantId, val, nickname);
+};
 
-  const handleUpdateRating = async (participantId, currentRating, delta) => {
-    const newRating = Math.max(0, currentRating + delta);
+  const handleUpdateRating = async (participantId, newRating, nickname) => {
+    const logActionUpdateRating = locale.Table.LogsActions.UpdateRating;
+    const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
     try {
+      // Отправляем уже готовый рейтинг
       await EditParticipantStatsRating(participantId, newRating);
+      
       setPlayers((prev) =>
         prev.map((p) =>
           p.id === participantId ? { ...p, rating: newRating } : p,
         ),
       );
-      addLog(`Рейтинг обновлен до ${newRating}`, "success");
+      addLog(`${logActionUpdateRating} ${nickname || "User"} - ${newRating}`, "success");
     } catch (err) {
-      addLog("Ошибка при обновлении рейтинга", "error");
+      addLog(`${logActionErrParts[0]} ${nickname || "User"}`, "error");
     }
-  };
+};
 
   const handleUpdateRatingRef = useRef(handleUpdateRating);
   handleUpdateRatingRef.current = handleUpdateRating;
 
   const debouncedRatingUpdate = useMemo(
-    () =>
-      debounce((participantId, newValue) => {
-        handleUpdateRatingRef.current(participantId, 0, newValue);
-      }, 600),
-    [],
-  );
+  () =>
+    debounce((participantId, newValue, nickname) => {
+      handleUpdateRatingRef.current(participantId, newValue, nickname);
+    }, 600),
+  [],
+);
 
   const fetchData = async (isNextPage = false, search = undefined) => {
     setLoading(true);
@@ -506,7 +499,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
     fetchData(false);
   }, [selectedGame, activeFilter]);
 
-  const addLog = (msg, type) => console.log(`[${type}] ${msg}`);
 
   const filteredPlayers = useMemo(() => {
     let list = players ? [...players] : [];
@@ -530,28 +522,34 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
 
 
   const handleCopyText = (participant) => {
-    console.log(participant);
-    // 1. Проверяем валидность турнирного логина
-    const isTournamentValid =
-      participant.tournamentPlatformLogin &&
-      participant.tournamentPlatformLogin !== "N/D";
-    const tournamentLine = isTournamentValid
-      ? `${nameTournamentPlatform} | Login: ${participant.tournamentPlatformLogin}`
-      : `${nameTournamentPlatform} | Login: "N/D"`;
+  console.log(participant);
+  const realId = participant.id ?? participant.Id ?? 0; // Получаем ID
 
-    // 2. Проверяем валидность мессенджер логина
-    const isMessengerValid =
-      participant.messenagerLogin && participant.messenagerLogin !== "N/D";
-    const messengerLine = isMessengerValid
-      ? `${nameMessengerPlatform} | Login: ${participant.messenagerLogin}`
-      : `${nameMessengerPlatform} | Login: "N/D"`;
+  // 1. Проверяем валидность турнирного логина
+  const isTournamentValid =
+    participant.tournamentPlatformLogin &&
+    participant.tournamentPlatformLogin !== "N/D";
+  const tournamentLine = isTournamentValid
+    ? `${nameTournamentPlatform} | Login: ${participant.tournamentPlatformLogin}`
+    : `${nameTournamentPlatform} | Login: "N/D"`;
 
-    // 3. Собираем строку с переносом \n
-    const fullText = `${tournamentLine}\n${messengerLine}`;
+  // 2. Проверяем валидность мессенджер логина
+  const isMessengerValid =
+    participant.messenagerLogin && participant.messenagerLogin !== "N/D";
+  const messengerLine = isMessengerValid
+    ? `${nameMessengerPlatform} | Login: ${participant.messenagerLogin}`
+    : `${nameMessengerPlatform} | Login: "N/D"`;
 
-    // 4. Записываем в буфер обмена
-    navigator.clipboard.writeText(fullText);
-  };
+  // 3. Собираем строку с переносом \n
+  const fullText = `${tournamentLine}\n${messengerLine}`;
+
+  // 4. Записываем в буфер обмена
+  navigator.clipboard.writeText(fullText);
+
+  // 5. Включаем галочку для конкретного игрока и гасим через 2 секунды
+  setCopiedPlayerId(realId);
+  setTimeout(() => setCopiedPlayerId(null), 2000);
+};
 
   const getRelativeTime = (dateString) => {
     if (!dateString || dateString.startsWith("0001")) return "—";
@@ -559,11 +557,11 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
     const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
 
-    if (diffInSeconds < 60) return `${locale.HeaderTable.TimeRemains.JustNow}`;
+    if (diffInSeconds < 60) return `${locale.Table.TimeRemains.JustNow}`;
     if (diffInSeconds < 3600)
-      return `${Math.floor(diffInSeconds / 60)} ${locale.HeaderTable.TimeRemains.MinAgo}`;
+      return `${Math.floor(diffInSeconds / 60)} ${locale.Table.TimeRemains.MinAgo}`;
     if (diffInSeconds < 86400)
-      return `${Math.floor(diffInSeconds / 3600)} ${locale.HeaderTable.TimeRemains.HourAgo}`;
+      return `${Math.floor(diffInSeconds / 3600)} ${locale.Table.TimeRemains.HourAgo}`;
     return date.toLocaleDateString(lang === "EN" ? "en-US" : "ru-RU");
   };
 
@@ -774,13 +772,13 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                     className="p-4"
                     style={{ width: `${sizeColumnOfNickname}px` }}
                   >
-                    {locale.HeaderTable.Nickname}
+                    {locale.Table.Nickname}
                   </th>
                   <th
                     className="p-4"
                     style={{ width: `${sizeColumnOfGameID}px` }}
                   >
-                    {locale.HeaderTable.GameID}
+                    {locale.Table.GameID}
                   </th>
                   {activeFilter === "banned" ? (
                     <>
@@ -788,31 +786,31 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                         className="p-4 text-red-500"
                         style={{ width: `${sizeColumnOfTypeBan}px` }}
                       >
-                        {locale.HeaderTable.ReasonBan}
+                        {locale.Table.ReasonBan}
                       </th>
                       <th
                         className="p-4 text-amber-500/80"
                         style={{ width: `${sizeColumnOfDescriptionBan}px` }}
                       >
-                        {locale.HeaderTable.DescriptionBan}
+                        {locale.Table.DescriptionBan}
                       </th>
                       <th
                         className="p-4 text-slate-400"
                         style={{ width: `${sizeColumnOfBannedAtDate}px` }}
                       >
-                        {locale.HeaderTable.DateBan}
+                        {locale.Table.DateBan}
                       </th>
                       <th
                         className="p-4 text-slate-400"
                         style={{ width: `${sizeColumnOfExpiresDate}px` }}
                       >
-                        {locale.HeaderTable.IsExpiring}
+                        {locale.Table.IsExpiring}
                       </th>
                       <th
                         className="p-4"
                         style={{ width: `${sizeColumnOfControl}px` }}
                       >
-                        {locale.HeaderTable.Management.Label}
+                        {locale.Table.Management.Label}
                       </th>
                     </>
                   ) : (
@@ -821,37 +819,37 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                         className="p-4"
                         style={{ width: `${sizeColumnOfRegion}px` }}
                       >
-                        {locale.HeaderTable.Region}
+                        {locale.Table.Region}
                       </th>
                       <th
                         className="p-4"
                         style={{ width: `${sizeColumnOfLanguage}px` }}
                       >
-                        {locale.HeaderTable.Language}
+                        {locale.Table.Language}
                       </th>
                       <th
                         className="p-4 text-blue-500"
                         style={{ width: `${sizeColumnOfMMR}px` }}
                       >
-                        {locale.HeaderTable.Rating}
+                        {locale.Table.Rating}
                       </th>
                       <th
                         className="p-3"
                         style={{ width: `${sizeColumnOfPlatforms}px` }}
                       >
-                        {locale.HeaderTable.Contacts}
+                        {locale.Table.Contacts}
                       </th>
                       <th
                         className="p-3"
                         style={{ width: `${sizeColumnOfUpdateDate}px` }}
                       >
-                        {locale.HeaderTable.UpdatedAt}
+                        {locale.Table.UpdatedAt}
                       </th>
                       <th
                         className="p-4"
                         style={{ width: `${sizeColumnOfControl}px` }}
                       >
-                        {locale.HeaderTable.Management.Label}
+                        {locale.Table.Management.Label}
                       </th>
                     </>
                   )}
@@ -910,7 +908,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                             <div
                               className={`text-[10px] leading-snug opacity-80 whitespace-normal break-words ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}
                             >
-                              {p.reason || locale.HeaderTable.EmptyDescription}
+                              {p.reason || locale.Table.EmptyDescription}
                             </div>
                           </td>
                           <td
@@ -949,7 +947,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                                 className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
                               >
                                 <Edit2 size={11} />{" "}
-                                {locale.HeaderTable.Management.Edit}
+                                {locale.Table.Management.Edit}
                               </button>
                               <button
                                 onClick={() =>
@@ -958,7 +956,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                                 className="flex items-center justify-center gap-1.5 px-2 py-2 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white rounded-lg font-black uppercase text-[8px] transition-all w-full"
                               >
                                 <ShieldCheck size={11} />{" "}
-                                {locale.HeaderTable.Management.Ban}
+                                {locale.Table.Management.Ban}
                               </button>
                               <button
                                 onClick={() =>
@@ -967,7 +965,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                                 className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg font-black uppercase text-[8px] transition-all w-full"
                               >
                                 <Trash2 size={11} />{" "}
-                                {locale.HeaderTable.Management.Unban}
+                                {locale.Table.Management.Unban}
                               </button>
                             </div>
                           </td>
@@ -1001,23 +999,26 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                               onChange={(e) => {
                                 const val = parseInt(e.target.value) || 0;
                                 if (val >= 0)
-                                  handleLocalRatingChange(p.id, val);
+                                  handleLocalRatingChange(p.id, val, p.gameNickname);
                               }}
                               className="bg-transparent text-blue-500 font-black text-sm italic outline-none border-b border-transparent focus:border-blue-500/30 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               style={{ width: `${sizeColumnOfMMRPoints}px` }}
                             />
                             <div className="flex gap-1 mt-1">
+                              {/* Кнопка ПЛЮС */}
                               <button
                                 onClick={() =>
-                                  handleUpdateRating(p.id, p.rating, 10)
+                                  handleUpdateRating(p.id, Math.max(0, (p.rating || 0) + 10), p.gameNickname)
                                 }
                                 className="w-7 h-7 flex items-center justify-center bg-green-600/10 text-green-500 rounded-lg border border-green-600/20 hover:bg-green-600/20 transition-colors"
                               >
                                 <Plus size={12} />
                               </button>
+
+                              {/* Кнопка МИНУС */}
                               <button
                                 onClick={() =>
-                                  handleUpdateRating(p.id, p.rating, -10)
+                                  handleUpdateRating(p.id, Math.max(0, (p.rating || 0) - 10), p.gameNickname)
                                 }
                                 className="w-7 h-7 flex items-center justify-center bg-red-600/10 text-red-500 rounded-lg border border-red-500/20 hover:bg-red-600/20 transition-colors"
                               >
@@ -1030,27 +1031,19 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                             style={{ width: `${sizeColumnOfPlatforms}px` }}
                           >
                             <div className="flex flex-row items-center justify-between gap-2">
-                              {/* Блок с текстом: увеличиваем шрифты до text-xs (12px) и text-[10px] */}
                               <div className="flex flex-col text-xs font-bold whitespace-nowrap leading-tight min-w-0">
-                                {/* 2.1 Первая строка: Название турнирной платформы */}
                                 <span className="truncate text-blue-500 font-black">
                                   {nameTournamentPlatform}
                                 </span>
-
-                                {/* 2.2 Вторая строка: Шаблон "Логин: %v" или "Логин: "N/D"" */}
                                 <span className="opacity-60 text-[10px] truncate">
                                   {p.tournamentPlatformLogin &&
                                   p.tournamentPlatformLogin !== "N/D"
                                     ? `${locale.AddButton.AddContactOfMessenger.Login}: ${p.tournamentPlatformLogin}`
                                     : `${locale.AddButton.AddContactOfMessenger.Login}: "N/D"`}
                                 </span>
-
-                                {/* 2.3 Третья строка: Название мессенджера */}
                                 <span className="text-purple-500 font-black mt-1">
                                   {nameMessengerPlatform}
                                 </span>
-
-                                {/* 2.4 Четвертая строка: Шаблон "Логин: %v" или "Логин: "N/D"" */}
                                 <span className="opacity-60 text-[10px] truncate">
                                   {p.messenagerLogin &&
                                   p.messenagerLogin !== "N/D"
@@ -1058,14 +1051,16 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                                     : `${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: "N/D"`}
                                 </span>
                               </div>
-
-                              {/* 2.5 Кнопка с иконкой, куда мы пробрасываем локальную переменную p */}
                               <button
                                 onClick={() => handleCopyText(p)}
-                                className="p-1.5 rounded-md border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
-                                title="Скопировать контакт"
+                                className={`p-1.5 rounded-md border transition-all shrink-0 ${
+                                  copiedPlayerId === (p.id ?? p.Id)
+                                    ? "bg-green-500/20 text-green-500 !border-green-500/30"
+                                    : "border-slate-200 dark:border-[#222222] hover:bg-blue-500/10 text-slate-500 hover:text-blue-500 hover:border-blue-500/30 dark:hover:border-blue-500/30"
+                                }`}
+                                title={copiedPlayerId === (p.id ?? p.Id) ? locale.Table.Management.Copied : locale.Table.Management.Copy}
                               >
-                                {<Copy size={12} />}
+                                {copiedPlayerId === (p.id ?? p.Id) ? <Check size={12} /> : <Copy size={12} />}
                               </button>
                             </div>
                           </td>
@@ -1085,7 +1080,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                                 className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
                               >
                                 <Edit2 size={11} />{" "}
-                                {locale.HeaderTable.Management.Edit}
+                                {locale.Table.Management.Edit}
                               </button>
                               {p.isBanned === "banned" ? (
                                 <button
@@ -1095,7 +1090,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                                   className="w-full flex items-center justify-center gap-2 p-2 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
                                 >
                                   <ShieldCheck size={11} />{" "}
-                                  {locale.HeaderTable.Management.Unban}
+                                  {locale.Table.Management.Unban}
                                 </button>
                               ) : (
                                 <button
@@ -1105,7 +1100,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                                   className="w-full flex items-center justify-center gap-2 p-2 bg-orange-600/10 hover:bg-orange-600 text-orange-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
                                 >
                                   <Ban size={11} />{" "}
-                                  {locale.HeaderTable.Management.Ban}
+                                  {locale.Table.Management.Ban}
                                 </button>
                               )}
                               <button
@@ -1115,7 +1110,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                                 className="w-full flex items-center justify-center gap-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
                               >
                                 <Trash2 size={11} />{" "}
-                                {locale.HeaderTable.Management.Delete}
+                                {locale.Table.Management.Delete}
                               </button>
                             </div>
                           </td>
@@ -1138,10 +1133,10 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                           />
                         </div>
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1 italic">
-                          Данные отсутствуют
+                          {locale.Table.NoData}
                         </h3>
                         <p className="text-[10px] text-slate-500 max-w-[250px] leading-relaxed uppercase font-bold">
-                          Нет данных по выбранным фильтрам поиска
+                          {locale.Table.NoDataAccordingFilters}
                         </p>
                       </div>
                     </td>
@@ -1151,7 +1146,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
             </table>
             {loading && (
               <div className="p-4 text-center text-[10px] font-black uppercase italic text-amber-500">
-                Загрузка участников...
+                {locale.Table.LoadingDataPlayers}
               </div>
             )}
           </div>
@@ -1218,6 +1213,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
         theme={theme}
         activeFilter={activeFilter}
         locale={locale.AddButton}
+        addLog={addLog}
       />
       <ParticipantActionModal
         isOpen={isActionModalOpen}
@@ -1230,6 +1226,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
         theme={theme}
         activeFilter={activeFilter}
         locale={locale}
+        addLog={addLog}
       />
       <ImportFileModal
         isOpen={isImportModalOpen}
@@ -1254,12 +1251,10 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
         locale={locale.AddButton.ImportFile}
         onClose={() => {
           setIsProgressModalOpen(false);
-          // Сбрасываем стейты окна после закрытия
           setImportError(null);
           setImportStatus("idle");
           setImportResult(null);
 
-          // Делаем рефетч таблицы
           setTimeout(() => {
             fetchData(false);
           }, 100);

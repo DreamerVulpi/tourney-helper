@@ -34,7 +34,7 @@ const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-[10px]">
         {logs.length === 0 ? (
           <div className="h-full flex items-center justify-center opacity-20 italic uppercase tracking-[0.3em] text-slate-500">
-            No events recorded
+            {locale.NoLogs}
           </div>
         ) : (
           logs.map((l, i) => (

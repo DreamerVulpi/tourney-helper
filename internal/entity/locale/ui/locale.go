@@ -1,5 +1,12 @@
 package ui
 
+type NspLogs struct {
+	NotificationDeliveryStopped string
+	LaunchNewsletterInDebugMode string
+	ErrorDuringTheMailing       string
+	LaunchNewsletter            string
+}
+
 type LobbyLiveBroadcast struct {
 	Label              string
 	RegionLabel        string
@@ -23,23 +30,41 @@ type Management struct {
 	Ban    string
 	Unban  string
 	Delete string
+	Copy   string
+	Copied string
 }
 
-type HeaderTable struct {
-	Nickname         string
-	GameID           string
-	Region           string
-	Language         string
-	Rating           string
-	Contacts         string
-	UpdatedAt        string
-	ReasonBan        string
-	DescriptionBan   string
-	DateBan          string
-	IsExpiring       string
-	EmptyDescription string
-	TimeRemains      TimeRemains
-	Management       Management
+type Table struct {
+	Nickname               string
+	GameID                 string
+	Region                 string
+	Language               string
+	Rating                 string
+	Contacts               string
+	UpdatedAt              string
+	ReasonBan              string
+	DescriptionBan         string
+	DateBan                string
+	IsExpiring             string
+	EmptyDescription       string
+	TimeRemains            TimeRemains
+	Management             Management
+	LogsActions            LogsActions
+	NoData                 string
+	NoDataAccordingFilters string
+	LoadingDataPlayers     string
+}
+
+type LogsActions struct {
+	Add          string
+	AddBan       string
+	Edit         string
+	Ban          string
+	Unban        string
+	Delete       string
+	Rating       string
+	UpdateRating string
+	Err          string
 }
 
 type TimeRemains struct {
@@ -61,6 +86,7 @@ type AddButton struct {
 	AddBanTitle              string
 	EditBanTitle             string
 	ImportFile               ImportFileModalWindow
+	ConfirmDurationBan       string
 	BanLabel                 string
 	AddBanFields             AddBanFields
 	AddContactOfMessenger    AddContactOfMessenger
@@ -101,6 +127,7 @@ type ImportFileModalWindow struct {
 	StartImportBannedButtonLabel  string
 	StartImportBanListButtonLabel string
 	LoadingImportFileModalWindows LoadingImportFileModalWindows
+	OnlyJsonCSV                   string
 }
 
 type ValidationAlertModal struct {
@@ -112,7 +139,8 @@ type ValidationAlertModal struct {
 type LoadingImportFileModalWindows struct {
 	InitImportFileMsg        string
 	WriteParticipantsInDBMsg string
-	SuccessImportMsg         string
+	SuccessImportDBMsg       string
+	SuccessImportBanListMsg  string
 	ErrorImportFileMsg       string
 	CriticalFailureStatus    string
 	StatusInProcess          string
@@ -122,22 +150,26 @@ type LoadingImportFileModalWindows struct {
 }
 
 type AddModalWindow struct {
-	Nickname                   string
-	GameID                     string
-	Region                     string
-	ListRegions                ListRegions
-	Language                   string
-	Rating                     string
-	AddContactOfMessenger      string
-	ContactOfMessengerLabel    string
-	AddDataOfTourneyPlatform   string
-	DataOfTourneyPlatformLabel string
-	CreateNoteButtonLabel      string
-	EditNoteButtonLabel        string
-	EditBanNoteButtonLabel     string
-	SaveChangesButtonLabel     string
-	ProcessingButtonLabel      string
-	BanAndSaveButtonLabel      string
+	Nickname                    string
+	GameID                      string
+	Region                      string
+	ListRegions                 ListRegions
+	Language                    string
+	Rating                      string
+	AddContactOfMessenger       string
+	ContactOfMessengerLabel     string
+	AddDataOfTourneyPlatform    string
+	DataOfTourneyPlatformLabel  string
+	CreateNoteButtonLabel       string
+	EditNoteButtonLabel         string
+	EditBanNoteButtonLabel      string
+	SaveChangesButtonLabel      string
+	ProcessingButtonLabel       string
+	BanAndSaveButtonLabel       string
+	ErrEmptyNickname            string
+	ErrEmptyGameID              string
+	ErrActivateMessengerNoLogin string
+	ErrActivateTourneyNoLogin   string
 }
 
 type AddBanFields struct {
@@ -183,6 +215,10 @@ type ConfigurationLogo struct {
 
 type Platform struct {
 	AuthorizeStatePlatform AuthorizeStatePlatform
+	RequireMsg             string
+	LaunchMsg              string
+	SuccessMsg             string
+	ErrMsg                 string
 	TokenBot               string
 	Messenger              string
 	Tourney                string

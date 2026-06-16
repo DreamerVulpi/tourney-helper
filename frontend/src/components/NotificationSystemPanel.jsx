@@ -170,6 +170,7 @@ const NotificationSystemPlate = ({
   handleAuth,
   locale,
   themeClasses,
+  localeValidation
 }) => {
   /////////////
   // Get data from configs
@@ -225,10 +226,10 @@ const NotificationSystemPlate = ({
     });
   };
 
-  const handleStartedSendingToggle = async () => {
+  const handleStartedSendingToggle = async (locale) => {
     if (isStartedSending) {
       setIsStartedSending(false);
-      addLog("Рассылка остановлена", "info");
+      addLog(locale.Logs.NotificationDeliveryStopped, "info");
       return;
     }
 
@@ -236,9 +237,9 @@ const NotificationSystemPlate = ({
       setIsStartedSending(true);
       addLog(
         debugMode
-          ? "Запуск рассылки в режиме отладки..."
-          : "Запуск обычной рассылки...",
-        "success",
+          ? locale.Logs.LaunchNewsletterInDebugMode
+          : locale.Logs.LaunchNewsletter,
+        "info",
       );
       await StartSendNotifications(
         activeMessenger,
@@ -247,7 +248,7 @@ const NotificationSystemPlate = ({
         tourneyCfg,
       );
     } catch (err) {
-      addLog("Ошибка при рассылке: " + err, "error");
+      addLog(locale.Logs.ErrorDuringTheMailing + err, "error");
       setIsStartedSending(false);
     }
   };
@@ -266,6 +267,8 @@ const NotificationSystemPlate = ({
   /////////////
 
   const paramsBotParts = locale.Platform.ParamsBot.split("%v");
+  const launchMsgParts = locale.Platform.LaunchMsg.split("%v");
+  const successMsgParts = locale.Platform.SuccessMsg.split("%v");
 
   const handleMessengerClick = async (messengerName) => {
     const nextMessenger =
@@ -284,21 +287,21 @@ const NotificationSystemPlate = ({
         setValidationAlert({
           isOpen: true,
           message:
-            "Для авторизации Discord необходимо заполнить обязательные поля: Application Client ID, Client Secret Token и Bot Token Authorization.",
+            locale.Platform.RequireMsg,
         });
         return;
       }
-
+      
       // 2. Инициализация на бэкенде
-      addLog("Запуск предварительной авторизации Discord...", "info");
+      addLog(`${launchMsgParts[0]} ${nextMessenger} ${launchMsgParts[1]}`, "info");
       try {
         await AuthorizeDiscord(clientID, secretClient);
         setAuthStatus((prev) => ({ ...prev, discord: true }));
-        addLog("Бот Discord успешно авторизован в системе", "success");
+        addLog(`${successMsgParts[0]} ${nextMessenger} ${successMsgParts[1]}`, "success");
       } catch (err) {
         console.error(err);
         setAuthStatus((prev) => ({ ...prev, discord: false }));
-        addLog(`Ошибка авторизации Discord: ${err}`, "error");
+        addLog(`${locale.Platform.ErrMsg}: ${err}`, "error");
       }
     }
   };
@@ -313,32 +316,74 @@ const NotificationSystemPlate = ({
       const secretClient = tourneyCfg[nextPlatform]?.secretClient;
 
       if (!clientID || !secretClient) {
-        // Сбрасываем выбор платформы в UI, если поля пустые
         setActivePlatform("");
         setValidationAlert({
           isOpen: true,
           message:
-            "Для авторизации Start.gg необходимо заполнить поля: Developer Client ID и Authentication Secret token в настройках платформы.",
+            locale.Platform.RequireMsg,
         });
         return;
       }
 
-      // 2. Инициализация на бэкенде
-      addLog("Инициализация клиента Start.gg...", "info");
+      addLog(`${launchMsgParts[0]} ${activePlatform} ${launchMsgParts[1]}`, "info");
       try {
         await AuthorizeStartgg(clientID, secretClient);
         setAuthStatus((prev) => ({ ...prev, startgg: true }));
-        addLog("Клиент Start.gg успешно сконфигурирован", "success");
+        addLog(`${successMsgParts[0]} ${nextPlatform} ${successMsgParts[1]}`, "success");
       } catch (err) {
         console.error(err);
         setAuthStatus((prev) => ({ ...prev, startgg: false }));
-        addLog(`Ошибка инициализации Start.gg: ${err}`, "error");
+        addLog(`${locale.Platform.ErrMsg}: ${err}`, "error");
       }
     }
   };
 
+  const rightPanelFooter = (
+    <div className="flex flex-col items-end gap-3">
+      {/* Текстовое предупреждение отладки (отображается только если рассылка НЕ запущена) */}
+      {!isStartedSending && debugMode && (
+        <div
+          className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-amber-500 animate-in fade-in slide-in-from-bottom-2 duration-300 ${
+            theme === "dark" 
+              ? "bg-amber-500/10 border-amber-500/20" 
+              : "bg-white border-amber-200 shadow-lg"
+          }`}
+        >
+          <AlertCircle size={16} className="shrink-0" />
+          <span className="text-[9px] font-bold uppercase italic tracking-tight leading-tight">
+            {locale.Mailing.AttentionDebugModeMsg}{" "}
+            {activeMessenger ? activeMessenger : ""}
+          </span>
+        </div>
+      )}
+
+      {/* Кнопка запуска/остановки рассылки */}
+      <button
+        type="button"
+        disabled={!isReadyToStart}
+        onClick={() => handleStartedSendingToggle(locale)}
+        className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-lg uppercase tracking-wider italic transition-all shadow-xl group text-white ${getButtonStyle()} ${
+          !isReadyToStart 
+            ? "opacity-40 cursor-not-allowed grayscale" 
+            : "hover:scale-[1.02] active:scale-95"
+        }`}
+      >
+        {isStartedSending ? (
+          <>
+            <Square fill="white" size={20} /> {locale.Mailing.Stop}
+          </>
+        ) : (
+          <>
+            {debugMode ? <Bug fill="white" size={20} /> : <Play fill="white" size={20} />}
+            {debugMode ? locale.Mailing.Debug : locale.Mailing.Start}
+          </>
+        )}
+      </button>
+    </div>
+  );
+
   return (
-      <PanelTemplate themeClasses={themeClasses} needToBlock={isStartedSending}>
+      <PanelTemplate themeClasses={themeClasses} needToBlock={isStartedSending} exceptionElement={rightPanelFooter}>
         <div className="grid grid-cols-12 gap-8 items-start flex-1">
           {/* Left panel */}
           <div className="col-span-12 lg:col-span-3 space-y-2">
@@ -1124,48 +1169,13 @@ const NotificationSystemPlate = ({
               </div>
             </div>
           </div>
-          {/* Button for start sending notifications */}
-          <div className="absolute bottom-8 right-8 z-50 flex flex-col items-end gap-3">
-            {!isStartedSending && debugMode && (
-              <div
-                className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-amber-500 animate-in fade-in slide-in-from-bottom-2 duration-300 ${isDark ? "bg-amber-500/10 border-amber-500/20" : "bg-white border-amber-200 shadow-lg"}`}
-              >
-                <AlertCircle size={16} className="shrink-0" />
-                <span className="text-[9px] font-bold uppercase italic tracking-tight leading-tight">
-                  {locale.Mailing.AttentionDebugModeMsg}{" "}
-                  {activeMessenger ? activeMessenger : ""}
-                </span>
-              </div>
-            )}
-            <button
-              type="button"
-              disabled={!isReadyToStart}
-              onClick={handleStartedSendingToggle}
-              className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-lg uppercase tracking-wider italic transition-all shadow-xl group text-white ${getButtonStyle()} ${!isReadyToStart ? "opacity-40 cursor-not-allowed grayscale" : "hover:scale-[1.02] active:scale-95"}`}
-            >
-              {isStartedSending ? (
-                <>
-                  <Square fill="white" size={20} /> {locale.Mailing.Stop}
-                </>
-              ) : (
-                <>
-                  {debugMode ? (
-                    <Bug fill="white" size={20} />
-                  ) : (
-                    <Play fill="white" size={20} />
-                  )}
-                  {debugMode ? locale.Mailing.Debug : locale.Mailing.Start}
-                </>
-              )}
-            </button>
-          </div>
         </div>
       <ValidationAlertModal
         isOpen={validationAlert.isOpen}
         message={validationAlert.message}
         theme={theme}
         onClose={() => setValidationAlert({ isOpen: false, message: "" })}
-        locale={locale.ValidationAlertModal}
+        locale={localeValidation}
       />
     </PanelTemplate>
   );
