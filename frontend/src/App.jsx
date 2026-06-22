@@ -41,6 +41,8 @@ import {
   SaveSystemConfig,
   SaveTournamentConfig,
   GetUiLocale,
+  LoadSettingsApp,
+  SaveSettingsApp,
 } from "../wailsjs/go/application/App.js";
 import { debounce } from "./hooks/debounce.jsx";
 import WidgetBracketPanel from "./components/WidgetBracketPanel.jsx";
@@ -128,6 +130,7 @@ const App = () => {
 
   const isConfigLoadedRef = useRef(false); // Флаг: загружена ли конфигурация
   const [lang, setLang] = useState("EN");
+  const [settings, setSettings] = useState(null);
   const [locale, setLocale] = useState(null);
   const [logs, setLogs] = useState([]); // Изначально пусто
 
@@ -236,9 +239,20 @@ const App = () => {
           addLog(locale.LogPanel.TournamentConfigSuccessfulLoaded, "success");
         }
 
+        const settings = await LoadSettingsApp();
+        if (settings) {
+          setSettings((prev) => ({
+            ...prev,
+            Language: settings.Language || "EN",
+          }));
+
+          if (settings.Language) {
+            setLang(settings.Language);
+          }
+          addLog(locale.LogPanel.SettingsApplicationLoaded, "success");
+        }
         setIsLoaded(true);
       } catch (err) {
-        console.error("Ошибка загрузки:", err);
         addLog(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
       }
     };
@@ -271,6 +285,20 @@ const App = () => {
     [],
   );
 
+  const debouncedSaveSettings = useMemo(
+    () =>
+      debounce(async (cfg) => {
+        try {
+            await SaveSettingsApp(cfg);
+          console.log("Настройки приложения успешно сохранены на бэкенде");
+        } catch (err) {
+          console.error("Не удалось сохранить настройки приложения:", err);
+        }
+        }, 1000),
+      []
+  );
+
+
   const updateConfig = (type, data) => {
     if (!isLoaded) return; // Не сохраняем, пока не загрузились старые данные
 
@@ -288,6 +316,15 @@ const App = () => {
             : prev.database,
         };
         debouncedSaveSystem(newCfg);
+        return newCfg;
+      });
+    } else if (type === "settings") {
+      setSettings((prev) => {
+        const newCfg = {
+          ...prev,
+          ...data,
+        };
+        debouncedSaveSettings(newCfg);
         return newCfg;
       });
     } else {
@@ -374,6 +411,7 @@ const App = () => {
             setTheme={setTheme}
             lang={lang}
             setLang={setLang}
+            updateConfig={updateConfig}
             locale={locale.HeaderPanel}
           />
 

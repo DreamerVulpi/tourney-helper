@@ -18,6 +18,22 @@ func (a *App) GetUiLocale(lang string) ui.Ui {
 	}
 }
 
+func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
+	path := config.GetAbsPath("config/settings.toml")
+	cfg, err := config.LoadSettings(path)
+	if err != nil {
+		nullCfg := config.SettingsApplication{
+			Language: "EN",
+		}
+		return nullCfg, nil
+	}
+	return cfg, nil
+}
+
+func (a *App) SaveSettingsApp(cfg config.SettingsApplication) error {
+	return config.SaveSettings(config.GetAbsPath("config/settings.toml"), cfg)
+}
+
 func (a *App) LoadSystemConfig() (config.ConfigMessenger, error) {
 	path := config.GetAbsPath("config/config2.toml")
 	cfg, err := config.LoadConfig(path)

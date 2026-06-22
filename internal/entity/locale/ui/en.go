@@ -23,7 +23,8 @@ var En = Ui{
 		LocaleNotLoaded:                  "Locale isn't loaded",
 		MainConfigSuccessfulLoaded:       "Main configuration loaded successfully",
 		TournamentConfigSuccessfulLoaded: "Tournament configuration loaded successfully",
-		ErrorLoadingConfig:               "Download error:",
+		SettingsApplicationLoaded:        "App settings have been loaded",
+		ErrorLoadingConfig:               "Load error:",
 		NoLogs:                           "No logs at the moment...",
 	},
 	SidePanel: SidePanel{

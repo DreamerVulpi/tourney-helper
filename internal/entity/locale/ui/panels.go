@@ -45,6 +45,7 @@ type LogPanel struct {
 	LocaleNotLoaded                  string
 	MainConfigSuccessfulLoaded       string
 	TournamentConfigSuccessfulLoaded string
+	SettingsApplicationLoaded        string
 	ErrorLoadingConfig               string
 	NoLogs                           string
 }

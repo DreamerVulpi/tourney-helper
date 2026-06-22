@@ -30,6 +30,7 @@ var Ru = Ui{
 		LocaleNotLoaded:                  "Локаль не загружена",
 		MainConfigSuccessfulLoaded:       "Основная конфигурация загружена успешна",
 		TournamentConfigSuccessfulLoaded: "Конфигурация турнира загружена успешна",
+		SettingsApplicationLoaded:        "Настройки приложения загружены успешно",
 		ErrorLoadingConfig:               "Ошибка загрузки:",
 		NoLogs:                           "Нет логов на текущий момент...",
 	},

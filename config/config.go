@@ -87,6 +87,10 @@ type ConfigTournament struct {
 	Game            ConfigGame         `toml:"game" json:"game"`
 }
 
+type SettingsApplication struct {
+	Language string `toml:"language"`
+}
+
 func GetAbsPath(fileName string) string {
 	ex, err := os.Executable()
 	if err != nil {
@@ -102,6 +106,8 @@ func GetAbsPath(fileName string) string {
 	return filepath.Join(exPath, fileName)
 }
 
+// TODO: REFACTOR CODE
+
 func LoadConfig(file string) (ConfigMessenger, error) {
 	var cfg ConfigMessenger
 
@@ -114,6 +120,24 @@ func LoadConfig(file string) (ConfigMessenger, error) {
 }
 
 func SaveConfig(file string, cfg ConfigMessenger) error {
+	f, err := os.Create(file)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return toml.NewEncoder(f).Encode(cfg)
+}
+
+func LoadSettings(file string) (SettingsApplication, error) {
+	var l SettingsApplication
+	err := cleanenv.ReadConfig(file, &l)
+	if err != nil {
+		return SettingsApplication{}, err
+	}
+	return l, nil
+}
+
+func SaveSettings(file string, cfg SettingsApplication) error {
 	f, err := os.Create(file)
 	if err != nil {
 		return err

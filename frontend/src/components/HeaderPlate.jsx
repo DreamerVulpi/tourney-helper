@@ -23,7 +23,7 @@ const AuthIndicator = ({ label, active }) => (
   </div>
 );
 
-const HeaderPlate = ({theme, setTheme, lang, setLang, locale}) => {
+const HeaderPlate = ({theme, setTheme, lang, setLang, locale, updateConfig}) => {
   const [isLangOpen, setIsLangOpen] = useState(false);
 
   const fontStyle = (
@@ -87,7 +87,10 @@ const HeaderPlate = ({theme, setTheme, lang, setLang, locale}) => {
                 <button
                   key={l}
                   onClick={() => {
-                    setLang(l);
+                    setLang(l); // 1. Меняем стейт для немедленного переключения UI
+                    if (updateConfig) {
+                      updateConfig("settings", { language: l }); // 2. Триггерим сохранение в файл настроек через дебаунс
+                    }
                     setIsLangOpen(false);
                   }}
                   className="w-full text-left px-[1rem] py-[0.45rem] text-[0.625rem] font-bold hover:bg-blue-600 hover:text-white transition-colors uppercase"
