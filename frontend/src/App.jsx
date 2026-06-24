@@ -133,6 +133,7 @@ const App = () => {
   const [settings, setSettings] = useState(null);
   const [locale, setLocale] = useState(null);
   const [logs, setLogs] = useState([]); // Изначально пусто
+  const [isMailingRunning, setIsMailingRunning] = useState(false);
 
   useEffect(() => {
     const loadLocalization = async () => {
@@ -359,6 +360,8 @@ const App = () => {
   // System statements
   const [theme, setTheme] = useState("dark");
   const [activeTab, setActiveTab] = useState("notifications");
+  const [activePlatform, setActivePlatform] = useState("");
+  const [activeMessenger, setActiveMessenger] = useState("");
   //////////////////
 
   //////////////////
@@ -443,6 +446,13 @@ const App = () => {
                     locale={locale.NotificationSystemPanel}
                     localeValidation={locale.ValidationAlertModal}
                     themeClasses={themeClasses}
+                    lang={lang}
+                    isStartedSending={isMailingRunning} 
+                    setIsStartedSending={setIsMailingRunning}
+                    activePlatform={activePlatform}
+                    setActivePlatform={setActivePlatform}
+                    activeMessenger={activeMessenger}
+                    setActiveMessenger={setActiveMessenger}
                   />
                 )}
 
@@ -518,6 +528,7 @@ const handleAuth = async (platform) => {
     if (success) {
       setAuthStatus((prev) => ({ ...prev, [platform]: true }));
       addLog(
+        // FIXME: No information about platform
         `${locale.NotificationSystemPanel.Platform.SuccessMsg} ${platform}`,
         "success",
       );

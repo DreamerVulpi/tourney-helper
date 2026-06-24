@@ -28,6 +28,7 @@ import {
   AuthorizeDiscord,
   AuthorizeStartgg,
   StartSendNotifications,
+  StopSendNotifications,
 } from "../../wailsjs/go/application/App.js";
 import ValidationAlertModal from "./ValidationAlertModal.jsx";
 import PanelTemplate from "./PanelTemplate.jsx";
@@ -113,7 +114,6 @@ const RuleInput = ({
 
   return (
     <div className="space-y-1.5">
-      {/* Label полностью повторяет структуру и стилизацию из референса */}
       <label
         className={`text-[9px] font-black uppercase flex items-center gap-2 ${themeClasses.label || themeClasses.textMuted}`}
       >
@@ -170,7 +170,14 @@ const NotificationSystemPlate = ({
   handleAuth,
   locale,
   themeClasses,
-  localeValidation
+  localeValidation,
+  isStartedSending,
+  setIsStartedSending,
+  lang,
+  activePlatform,
+  setActivePlatform,
+  activeMessenger,
+  setActiveMessenger
 }) => {
   /////////////
   // Get data from configs
@@ -198,14 +205,11 @@ const NotificationSystemPlate = ({
   const roles = systemCfg?.[activeSettings]?.roles || { ru: "", en: "" };
   const [checkInEnabled, setCheckInEnabled] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [activePlatform, setActivePlatform] = useState("");
-  const [activeMessenger, setActiveMessenger] = useState("");
   const isReadyToStart =
     activePlatform &&
     authStatus?.[activePlatform] &&
     activeMessenger &&
     authStatus?.[activeMessenger];
-  const [isStartedSending, setIsStartedSending] = useState(false);
   const [activeTab, setActiveTab] = useState("rules"); // "rules" or "lobby"
   const toggleSettings = (id) => {
     // open/close settings when click on gear
@@ -227,31 +231,38 @@ const NotificationSystemPlate = ({
   };
 
   const handleStartedSendingToggle = async (locale) => {
-    if (isStartedSending) {
-      setIsStartedSending(false);
-      addLog(locale.Logs.NotificationDeliveryStopped, "info");
-      return;
-    }
-
+  if (isStartedSending) {
     try {
-      setIsStartedSending(true);
-      addLog(
-        debugMode
-          ? locale.Logs.LaunchNewsletterInDebugMode
-          : locale.Logs.LaunchNewsletter,
-        "info",
-      );
-      await StartSendNotifications(
-        activeMessenger,
-        activePlatform,
-        systemCfg,
-        tourneyCfg,
-      );
-    } catch (err) {
-      addLog(locale.Logs.ErrorDuringTheMailing + err, "error");
+      addLog(locale.Logs.NotificationDeliveryStopped, "info");
+      await StopSendNotifications(); 
       setIsStartedSending(false);
+    } catch (err) {
+      addLog(locale.Logs.ErrorDuringTheMailing + ": " + err, "error");
     }
-  };
+    return;
+  }
+
+  try {
+    setIsStartedSending(true);
+    addLog(
+      debugMode
+        ? locale.Logs.LaunchNewsletterInDebugMode
+        : locale.Logs.LaunchNewsletter,
+      "info",
+    );
+    
+    await StartSendNotifications(
+      activeMessenger,
+      activePlatform,
+      systemCfg,
+      tourneyCfg,
+      lang,
+    );
+  } catch (err) {
+    addLog(locale.Logs.ErrorDuringTheMailing + ": " + err, "error");
+    setIsStartedSending(false);
+  }
+};
 
   const getButtonStyle = () => {
     if (isStartedSending) return "bg-red-600 shadow-red-600/40";

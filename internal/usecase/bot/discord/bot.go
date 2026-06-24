@@ -3,8 +3,6 @@ package discord
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/signal"
 	"sync"
 
 	"context"
@@ -36,6 +34,10 @@ type Handler struct {
 	cancel             context.CancelFunc
 	mtx                sync.Mutex
 	params             params
+
+	session        *discordgo.Session
+	registeredCmds []*discordgo.ApplicationCommand
+	cfgCache       config.ConfigMessenger
 }
 
 func (dh *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform string, tournament config.ConfigTournament) {
@@ -66,12 +68,18 @@ func (dh *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform 
 
 }
 
-func (dh *Handler) Start(tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.ConfigMessenger, tournament config.ConfigTournament) error {
+func (dh *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.ConfigMessenger, tournament config.ConfigTournament) error {
+	dh.mtx.Lock()
+	defer dh.mtx.Unlock()
+
+	if dh.session != nil {
+		return fmt.Errorf("discord bot is already running")
+	}
+
 	session, err := discordgo.New(cfg.Discord.Token)
 	if err != nil {
 		return err
 	}
-	defer session.Close() //nolint:errcheck
 
 	err = session.Open()
 	if err != nil {
@@ -87,28 +95,80 @@ func (dh *Handler) Start(tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.
 
 	registeredCommands, err := dh.InitCommands(dh.Auth.Config.ClientID, session, &tournament, &cfg)
 	if err != nil {
+		session.Close()
+		dh.Ns.Messenger = nil
 		return err
 	}
 
-	log.Println("the bot is online!")
+	dh.session = session
+	dh.registeredCmds = registeredCommands
+	dh.cfgCache = cfg
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
-	log.Println("press Ctrl+C to exit")
-	<-stop
-
-	log.Println("removing commands...")
-	if err := dh.deleteTourneyRole(session); err != nil {
-		return err
-	}
-
-	for _, v := range registeredCommands {
-		err := session.ApplicationCommandDelete(dh.Auth.Config.ClientID, cfg.Discord.GuildID, v.ID)
-		log.Printf("%v\n", v.Name)
-		if err != nil {
-			fmt.Printf("Cannot delete '%v' command: %v\n", v.Name, err)
-		}
-	}
-	log.Println("gracefully shutting down!")
+	log.Println("discord bot is online!")
 	return nil
+}
+
+func (dh *Handler) Stop() error {
+	dh.mtx.Lock()
+	defer dh.mtx.Unlock()
+
+	// ДЕБАГ: Проверяем состояние самого Handler и его сессии
+	log.Printf("[DEBUG STOP] Starting bot stop procedure. dh pointer: %p\n", dh)
+	if dh == nil {
+		return fmt.Errorf("handler is nil")
+	}
+	log.Printf("[DEBUG STOP] dh.session: %p, dh.Auth: %p, dh.Ns: %p\n", dh.session, dh.Auth, dh.Ns)
+
+	if dh.session == nil {
+		return fmt.Errorf("discord bot isn't running (session is nil)")
+	}
+
+	log.Println("removing discord commands and clearing up roles...")
+
+	if err := dh.deleteTourneyRole(dh.session); err != nil {
+		log.Printf("error deleting tourney role: %v\n", err)
+	}
+
+	// Проверяем наличие Auth и Config перед удалением команд
+	if dh.Auth != nil {
+		log.Printf("[DEBUG STOP] dh.Auth.Config pointer: %p\n", dh.Auth.Config)
+		if dh.Auth.Config != nil {
+			log.Printf("[DEBUG STOP] Processing %d registered commands for deletion\n", len(dh.registeredCmds))
+
+			for _, v := range dh.registeredCmds {
+				if v == nil {
+					log.Println("[DEBUG STOP] Found nil command in slice, skipping")
+					continue
+				}
+
+				err := dh.session.ApplicationCommandDelete(dh.Auth.Config.ClientID, dh.cfgCache.Discord.GuildID, v.ID)
+				if err != nil {
+					log.Printf("cannot delete '%v' command: %v\n", v.Name, err)
+				} else {
+					log.Printf("[DEBUG STOP] Successfully deleted command: %s\n", v.Name)
+				}
+			}
+		} else {
+			log.Println("WARN | dh.Auth.Config is nil, skipping command deletion")
+		}
+	} else {
+		log.Println("WARN | dh.Auth is nil, skipping command deletion")
+	}
+
+	log.Println("[DEBUG STOP] Closing discord session...")
+	err := dh.session.Close()
+
+	if dh.Ns != nil {
+		log.Printf("[DEBUG STOP] Unlinking messenger from dh.Ns (%p)\n", dh.Ns)
+		dh.Ns.Messenger = nil
+	} else {
+		log.Println("WARN | dh.Ns is nil, skipping messenger unlinking")
+	}
+
+	// Очищаем ресурсы сессии
+	dh.session = nil
+	dh.registeredCmds = nil
+
+	log.Println("discord bot and notification system gracefully stopped!")
+	return err
 }

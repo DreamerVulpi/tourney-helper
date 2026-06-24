@@ -141,7 +141,7 @@ func main() {
 			if cfg.DebugMode.Mode {
 				log.Printf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord")
 			}
-			if err := dh.Start(ggAuth, conn, cfg, tournament); err != nil {
+			if err := dh.Start(ctx, ggAuth, conn, cfg, tournament); err != nil {
 				log.Println(err)
 			}
 		}
