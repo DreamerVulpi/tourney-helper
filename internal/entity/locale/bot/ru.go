@@ -11,6 +11,16 @@ var Ru = Lang{
 		UsuallyMsgHeader:       "Информация ℹ️",
 		CheckIn:                "**Ссылка на check-in: %s**",
 	},
+	ContactMessage: ContactMsg{
+		Title:             "Поиск игрока в базе данных",
+		FailedResult:      "Игрок %v не найден",
+		SuccessResult:     "Найдены данные о игроке %v",
+		TourneyPlatform:   "Турнирная платформа",
+		GameName:          "Название игры",
+		GameNickname:      "Игровой никнейм",
+		MessenagerContact: "Данные контакта Дискорд",
+		MessenagerLogin:   "Логин мессенджера",
+	},
 	InviteMessage: InviteMessage{
 		Title:                    "Турнир **%v**",
 		Description:              "Приглашение на турнир со всей необходимой информацией.\n\n*Это сообщение сгенерировано автоматически. Отвечать на него не нужно. В случае вопросов или помощи обращайтесь к помощникам организатора.*",

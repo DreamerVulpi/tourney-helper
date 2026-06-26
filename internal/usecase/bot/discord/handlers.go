@@ -6,114 +6,53 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func (dh *Handler) viewData(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
-
-	embed := []*discordgo.MessageEmbed{
-		dh.msgViewData(i.Locale.String()),
-	}
-
-	if err := dh.responseEmbedMsg(s, i, embed); err != nil {
-		log.Println("viewData:", local.errorMsg.Respond)
-	}
-}
-
-func (dh *Handler) startSending(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
-	if err := dh.processSending(s, i, local); err != nil {
-		log.Println("processSending:", err)
-	}
-}
-
-func (dh *Handler) stopSending(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
-
-	go func() {
-		if err := responseMsg(s, i, local.responseMsg.Stopping); err != nil {
-			log.Println("Error sending interaction response:", err)
+func (h *Handler) viewData(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[PANIC RECOVER] во viewData: %v\n", r)
 		}
 	}()
+	local := h.configResponseMsg(i.Locale.String())
 
-	dh.mtx.Lock()
-	if dh.cancel != nil {
-		dh.cancel()
-		dh.cancel = nil
-		log.Println("SUCCESS: Cancel function executed")
+	embed := []*discordgo.MessageEmbed{
+		h.msgViewData(i.Locale.String()),
 	}
-	dh.mtx.Unlock()
+	log.Println(embed)
 
-	_, err := s.ChannelMessageSend(i.ChannelID, local.responseMsg.Stopped)
-	if err != nil {
-		log.Println("Error sending final message:", err)
+	if err := h.responseEmbedMsgImmediate(s, i, embed); err != nil {
+		log.Printf("viewData: %s\n err: %s\n", local.errorMsg.Respond, err)
 	}
 }
 
-func (dh *Handler) setEvent(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
-	embed, err := dh.parseURL(i, local)
-	if err != nil {
-		log.Println("parseURL:", err)
-	}
+// TODO: Change to actual - request to database
+func (h *Handler) viewContact(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	local := h.configResponseMsg(i.Locale.String())
 
-	if err := dh.responseEmbedMsg(s, i, embed); err != nil {
-		log.Println("setEvent:", local.errorMsg.Respond)
-	}
-}
-
-func (dh *Handler) editRuleMatches(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
-
-	embed := dh.getRuleMatchesData(i)
-	if err := dh.responseEmbedMsg(s, i, embed); err != nil {
-		log.Println("editRuleMatches:", local.errorMsg.Respond)
-	}
-}
-
-func (dh *Handler) editStreamLobby(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
-
-	embed, err := dh.getStreamLobbyData(i, local)
-	if err != nil {
-		log.Println("getStreamLobbyData:", err)
-	}
-
-	if err := dh.responseEmbedMsg(s, i, embed); err != nil {
-		log.Println("editStreamLobby:", local.errorMsg.Respond)
-	}
-}
-
-func (dh *Handler) editLogoTournament(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
-
-	embed := dh.getLogoTournamnentURL(i, local)
-	if err := dh.responseEmbedMsg(s, i, embed); err != nil {
-		log.Println("editLogoTournament:", local.errorMsg.Respond)
-	}
-}
-
-func (dh *Handler) viewContacts(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
-
+	_ = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+	})
 	go func() {
-		embed, err := dh.readCommandEmbedJSON(s, i, local)
+		embed, err := h.getContact(i, local)
 		if err != nil {
-			log.Println("readCommandEmbedJSON:", err)
+			log.Println("getContact business logic error:", err)
+			return
 		}
+
 		if len(embed) > 0 {
-			if err := dh.responseEmbedMsg(s, i, embed); err != nil {
-				log.Println("viewContacts response error:", err)
+			if err := h.responseEmbedMsgFollowup(s, i, embed); err != nil {
+				log.Println("viewContact response error:", err)
 			}
 		}
 	}()
 }
 
-func (dh *Handler) roles(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	local := dh.configResponseMsg(i.Locale.String())
+func (h *Handler) roles(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	local := h.configResponseMsg(i.Locale.String())
 	arg := i.ApplicationCommandData().Options[0].StringValue()
 
-	embed := dh.controlRole(s, arg)
+	embed := h.controlRole(s, arg)
 
-	if err := dh.responseEmbedMsg(s, i, embed); err != nil {
+	if err := h.responseEmbedMsgFollowup(s, i, embed); err != nil {
 		log.Println("roles:", local.errorMsg.Respond)
 	}
 }

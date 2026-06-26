@@ -220,37 +220,3 @@ func (a *App) EditParticipant(request app.EditParticipantRequest) error {
 	}
 	return err
 }
-
-// func (a *App) EditParticipant(
-// 	id int,
-// 	nickname string,
-// 	gameId string,
-// 	gameName string,
-// 	region string,
-// 	locale string,
-// 	rating int,
-// 	messengerName string,
-// 	messengerLogin string,
-// 	tournamentPlatformName string,
-// 	tournamentPlatformLogin string) error {
-// 	log.Printf("Request: %v %v %v %v %v | Rating: %v | %v %v %v %v", nickname, gameId, gameName, region, locale, rating, messengerName, messengerLogin, tournamentPlatformName, tournamentPlatformLogin)
-// 	p := sender.Participant{
-// 		Id:                      id,
-// 		MessenagerLogin:         messengerLogin,
-// 		MessenagerName:          messengerName,
-// 		TournamentPlatformName:  tournamentPlatformName,
-// 		TournamentPlatformLogin: tournamentPlatformLogin,
-// 		GameName:                gameName,
-// 		GameNickname:            nickname,
-// 		GameID:                  gameId,
-// 		Region:                  region,
-// 		Locale:                  locale,
-// 		Rating:                  rating,
-// 	}
-
-// 	err := a.Db.EditParticipant(a.ctx, p)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return err
-// }

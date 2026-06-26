@@ -11,6 +11,17 @@ type LogMessage struct {
 	CheckIn                string
 }
 
+type ContactMsg struct {
+	Title             string
+	FailedResult      string
+	SuccessResult     string
+	TourneyPlatform   string
+	GameName          string
+	GameNickname      string
+	MessenagerContact string
+	MessenagerLogin   string
+}
+
 type InviteMessage struct {
 	Title                    string
 	Description              string
@@ -85,4 +96,5 @@ type Lang struct {
 	ErrorMessage       ErrorMessage
 	ResponseMessage    ResponseMessage
 	LogMessage         LogMessage
+	ContactMessage     ContactMsg
 }

@@ -19,32 +19,32 @@ func (s *DiscordSender) GetPlatformMessenagerName() string {
 	return "Discord"
 }
 
-func (dh *Handler) SendingMessages(ctx context.Context) error {
-	if err := dh.Ns.Process(ctx); err != nil {
+func (h *Handler) SendingMessages(ctx context.Context) error {
+	if err := h.Ns.Process(ctx); err != nil {
 		return fmt.Errorf("sendingMessages | process failed: %w", err)
 	}
 	return nil
 }
 
-func (dh *Handler) Process(s *discordgo.Session) {
-	dh.mtx.Lock()
+func (h *Handler) Process(s *discordgo.Session) {
+	h.mtx.Lock()
 
-	if dh.cancel != nil {
-		dh.cancel()
+	if h.cancel != nil {
+		h.cancel()
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	dh.cancel = cancel
-	dh.mtx.Unlock()
+	h.cancel = cancel
+	h.mtx.Unlock()
 
 	defer func() {
 		cancel()
-		dh.mtx.Lock()
-		dh.cancel = nil
-		dh.mtx.Unlock()
+		h.mtx.Lock()
+		h.cancel = nil
+		h.mtx.Unlock()
 	}()
 
-	if err := dh.SendingMessages(ctx); err != nil {
+	if err := h.SendingMessages(ctx); err != nil {
 		log.Printf("SendingMessages stopped or failed: %v", err)
 	}
 }
@@ -101,7 +101,6 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 			messengerID = "000000000000000000"
 			isFound = true
 			cleanNickname = "N/D"
-			currentLocale = "ru"
 		} else {
 			isFound = false
 			return entitySender.Participant{}, fmt.Errorf("findContact | member %s not founded in guild (server)\n", cleanNickname)
@@ -111,7 +110,6 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 		if err != nil || len(members) != 1 {
 			if s.params.debugMode {
 				messengerID = "000000000000000000"
-				currentLocale = "ru"
 				isFound = true
 			} else {
 				return entitySender.Participant{

@@ -11,6 +11,16 @@ var En = Lang{
 		UsuallyMsgHeader:       "Information ℹ️",
 		CheckIn:                "**Link to check-in: %s**",
 	},
+	ContactMessage: ContactMsg{
+		Title:             "Search for a player in the database",
+		FailedResult:      "Player %v not found",
+		SuccessResult:     "Player %v found",
+		TourneyPlatform:   "Tournament platform",
+		GameName:          "Game name",
+		GameNickname:      "Game nickname",
+		MessenagerContact: "Discord contact information",
+		MessenagerLogin:   "Messenager login",
+	},
 	InviteMessage: InviteMessage{
 		Title:                    "Tournament **%v**",
 		Description:              "An invitation to the tournament, including all the necessary information.\n\n*This message was automatically generated. There is no need to reply. If you have any questions or need assistance, please contact one of the organizers' assistants.*",
