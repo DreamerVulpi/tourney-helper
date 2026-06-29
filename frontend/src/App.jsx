@@ -358,6 +358,7 @@ const App = () => {
 
   //////////////////
   // System statements
+  const [isProcessing, setIsProcessing] = useState(false);
   const [theme, setTheme] = useState("dark");
   const [activeTab, setActiveTab] = useState("notifications");
   const [activePlatform, setActivePlatform] = useState("");
@@ -453,6 +454,8 @@ const App = () => {
                     setActivePlatform={setActivePlatform}
                     activeMessenger={activeMessenger}
                     setActiveMessenger={setActiveMessenger}
+                    isProcessing={isProcessing}
+                    setIsProcessing={setIsProcessing}
                   />
                 )}
 

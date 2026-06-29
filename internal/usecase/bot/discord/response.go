@@ -1,26 +1,8 @@
 package discord
 
 import (
-	"errors"
-
 	"github.com/bwmarrin/discordgo"
 )
-
-func responseMsg(s *discordgo.Session, i *discordgo.InteractionCreate, text string) error {
-	err := s.InteractionRespond(
-		i.Interaction,
-		&discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: text,
-			},
-		},
-	)
-	if err != nil {
-		return errors.New("response: can't respond on message")
-	}
-	return nil
-}
 
 // Response for instant command: /check
 func (h *Handler) responseEmbedMsgImmediate(i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
