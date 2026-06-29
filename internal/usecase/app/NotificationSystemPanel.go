@@ -232,6 +232,16 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 			log.Println(err)
 		}
 	}()
+	go func() {
+		readySignal := sn.ReadyChan
+		select {
+		case <-readySignal:
+			log.Println("Bot online. Launch sending messages...")
+			sn.Process()
+		case <-ctx.Done():
+			return
+		}
+	}()
 
 	return nil
 }

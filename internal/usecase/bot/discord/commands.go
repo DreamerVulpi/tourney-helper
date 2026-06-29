@@ -102,20 +102,20 @@ func (h *Handler) commands() []*discordgo.ApplicationCommand {
 }
 
 func (h *Handler) InitCommands(appID string, session *discordgo.Session, tournament *config.ConfigTournament, cfg *config.ConfigMessenger) ([]*discordgo.ApplicationCommand, error) {
-	commandHandlers := make(map[string]func(s *discordgo.Session, i *discordgo.InteractionCreate))
+	commandHandlers := make(map[string]func(i *discordgo.InteractionCreate))
 	commandHandlers["check"] = h.viewData
+	commandHandlers["contact"] = h.viewContact
 
 	if err := h.createTourneyRole(session); err != nil {
 		return nil, err
 	}
-	commandHandlers["contact"] = h.viewContact
 
 	session.AddHandler(func(
 		s *discordgo.Session,
 		i *discordgo.InteractionCreate,
 	) {
 		if h, ok := commandHandlers[i.ApplicationCommandData().Name]; ok {
-			h(s, i)
+			h(i)
 		}
 	})
 

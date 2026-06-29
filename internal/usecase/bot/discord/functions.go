@@ -27,7 +27,7 @@ func (h *Handler) processSending(s *discordgo.Session, i *discordgo.InteractionC
 		if err := responseMsg(s, i, local.responseMsg.Starting); err != nil {
 			return err
 		}
-		go h.Process(s)
+		go h.Process()
 	}
 	return fmt.Errorf("guildID = %v | slug = %v", h.params.guildID, h.params.tournament.UrlToTournament)
 }

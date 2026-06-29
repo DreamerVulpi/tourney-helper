@@ -23,8 +23,8 @@ func responseMsg(s *discordgo.Session, i *discordgo.InteractionCreate, text stri
 }
 
 // Response for instant command: /check
-func (dh *Handler) responseEmbedMsgImmediate(s *discordgo.Session, i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
-	return s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+func (h *Handler) responseEmbedMsgImmediate(i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
+	return h.session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: embed,
@@ -33,8 +33,8 @@ func (dh *Handler) responseEmbedMsgImmediate(s *discordgo.Session, i *discordgo.
 }
 
 // Response for heavy command using gorutines
-func (dh *Handler) responseEmbedMsgFollowup(s *discordgo.Session, i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
-	_, err := s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+func (h *Handler) responseEmbedMsgFollowup(i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
+	_, err := h.session.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Embeds: embed,
 	})
 	return err

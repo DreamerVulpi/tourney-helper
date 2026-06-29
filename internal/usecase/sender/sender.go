@@ -130,6 +130,11 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 
 		if p1NeedsSending && contactP1.IsFound {
 			if contactP1.MessenagerID != "" && contactP1.MessenagerID != "N/D" {
+				if err := ctx.Err(); err != nil {
+					log.Println("Process | Cancel context. Breaking process...")
+					return err
+				}
+
 				if err := p.Messenger.SendNotification(ctx, contactP1.MessenagerID, set); err == nil {
 					now := time.Now()
 					timeP1 = &now
@@ -149,6 +154,10 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 			setForP2.ContactPlayer2 = contactP1
 
 			if contactP2.MessenagerID != "" && contactP2.MessenagerID != "N/D" {
+				if err := ctx.Err(); err != nil {
+					log.Println("Process | Cancel context. Breaking process...")
+					return err
+				}
 				if err := p.Messenger.SendNotification(ctx, contactP2.MessenagerID, setForP2); err == nil {
 					now := time.Now()
 					timeP2 = &now

@@ -38,6 +38,7 @@ type Handler struct {
 	session        *discordgo.Session
 	registeredCmds []*discordgo.ApplicationCommand
 	cfgCache       config.ConfigMessenger
+	ReadyChan      chan struct{}
 }
 
 func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform string, tournament config.ConfigTournament) {
@@ -70,11 +71,13 @@ func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform s
 
 func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.ConfigMessenger, tournament config.ConfigTournament) error {
 	h.mtx.Lock()
-	defer h.mtx.Unlock()
 
 	if h.session != nil {
+		h.mtx.Unlock()
 		return fmt.Errorf("discord bot is already running")
 	}
+	h.ReadyChan = make(chan struct{})
+	h.mtx.Unlock()
 
 	session, err := discordgo.New(cfg.Discord.Token)
 	if err != nil {
@@ -100,48 +103,60 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 		return err
 	}
 
+	h.mtx.Lock()
 	h.session = session
 	h.registeredCmds = registeredCommands
 	h.cfgCache = cfg
+	h.mtx.Unlock()
 
 	log.Println("discord bot is online!")
+	close(h.ReadyChan)
 	return nil
 }
 
 func (h *Handler) Stop() error {
-	h.mtx.Lock()
-	defer h.mtx.Unlock()
-
-	// ДЕБАГ: Проверяем состояние самого Handler и его сессии
 	log.Printf("[DEBUG STOP] Starting bot stop procedure. dh pointer: %p\n", h)
 	if h == nil {
 		return fmt.Errorf("handler is nil")
 	}
+	h.mtx.Lock()
 	log.Printf("[DEBUG STOP] dh.session: %p, dh.Auth: %p, dh.Ns: %p\n", h.session, h.Auth, h.Ns)
 
+	if h.cancel != nil {
+		log.Println("[DEBUG STOP] Canceling process...")
+		h.cancel()
+	}
+
 	if h.session == nil {
+		h.mtx.Unlock()
 		return fmt.Errorf("discord bot isn't running (session is nil)")
 	}
 
+	session := h.session
+	registeredCmds := h.registeredCmds
+	auth := h.Auth
+	ns := h.Ns
+	h.mtx.Unlock()
+
 	log.Println("removing discord commands and clearing up roles...")
 
-	if err := h.deleteTourneyRole(h.session); err != nil {
+	if err := h.deleteTourneyRole(session); err != nil {
 		log.Printf("error deleting tourney role: %v\n", err)
 	}
 
 	// Проверяем наличие Auth и Config перед удалением команд
-	if h.Auth != nil {
-		log.Printf("[DEBUG STOP] dh.Auth.Config pointer: %p\n", h.Auth.Config)
-		if h.Auth.Config != nil {
-			log.Printf("[DEBUG STOP] Processing %d registered commands for deletion\n", len(h.registeredCmds))
+	if auth != nil {
+		log.Printf("[DEBUG STOP] auth.Config pointer: %p\n", auth.Config)
+		if auth.Config != nil {
+			log.Printf("[DEBUG STOP] Processing %d registered commands for deletion\n", len(registeredCmds))
 
-			for _, v := range h.registeredCmds {
+			for _, v := range registeredCmds {
 				if v == nil {
 					log.Println("[DEBUG STOP] Found nil command in slice, skipping")
 					continue
 				}
 
-				err := h.session.ApplicationCommandDelete(h.Auth.Config.ClientID, h.cfgCache.Discord.GuildID, v.ID)
+				err := session.ApplicationCommandDelete(auth.Config.ClientID, h.cfgCache.Discord.GuildID, v.ID)
 				if err != nil {
 					log.Printf("cannot delete '%v' command: %v\n", v.Name, err)
 				} else {
@@ -156,18 +171,21 @@ func (h *Handler) Stop() error {
 	}
 
 	log.Println("[DEBUG STOP] Closing discord session...")
-	err := h.session.Close()
+	err := session.Close()
 
-	if h.Ns != nil {
-		log.Printf("[DEBUG STOP] Unlinking messenger from dh.Ns (%p)\n", h.Ns)
-		h.Ns.Messenger = nil
+	if ns != nil {
+		log.Printf("[DEBUG STOP] Unlinking messenger from dh.Ns (%p)\n", ns)
+		ns.Messenger = nil
 	} else {
 		log.Println("WARN | dh.Ns is nil, skipping messenger unlinking")
 	}
 
 	// Очищаем ресурсы сессии
+	h.mtx.Lock()
 	h.session = nil
 	h.registeredCmds = nil
+	h.cancel = nil
+	h.mtx.Unlock()
 
 	log.Println("discord bot and notification system gracefully stopped!")
 	return err

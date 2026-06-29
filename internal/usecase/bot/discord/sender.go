@@ -26,7 +26,7 @@ func (h *Handler) SendingMessages(ctx context.Context) error {
 	return nil
 }
 
-func (h *Handler) Process(s *discordgo.Session) {
+func (h *Handler) Process() {
 	h.mtx.Lock()
 
 	if h.cancel != nil {
