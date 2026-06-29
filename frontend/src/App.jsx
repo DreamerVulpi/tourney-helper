@@ -164,101 +164,98 @@ const App = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (!locale) return;
-    if (isConfigLoadedRef.current) return;
-    const initApp = async () => {
-      try {
-        const sys = await LoadSystemConfig();
-        if (sys) {
-          // Используем функциональный апдейт и spread, чтобы ничего не потерять
-          setSystemCfg((prev) => ({
-            ...prev,
-            // 1. Обработка Discord (теперь роли внутри платформы)
-            discord: {
-              ...prev.discord,
-              ...(sys.discord || {}),
-              token: sys.discord?.token || "",
-              roles: {
-                ru: sys.discord?.roles?.ru || "",
-                en: sys.discord?.roles?.en || "",
-              },
-            },
-            // 2. Добавляем Telegram (на будущее, по той же логике)
-            telegram: {
-              ...prev.telegram,
-              ...(sys.telegram || {}),
-              roles: {
-                ru: sys.telegram?.roles?.ru || "",
-                en: sys.telegram?.roles?.en || "",
-              },
-            },
-            // 3. Отладочный режим
-            debug: {
-              mode: sys.debug?.mode ?? sys.Debug?.mode ?? false,
-            },
-            // 4. База данных (в Go у тебя поле Db)
-            database: {
-              dsn: sys.database?.dsn || sys.db?.dsn || "",
-            },
-          }));
-          addLog(locale.LogPanel.MainConfigSuccessfulLoaded, "success");
-        }
+  if (!locale) return;
+  if (isConfigLoadedRef.current) return;
 
-        const tourney = await LoadTournamentConfig();
-        if (tourney) {
-          setTourneyCfg((prev) => ({
-            ...prev,
-            // Раскрываем вложенные структуры Go
-            urlToTournament: tourney.urlToTournament || "",
-            startgg: {
-              clientID: tourney.startgg?.clientID || "",
-              secretClient: tourney.startgg?.secretClient || "",
-              name: tourney.startgg?.name || "startgg",
+  const initApp = async () => {
+    try {
+      const sys = await LoadSystemConfig();
+      if (sys) {
+        setSystemCfg((prev) => ({
+          ...prev,
+          discord: {
+            ...prev.discord,
+            ...(sys.discord || {}),
+            token: sys.discord?.token || "",
+            roles: {
+              ru: sys.discord?.roles?.ru || "",
+              en: sys.discord?.roles?.en || "",
             },
-            challonge: {
-              clientID: tourney.challonge?.clientID || "",
-              secretClient: tourney.challonge?.secretClient || "",
-              name: tourney.challonge?.name || "challonge",
+          },
+          telegram: {
+            ...prev.telegram,
+            ...(sys.telegram || {}),
+            roles: {
+              ru: sys.telegram?.roles?.ru || "",
+              en: sys.telegram?.roles?.en || "",
             },
-            logo: {
-              img: tourney.logo?.img || "",
-            },
-            rules: {
-              // Здесь маппинг по тегам json из Go
-              standardFormat: tourney.rules?.standardFormat ?? 2,
-              finalsFormat: tourney.rules?.finalsFormat ?? 3,
-              rounds: tourney.rules?.rounds ?? 3,
-              duration: tourney.rules?.duration ?? 60,
-              waiting: tourney.rules?.waiting ?? 10,
-              stage: tourney.rules?.stage || "Any",
-              crossplatform: tourney.rules?.crossplatform ?? true,
-            },
-            // Не забываем про остальные вложенные объекты, если они нужны
-            stream: tourney.stream || {},
-            game: tourney.game || { name: "" },
-          }));
-          addLog(locale.LogPanel.TournamentConfigSuccessfulLoaded, "success");
-        }
-
-        const settings = await LoadSettingsApp();
-        if (settings) {
-          setSettings((prev) => ({
-            ...prev,
-            Language: settings.Language || "EN",
-          }));
-
-          if (settings.Language) {
-            setLang(settings.Language);
-          }
-          addLog(locale.LogPanel.SettingsApplicationLoaded, "success");
-        }
-        setIsLoaded(true);
-      } catch (err) {
-        addLog(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
+          },
+          debug: {
+            mode: sys.debug?.mode ?? sys.Debug?.mode ?? false,
+          },
+          database: {
+            dsn: sys.database?.dsn || sys.db?.dsn || "",
+          },
+        }));
+        addLog(locale.LogPanel.MainConfigSuccessfulLoaded, "success");
       }
-    };
-    initApp();
-  }, [locale]);
+
+      const tourney = await LoadTournamentConfig();
+      if (tourney) {
+        setTourneyCfg((prev) => ({
+          ...prev,
+          urlToTournament: tourney.urlToTournament || "",
+          startgg: {
+            clientID: tourney.startgg?.clientID || "",
+            secretClient: tourney.startgg?.secretClient || "",
+            name: tourney.startgg?.name || "startgg",
+          },
+          challonge: {
+            clientID: tourney.challonge?.clientID || "",
+            secretClient: tourney.challonge?.secretClient || "",
+            name: tourney.challonge?.name || "challonge",
+          },
+          logo: {
+            img: tourney.logo?.img || "",
+          },
+          rules: {
+            standardFormat: tourney.rules?.standardFormat ?? 2,
+            finalsFormat: tourney.rules?.finalsFormat ?? 3,
+            rounds: tourney.rules?.rounds ?? 3,
+            duration: tourney.rules?.duration ?? 60,
+            waiting: tourney.rules?.waiting ?? 10,
+            stage: tourney.rules?.stage || "Any",
+            crossplatform: tourney.rules?.crossplatform ?? true,
+          },
+          stream: tourney.stream || {},
+          game: tourney.game || { name: "" },
+        }));
+        addLog(locale.LogPanel.TournamentConfigSuccessfulLoaded, "success");
+      }
+
+      const settings = await LoadSettingsApp();
+      if (settings) {
+        const fileLang = settings.Language || settings.language || "EN";
+        
+        setSettings((prev) => ({
+          ...prev,
+          Language: fileLang,
+        }));
+
+        setLang(fileLang);
+        addLog(locale.LogPanel.SettingsApplicationLoaded, "success");
+      }
+
+      isConfigLoadedRef.current = true;
+      setIsLoaded(true);
+
+    } catch (err) {
+      addLog(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
+    }
+  };
+
+  initApp();
+}, [locale]);
 
   const debouncedSaveSystem = useMemo(
     () => debounce((cfg) => SaveSystemConfig(cfg), 1000),
@@ -267,7 +264,6 @@ const App = () => {
   const debouncedSaveTourney = useMemo(
     () =>
       debounce((cfg) => {
-        // Безопасное приведение типов перед отправкой в Go
         const dataToSend = {
           ...cfg,
           startgg: cfg.startgg || {},
@@ -301,7 +297,7 @@ const App = () => {
 
 
   const updateConfig = (type, data) => {
-    if (!isLoaded) return; // Не сохраняем, пока не загрузились старые данные
+    if (!isLoaded) return;
 
     if (type === "system") {
       setSystemCfg((prev) => {

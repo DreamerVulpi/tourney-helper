@@ -87,9 +87,9 @@ const HeaderPlate = ({theme, setTheme, lang, setLang, locale, updateConfig}) => 
                 <button
                   key={l}
                   onClick={() => {
-                    setLang(l); // 1. Меняем стейт для немедленного переключения UI
+                    setLang(l);
                     if (updateConfig) {
-                      updateConfig("settings", { language: l }); // 2. Триггерим сохранение в файл настроек через дебаунс
+                      updateConfig("settings", { language: l, });
                     }
                     setIsLangOpen(false);
                   }}
