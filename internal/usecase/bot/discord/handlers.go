@@ -44,14 +44,3 @@ func (h *Handler) viewContact(i *discordgo.InteractionCreate) {
 		}
 	}()
 }
-
-func (h *Handler) roles(i *discordgo.InteractionCreate) {
-	local := h.configResponseMsg(i.Locale.String())
-	arg := i.ApplicationCommandData().Options[0].StringValue()
-
-	embed := h.controlRole(arg)
-
-	if err := h.responseEmbedMsgFollowup(i, embed); err != nil {
-		log.Println("roles:", local.errorMsg.Respond)
-	}
-}

@@ -102,7 +102,6 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 			isFound = true
 			cleanNickname = "N/D"
 		} else {
-			isFound = false
 			return entitySender.Participant{}, fmt.Errorf("findContact | member %s not founded in guild (server)\n", cleanNickname)
 		}
 	} else {

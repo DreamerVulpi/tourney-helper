@@ -20,18 +20,6 @@ func escapeMarkdown(text string) string {
 	).Replace(text)
 }
 
-// method for start sending messages for players tournament
-func (h *Handler) processSending(s *discordgo.Session, i *discordgo.InteractionCreate, local responseLocale) error {
-	// Check values ID server (guildID) and URL to tournament (slug)
-	if h.params.guildID != "" && h.params.tournament.UrlToTournament != "" {
-		if err := responseMsg(s, i, local.responseMsg.Starting); err != nil {
-			return err
-		}
-		go h.Process()
-	}
-	return fmt.Errorf("guildID = %v | slug = %v", h.params.guildID, h.params.tournament.UrlToTournament)
-}
-
 // TODO: ADD SUPPORT TOURNEY MULTIPLATFORMING
 func (h *Handler) getContact(i *discordgo.InteractionCreate, local responseLocale) ([]*discordgo.MessageEmbed, error) {
 	embed := []*discordgo.MessageEmbed{}
