@@ -137,7 +137,6 @@ func main() {
 				GameName:        tournament.Game.Name,
 			})
 			dh.Ns = ns
-			dh.SetContacts(contacts)
 			if cfg.DebugMode.Mode {
 				log.Printf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord")
 			}

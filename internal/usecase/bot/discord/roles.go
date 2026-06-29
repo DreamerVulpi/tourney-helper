@@ -3,10 +3,16 @@ package discord
 import (
 	"log"
 
+	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 )
 
 func (h *Handler) createTourneyRole(session *discordgo.Session) error {
+	if session == nil {
+		return fmt.Errorf("createTourneyRole failed: discord session is nil")
+	}
+
 	rolesServer, err := session.GuildRoles(h.params.guildID)
 	if err != nil {
 		return err
@@ -18,7 +24,7 @@ func (h *Handler) createTourneyRole(session *discordgo.Session) error {
 	for _, r := range rolesServer {
 		if r.Name == "Tourney Role" {
 			checker = true
-			h.contacts.tourneyRole = r
+			h.tourneyRole = r
 			log.Println("createTourneyRole | Finded role in server! Saved to program")
 		}
 	}
@@ -41,7 +47,7 @@ func (h *Handler) createTourneyRole(session *discordgo.Session) error {
 			log.Println(err.Error())
 		}
 
-		h.contacts.tourneyRole = rslt
+		h.tourneyRole = rslt
 
 		log.Println("Tourney role successfuly created in server!")
 	}
@@ -50,6 +56,10 @@ func (h *Handler) createTourneyRole(session *discordgo.Session) error {
 }
 
 func (h *Handler) deleteTourneyRole(session *discordgo.Session) error {
+	if session == nil {
+		return fmt.Errorf("createTourneyRole failed: discord session is nil")
+	}
+
 	rolesServer, err := session.GuildRoles(h.params.guildID)
 	if err != nil {
 		return err

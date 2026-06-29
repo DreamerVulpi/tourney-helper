@@ -30,7 +30,7 @@ type Handler struct {
 	Auth               *auth.AuthClient
 	Ns                 *usecaseSender.NotificationSystem
 	tournamentPlatform string
-	contacts           preparedContacts
+	tourneyRole        *discordgo.Role
 	cancel             context.CancelFunc
 	mtx                sync.Mutex
 	params             params
