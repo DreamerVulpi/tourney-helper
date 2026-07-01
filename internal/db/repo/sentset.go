@@ -29,21 +29,22 @@ func (s *SentSet) Exists(ctx context.Context, setId int64) (bool, error) {
 	return exists, err
 }
 
-func (s *SentSet) Add(ctx context.Context, setId int64, tournamentPlatform string, messengerPlatform string, tournamentSlug string, sent_at_p1 *time.Time, sent_at_p2 *time.Time) (int64, error) {
+func (s *SentSet) Add(ctx context.Context, setId int64, tournamentPlatform string, messengerPlatform string, tournamentSlug string, state *entity.SetState, sentAtP1 *time.Time, sentAtP2 *time.Time) (int64, error) {
 	const sql = `
 		INSERT INTO sent_sets
-			(set_id, tournament_platform, messenger_platform, tournament_slug, sent_at_p1, sent_at_p2)
-		VALUES ($1, $2, $3, $4, $5, $6)
+			(set_id, tournament_platform, messenger_platform, tournament_slug, state, sent_at_p1, sent_at_p2)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		ON CONFLICT (set_id, tournament_platform, messenger_platform)
 		DO UPDATE SET
+			state = COALESCE(EXCLUDED.state, sent_sets.state),
 			sent_at_p1 = COALESCE(EXCLUDED.sent_at_p1, sent_sets.sent_at_p1),
-			sent_at_p2 = COALESCE(EXCLUDED.sent_at_p2, sent_sets.sent_at_p2),
+			sent_at_p2 = COALESCE(EXCLUDED.sent_at_p2, sent_sets.sent_at_p2)
 		RETURNING set_id`
 	var id int64
-	err := s.Conn.QueryRowContext(ctx, sql, setId, tournamentPlatform, messengerPlatform, tournamentSlug, sent_at_p1, sent_at_p2).Scan(&id)
+	err := s.Conn.QueryRowContext(ctx, sql, setId, tournamentPlatform, messengerPlatform, tournamentSlug, state, sentAtP1, sentAtP2).Scan(&id)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
-			return 0, nil // todo: уже существует
+			return 0, nil
 		}
 		return 0, fmt.Errorf("unable to create sentSet in database, %w", err)
 	}
@@ -52,7 +53,7 @@ func (s *SentSet) Add(ctx context.Context, setId int64, tournamentPlatform strin
 
 func (s *SentSet) Get(ctx context.Context, setId int64) (entity.SentSet, error) {
 	const sql = `
-		SELECT s.set_id, s.tournament_platform, s.messenger_platform, s.tournament_slug, s.sent_at_p1, s.sent_at_p2
+		SELECT s.set_id, s.tournament_platform, s.messenger_platform, s.tournament_slug, s.state, s.sent_at_p1, s.sent_at_p2
 		FROM sent_sets s
 		WHERE set_id = $1`
 	var sentSet entity.SentSet
@@ -61,6 +62,7 @@ func (s *SentSet) Get(ctx context.Context, setId int64) (entity.SentSet, error) 
 		&sentSet.TournamentPlatform,
 		&sentSet.MessengerPlatform,
 		&sentSet.TournamentSlug,
+		&sentSet.State,
 		&sentSet.SentAtP1,
 		&sentSet.SentAtP2,
 	)
@@ -90,12 +92,12 @@ func (s *SentSet) Del(ctx context.Context, setId int64) error {
 	return nil
 }
 
-func (s *SentSet) Edit(ctx context.Context, setId int64, tournamentPlatform string, messengerPlatform string, tournamentSlug string, sent_at_p1 *time.Time, sent_at_p2 *time.Time) error {
+func (s *SentSet) Edit(ctx context.Context, setId int64, tournamentPlatform string, messengerPlatform string, tournamentSlug string, state *entity.SetState, sent_at_p1 *time.Time, sent_at_p2 *time.Time) error {
 	const sql = `
 		UPDATE sent_sets
-		SET tournament_platform = $2, messenger_platform = $3, tournament_slug = $4, sent_at_p1 = $5, sent_at_p2 = $6
+		SET tournament_platform = $2, messenger_platform = $3, tournament_slug = $4, state = $5, sent_at_p1 = $6, sent_at_p2 = $7
 		WHERE set_id = $1`
-	tag, err := s.Conn.ExecContext(ctx, sql, setId, tournamentPlatform, messengerPlatform, tournamentSlug, sent_at_p1, sent_at_p2)
+	tag, err := s.Conn.ExecContext(ctx, sql, setId, tournamentPlatform, messengerPlatform, tournamentSlug, state, sent_at_p1, sent_at_p2)
 	if err != nil {
 		return fmt.Errorf("don't edited sentset from database, %w", err)
 	}

@@ -40,6 +40,7 @@ type SetData struct {
 	FullInviteLink string
 	IsFinals       bool
 	IsTest         bool
+	State          int
 }
 
 type NotificationSender interface {

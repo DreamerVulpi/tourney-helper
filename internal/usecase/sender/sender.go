@@ -13,11 +13,12 @@ import (
 )
 
 type NotificationSystem struct {
-	Messenger   entitySender.NotificationSender
-	Data        entitySender.NotificationData
-	Db          *dbManager.Database
-	DebugMode   bool
-	TestContact entitySender.Participant
+	Messenger        entitySender.NotificationSender
+	Data             entitySender.NotificationData
+	Db               *dbManager.Database
+	DebugMode        bool
+	TestContact      entitySender.Participant
+	ReminderInterval time.Duration
 }
 
 func NewNotificationSystem(
@@ -25,20 +26,48 @@ func NewNotificationSystem(
 	d entitySender.NotificationData,
 	db *dbManager.Database,
 	mode bool,
-	contact entitySender.Participant) *NotificationSystem {
+	contact entitySender.Participant,
+	t time.Duration) *NotificationSystem {
 	return &NotificationSystem{
-		Messenger:   s,
-		Data:        d,
-		Db:          db,
-		DebugMode:   mode,
-		TestContact: contact,
+		Messenger:        s,
+		Data:             d,
+		Db:               db,
+		DebugMode:        mode,
+		TestContact:      contact,
+		ReminderInterval: t,
 	}
 }
 
-func (p NotificationSystem) Process(ctx context.Context) error {
-	sets, err := p.Data.GetSetsData(ctx)
+func (ns NotificationSystem) checkParticipant(ctx context.Context, contact entitySender.Participant) (entitySender.Participant, error) {
+	participant, err := ns.Db.GetParticipant(ctx, contact)
+	if err == nil {
+		return participant, nil
+	}
+	log.Printf("Process | Player not found in DB, searching in %s...", contact.MessenagerName)
+
+	foundParticipant, err := ns.Messenger.FindContactOfParticipant(ctx, contact)
+	if err != nil {
+		log.Printf("Process | Pplayer not found in %s: %v", contact.MessenagerName, err)
+		return contact, err
+	}
+
+	if _, errSave := ns.Db.AddParticipant(ctx, foundParticipant); errSave != nil {
+		log.Printf("Process | failed to save player (%v) to DB: %v", foundParticipant.MessenagerName, errSave)
+	}
+
+	return foundParticipant, err
+}
+
+func (ns NotificationSystem) Process(ctx context.Context) error {
+	sets, err := ns.Data.GetSetsData(ctx)
 	if err != nil {
 		return err
+	}
+
+	slug, err := ns.Data.GetTournamentSlug()
+	if err != nil {
+		slug = "N/D"
+		log.Printf("process | Warning - %v\n", err)
 	}
 
 	for _, set := range sets {
@@ -49,49 +78,48 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 		default:
 		}
 
-		sentInfo, err := p.Db.SentSets.GetSentSet(ctx, set.SetID)
+		sentInfo, err := ns.Db.SentSets.GetSentSet(ctx, set.SetID)
 		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			return err
 		}
 
-		p1NeedsSending := sentInfo == nil || sentInfo.SentAtP1 == nil
-		p2NeedsSending := sentInfo == nil || sentInfo.SentAtP2 == nil
+		if sentInfo != nil && sentInfo.State != nil {
+			sentState := *sentInfo.State
+			if sentState == entityDB.StateCompleted || *sentInfo.State == entityDB.StateInProgress {
+				continue
+			}
+		}
 
-		if !p1NeedsSending && !p2NeedsSending && !p.DebugMode {
+		p1NeedsSending := false
+		if sentInfo == nil || sentInfo.SentAtP1 == nil {
+			// No notifications
+			p1NeedsSending = true
+		} else if time.Since(*sentInfo.SentAtP1) >= ns.ReminderInterval {
+			// Sended notification, but more 5 minutes ago
+			p1NeedsSending = true
+		}
+
+		p2NeedsSending := false
+		if sentInfo == nil || sentInfo.SentAtP2 == nil {
+			// No notifications
+			p2NeedsSending = true
+		} else if time.Since(*sentInfo.SentAtP2) >= ns.ReminderInterval {
+			// Sended notification, but more 5 minutes ago
+			p2NeedsSending = true
+		}
+
+		if !p1NeedsSending && !p2NeedsSending && !ns.DebugMode {
 			continue
 		}
 
 		log.Printf("set.ContactPlayer1: %v", set.ContactPlayer1)
-		contactP1, err := p.Db.GetParticipant(ctx, set.ContactPlayer1)
-		log.Printf("contactP1: %v", contactP1)
-		if err != nil {
-			log.Printf("Process | P1 not found in DB, searching in %s...", set.ContactPlayer1.MessenagerName)
-			contactP1, err = p.Messenger.FindContactOfParticipant(ctx, set.ContactPlayer1)
-			if err != nil {
-				log.Printf("Process | P1 not found in %s...", set.ContactPlayer1.MessenagerName)
-			} else {
-				if _, err := p.Db.AddParticipant(ctx, contactP1); err != nil {
-					log.Printf("Process | failed to save P1 (%v) to DB: %v", set.ContactPlayer1.MessenagerName, err)
-				}
-			}
-		}
-		log.Printf("set.ContactPlayer2: %v", set.ContactPlayer2)
-		contactP2, err := p.Db.GetParticipant(ctx, set.ContactPlayer2)
-		log.Printf("contactP2: %v", contactP2)
-		if err != nil {
-			log.Printf("Process | P2 not found in DB, searching in %s...", set.ContactPlayer2.MessenagerName)
-			contactP2, err = p.Messenger.FindContactOfParticipant(ctx, set.ContactPlayer2)
-			if err != nil {
-				log.Printf("Process | P2 not found in %s...", set.ContactPlayer2.MessenagerName)
-			} else {
-				if _, err := p.Db.AddParticipant(ctx, contactP2); err != nil {
-					log.Printf("Process | failed to save P2 (%v) to DB: %v", set.ContactPlayer2.MessenagerName, err)
-				}
-			}
-		}
+		contactP1, err := ns.checkParticipant(ctx, set.ContactPlayer1)
 
-		if p.DebugMode {
-			log.Printf("Debug | Redirecting notification for set %v to test user %v", set.SetID, p.TestContact.MessenagerLogin)
+		log.Printf("set.ContactPlayer2: %v", set.ContactPlayer2)
+		contactP2, err := ns.checkParticipant(ctx, set.ContactPlayer2)
+
+		if ns.DebugMode {
+			log.Printf("Debug | Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessenagerLogin)
 
 			setForP1 := set
 			setForP2 := set
@@ -104,15 +132,38 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 			setForP2.ContactPlayer2 = contactP1
 			setForP2.IsTest = true
 
-			if err := p.Messenger.SendNotification(ctx, p.TestContact.MessenagerID, setForP1); err != nil {
+			var timeP1 *time.Time
+			var timeP2 *time.Time
+
+			if err := ns.Messenger.SendNotification(ctx, ns.TestContact.MessenagerID, setForP1); err != nil {
 				log.Printf("Debug | Failed to send P1-view: %v", err)
 			}
-
+			now1 := time.Now()
+			timeP1 = &now1
 			time.Sleep(1500 * time.Millisecond)
 
-			if err := p.Messenger.SendNotification(ctx, p.TestContact.MessenagerID, setForP2); err != nil {
+			if err := ns.Messenger.SendNotification(ctx, ns.TestContact.MessenagerID, setForP2); err != nil {
 				log.Printf("Debug | Failed to send P2-view: %v", err)
 			}
+
+			now2 := time.Now()
+			timeP2 = &now2
+
+			var currentState entityDB.SetState = entityDB.ConvertToSetState(set.State)
+			request := entityDB.SentSetAddRequest{
+				SetId:              set.SetID,
+				TournamentPlatform: ns.Data.GetPlatformTournamentName(),
+				MessengerPlatform:  ns.Messenger.GetPlatformMessenagerName(),
+				TournamentSlug:     slug,
+				State:              entityDB.PointerSetState(currentState),
+				SentAtP1:           timeP1,
+				SentAtP2:           timeP2,
+			}
+			_, err = ns.Db.SentSets.AddSentSet(ctx, request)
+			if err != nil {
+				log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
+			}
+			time.Sleep(1500 * time.Millisecond)
 
 			continue
 		}
@@ -135,7 +186,7 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 					return err
 				}
 
-				if err := p.Messenger.SendNotification(ctx, contactP1.MessenagerID, set); err == nil {
+				if err := ns.Messenger.SendNotification(ctx, contactP1.MessenagerID, set); err == nil {
 					now := time.Now()
 					timeP1 = &now
 				} else {
@@ -158,7 +209,7 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 					log.Println("Process | Cancel context. Breaking process...")
 					return err
 				}
-				if err := p.Messenger.SendNotification(ctx, contactP2.MessenagerID, setForP2); err == nil {
+				if err := ns.Messenger.SendNotification(ctx, contactP2.MessenagerID, setForP2); err == nil {
 					now := time.Now()
 					timeP2 = &now
 				} else {
@@ -171,21 +222,17 @@ func (p NotificationSystem) Process(ctx context.Context) error {
 			}
 		}
 
-		slug, err := p.Data.GetTournamentSlug()
-		if err != nil {
-			slug = "N/D"
-			log.Printf("process | Warning - %v\n", err)
-		}
-
+		var currentState entityDB.SetState = entityDB.ConvertToSetState(set.State)
 		request := entityDB.SentSetAddRequest{
 			SetId:              set.SetID,
-			TournamentPlatform: p.Data.GetPlatformTournamentName(),
-			MessengerPlatform:  p.Messenger.GetPlatformMessenagerName(),
+			TournamentPlatform: ns.Data.GetPlatformTournamentName(),
+			MessengerPlatform:  ns.Messenger.GetPlatformMessenagerName(),
 			TournamentSlug:     slug,
+			State:              entityDB.PointerSetState(currentState),
 			SentAtP1:           timeP1,
 			SentAtP2:           timeP2,
 		}
-		_, err = p.Db.SentSets.AddSentSet(ctx, request)
+		_, err = ns.Db.SentSets.AddSentSet(ctx, request)
 		if err != nil {
 			log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
 		}

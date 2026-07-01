@@ -218,6 +218,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, 
 					ContactPlayer1: p1,
 					ContactPlayer2: p2,
 					IsFinals:       isFinals,
+					State:          int(set.State),
 					FullInviteLink: fmt.Sprint("https://www.start.gg/", slug, "/set/", set.Id),
 				}
 				setsData = append(setsData, set)

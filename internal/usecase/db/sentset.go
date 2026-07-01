@@ -23,7 +23,7 @@ func (s *SentSet) IsExists(ctx context.Context, request entity.SentSetCheckReque
 }
 
 func (s *SentSet) AddSentSet(ctx context.Context, request entity.SentSetAddRequest) (entity.SentSetAddResponse, error) {
-	setId, err := s.Repo.Add(ctx, request.SetId, request.TournamentPlatform, request.MessengerPlatform, request.TournamentSlug, request.SentAtP1, request.SentAtP2)
+	setId, err := s.Repo.Add(ctx, request.SetId, request.TournamentPlatform, request.MessengerPlatform, request.TournamentSlug, request.State, request.SentAtP1, request.SentAtP2)
 	if err != nil {
 		return entity.SentSetAddResponse{}, err
 	}
@@ -36,7 +36,7 @@ func (s *SentSet) EditSentSet(ctx context.Context, request entity.SentSetEditReq
 		return entity.SentSetEditResponse{}, err
 	}
 
-	err = s.Repo.Edit(ctx, request.SetId, request.TournamentPlatform, request.MessengerPlatform, request.TournamentSlug, request.SentAtP1, request.SentAtP2)
+	err = s.Repo.Edit(ctx, request.SetId, request.TournamentPlatform, request.MessengerPlatform, request.TournamentSlug, request.State, request.SentAtP1, request.SentAtP2)
 	if err != nil {
 		return entity.SentSetEditResponse{}, err
 	}
@@ -70,6 +70,7 @@ func (s *SentSet) GetSentSet(ctx context.Context, setId int64) (*entity.SentSetG
 		TournamentPlatform: sentSet.TournamentPlatform,
 		MessengerPlatform:  sentSet.MessengerPlatform,
 		TournamentSlug:     sentSet.TournamentSlug,
+		State:              sentSet.State,
 		SentAtP1:           sentSet.SentAtP1,
 		SentAtP2:           sentSet.SentAtP2,
 	}

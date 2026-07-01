@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS sent_sets (
     tournament_platform TEXT NOT NULL,
     messenger_platform TEXT NOT NULL,
     tournament_slug TEXT NOT NULL,
+    state INTEGER NOT NULL,
     sent_at_p1 DATETIME,
     sent_at_p2 DATETIME,
     UNIQUE(set_id, tournament_platform, messenger_platform)

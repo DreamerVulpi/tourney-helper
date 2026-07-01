@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"runtime/debug"
 
@@ -135,7 +136,7 @@ func main() {
 				MessenagerLogin: meDiscordPlatform.Username,
 				Locale:          "ru",
 				GameName:        tournament.Game.Name,
-			})
+			}, 5*time.Minute)
 			dh.Ns = ns
 			if cfg.DebugMode.Mode {
 				log.Printf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord")

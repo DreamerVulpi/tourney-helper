@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"strings"
 
@@ -70,12 +71,13 @@ func (a *App) InitSystemNotification(language string) (discord.Handler, error) {
 	if err != nil {
 		return discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
 	}
+	// TODO: Change 5 minutes to custom value
 	ns := sender.NewNotificationSystem(nil, adapter, a.Db, a.ConfigMessenger.DebugMode.Mode, entitySender.Participant{
 		MessenagerID:    meDiscordPlatform.ID,
 		MessenagerLogin: meDiscordPlatform.Username,
 		Locale:          strings.ToLower(language),
 		GameName:        a.ConfigTournament.Game.Name,
-	})
+	}, 5*time.Minute)
 	dh.Ns = ns
 	if a.ConfigMessenger.DebugMode.Mode {
 		log.Printf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord")
