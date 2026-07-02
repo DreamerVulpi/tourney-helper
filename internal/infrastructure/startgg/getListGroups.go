@@ -4,9 +4,10 @@ import (
 	"github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 )
 
-func (c *Client) GetListGroups(slug string) ([]startgg.PhaseGroupId, error) {
+func (c *Client) GetListGroups(slug string, states []int) ([]startgg.PhaseGroupInfo, error) {
 	var variables = map[string]any{
-		"slug": slug,
+		"slug":   slug,
+		"states": states,
 	}
 
 	results, err := GetData[startgg.RawPhaseGroupsData](c, startgg.GetListPhaseGroups, variables)

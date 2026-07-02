@@ -147,21 +147,21 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 		return nil, fmt.Errorf("GetSetsData | Startgg | get tournament error: %w", err)
 	}
 
-	phaseGroups, err := s.Client.GetListGroups(slug)
-	if err != nil {
-		return nil, fmt.Errorf("GetSetsData | Startgg | get groups error: %w", err)
-	}
-
 	states := []int{1}
 	if s.DebugMode {
 		states = []int{1, 2, 3}
 	}
 
+	phaseGroups, err := s.Client.GetListGroups(slug, states)
+	if err != nil {
+		return nil, fmt.Errorf("GetSetsData | Startgg | get groups error: %w", err)
+	}
+
 	var setsData []sender.SetData
 
-	for _, phaseGroupId := range phaseGroups {
-		total, err := s.Client.GetPagesCount(phaseGroupId.Id, states)
-		if err != nil || total == 0 {
+	for _, phaseGroupInfo := range phaseGroups {
+		total := phaseGroupInfo.Sets.PageInfo.Total
+		if total == 0 {
 			continue
 		}
 
@@ -172,10 +172,10 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 			pages = int(math.Ceil(float64(total) / 60.0))
 		}
 
-		log.Printf("GetSetsData | Startgg | %v | %v | Pages: %v\n", phaseGroupId, total, pages)
+		log.Printf("GetSetsData | Startgg | %v | %v | Pages: %v\n", phaseGroupInfo, total, pages)
 
 		for i := 0; i < pages; i++ {
-			sets, err := s.Client.GetSets(phaseGroupId.Id, i+1, 60, states)
+			sets, err := s.Client.GetSets(phaseGroupInfo.Id, i+1, 60, states)
 			if err != nil {
 				log.Printf("GetSetsData | Startgg | Can't get data of sets: %v", err)
 				continue
@@ -183,7 +183,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 
 			for _, set := range sets {
 				if ctx.Err() != nil {
-					break
+					return nil, err
 				}
 
 				if len(set.Slots[0].Entrant.Participants) == 0 || len(set.Slots[1].Entrant.Participants) == 0 {
@@ -195,7 +195,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 				p2 := s.ConvertContacts(set.Slots[1].Entrant.Participants[0])
 
 				isFinals := false
-				if s.Finals.FinalBracketId == phaseGroupId.Id {
+				if s.Finals.FinalBracketId == phaseGroupInfo.Id {
 					round := set.Round
 					if s.Finals.MinRoundNumA <= round && round <= s.Finals.MinRoundNumB || s.Finals.MaxRoundNumA <= round && round <= s.Finals.MaxRoundNumB {
 						isFinals = true
@@ -209,7 +209,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 					StreamName:     set.Stream.StreamName,
 					StreamSourse:   set.Stream.StreamSource,
 					RoundNum:       set.Round,
-					PhaseGroupId:   phaseGroupId.Id,
+					PhaseGroupId:   phaseGroupInfo.Id,
 					ContactPlayer1: p1,
 					ContactPlayer2: p2,
 					IsFinals:       isFinals,
@@ -218,7 +218,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 				}
 				setsData = append(setsData, set)
 			}
-			log.Printf("GetSetsData | Startgg | Checked phaseGroup (%v)", phaseGroupId)
+			log.Printf("GetSetsData | Startgg | Checked phaseGroup (%v)", phaseGroupInfo)
 		}
 	}
 	return setsData, nil

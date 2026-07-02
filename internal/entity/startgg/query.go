@@ -19,12 +19,19 @@ const (
 	}
 	`
 	GetListPhaseGroups = `
-	query getListPhaseGroups($slug: String) {
+	query getListPhaseGroups($slug: String, $states: [Int]) {
 		event(slug: $slug) {
 			id
 			name
 			phaseGroups {
 				id
+				sets (
+					filters: {state: $states}
+				){
+					pageInfo{
+						total
+					}
+				}
 			}
 		}
 	}

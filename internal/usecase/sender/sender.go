@@ -64,8 +64,7 @@ func (ns NotificationSystem) Process(ctx context.Context) error {
 		}
 
 		if sentInfo != nil && sentInfo.State != nil {
-			sentState := *sentInfo.State
-			if sentState == entityDB.StateCompleted || *sentInfo.State == entityDB.StateInProgress {
+			if *sentInfo.State == entityDB.StateCompleted || *sentInfo.State == entityDB.StateInProgress {
 				continue
 			}
 		}
