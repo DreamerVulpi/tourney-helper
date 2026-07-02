@@ -36,7 +36,7 @@ func (c ChallongeMatchAdapter) GetTournamentSlug() (string, error) {
 	return c.UrlToTournament, nil
 }
 
-func (c ChallongeMatchAdapter) GetSetsData(ctx context.Context) ([]entitySender.SetData, error) {
+func (c ChallongeMatchAdapter) GetSetsData(ctx context.Context, slug string) ([]entitySender.SetData, error) {
 	// TODO: Complete method
 	// https://challonge.com/ru/tournamentdciii
 

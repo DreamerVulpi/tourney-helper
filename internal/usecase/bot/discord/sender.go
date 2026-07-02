@@ -49,7 +49,7 @@ func (h *Handler) Process() {
 	}
 }
 
-func (s *DiscordSender) SendNotification(ctx context.Context, targetID string, set entitySender.SetData) error {
+func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, set entitySender.SetData) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}

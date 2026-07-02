@@ -141,12 +141,7 @@ func (s *StartggSetAdapter) GetTournamentSlug() (string, error) {
 	return slug, nil
 }
 
-func (s *StartggSetAdapter) GetSetsData(ctx context.Context) ([]sender.SetData, error) {
-	slug, err := s.GetTournamentSlug()
-	if err != nil {
-		return nil, err
-	}
-
+func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sender.SetData, error) {
 	tournament, err := s.Client.GetTournament(strings.Split(slug, "/")[1])
 	if err != nil {
 		return nil, fmt.Errorf("GetSetsData | Startgg | get tournament error: %w", err)
