@@ -38,13 +38,38 @@ func NewNotificationSystem(
 	}
 }
 
-func (ns NotificationSystem) Process(ctx context.Context) error {
+func (ns NotificationSystem) Run(ctx context.Context) error {
 	slug, err := ns.Data.GetTournamentSlug()
 	if err != nil {
 		slug = "N/D"
 		log.Printf("process | Warning - %v\n", err)
 	}
 
+	ticker := time.NewTicker(ns.ReminderInterval)
+	defer ticker.Stop()
+
+	for {
+		log.Println("Run | Starting process...")
+		started := time.Now()
+		log.Printf("Run | Cycle started at %s", started.Format("15:04:05"))
+		if err := ns.Process(ctx, slug); err != nil {
+			if errors.Is(err, context.Canceled) {
+				return err
+			}
+			log.Printf("process error: %v", err)
+		}
+		log.Println("RUN | Process finished")
+		log.Printf("Run | Cycle finished in %v", time.Since(started))
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-ticker.C:
+		}
+	}
+}
+
+func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
+	log.Println("Process | START", time.Now().Format("15:04:05"))
 	sets, err := ns.Data.GetSetsData(ctx, slug)
 	if err != nil {
 		return err
@@ -63,8 +88,15 @@ func (ns NotificationSystem) Process(ctx context.Context) error {
 			return err
 		}
 
-		if sentInfo != nil && sentInfo.State != nil {
-			if *sentInfo.State == entityDB.StateCompleted || *sentInfo.State == entityDB.StateInProgress {
+		currentState := entityDB.SetState(set.State)
+		if sentInfo != nil {
+			previousState := sentInfo.State
+			if previousState != nil && *previousState != currentState {
+				if err := ns.saveSentInfo(ctx, slug, set, nil, nil); err != nil {
+					log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
+				}
+			}
+			if currentState == entityDB.StateCompleted || currentState == entityDB.StateInProgress {
 				continue
 			}
 		}
@@ -83,10 +115,7 @@ func (ns NotificationSystem) Process(ctx context.Context) error {
 			continue
 		}
 
-		log.Printf("set.ContactPlayer1: %v", set.ContactPlayer1)
 		contactP1, err := ns.checkParticipant(ctx, set.ContactPlayer1)
-
-		log.Printf("set.ContactPlayer2: %v", set.ContactPlayer2)
 		contactP2, err := ns.checkParticipant(ctx, set.ContactPlayer2)
 
 		if ns.DebugMode {
@@ -113,6 +142,8 @@ func (ns NotificationSystem) Process(ctx context.Context) error {
 			}
 		}
 
+		time.Sleep(entitySender.NotificationDelay)
+
 		if p2NeedsSending && contactP2.IsFound {
 			setForP2 := set
 			setForP2.ContactPlayer1 = contactP2
@@ -127,7 +158,7 @@ func (ns NotificationSystem) Process(ctx context.Context) error {
 		if err := ns.saveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {
 			log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
 		}
-		time.Sleep(entitySender.NotificationDelay)
 	}
+	log.Println("Process | START", time.Now().Format("15:04:05"))
 	return nil
 }

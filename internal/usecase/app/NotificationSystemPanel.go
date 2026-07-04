@@ -71,7 +71,7 @@ func (a *App) InitSystemNotification(language string) (discord.Handler, error) {
 	if err != nil {
 		return discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
 	}
-	// TODO: Change 5 minutes to custom value
+
 	ns := sender.NewNotificationSystem(nil, adapter, a.Db, a.ConfigMessenger.DebugMode.Mode, entitySender.Participant{
 		MessenagerID:    meDiscordPlatform.ID,
 		MessenagerLogin: meDiscordPlatform.Username,
@@ -211,10 +211,10 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 		}
 	}
 
-	url, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.UrlToTournament)
-	cfgTournament.UrlToTournament = url
+	slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.UrlToTournament)
+	cfgTournament.UrlToTournament = slug
 	if a.ConfigTournament != nil {
-		a.ConfigTournament.UrlToTournament = url
+		a.ConfigTournament.UrlToTournament = slug
 	}
 
 	sn, err := a.InitSystemNotification(language)
@@ -239,7 +239,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 		select {
 		case <-readySignal:
 			log.Println("Bot online. Launch sending messages...")
-			sn.Process()
+			sn.StartSendMessages()
 		case <-ctx.Done():
 			return
 		}

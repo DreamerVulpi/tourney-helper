@@ -151,13 +151,10 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 	var targetParticipantId int
 	if responseMessenger.ParticipantId != 0 {
 		targetParticipantId = responseMessenger.ParticipantId
-		log.Printf("targetParticipantId -> %v", targetParticipantId)
 	} else {
 		targetParticipantId = responseTournamentAccount.ParticipantId
-		log.Printf("targetParticipantId -> %v", targetParticipantId)
 	}
 
-	log.Printf("targetParticipantId = %v", targetParticipantId)
 	if targetParticipantId != 0 {
 		requestStatsGame := entityDB.ParticipantStatGetRequestByGame{
 			ParticipantId: targetParticipantId,
@@ -175,6 +172,7 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 		requestParticipant := entityDB.ParticipantGetRequestById{
 			Id: targetParticipantId,
 		}
+
 		log.Printf("GetParticipantById request: %v", requestParticipant.Id)
 		responseParticipant, err := db.Participant.GetParticipantById(ctx, requestParticipant)
 		if err != nil {
@@ -522,7 +520,7 @@ func (db *Database) AddParticipants(ctx context.Context, list []entityStartgg.Im
 		participant := db.ConvertData(data)
 		_, err := db.addParticipantWithTx(ctx, tx, participant, isBan)
 		if err != nil {
-			log.Printf("db | bulk: skipping participant %s due to error: %w", data.Nickname, err)
+			log.Printf("db | bulk: skipping participant %s due to error: %v", data.Nickname, err)
 			continue
 		}
 		successful++

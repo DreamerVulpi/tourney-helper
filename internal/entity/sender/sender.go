@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const NotificationDelay = 1500 * time.Millisecond
+const NotificationDelay = 1000 * time.Millisecond
 
 type Participant struct {
 	Id                      int        `json:"id"`

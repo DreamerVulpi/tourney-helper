@@ -45,20 +45,6 @@ const (
 		}
 	}
 	`
-	GetPagesCount = `
-	query getPagesCount($phaseGroupId: ID!, $states: [Int]){
-		phaseGroup(id:$phaseGroupId){
-			id
-			sets (
-				filters: {state: $states}
-			){
-				pageInfo{
-					total
-				}
-			}
-		}
-	}
-	`
 	GetPhaseGroupState = `
 	query getPhaseGroupState($phaseGroupId: ID!){
 		phaseGroup(id:$phaseGroupId){

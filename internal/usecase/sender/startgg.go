@@ -279,6 +279,5 @@ func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) send
 		p.MessenagerID = "N/D"
 	}
 
-	log.Printf("ConvertContacts - Object: %v", p)
 	return p
 }

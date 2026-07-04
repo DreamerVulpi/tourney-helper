@@ -19,14 +19,7 @@ func (s *DiscordSender) GetPlatformMessenagerName() string {
 	return "Discord"
 }
 
-func (h *Handler) SendingMessages(ctx context.Context) error {
-	if err := h.Ns.Process(ctx); err != nil {
-		return fmt.Errorf("sendingMessages | process failed: %w", err)
-	}
-	return nil
-}
-
-func (h *Handler) Process() {
+func (h *Handler) StartSendMessages() {
 	h.mtx.Lock()
 
 	if h.cancel != nil {
@@ -44,8 +37,8 @@ func (h *Handler) Process() {
 		h.mtx.Unlock()
 	}()
 
-	if err := h.SendingMessages(ctx); err != nil {
-		log.Printf("SendingMessages stopped or failed: %v", err)
+	if err := h.Ns.Run(ctx); err != nil {
+		log.Printf("sendingMessages | process failed: %v", err)
 	}
 }
 

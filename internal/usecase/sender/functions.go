@@ -27,6 +27,7 @@ func (ns NotificationSystem) checkParticipant(ctx context.Context, contact entit
 		log.Printf("Process | failed to save player (%v) to DB: %v", foundParticipant.MessenagerName, errSave)
 	}
 
+	log.Printf("set.ContactPlayer: %v", contact)
 	return foundParticipant, err
 }
 
@@ -79,7 +80,6 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 	if err := ns.saveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {
 		log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
 	}
-	time.Sleep(entitySender.NotificationDelay)
 }
 
 func (ns NotificationSystem) shouldSend(lastSent *time.Time) bool {
