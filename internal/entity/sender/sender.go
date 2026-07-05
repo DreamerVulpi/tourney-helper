@@ -17,6 +17,7 @@ type Participant struct {
 	TournamentPlatformID    string     `json:"tournamentPlatformId"`
 	GameName                string     `json:"gameName"`
 	GameNickname            string     `json:"gameNickname"`
+	DmChannelId             *string    `json:"dmChannelId"`
 	GameID                  string     `json:"gameId"`
 	Region                  string     `json:"region"`
 	Locale                  string     `json:"locale"`
@@ -47,7 +48,7 @@ type SetData struct {
 
 type NotificationSender interface {
 	FindContactOfParticipant(ctx context.Context, participant Participant) (Participant, error)
-	SendMessage(ctx context.Context, targetID string, data SetData) error
+	SendMessage(ctx context.Context, targetID string, dmChannelID *string, data SetData) (string, error)
 	GetPlatformMessenagerName() string
 }
 

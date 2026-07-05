@@ -15,7 +15,7 @@ func (p *ParticipantAccounts) WithTx(tx entity.SQLHandler) *ParticipantAccounts 
 }
 
 func (p *ParticipantAccounts) AddParticipantAccount(ctx context.Context, request entity.ParticipantAccountAddRequest) (entity.ParticipantAccountAddResponse, error) {
-	id, err := p.Repo.Add(ctx, request.ParticipantId, request.PlatformName, request.PlatformId, request.PlatformLogin, request.IsFound)
+	id, err := p.Repo.Add(ctx, request.ParticipantId, request.PlatformName, request.PlatformId, request.DmChannelId, request.PlatformLogin, request.IsFound)
 	if err != nil {
 		return entity.ParticipantAccountAddResponse{}, err
 	}
@@ -23,11 +23,19 @@ func (p *ParticipantAccounts) AddParticipantAccount(ctx context.Context, request
 }
 
 func (p *ParticipantAccounts) EditParticipantAccount(ctx context.Context, request entity.ParticipantAccountEditRequest) (entity.ParticipantAccountEditResponse, error) {
-	err := p.Repo.Edit(ctx, request.ParticipantId, request.PlatformName, request.PlatformId, request.PlatformLogin, request.IsFound)
+	err := p.Repo.Edit(ctx, request.ParticipantId, request.PlatformName, request.PlatformId, request.DmChannelId, request.PlatformLogin, request.IsFound)
 	if err != nil {
 		return entity.ParticipantAccountEditResponse{}, err
 	}
 	return entity.ParticipantAccountEditResponse{}, nil
+}
+
+func (p *ParticipantAccounts) EditDmChannelParticipantAccount(ctx context.Context, request entity.ParticipantAccoutnEditDMChannelRequest) error {
+	err := p.Repo.EditDmChannel(ctx, request.ParticipantId, request.PlatformName, request.DmChannelId)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *ParticipantAccounts) DeleteParticipantAccountByPlatform(ctx context.Context, request entity.ParticipantAccountDeleteRequestByPlatform) (entity.ParticipantAccountDeleteResponse, error) {
@@ -51,6 +59,7 @@ func (p *ParticipantAccounts) GetParticipantAccountsByParticipantId(ctx context.
 		a.ParticipantId = account.ParticipantId
 		a.PlatformName = account.PlatformName
 		a.PlatformLogin = account.PlatformLogin
+		a.DmChannelId = account.DmChannelId
 		a.PlatformId = account.PlatformId
 		a.IsFound = account.IsFound
 		a.UpdatedAt = account.UpdatedAt
@@ -70,6 +79,24 @@ func (p *ParticipantAccounts) GetParticipantAccountByPlatform(ctx context.Contex
 		ParticipantId: account.ParticipantId,
 		PlatformName:  account.PlatformName,
 		PlatformLogin: account.PlatformLogin,
+		DmChannelId:   account.DmChannelId,
+		PlatformId:    account.PlatformId,
+		IsFound:       account.IsFound,
+		UpdatedAt:     account.UpdatedAt,
+	}, nil
+}
+
+func (p *ParticipantAccounts) GetParticipantAccountByLogin(ctx context.Context, request entity.ParticipantAccountGetRequestByLogin) (entity.ParticipantAccountGetResponse, error) {
+	account, err := p.Repo.GetByLogin(ctx, request.PlatformName, request.PlatformLogin)
+	if err != nil {
+		return entity.ParticipantAccountGetResponse{}, err
+	}
+	return entity.ParticipantAccountGetResponse{
+		Id:            account.Id,
+		ParticipantId: account.ParticipantId,
+		PlatformName:  account.PlatformName,
+		PlatformLogin: account.PlatformLogin,
+		DmChannelId:   account.DmChannelId,
 		PlatformId:    account.PlatformId,
 		IsFound:       account.IsFound,
 		UpdatedAt:     account.UpdatedAt,

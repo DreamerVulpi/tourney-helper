@@ -42,32 +42,39 @@ func (h *Handler) StartSendMessages() {
 	}
 }
 
-func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, set entitySender.SetData) error {
+func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChannelID *string, set entitySender.SetData) (channelId string, err error) {
 	if err := ctx.Err(); err != nil {
-		return err
+		return "", err
 	}
 
 	if targetID == "" || targetID == "N/D" || len(targetID) == 0 || targetID == "0" {
-		return fmt.Errorf("SendNotification | tartgetID is empty, cannot create DM channel")
+		return "", fmt.Errorf("SendNotification | targetID is empty")
 	}
 
-	channel, err := s.session.UserChannelCreate(targetID)
-	if err != nil {
-		return fmt.Errorf("SendNotification | error creating channel for %s: %w", targetID, err)
+	var channelID string
+	log.Printf("dmChannelID(%v) != nil && *dmChannelID(%v) != 0", dmChannelID, dmChannelID)
+	if dmChannelID != nil && *dmChannelID != "" {
+		channelID = *dmChannelID
+	} else {
+		log.Printf("SendNotification | create channel for %s", targetID)
+		channel, err := s.session.UserChannelCreate(targetID)
+		if err != nil {
+			return "", fmt.Errorf("SendNotification | error creating channel for %s: %w", targetID, err)
+		}
+		channelID = channel.ID
 	}
 
-	log.Printf("SendNotification | Check variable set.TournamentName = %v", set.TournamentName)
 	message, local, recipient := s.msgInvite(targetID, set)
 
-	_, err = s.session.ChannelMessageSendEmbed(channel.ID, message)
+	_, err = s.session.ChannelMessageSendEmbed(channelID, message)
 	if err != nil {
 		log.Printf("SendNotification | error sended DM: %v\n", err.Error())
 		s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
-		return err
+		return "", err
 	}
 
 	s.logMsgToDiscord(true, "", set, local, recipient.GameNickname)
-	return nil
+	return channelID, nil
 }
 
 func (s *DiscordSender) cleanDiscordLogin(login string) string {
@@ -114,6 +121,7 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 					GameNickname:            p.GameNickname,
 					GameName:                p.GameName,
 					GameID:                  p.GameID,
+					DmChannelId:             p.DmChannelId,
 					Locale:                  currentLocale,
 					IsFound:                 false,
 				}, fmt.Errorf("findContact | member %s not founded in guild (server)\n", cleanNickname)

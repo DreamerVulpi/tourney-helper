@@ -69,7 +69,6 @@ func (ns NotificationSystem) Run(ctx context.Context) error {
 }
 
 func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
-	log.Println("Process | START", time.Now().Format("15:04:05"))
 	sets, err := ns.Data.GetSetsData(ctx, slug)
 	if err != nil {
 		return err
@@ -159,6 +158,5 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 			log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
 		}
 	}
-	log.Println("Process | START", time.Now().Format("15:04:05"))
 	return nil
 }

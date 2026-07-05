@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS participant_accounts (
     participant_id INTEGER NOT NULL,
     platform_name TEXT NOT NULL, -- discord, tg, startgg, challonge
     platform_id TEXT NOT NULL,
+    dm_channel_id TEXT DEFAULT NULL,
     platform_login TEXT NOT NULL,
     is_found BOOLEAN NOT NULL DEFAULT 0,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,

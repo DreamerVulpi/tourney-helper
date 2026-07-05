@@ -18,18 +18,19 @@ func (p *ParticipantAccounts) WithTx(tx entity.SQLHandler) entity.ParticipantAcc
 	}
 }
 
-func (p *ParticipantAccounts) Add(ctx context.Context, participantId int, platformName string, platformId string, platformLogin string, isFound bool) (int, error) {
+func (p *ParticipantAccounts) Add(ctx context.Context, participantId int, platformName string, platformId string, dmChannelId *string, platformLogin string, isFound bool) (int, error) {
 	const sql = `
 		INSERT INTO participant_accounts (
-			participant_id, platform_name, platform_id, platform_login, is_found
+			participant_id, platform_name, platform_id, dm_channel_id, platform_login, is_found	
 		)
-		VALUES ($1, $2, $3, $4, $5)
-		ON CONFLICT (platform_name, participant_id) 
+		VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (platform_name, participant_id)
 		DO UPDATE SET
 			platform_id = EXCLUDED.platform_id,
+			dm_channel_id = COALESCE(EXCLUDED.dm_channel_id, participant_accounts.dm_channel_id),
 			platform_login = EXCLUDED.platform_login,
 			is_found = EXCLUDED.is_found,
-			updated_at = CURRENT_TIMESTAMP 
+			updated_at = CURRENT_TIMESTAMP
 		RETURNING id`
 	var id int
 	err := p.Conn.QueryRowContext(ctx, sql, participantId, platformName, platformId, platformLogin, isFound).Scan(&id)
@@ -39,15 +40,16 @@ func (p *ParticipantAccounts) Add(ctx context.Context, participantId int, platfo
 	return id, nil
 }
 
-func (p *ParticipantAccounts) Edit(ctx context.Context, participantId int, platformName string, platformId string, platformLogin string, isFound bool) error {
+func (p *ParticipantAccounts) Edit(ctx context.Context, participantId int, platformName string, platformId string, dmChannelId *string, platformLogin string, isFound bool) error {
 	const sql = `
 		INSERT INTO participant_accounts (
-			participant_id, platform_name, platform_id, platform_login, is_found	
+			participant_id, platform_name, platform_id, dm_channel_id, platform_login, is_found	
 		)
-		VALUES ($1, $2, $3, $4, $5)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (platform_name, participant_id)
 		DO UPDATE SET
 			platform_id = EXCLUDED.platform_id,
+			dm_channel_id = COALESCE(EXCLUDED.dm_channel_id, participant_accounts.dm_channel_id),
 			platform_login = EXCLUDED.platform_login,
 			is_found = EXCLUDED.is_found,
 			updated_at = CURRENT_TIMESTAMP
@@ -55,14 +57,29 @@ func (p *ParticipantAccounts) Edit(ctx context.Context, participantId int, platf
 
 	_, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, platformId, platformLogin, isFound)
 	if err != nil {
-		return fmt.Errorf("don't edited participant account (PlatformName: %v) from database, %w", platformName, err)
+		return fmt.Errorf("failed edit participant account (PlatformName: %v) from database, %w", platformName, err)
+	}
+	return nil
+}
+
+func (p *ParticipantAccounts) EditDmChannel(ctx context.Context, participantId int, platformName string, dmChannelId *string) error {
+	const sql = `
+		UPDATE participant_accounts
+		SET
+			dm_channel_id = $3,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE participant_id = $1 AND platform_name = $2
+	`
+	_, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, dmChannelId)
+	if err != nil {
+		return fmt.Errorf("failed to update DM channel participant account (PlatformName: %v) from database, %w", platformName, err)
 	}
 	return nil
 }
 
 func (p *ParticipantAccounts) GetById(ctx context.Context, id int) ([]entity.ParticipantAccount, error) {
 	const sql = `
-		SELECT pa.id, pa.platform_name, pa.participant_id, pa.platform_login, pa.platform_id, pa.is_found, pa.updated_at
+		SELECT pa.id, pa.platform_name, pa.participant_id, pa.platform_login, pa.dm_channel_id, pa.platform_id, pa.is_found, pa.updated_at
 		FROM participant_accounts pa
 		WHERE participant_id = $1`
 	rows, err := p.Conn.QueryContext(ctx, sql, id)
@@ -79,6 +96,7 @@ func (p *ParticipantAccounts) GetById(ctx context.Context, id int) ([]entity.Par
 			&pa.PlatformName,
 			&pa.ParticipantId,
 			&pa.PlatformLogin,
+			&pa.DmChannelId,
 			&pa.PlatformId,
 			&pa.IsFound,
 			&pa.UpdatedAt,
@@ -96,9 +114,31 @@ func (p *ParticipantAccounts) GetById(ctx context.Context, id int) ([]entity.Par
 	return accounts, nil
 }
 
+func (p *ParticipantAccounts) GetByLogin(ctx context.Context, platformName string, platformLogin string) (entity.ParticipantAccount, error) {
+	const sql = `
+		SELECT pa.id, pa.platform_name, pa.participant_id, pa.platform_login, pa.dm_channel_id, pa.platform_id, pa.is_found, pa.updated_at
+		FROM participant_accounts pa
+		WHERE platform_name = $1 AND platform_login = $2`
+	var account entity.ParticipantAccount
+	err := p.Conn.QueryRowContext(ctx, sql, platformName, platformLogin).Scan(
+		&account.Id,
+		&account.PlatformName,
+		&account.ParticipantId,
+		&account.PlatformLogin,
+		&account.DmChannelId,
+		&account.PlatformId,
+		&account.IsFound,
+		&account.UpdatedAt,
+	)
+	if err != nil {
+		return entity.ParticipantAccount{}, fmt.Errorf("unable to find account %v of participant in database using login: %v | %w", platformName, platformLogin, err)
+	}
+	return account, nil
+}
+
 func (p *ParticipantAccounts) GetByPlatform(ctx context.Context, platformName string, platformId string) (entity.ParticipantAccount, error) {
 	const sql = `
-		SELECT pa.id, pa.platform_name, pa.participant_id, pa.platform_login, pa.platform_id, pa.is_found, pa.updated_at
+		SELECT pa.id, pa.platform_name, pa.participant_id, pa.platform_login, pa.dm_channel_id, pa.platform_id, pa.is_found, pa.updated_at
 		FROM participant_accounts pa
 		WHERE platform_name = $1 AND platform_id = $2`
 	var account entity.ParticipantAccount
@@ -107,6 +147,7 @@ func (p *ParticipantAccounts) GetByPlatform(ctx context.Context, platformName st
 		&account.PlatformName,
 		&account.ParticipantId,
 		&account.PlatformLogin,
+		&account.DmChannelId,
 		&account.PlatformId,
 		&account.IsFound,
 		&account.UpdatedAt,

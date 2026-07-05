@@ -24,7 +24,6 @@ type StartggSetAdapter struct {
 	sender.StartggSetAdapter
 }
 
-// TODO: Check empty fields
 func NewStartggAdapter(client *startgg.Client, messengerName string, url string, debug bool, game string, contacts map[string]sender.Participant) *StartggSetAdapter {
 	return &StartggSetAdapter{
 		StartggSetAdapter: sender.StartggSetAdapter{
@@ -172,8 +171,6 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 			pages = int(math.Ceil(float64(total) / 60.0))
 		}
 
-		log.Printf("GetSetsData | Startgg | %v | %v | Pages: %v\n", phaseGroupInfo, total, pages)
-
 		for i := 0; i < pages; i++ {
 			sets, err := s.Client.GetSets(phaseGroupInfo.Id, i+1, 60, states)
 			if err != nil {
@@ -202,7 +199,6 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 					}
 				}
 
-				log.Printf("GetSetsData | Startgg | Tournament name: %v", tournament.Name)
 				set := sender.SetData{
 					TournamentName: tournament.Name,
 					SetID:          set.Id,

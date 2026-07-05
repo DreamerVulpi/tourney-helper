@@ -168,7 +168,7 @@ func (a *App) ParseTournamentURL(platform string, rawURL string) (string, error)
 
 // TODO: Add logs in frontend
 func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament, language string) error {
-	log.Printf("Messenger: %v, TournamentPlatform: %v, ConfigBot: %v, ConfigTournament: %v", messenger, tournamentPlatform, cfgBot, cfgTournament)
+	// log.Printf("Messenger: %v, TournamentPlatform: %v, ConfigBot: %v, ConfigTournament: %v", messenger, tournamentPlatform, cfgBot, cfgTournament)
 
 	a.mu.Lock()
 	if a.ns != nil {
