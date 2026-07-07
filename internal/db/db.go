@@ -34,11 +34,6 @@ func getAbsPath(fileName string) string {
 	return filepath.Join(exPath, fileName)
 }
 
-func isGoRun(path string) bool {
-	return filepath.Base(filepath.Dir(path)) == "go-build" ||
-		filepath.Base(path) == "b001"
-}
-
 func NewPool() (*sql.DB, error) {
 	db, err := sql.Open("sqlite", getAbsPath("tourneyHelperProject.db"))
 	if err != nil {

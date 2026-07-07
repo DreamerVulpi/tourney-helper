@@ -24,7 +24,7 @@ const SbField = ({ label, value, onChange, inputClasses }) => (
   </div>
 );
 
-const WidgetBracketPlate = ({ theme, addLog }) => {
+const WidgetBracketPlate = ({ theme }) => {
   const [isGridOverlayActive, setIsGridOverlayActive] = useState(false);
   const [bracketUrl, setBracketUrl] = useState("https://start.gg/tournament/...");
   
@@ -43,7 +43,6 @@ const WidgetBracketPlate = ({ theme, addLog }) => {
   const copyToClipboard = () => {
     const url = "http://localhost:3000/widgets/bracket/live";
     navigator.clipboard.writeText(url);
-    if (addLog) addLog("URL скопирован в буфер обмена", "success");
   };
 
   return (
@@ -99,12 +98,6 @@ const WidgetBracketPlate = ({ theme, addLog }) => {
             onClick={() => {
               const newState = !isGridOverlayActive;
               setIsGridOverlayActive(newState);
-              if (addLog) {
-                addLog(
-                  newState ? "Оверлей сетки активирован" : "Оверлей сетки выключен",
-                  newState ? "success" : "info"
-                );
-              }
             }}
             className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase italic text-xs transition-all duration-300 ${
               isGridOverlayActive

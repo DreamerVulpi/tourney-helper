@@ -15,6 +15,7 @@ import (
 
 	"bytes"
 
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	"golang.org/x/oauth2"
 )
 
@@ -109,12 +110,13 @@ func GetTokenFromFile(filename string) (*oauth2.Token, error) {
 
 func (ac *AuthClient) Init(ctx context.Context) error {
 	if ac.Config == nil {
-		return fmt.Errorf("auth | config is nil. check your Get...Oauth2 functions")
+		return fmt.Errorf("Config is nil. Check your Get...Oauth2 functions")
 	}
 
 	token, err := GetTokenFromFile(ac.TokenFile)
 	if err != nil || !token.Valid() {
-		log.Printf("auth | token invalid or missing is %s, starting web flow...", ac.TokenFile)
+		logger.Log(logger.Warning, fmt.Sprintf("Token invalid or missing is %s, starting web flow...", ac.TokenFile))
+
 		codeChan := make(chan string)
 
 		mux := http.NewServeMux()
@@ -124,7 +126,7 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 			code := r.URL.Query().Get("code")
 			_, err := fmt.Fprint(w, "Authurization is success! Back to programm.")
 			if err != nil {
-				log.Printf("auth | Authurization isn't correct: %v\n", err)
+				logger.Log(logger.Error, fmt.Sprintf("Authurization isn't correct: %v\n", err))
 				return
 			}
 			codeChan <- code
@@ -133,12 +135,13 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 		// launch server for listening
 		go func() {
 			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				log.Fatalf("HTTP Server error: %v", err)
+				logger.Log(logger.Error, fmt.Sprintf("HTTP Server error: %v", err))
+				return
 			}
 		}()
 
 		authURL := ac.Config.AuthCodeURL("state")
-		log.Printf("Link to auth: %v", authURL)
+		logger.Log(logger.Info, fmt.Sprintf("Link to auth: %v", authURL))
 
 		// open browser for os windows
 		if err := exec.Command("rundll32", "url.dll,FileProtocolHandler", authURL).Start(); err != nil {

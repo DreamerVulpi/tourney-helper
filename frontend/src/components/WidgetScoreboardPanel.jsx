@@ -39,7 +39,7 @@ const ControlPad = ({ name, score, color, onPlus, onMinus, cardClasses }) => (
   </div>
 );
 
-const WidgetScoreboardPlate = ({ theme, addLog }) => {
+const WidgetScoreboardPlate = ({ theme }) => {
   // Состояния
   const [isScoreboardOverlayActive, setIsScoreboardOverlayActive] = useState(false);
   const [sbConfig, setSbConfig] = useState({
@@ -120,7 +120,6 @@ const WidgetScoreboardPlate = ({ theme, addLog }) => {
             onClick={() => {
               const newState = !isScoreboardOverlayActive;
               setIsScoreboardOverlayActive(newState);
-              if (addLog) addLog(newState ? "Scoreboard выведен на экран" : "Scoreboard скрыт", newState ? "success" : "info");
             }}
             className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase italic text-xs transition-all duration-300 ${
               isScoreboardOverlayActive

@@ -11,7 +11,6 @@ const ParticipantActionModal = ({
     loading = false,
     theme = 'dark',
     locale,
-    addLog
 }) => {
     // Важно: для reset_rating_all participantData будет null, поэтому убираем жесткую блокировку
     if (!isOpen || (!participantData && actionType !== 'reset_rating_all')) return null;
@@ -91,7 +90,7 @@ const ParticipantActionModal = ({
     const handleConfirm = () => {
         if (actionType === 'ban') {
             if (!isPermanent && (!duration || parseInt(duration) <= 0)) {
-                addLog(locale.AddButton.ConfirmDurationBan, "error");
+                console.error(locale.AddButton.ConfirmDurationBan);
                 return;
             }
             

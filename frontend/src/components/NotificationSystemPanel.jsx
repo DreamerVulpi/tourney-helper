@@ -161,7 +161,6 @@ const RuleInput = ({
 const NotificationSystemPlate = ({
   theme,
   statusNotificationSystem,
-  addLog,
   authStatus,
   setAuthStatus,
   systemCfg,
@@ -240,11 +239,10 @@ const NotificationSystemPlate = ({
 
     if (isStartedSending) {
       try {
-        addLog(locale.Logs.NotificationDeliveryStopped, "info");
         await StopSendNotifications();
         setIsStartedSending(false); // Меняем статус только после успешной остановки
       } catch (err) {
-        addLog(locale.Logs.ErrorDuringTheMailing + ": " + err, "error");
+        console.error(err);
       } finally {
         setIsProcessing(false); // В любом случае разблокируем кнопку в конце
       }
@@ -253,13 +251,6 @@ const NotificationSystemPlate = ({
 
     // Логика запуска рассылки
     try {
-      addLog(
-        debugMode
-          ? locale.Logs.LaunchNewsletterInDebugMode
-          : locale.Logs.LaunchNewsletter,
-        "info",
-      );
-
       await StartSendNotifications(
         activeMessenger,
         activePlatform,
@@ -267,13 +258,12 @@ const NotificationSystemPlate = ({
         tourneyCfg,
         lang,
       );
-
-      setIsStartedSending(true); // Включаем статус "Запущено" только когда бэкенд подтвердил старт
+      setIsStartedSending(true);
     } catch (err) {
-      addLog(locale.Logs.ErrorDuringTheMailing + ": " + err, "error");
-      setIsStartedSending(false); // Если упало с ошибкой, убеждаемся, что статус сброшен
+      console.error(err);
+      setIsStartedSending(false);
     } finally {
-      setIsProcessing(false); // В любом случае разблокируем кнопку в конце
+      setIsProcessing(false);
     }
   };
 
@@ -300,13 +290,11 @@ const NotificationSystemPlate = ({
     setActiveMessenger(nextMessenger);
 
     if (nextMessenger === "discord") {
-      // 1. Валидация обязательных полей с использованием динамического ключа
       const token = systemCfg[nextMessenger]?.token;
       const clientID = systemCfg[nextMessenger]?.clientID;
       const secretClient = systemCfg[nextMessenger]?.secretClient;
 
       if (!token || !clientID || !secretClient) {
-        // Сбрасываем выбор мессенджера в UI, если обязательные поля пустые
         setActiveMessenger("");
         setValidationAlert({
           isOpen: true,
@@ -315,22 +303,12 @@ const NotificationSystemPlate = ({
         return;
       }
 
-      // 2. Инициализация на бэкенде
-      addLog(
-        `${launchMsgParts[0]} ${nextMessenger} ${launchMsgParts[1]}`,
-        "info",
-      );
       try {
         await AuthorizeDiscord(clientID, secretClient);
         setAuthStatus((prev) => ({ ...prev, discord: true }));
-        addLog(
-          `${successMsgParts[0]} ${nextMessenger} ${successMsgParts[1]}`,
-          "success",
-        );
       } catch (err) {
         console.error(err);
         setAuthStatus((prev) => ({ ...prev, discord: false }));
-        addLog(`${locale.Platform.ErrMsg}: ${err}`, "error");
       }
     }
   };
@@ -340,7 +318,6 @@ const NotificationSystemPlate = ({
     setActivePlatform(nextPlatform);
 
     if (nextPlatform === "startgg") {
-      // 1. Валидация полей с использованием динамического ключа
       const clientID = tourneyCfg[nextPlatform]?.clientID;
       const secretClient = tourneyCfg[nextPlatform]?.secretClient;
 
@@ -353,21 +330,12 @@ const NotificationSystemPlate = ({
         return;
       }
 
-      addLog(
-        `${launchMsgParts[0]} ${activePlatform} ${launchMsgParts[1]}`,
-        "info",
-      );
       try {
         await AuthorizeStartgg(clientID, secretClient);
         setAuthStatus((prev) => ({ ...prev, startgg: true }));
-        addLog(
-          `${successMsgParts[0]} ${nextPlatform} ${successMsgParts[1]}`,
-          "success",
-        );
       } catch (err) {
         console.error(err);
         setAuthStatus((prev) => ({ ...prev, startgg: false }));
-        addLog(`${locale.Platform.ErrMsg}: ${err}`, "error");
       }
     }
   };

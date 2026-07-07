@@ -16,6 +16,7 @@ import (
 	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 var startggTemplateSlug = regexp.MustCompile(`tournament/[^/]+/event/[^/]+`)
@@ -214,7 +215,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 				}
 				setsData = append(setsData, set)
 			}
-			log.Printf("GetSetsData | Startgg | Checked phaseGroup (%v)", phaseGroupInfo)
+			logger.Log(logger.Success, fmt.Sprintf("GetSetsData | Startgg | Checked phaseGroup (%v)", phaseGroupInfo))
 		}
 	}
 	return setsData, nil

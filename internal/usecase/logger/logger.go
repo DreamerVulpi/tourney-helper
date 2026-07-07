@@ -6,24 +6,59 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
 
-func Init(logDir string) (*os.File, error) {
+var (
+	devFile *os.File
+	mu      sync.Mutex
+)
+
+const (
+	Info    = "INFO"
+	Warning = "WARNING"
+	Error   = "ERROR"
+	Success = "SUCCESS"
+)
+
+func DevLogPath() string {
+	if devFile == nil {
+		return ""
+	}
+	return devFile.Name()
+}
+
+func Init(logDir string) error {
 	if err := os.MkdirAll(logDir, 0755); err != nil {
-		return nil, fmt.Errorf("could not create log directory: %v", err)
+		return fmt.Errorf("could not create log directory: %w", err)
 	}
 
 	currentTime := time.Now().Format("02-01-2006_15-04-05")
-	logFilePath := filepath.Join(logDir, fmt.Sprintf("tourneyHelper_%s.log", currentTime))
-	file, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	var err error
+
+	devPath := filepath.Join(logDir, fmt.Sprintf("tourneyHelper_dev_%s.log", currentTime))
+	devFile, err = os.OpenFile(devPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		return nil, fmt.Errorf("could not open log file: %v", err)
+		return fmt.Errorf("could not open log file: %w", err)
 	}
 
-	multiWriter := io.MultiWriter(os.Stdout, file)
-	log.SetOutput(multiWriter)
+	log.SetOutput(io.MultiWriter(os.Stdout, devFile))
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	log.Println("--- Logger initialized ---")
-	return file, nil
+
+	Log(Info, "The logger has been initialized")
+	return nil
+}
+
+func Close() error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	var err error
+	if devFile != nil {
+		if e := devFile.Close(); e != nil {
+			err = e
+		}
+	}
+	return err
 }

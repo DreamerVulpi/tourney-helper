@@ -39,7 +39,7 @@ import ParticipantModal from "./ParticipantModal.jsx";
 import PanelTemplate from "./PanelTemplate.jsx";
 import ParticipantActionModal from "./ParticipantActionModal.jsx";
 
-const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClasses }) => {
+const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) => {
   const [selectedGame, setSelectedGame] = useState("Tekken8");
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -116,7 +116,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
     const isCsv = file.name.endsWith(".csv");
 
     if (!isJson && !isCsv) {
-      addLog(locale.AddButton.ImportFile.OnlyJsonCSV, "error");
       return;
     }
 
@@ -156,17 +155,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
       setImportStatus("success");
       const successImportDBMsgParts = locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportDBMsg.split("%v")
       const successImportBanListMsgParts = locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportBanListMsg.split("%v")
-      if (isBanChecked) {
-        addLog(
-          `${successImportBanListMsgParts[0]} ${successCount} ${successImportBanListMsgParts[1]} ${totalCount} ${successImportBanListMsgParts[2]}`,
-          "success",
-        );
-      } else {
-        addLog(
-          `${successImportDBMsgParts[0]} ${successCount} ${successImportDBMsgParts[1]} ${totalCount} ${successImportDBMsgParts[2]}`,
-          "success",
-        );
-      }
 
       setImportedFileData(null);
       setImportFileType(null);
@@ -179,7 +167,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
         err?.message || err?.toString() || "Unknown error";
       setImportError(errorText);
       setImportStatus("idle");
-      addLog(`${locale.AddButton.ImportFile.LoadingImportFileModalWindows.ErrorImportFileMsg} ${errorText}`, "error");
     }
   };
 
@@ -216,41 +203,21 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
           isPermanent: data.isPermanent,
         };
         await AddBanToParticipant(banRequest);
-        addLog(
-          `${logActionBanParts[0]} ${selectedParticipantForAction.nickname} ${logActionBanParts[1]}`,
-          "success",
-        );
       } else if (data.action === "unban") {
         const unbanRequest = { participantId: selectedParticipantForAction.id };
         await DelBanFromParticipant(unbanRequest);
-        addLog(
-           `${logActionUnbanParts[0]} ${selectedParticipantForAction.nickname} ${logActionUnbanParts[1]}`,
-          "success",
-        );
       } else if (data.action === "delete") {
         const deleteRequest = { id: selectedParticipantForAction.id };
         await DelParticipant(deleteRequest);
-        addLog(
-           `${logActionDeleteParts[0]} ${selectedParticipantForAction.nickname} ${logActionDeleteParts[1]}`,
-          "success",
-        );
       } else if (data.action === "reset_rating_all") {
         const resetRatingRequest = { gameName: selectedGame };
         await ResetRating(resetRatingRequest);
-        addLog(
-           `${logActionRatingParts[0]} ${selectedGame} ${logActionRatingParts[1]}`,
-          "success",
-        );
       }
 
       setIsActionModalOpen(false);
       fetchData(false);
     } catch (err) {
-      console.error("Ошибка при выполнении действия над участником:", err);
-      addLog(
-           `${logActionErrParts[0]} ${selectedParticipantForAction.nickname} ${logActionErrParts[1]} ${err}`,
-          "error",
-        );
+      console.error("Failed do thing under participant: ", err);
     } finally {
       setActionLoading(false);
     }
@@ -281,9 +248,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
           messengerLogin: data.messenger.login,
           tournamentPlatformName: data.tournament.platform,
           tournamentPlatformLogin: data.tournament.login,
-
-          // Если есть данные о бане (например, редактируем забаненного или добавляем бан),
-          // передаем объект. В противном случае — null (на бэкенде будет nil)
           banInfo: data.banInfo
             ? {
                 id: editingParticipant.id,
@@ -299,7 +263,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
         await EditParticipant(updateRequest);
         setIsModalOpen(false);
         await fetchData(false, searchQuery);
-        addLog(`${logActionEditParts[0]} ${data.nickname} ${logActionEditParts[1]}`, "success");
       } else {
         // Добавление нового игрока
         const response = await AddParticipant(
@@ -336,22 +299,14 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
           setIsModalOpen(false);
           setTimeout(async () => {
             await fetchData(false);
-            addLog(
-              `${logActionAddBanParts[0]} ${data.nickname} ${logActionAddBanParts[1]}`,
-              "success",
-            );
           }, 300);
         } else {
           setIsModalOpen(false);
           await fetchData(false);
-          addLog(`${logActionAddParts[0]} ${data.nickname} ${logActionAddParts[1]}`, "success");
         }
       }
     } catch (err) {
       console.error(`${logActionErrParts[0]} ${data.nickname} ${logActionErrParts[1]} ${err}`, err);
-      if (typeof addLog === "function") {
-        addLog(`${logActionErrParts[0]} ${data.nickname} ${logActionErrParts[1]} ${err.message || err}`, "error");
-      }
     } finally {
       setModalLoading(false);
     }
@@ -380,9 +335,8 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
           p.id === participantId ? { ...p, rating: newRating } : p,
         ),
       );
-      addLog(`${logActionUpdateRating} ${nickname || "User"} - ${newRating}`, "success");
     } catch (err) {
-      addLog(`${logActionErrParts[0]} ${nickname || "User"}`, "error");
+      console.error(`${logActionErrParts[0]} ${nickname || "User"}`);
     }
 };
 
@@ -407,7 +361,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
       let items = [];
       let total = 0;
 
-      // РАЗВЕТВЛЕНИЕ ЛОГИКИ В ЗАВИСИМОСТИ ОТ ФИЛЬТРА
       if (activeFilter === "banned") {
         const response = await GetBanned(
           selectedGame,
@@ -419,14 +372,13 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
           const rawList = response.list || [];
           items = rawList.map((b) => ({
             ...b,
-            id: b.id !== undefined ? b.id : b.Id, // Проверяем обе буквы, записываем строго в id
+            id: b.id !== undefined ? b.id : b.Id,
             nickname: b.gameNickname || b.nickname,
             gameId: b.gameId || b.gameID,
           }));
           total = response.totalCount || items.length;
         }
       } else {
-        // Стандартный запрос для вкладок "Все" и "Рейтинг"
         const response = await GetParticipants(
           nameMessengerPlatform,
           nameTournamentPlatform,
@@ -442,7 +394,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
         }
       }
 
-      // Наполнение стейта игроков для рендеринга таблицы
       if (isNextPage) {
         setPlayers((prev) => [...prev, ...items]);
       } else {
@@ -450,9 +401,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
       }
       setTotalCount(total);
     } catch (err) {
-      if (typeof addLog === "function") {
-        addLog(`Ошибка при получении списка: ${err.message || err}`, "error");
-      }
+        console.error(`Failed to get list: ${err.message || err}`)
     } finally {
       setLoading(false);
     }
@@ -503,12 +452,10 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
   const filteredPlayers = useMemo(() => {
     let list = players ? [...players] : [];
 
-    // Если вкладка "banned", бэкенд уже прислал чистый отфильтрованный список нарушителей
     if (activeFilter === "banned") {
       return list;
     }
 
-    // Если вкладка "rating", оставляем только сортировку по рейтингу активных
     if (activeFilter === "rating") {
       return list
         .filter(
@@ -523,9 +470,8 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
 
   const handleCopyText = (participant) => {
   console.log(participant);
-  const realId = participant.id ?? participant.Id ?? 0; // Получаем ID
+  const realId = participant.id ?? participant.Id ?? 0;
 
-  // 1. Проверяем валидность турнирного логина
   const isTournamentValid =
     participant.tournamentPlatformLogin &&
     participant.tournamentPlatformLogin !== "N/D";
@@ -533,20 +479,15 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
     ? `${nameTournamentPlatform} | Login: ${participant.tournamentPlatformLogin}`
     : `${nameTournamentPlatform} | Login: "N/D"`;
 
-  // 2. Проверяем валидность мессенджер логина
   const isMessengerValid =
     participant.messenagerLogin && participant.messenagerLogin !== "N/D";
   const messengerLine = isMessengerValid
     ? `${nameMessengerPlatform} | Login: ${participant.messenagerLogin}`
     : `${nameMessengerPlatform} | Login: "N/D"`;
 
-  // 3. Собираем строку с переносом \n
   const fullText = `${tournamentLine}\n${messengerLine}`;
-
-  // 4. Записываем в буфер обмена
   navigator.clipboard.writeText(fullText);
 
-  // 5. Включаем галочку для конкретного игрока и гасим через 2 секунды
   setCopiedPlayerId(realId);
   setTimeout(() => setCopiedPlayerId(null), 2000);
 };
@@ -1213,7 +1154,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
         theme={theme}
         activeFilter={activeFilter}
         locale={locale.AddButton}
-        addLog={addLog}
       />
       <ParticipantActionModal
         isOpen={isActionModalOpen}
@@ -1226,7 +1166,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, addLog, themeClass
         theme={theme}
         activeFilter={activeFilter}
         locale={locale}
-        addLog={addLog}
       />
       <ImportFileModal
         isOpen={isImportModalOpen}

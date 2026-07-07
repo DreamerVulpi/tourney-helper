@@ -12,6 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	usecaseSender "github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 )
 
@@ -66,7 +67,6 @@ func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform s
 	// TODO: Change to another url
 	h.params.logo = "https://i.imgur.com/n9SG5IL.png"
 	h.params.debugChannelID = cfg.Discord.DebugChannelID
-
 }
 
 func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.ConfigMessenger, tournament config.ConfigTournament) error {
@@ -115,15 +115,14 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 }
 
 func (h *Handler) Stop() error {
-	log.Printf("[DEBUG STOP] Starting bot stop procedure. dh pointer: %p\n", h)
+	logger.Log(logger.Info, fmt.Sprintf("Starting bot stop procedure. dh pointer: %p\n", h))
 	if h == nil {
 		return fmt.Errorf("handler is nil")
 	}
 	h.mtx.Lock()
-	log.Printf("[DEBUG STOP] dh.session: %p, dh.Auth: %p, dh.Ns: %p\n", h.session, h.Auth, h.Ns)
+	log.Printf("dh.session: %p, dh.Auth: %p, dh.Ns: %p\n", h.session, h.Auth, h.Ns)
 
 	if h.cancel != nil {
-		log.Println("[DEBUG STOP] Canceling process...")
 		h.cancel()
 	}
 
@@ -138,7 +137,7 @@ func (h *Handler) Stop() error {
 	ns := h.Ns
 	h.mtx.Unlock()
 
-	log.Println("removing discord commands and clearing up roles...")
+	logger.Log(logger.Info, "Removing Discord commands and clearing up roles...")
 
 	if err := h.deleteTourneyRole(session); err != nil {
 		log.Printf("error deleting tourney role: %v\n", err)
@@ -146,13 +145,13 @@ func (h *Handler) Stop() error {
 
 	// Проверяем наличие Auth и Config перед удалением команд
 	if auth != nil {
-		log.Printf("[DEBUG STOP] auth.Config pointer: %p\n", auth.Config)
+		log.Printf("auth.Config pointer: %p\n", auth.Config)
 		if auth.Config != nil {
-			log.Printf("[DEBUG STOP] Processing %d registered commands for deletion\n", len(registeredCmds))
+			log.Printf("Processing %d registered commands for deletion\n", len(registeredCmds))
 
 			for _, v := range registeredCmds {
 				if v == nil {
-					log.Println("[DEBUG STOP] Found nil command in slice, skipping")
+					log.Println("Found nil command in slice, skipping")
 					continue
 				}
 
@@ -160,24 +159,24 @@ func (h *Handler) Stop() error {
 				if err != nil {
 					log.Printf("cannot delete '%v' command: %v\n", v.Name, err)
 				} else {
-					log.Printf("[DEBUG STOP] Successfully deleted command: %s\n", v.Name)
+					log.Printf(" Successfully deleted command: %s\n", v.Name)
 				}
 			}
 		} else {
-			log.Println("WARN | dh.Auth.Config is nil, skipping command deletion")
+			log.Println("dh.Auth.Config is nil, skipping command deleteion")
 		}
 	} else {
-		log.Println("WARN | dh.Auth is nil, skipping command deletion")
+		log.Println("dh.Auth is nil, skipping command deleteion")
 	}
 
-	log.Println("[DEBUG STOP] Closing discord session...")
+	logger.Log(logger.Info, "Closing Discord session...")
 	err := session.Close()
 
 	if ns != nil {
-		log.Printf("[DEBUG STOP] Unlinking messenger from dh.Ns (%p)\n", ns)
+		log.Printf("Unlinking messenger from dh.Ns (%p)\n", ns)
 		ns.Messenger = nil
 	} else {
-		log.Println("WARN | dh.Ns is nil, skipping messenger unlinking")
+		log.Println("dh.Ns is nil, skipping messenger unlinking")
 	}
 
 	// Очищаем ресурсы сессии
@@ -187,6 +186,6 @@ func (h *Handler) Stop() error {
 	h.cancel = nil
 	h.mtx.Unlock()
 
-	log.Println("discord bot and notification system gracefully stopped!")
+	logger.Log(logger.Success, "Discord bot and notification system gracefully stopped!")
 	return err
 }

@@ -26,12 +26,12 @@ import (
 
 func main() {
 	logDir := "logs"
-	f, err := logger.Init(logDir)
+	err := logger.Init(logDir)
 	if err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)
 	}
-	defer f.Close()
+	defer logger.Close()
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -129,7 +129,8 @@ func main() {
 			ctx := context.Background()
 			meDiscordPlatform, err := dh.Auth.GetDiscordMe(ctx)
 			if err != nil {
-				log.Printf("InitBot | Failed to get debug user: %v", err)
+				logger.Log(logger.Error, fmt.Sprintf("InitBot | Failed to get debug user: %v", err))
+				return
 			}
 			ns := sender.NewNotificationSystem(nil, adapter, &db, cfg.DebugMode.Mode, entitySender.Participant{
 				MessenagerID:    meDiscordPlatform.ID,

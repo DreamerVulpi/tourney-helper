@@ -148,7 +148,7 @@ var En = Ui{
 					WriteParticipantsInDBMsg: "Writing to database",
 					SuccessImportDBMsg:       "Success! Imported %v from %v into the database",
 					SuccessImportBanListMsg:  "Success! Imported %v from %v into the ban list",
-					ErrorImportFileMsg:       "Error: %v",
+					ErrorImportFileMsg:       "Error import file: %v",
 					CriticalFailureStatus:    "Critical Failure",
 					StatusInProcess:          "Processing data",
 					CloseButtonLabel:         "Close",

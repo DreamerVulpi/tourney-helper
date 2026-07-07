@@ -10,7 +10,6 @@ const ParticipantModal = ({
     theme = 'dark',
     activeFilter = 'all',
     locale,
-    addLog
 }) => {
     const isEditMode = !!initialData;
     const isEditingBannedPlayer = isEditMode && (initialData.isBanned === "banned" || initialData.status === "banned");
@@ -100,22 +99,22 @@ const ParticipantModal = ({
         const trimmedGameId = formData.gameId.trim();
 
         if (!trimmedNickname) {
-            addLog(locale.AddModalWindow.ErrEmptyNickname, "error"); 
+            console.error(locale.AddModalWindow.ErrEmptyNickname); 
             return;
         }
 
         if (!trimmedGameId) {
-            addLog(locale.AddModalWindow.ErrEmptyGameID, "error");
+            console.error(locale.AddModalWindow.ErrEmptyGameID);
             return;
         }
 
         if (formData.messenger.active && !formData.messenger.login.trim()) {
-            addLog(locale.AddModalWindow.ErrActivateMessengerNoLogin, "error");
+            console.error(locale.AddModalWindow.ErrActivateMessengerNoLogin);
             return;
         }
 
         if (formData.tournament.active && !formData.tournament.login.trim()) {
-            addLog(locale.AddModalWindow.ErrActivateTourneyNoLogin, "error");
+            console.error(locale.AddModalWindow.ErrActivateTourneyNoLogin);
             return;
         }
 
@@ -135,8 +134,8 @@ const ParticipantModal = ({
                 isDirectBan: isBanMode,
                 banInfo: {
                     ...banData,
-                    reason: banData.reason.trim() || "Причина не указана администратором",
-                    duration: banData.isPermanent ? 0 : Number(banData.duration) // При перманентном бане ставим 0
+                    reason: banData.reason.trim() || "No reason",
+                    duration: banData.isPermanent ? 0 : Number(banData.duration)
                 }
             });
         } else {

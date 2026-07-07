@@ -15,9 +15,8 @@ import (
 	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
-
-// REFACTOR
 
 func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, gameName string, isBan bool) (*app.ImportListPlayersResponse, error) {
 	switch strings.ToLower(selectedTournamentPlatform) {
@@ -36,12 +35,12 @@ func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, ga
 		switch ext {
 		case ".csv":
 			list, err = client.LoadDataFromCSV(path, gameName)
-			log.Println(list)
 		case ".json":
 			list, err = client.LoadDataFromJSON(path, gameName)
-			log.Println(list)
 		default:
-			return nil, fmt.Errorf("unsupported file extension: %s. Only .csv and .json", ext)
+			err := fmt.Errorf("unsupported file extension: %s. Only .csv and .json", ext)
+			a.Log(logger.Error, err.Error())
+			return nil, err
 		}
 		if err != nil {
 			return nil, err
@@ -49,37 +48,42 @@ func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, ga
 
 		s, t, err := a.Db.AddParticipants(a.ctx, list, isBan)
 		if err != nil {
+			a.Log(logger.Error, err.Error())
 			return nil, err
 		}
 
-		// TODO: Add to locale
-		actionText := "добавлено в систему"
+		actionText := "added to system"
 		if isBan {
-			actionText = "добавлено в бан-лист"
+			actionText = "added to ban-list"
 		}
 
-		report := fmt.Sprintf("Успешно %s %d из %d записей", actionText, s, t)
-		log.Println("app | " + report)
+		a.Log(logger.Success, fmt.Sprintf("Successful %s %d of %d records", actionText, s, t))
 		return &app.ImportListPlayersResponse{Success: s, Total: t}, nil
 
 	default:
-		return nil, fmt.Errorf("no support selected platform: %v", selectedTournamentPlatform)
+		err := fmt.Errorf("no support selected platform: %v", selectedTournamentPlatform)
+		a.Log(logger.Error, err.Error())
+		return nil, err
 	}
 }
 
 func (a *App) ResetRating(request db.ParticipantStatResetRequest) error {
 	err := a.Db.Stats.ResetRating(a.ctx, request)
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return err
 	}
+	a.Log(logger.Success, "The rating was successfully reset")
 	return nil
 }
 
 func (a *App) DelParticipant(request db.ParticipantDeleteRequest) error {
 	_, err := a.Db.Participant.DelParticipant(a.ctx, request)
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return err
 	}
+	a.Log(logger.Success, fmt.Sprintf("Participant (Id: %v) was successfully deleted from database", request.Id))
 	return nil
 }
 
@@ -92,37 +96,36 @@ func (a *App) StartBanCleaner(ctx context.Context) {
 		case <-ticker.C:
 			err := a.Db.RemoveExpiredBans(ctx)
 			if err != nil {
-				log.Printf("Ошибка при очистке просроченных банов: %v", err)
-			} else {
-				log.Println("Worker: проверка завершена, просроченные баны удалены")
+				a.Log(logger.Error, fmt.Sprintf("Error while clearing expired bans: %v", err))
 			}
 
 		case <-ctx.Done():
-			log.Printf("Фоновая очистка банов остановлена")
+			a.Log(logger.Error, "Background ban cleanup has been paused")
 			return
 		}
 	}
 }
 
 func (a *App) DelBanFromParticipant(request app.UnbanRequest) error {
-	log.Printf("Request: %v", request.ParticipantId)
 	err := a.Db.DeleteBan(a.ctx, request.ParticipantId)
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return err
 	}
+	a.Log(logger.Success, fmt.Sprintf("Participant with Id %v was unbanned", request.ParticipantId))
 	return nil
 }
 
 func (a *App) AddBanToParticipant(request app.BanRequest) error {
-	log.Printf("Request: %v %v %v %v %v %v", request.Id, request.TypeBan, request.Reason, request.Duration, request.Unit, request.IsPermanent)
 	banUntil := a.Db.CalculateBanUntil(request.IsPermanent, request.Duration, request.Unit)
 	if banUntil != nil {
-		fmt.Printf("Участник с Id %v забанен до %s по причине: %v\n", request.Id, banUntil.Format("2006-01-02 15:04:05"), request.TypeBan)
+		a.Log(logger.Success, fmt.Sprintf("Participant with Id %v was banned (%s) for reason: %v", request.Id, banUntil.Format("2006-01-02 15:04:05"), request.TypeBan))
 	} else {
-		fmt.Printf("Участник с Id %v  забанен навсегда по причине: %v\n", request.Id, request.TypeBan)
+		a.Log(logger.Success, fmt.Sprintf("Participant with Id %v was banned (Permanent) for reason: %v", request.Id, request.TypeBan))
 	}
 	err := a.Db.AddBan(a.ctx, request.Id, request.TypeBan, request.Reason, banUntil)
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return err
 	}
 	return nil
@@ -139,7 +142,6 @@ func (a *App) AddParticipant(
 	messengerLogin string,
 	tournamentPlatformName string,
 	tournamentPlatformLogin string) (int, error) {
-	log.Printf("Request: %v %v %v %v %v | Rating: %v | %v %v %v %v", nickname, gameId, gameName, region, locale, rating, messengerName, messengerLogin, tournamentPlatformName, tournamentPlatformLogin)
 	p := sender.Participant{
 		GameNickname:            nickname,
 		GameID:                  gameId,
@@ -155,15 +157,17 @@ func (a *App) AddParticipant(
 
 	response, err := a.Db.AddParticipant(a.ctx, p)
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return 0, err
 	}
+	a.Log(logger.Success, fmt.Sprintf("Added successfuly new participant (Nickname: %v)", p.GameNickname))
 	return response.Id, nil
 }
 
 func (a *App) GetParticipants(messengerName, tournamentPlatformName, gameName string, limit, offset int, search string) (db.ParticipantGetParticipantsListWithTotalCountResponse, error) {
-	log.Printf("Request: %v %v %v Limit = %v, Offset = %v, Search = \"%v\"", messengerName, tournamentPlatformName, gameName, limit, offset, search)
 	result, err := a.Db.GetParticipants(a.ctx, messengerName, tournamentPlatformName, gameName, limit, offset, search)
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return db.ParticipantGetParticipantsListWithTotalCountResponse{}, err
 	}
 	return result, nil
@@ -173,17 +177,19 @@ func (a *App) GetBanned(gameName string, limit, offset int, search string) (db.P
 	log.Printf("Request: GameName = %v Limit = %v, Offset = %v, Search = \"%v\"", gameName, limit, offset, search)
 	result, err := a.Db.GetBanned(a.ctx, gameName, limit, offset, search)
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return db.ParticipantGetListResponse{}, err
 	}
 	return result, nil
 }
 
 func (a *App) EditParticipantStatsRating(id, rating int) (db.ParticipantEditResponse, error) {
-	log.Printf("Request: %v %v", id, rating)
 	result, err := a.Db.Stats.EditParticipantStatsRating(a.ctx, db.ParticipantStatEditRatingRequest{Id: id, Rating: rating})
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return db.ParticipantEditResponse{}, err
 	}
+	a.Log(logger.Success, fmt.Sprintf("The participant's (Id: %v) rating has been successfully updated to %v", id, rating))
 	return result, nil
 }
 
@@ -216,7 +222,9 @@ func (a *App) EditParticipant(request app.EditParticipantRequest) error {
 
 	err := a.Db.EditParticipant(a.ctx, p, ban)
 	if err != nil {
+		a.Log(logger.Error, err.Error())
 		return err
 	}
+	a.Log(logger.Success, fmt.Sprintf("The participant's (Nickname: %v) data has been successfully updated", p.GameNickname))
 	return err
 }

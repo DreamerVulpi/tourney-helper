@@ -1,7 +1,6 @@
 import React from "react";
 import { Database } from "lucide-react";
 
-// Добавляем пропсы: logs, setLogs и theme
 const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
   return (
     <footer
@@ -19,15 +18,7 @@ const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
           </span>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[9px] font-mono text-slate-500">
-            {new Date().toLocaleTimeString()}
-          </span>
-          <button
-            onClick={() => setLogs([])}
-            className="text-[8px] font-black uppercase text-slate-600 hover:text-blue-500 transition-colors"
-          >
-            {locale.ClearButtonLabel}
-          </button>
+          
         </div>
       </div>
 

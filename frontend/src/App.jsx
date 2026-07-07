@@ -43,11 +43,13 @@ import {
   GetUiLocale,
   LoadSettingsApp,
   SaveSettingsApp,
+  GetLogs,
 } from "../wailsjs/go/application/App.js";
 import { debounce } from "./hooks/debounce.jsx";
 import WidgetBracketPanel from "./components/WidgetBracketPanel.jsx";
 import WidgetScoreboardPanel from "./components/WidgetScoreboardPanel.jsx";
 import LoggerPlate from "./components/LoggerPlate.jsx";
+import { EventsOn } from "../wailsjs/runtime/runtime";
 
 const App = () => {
   const [systemCfg, setSystemCfg] = useState({
@@ -95,11 +97,37 @@ const App = () => {
     csv: { nameFile: "" },
   });
 
-  const addLog = (msg, type = "info") => {
+  const loadLogs = async () => {
+    try {
+      const logs = await GetLogs();
+
+      const mapped = logs.map((log) => ({
+        time: log.time,
+        msg: locale.LogPanel?.[log.msg] || log.msg,
+        type: (log.type || "info").toLowerCase(),
+      }));
+
+      setLogs(mapped.reverse());
+    } catch (err) {
+      console.error("Failed to load logs:", err);
+    }
+  };
+
+  const addLog = (log) => {
+    if (!log) return;
+
     setLogs((prev) => [
-      { time: new Date().toLocaleTimeString(), msg, type },
+      {
+        time: log.time || "",
+        msg: log.msg || "",
+        type: (log.type || "info").toLowerCase(),
+      },
       ...prev,
     ]);
+  };
+
+  const getLogText = (log, locale) => {
+    return locale.LogPanel?.[log.msg] || log.msg;
   };
 
   // Scaling
@@ -154,7 +182,6 @@ const App = () => {
         }
       } catch (err) {
         console.error(`${data.LogPanel.LocaleNotLoaded}:`, err);
-        addLog(`${data.LogPanel.LocaleNotLoaded}: ${err}`, "error");
       }
     };
     loadLocalization();
@@ -164,97 +191,122 @@ const App = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-  if (!locale) return;
-  if (isConfigLoadedRef.current) return;
+    if (!locale) return;
 
-  const initApp = async () => {
-    try {
-      const sys = await LoadSystemConfig();
-      if (sys) {
-        setSystemCfg((prev) => ({
-          ...prev,
-          discord: {
-            ...prev.discord,
-            ...(sys.discord || {}),
-            token: sys.discord?.token || "",
-            roles: {
-              ru: sys.discord?.roles?.ru || "",
-              en: sys.discord?.roles?.en || "",
+    const unsubscribe = EventsOn("logs-updated", () => {
+        loadLogs();
+    });
+
+    return unsubscribe;
+}, [locale]);
+      
+
+  useEffect(() => {
+    if (!locale) return;
+
+    loadLogs(locale);
+
+    if (isConfigLoadedRef.current) return;
+
+    const initApp = async () => {
+      try {
+        const sys = await LoadSystemConfig();
+        if (sys) {
+          setSystemCfg((prev) => ({
+            ...prev,
+            discord: {
+              ...prev.discord,
+              ...(sys.discord || {}),
+              token: sys.discord?.token || "",
+              roles: {
+                ru: sys.discord?.roles?.ru || "",
+                en: sys.discord?.roles?.en || "",
+              },
             },
-          },
-          telegram: {
-            ...prev.telegram,
-            ...(sys.telegram || {}),
-            roles: {
-              ru: sys.telegram?.roles?.ru || "",
-              en: sys.telegram?.roles?.en || "",
+            telegram: {
+              ...prev.telegram,
+              ...(sys.telegram || {}),
+              roles: {
+                ru: sys.telegram?.roles?.ru || "",
+                en: sys.telegram?.roles?.en || "",
+              },
             },
-          },
-          debug: {
-            mode: sys.debug?.mode ?? sys.Debug?.mode ?? false,
-          },
-          database: {
-            dsn: sys.database?.dsn || sys.db?.dsn || "",
-          },
-        }));
-        addLog(locale.LogPanel.MainConfigSuccessfulLoaded, "success");
+            debug: {
+              mode: sys.debug?.mode ?? sys.Debug?.mode ?? false,
+            },
+            database: {
+              dsn: sys.database?.dsn || sys.db?.dsn || "",
+            },
+          }));
+        }
+
+        const tourney = await LoadTournamentConfig();
+        if (tourney) {
+          setTourneyCfg((prev) => ({
+            ...prev,
+            urlToTournament: tourney.urlToTournament || "",
+            startgg: {
+              clientID: tourney.startgg?.clientID || "",
+              secretClient: tourney.startgg?.secretClient || "",
+              name: tourney.startgg?.name || "startgg",
+            },
+            challonge: {
+              clientID: tourney.challonge?.clientID || "",
+              secretClient: tourney.challonge?.secretClient || "",
+              name: tourney.challonge?.name || "challonge",
+            },
+            logo: {
+              img: tourney.logo?.img || "",
+            },
+            rules: {
+              standardFormat: tourney.rules?.standardFormat ?? 2,
+              finalsFormat: tourney.rules?.finalsFormat ?? 3,
+              rounds: tourney.rules?.rounds ?? 3,
+              duration: tourney.rules?.duration ?? 60,
+              waiting: tourney.rules?.waiting ?? 10,
+              stage: tourney.rules?.stage || "Any",
+              crossplatform: tourney.rules?.crossplatform ?? true,
+            },
+            stream: tourney.stream || {},
+            game: tourney.game || { name: "" },
+          }));
+        }
+
+        const settings = await LoadSettingsApp();
+        if (settings) {
+          const fileLang = settings.Language || settings.language || "EN";
+
+          setSettings((prev) => ({
+            ...prev,
+            Language: fileLang,
+          }));
+
+          setLang(fileLang);
+        }
+
+        isConfigLoadedRef.current = true;
+        setIsLoaded(true);
+      } catch (err) {
+        console.error(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
       }
+    };
 
-      const tourney = await LoadTournamentConfig();
-      if (tourney) {
-        setTourneyCfg((prev) => ({
-          ...prev,
-          urlToTournament: tourney.urlToTournament || "",
-          startgg: {
-            clientID: tourney.startgg?.clientID || "",
-            secretClient: tourney.startgg?.secretClient || "",
-            name: tourney.startgg?.name || "startgg",
-          },
-          challonge: {
-            clientID: tourney.challonge?.clientID || "",
-            secretClient: tourney.challonge?.secretClient || "",
-            name: tourney.challonge?.name || "challonge",
-          },
-          logo: {
-            img: tourney.logo?.img || "",
-          },
-          rules: {
-            standardFormat: tourney.rules?.standardFormat ?? 2,
-            finalsFormat: tourney.rules?.finalsFormat ?? 3,
-            rounds: tourney.rules?.rounds ?? 3,
-            duration: tourney.rules?.duration ?? 60,
-            waiting: tourney.rules?.waiting ?? 10,
-            stage: tourney.rules?.stage || "Any",
-            crossplatform: tourney.rules?.crossplatform ?? true,
-          },
-          stream: tourney.stream || {},
-          game: tourney.game || { name: "" },
-        }));
-        addLog(locale.LogPanel.TournamentConfigSuccessfulLoaded, "success");
-      }
+    initApp();
+  }, [locale]);
 
-      const settings = await LoadSettingsApp();
-      if (settings) {
-        const fileLang = settings.Language || settings.language || "EN";
-        
-        setSettings((prev) => ({
-          ...prev,
-          Language: fileLang,
-        }));
+  useEffect(() => {
+  const unsubscribe = EventsOn("user-log", (log) => {
+    setLogs(prev => [
+      {
+        time: log.time,
+        msg: locale.LogPanel?.[log.msg] || log.msg,
+        type: (log.type || "info").toLowerCase(),
+      },
+      ...prev,
+    ]);
+  });
 
-        setLang(fileLang);
-        addLog(locale.LogPanel.SettingsApplicationLoaded, "success");
-      }
-
-      isConfigLoadedRef.current = true;
-      setIsLoaded(true);
-
-    } catch (err) {
-      addLog(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
-    }
-  };
-
-  initApp();
+  return unsubscribe;
 }, [locale]);
 
   const debouncedSaveSystem = useMemo(
@@ -286,15 +338,14 @@ const App = () => {
     () =>
       debounce(async (cfg) => {
         try {
-            await SaveSettingsApp(cfg);
+          await SaveSettingsApp(cfg);
           console.log("Настройки приложения успешно сохранены на бэкенде");
         } catch (err) {
           console.error("Не удалось сохранить настройки приложения:", err);
         }
-        }, 1000),
-      []
+      }, 1000),
+    [],
   );
-
 
   const updateConfig = (type, data) => {
     if (!isLoaded) return;
@@ -444,7 +495,7 @@ const App = () => {
                     localeValidation={locale.ValidationAlertModal}
                     themeClasses={themeClasses}
                     lang={lang}
-                    isStartedSending={isMailingRunning} 
+                    isStartedSending={isMailingRunning}
                     setIsStartedSending={setIsMailingRunning}
                     activePlatform={activePlatform}
                     setActivePlatform={setActivePlatform}
@@ -461,7 +512,6 @@ const App = () => {
                     statusDatabase={statusDatabase}
                     locale={locale.DatabasePanel}
                     lang={lang}
-                    addLog={addLog}
                     themeClasses={themeClasses}
                   />
                 )}
@@ -491,11 +541,6 @@ const App = () => {
 
 const handleAuth = async (platform) => {
   try {
-    addLog(
-      `${locale.NotificationSystemPanel.Platform.LaunchMsg} ${platform}...`,
-      "info",
-    );
-
     let success = false;
 
     if (platform === "discord") {
@@ -526,19 +571,14 @@ const handleAuth = async (platform) => {
 
     if (success) {
       setAuthStatus((prev) => ({ ...prev, [platform]: true }));
-      addLog(
-        // FIXME: No information about platform
-        `${locale.NotificationSystemPanel.Platform.SuccessMsg} ${platform}`,
-        "success",
-      );
     } else {
-      addLog(
+      console.error(
         `${locale.NotificationSystemPanel.Platform.SuccessMsg} ${platform}`,
         "error",
       );
     }
   } catch (err) {
-    addLog(`[${platform}]: ${err.message || err}`, "error");
+    console.error(`[${platform}]: ${err.message || err}`, "error");
     setAuthStatus((prev) => ({ ...prev, [platform]: false }));
   }
 };

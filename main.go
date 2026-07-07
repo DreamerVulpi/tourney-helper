@@ -25,27 +25,25 @@ import (
 var assets embed.FS
 
 func main() {
-	logDir := "logs"
-	f, err := logger.Init(logDir)
-	if err != nil {
+	if err := logger.Init("logs"); err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)
 	}
-	defer f.Close()
-
-	defer func() {
-		if r := recover(); r != nil {
-			log.Printf("Critical error\n Why? %v\n Stack:\n%s", r, debug.Stack())
-			fmt.Println("Programm closed with error. More details in folder logs")
-		}
-	}()
+	defer logger.Close()
 
 	app := application.NewApp()
 	conn, err := db.NewPool()
 	if err != nil {
-		log.Println(err)
+		app.Log(logger.Error, err.Error())
 		return
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			app.Log(logger.Error, fmt.Sprintf("Critical error\n Why? %v\n Stack:\n%s", r, debug.Stack()))
+			app.Log(logger.Error, "Programm closed with error. More details in folder logs")
+		}
+	}()
 	db := dbManager.Database{
 		Conn:        conn,
 		Participant: usecaseDB.Participant{Repo: &repo.Participants{Conn: conn}},
