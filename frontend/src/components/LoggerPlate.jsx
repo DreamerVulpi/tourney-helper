@@ -22,7 +22,7 @@ const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-1 font-mono text-[10px]">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1 font-mono text-[10px]">
         {logs.length === 0 ? (
           <div className="h-full flex items-center justify-center opacity-20 italic uppercase tracking-[0.3em] text-slate-500">
             {locale.NoLogs}
@@ -36,6 +36,8 @@ const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
                   ? "text-green-500" 
                   : l.type === "error" 
                     ? "text-red-500" 
+                    : l.type === "warning"
+                    ? "text-orange-500"
                     : "text-blue-400"
               }`}
             >

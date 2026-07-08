@@ -47,7 +47,6 @@ type RulesMatches struct {
 	Rounds         int    `toml:"rounds" json:"rounds"`
 	Duration       int    `toml:"duration" json:"duration"`
 	Crossplatform  bool   `toml:"crossplatform" json:"crossplatform"`
-	Waiting        int    `toml:"waiting" json:"waiting"`
 }
 
 type StreamLobby struct {

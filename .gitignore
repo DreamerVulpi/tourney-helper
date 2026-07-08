@@ -4,6 +4,7 @@
 .vscode
 *.png
 *.txt
+*.jsonl
 contacts.json
 contactsEmbed.json
 token_discord.json

@@ -83,12 +83,12 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-6">
+        <div className={`p-6 max-h-[70vh] overflow-y-auto space-y-6`}>
           <p className={`text-xs leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
             {locale.DescriptionImport}
           </p>
 
-          {/* Информационная плашка параметров */}
+          {/* Params */}
           <div className={`p-4 rounded-xl border space-y-2.5 font-mono text-xs ${
             isDark ? 'bg-white/5 border-white/5 text-white' : 'bg-slate-50 border-slate-200 text-slate-900'
           }`}>
@@ -144,7 +144,7 @@ const ImportFileModal = ({ isOpen, onClose, onConfirm, filePath, fileType, theme
                 <textarea
                   readOnly
                   value={jsonTemplate}
-                  className={`w-full h-32 p-3 rounded-xl font-mono text-[11px] leading-relaxed resize-none border focus:outline-none custom-scrollbar ${
+                  className={`w-full h-32 p-3 rounded-xl font-mono text-[11px] leading-relaxed resize-none border focus:outline-none ${isBanImport ? 'custom-scrollbar custom-scrollbar-red' : 'custom-scrollbar'} ${
                     isDark ? 'bg-transparent border-white/10 text-slate-300' : 'bg-transparent border-slate-200 text-slate-700'
                   }`}
                 />

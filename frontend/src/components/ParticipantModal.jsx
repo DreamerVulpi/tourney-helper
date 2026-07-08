@@ -216,8 +216,7 @@ const ParticipantModal = ({
                 </div>
 
                 {/* Content */}
-                <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-6">
-                    
+                <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar custom-scrollbar-red space-y-6">
                     {/* Основные инпуты */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="col-span-2 sm:col-span-1">

@@ -8,18 +8,13 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 )
 
 var (
 	devFile *os.File
 	mu      sync.Mutex
-)
-
-const (
-	Info    = "INFO"
-	Warning = "WARNING"
-	Error   = "ERROR"
-	Success = "SUCCESS"
 )
 
 func DevLogPath() string {
@@ -46,7 +41,7 @@ func Init(logDir string) error {
 	log.SetOutput(io.MultiWriter(os.Stdout, devFile))
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	Log(Info, "The logger has been initialized")
+	Log(logger.Info, "The logger has been initialized")
 	return nil
 }
 

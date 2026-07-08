@@ -6,18 +6,16 @@ const ParticipantActionModal = ({
     onClose, 
     onConfirm, 
     actionType, // 'ban', 'unban', 'delete', 'reset_rating_all'
-    participantData, // { nickname: 'DoshiPanda', ... } или null при глобальных экшенах
+    participantData, // { nickname: 'DoshiPanda', ... } or null
     currentGame,
     loading = false,
     theme = 'dark',
     locale,
 }) => {
-    // Важно: для reset_rating_all participantData будет null, поэтому убираем жесткую блокировку
     if (!isOpen || (!participantData && actionType !== 'reset_rating_all')) return null;
 
     const isDark = theme === 'dark';
 
-    // Список предустановленных причин: value пойдет в бэкенд (Go), label — отображается юзеру
     const banReasons = [
         { value: 'software/cheats', label: locale.AddButton.AddBanFields.ListViolationCategories.UsingSoftwareOrCheats },
         { value: 'toxic/insults', label: locale.AddButton.AddBanFields.ListViolationCategories.ToxicBehavior },
@@ -26,14 +24,13 @@ const ParticipantActionModal = ({
         { value: 'smurfing', label: locale.AddButton.AddBanFields.ListViolationCategories.Smurfing }
     ];
 
-    // Стейты для полей бана
     const [typeBan, setTypeBan] = useState(banReasons[0].value);
-    const [reason, setReason] = useState(''); // Это описание/подробности нарушения
+    const [reason, setReason] = useState('');
     const [duration, setDuration] = useState('1');
     const [unit, setUnit] = useState('days'); // 'minutes' | 'hours' | 'days' | 'months'
     const [isPermanent, setIsPermanent] = useState(false);
 
-    // Сбрасываем поля при открытии окна или смене типа действия
+    // Back to default values if close window
     useEffect(() => {
         if (isOpen) {
             setTypeBan(banReasons[0].value);

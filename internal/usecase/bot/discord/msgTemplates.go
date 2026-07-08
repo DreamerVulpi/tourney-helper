@@ -133,10 +133,10 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 			{Name: local.InviteMessage.Discord, Value: discordDisplay, Inline: true},
 
 			{Name: local.InviteMessage.CheckIn, Value: set.FullInviteLink},
-			{Name: fmt.Sprintf(local.InviteMessage.Warning, s.params.rulesMatches.Waiting), Value: "\u200B"},
 
 			{Name: local.InviteMessage.SettingsHeader},
 			{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, format) + fmt.Sprintf(local.InviteMessage.FormatDescription, format), Inline: true},
+			// TODO: Add locale to stage (Any, Любая)
 			{Name: local.InviteMessage.Stage, Value: fieldStage(local, s.params.rulesMatches.Stage), Inline: true},
 			{Name: local.InviteMessage.Rounds, Value: fmt.Sprintf("%v", s.params.rulesMatches.Rounds), Inline: true},
 			{Name: local.InviteMessage.Duration, Value: fmt.Sprintf(local.InviteMessage.DurationCount, s.params.rulesMatches.Duration), Inline: true},
@@ -155,8 +155,6 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 		fields := []*discordgo.MessageEmbedField{
 			{Name: local.StreamLobbyMessage.StreamLink, Value: stream},
 			{Name: local.StreamLobbyMessage.MessageHeader, Value: set.FullInviteLink},
-			{Name: fmt.Sprintf(local.StreamLobbyMessage.Warning, s.params.rulesMatches.Waiting), Value: "\u200B"},
-
 			{Name: local.StreamLobbyMessage.ParamsHeader},
 			{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, format) + fmt.Sprintf(local.InviteMessage.FormatDescription, format), Inline: true},
 			{Name: local.StreamLobbyMessage.Area, Value: fieldArea(local, s.params.streamLobby.Area), Inline: true},
@@ -315,12 +313,6 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 	logFields = []*discordgo.MessageEmbedField{
 		{Name: fmt.Sprintf(local.LogMessage.SuccesfullSendedMsg, state), Value: "\u200B"},
 		{Name: fmt.Sprintf("Set #%v | ", set.SetID), Value: fmt.Sprintf("%v vs %v", set.ContactPlayer1.GameNickname, set.ContactPlayer2.GameNickname)},
-	}
-
-	if len(set.FullInviteLink) > 0 {
-		logFields = append(logFields, &discordgo.MessageEmbedField{
-			Name: fmt.Sprintf(local.LogMessage.CheckIn, set.FullInviteLink), Value: "\u200B",
-		})
 	}
 
 	if !success {

@@ -73,9 +73,6 @@ func (db *Database) GetBanned(ctx context.Context, gameName string, limit, offse
 		return entityDB.ParticipantGetListResponse{}, err
 	}
 
-	log.Println(entityDB.ParticipantGetListResponse{
-		ListBanned: responseList.ListBanned,
-	})
 	return entityDB.ParticipantGetListResponse{
 		ListBanned: responseList.ListBanned,
 	}, err
@@ -378,9 +375,8 @@ func (db *Database) addParticipantWithTx(ctx context.Context, tx *sql.Tx, p enti
 		pAddBanRequest := entityDB.ParticipantBansAddRequest{
 			ParticipantId: pAddResponse.Id,
 			TypeBan:       "other",
-			// TODO: Add to locale
-			Reason:    "Массовый импорт из списка",
-			ExpiresAt: expiresAt,
+			Reason:        "Import from file",
+			ExpiresAt:     expiresAt,
 		}
 		log.Printf("db | Adding participant ID %v to ban list", pAddResponse.Id)
 		_, err := bansTxUc.AddParticipantBan(ctx, pAddBanRequest)

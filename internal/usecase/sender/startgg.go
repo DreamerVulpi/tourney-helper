@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 
+	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
 	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
@@ -215,7 +216,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 				}
 				setsData = append(setsData, set)
 			}
-			logger.Log(logger.Success, fmt.Sprintf("GetSetsData | Startgg | Checked phaseGroup (%v)", phaseGroupInfo))
+			logger.Log(loggerEntity.Success, fmt.Sprintf("GetSetsData | Startgg | Checked phaseGroup (%v)", phaseGroupInfo))
 		}
 	}
 	return setsData, nil

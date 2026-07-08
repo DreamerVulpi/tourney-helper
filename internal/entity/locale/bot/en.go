@@ -9,7 +9,6 @@ var En = Lang{
 		SuccesfullSendedMsg:    "Invite message sended to %v",
 		FailedSentMsg:          "Failed sent message due to %v ",
 		UsuallyMsgHeader:       "Information ℹ️",
-		CheckIn:                "**Link to check-in: %s**",
 	},
 	ContactMessage: ContactMsg{
 		Title:             "Search for a player in the database",

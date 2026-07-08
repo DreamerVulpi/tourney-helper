@@ -80,7 +80,6 @@ const App = () => {
     rules: {
       standardFormat: 2,
       finalsFormat: 3,
-      stage: "Any", // TODO: Add field in windows of rules
       rounds: 3,
       duration: 60,
       crossplatform: true,
@@ -156,11 +155,11 @@ const App = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const isConfigLoadedRef = useRef(false); // Флаг: загружена ли конфигурация
+  const isConfigLoadedRef = useRef(false);
   const [lang, setLang] = useState("EN");
   const [settings, setSettings] = useState(null);
   const [locale, setLocale] = useState(null);
-  const [logs, setLogs] = useState([]); // Изначально пусто
+  const [logs, setLogs] = useState([]);
   const [isMailingRunning, setIsMailingRunning] = useState(false);
 
   useEffect(() => {
@@ -170,7 +169,6 @@ const App = () => {
         setLocale(data);
         console.log(`${lang} - ${data.LogPanel.LocaleLoaded}`, data);
 
-        // Добавляем приветственный лог, используя только что пришедшие данные data
         if (data?.LogPanel?.LocaleLoaded) {
           setLogs([
             {
@@ -198,7 +196,7 @@ const App = () => {
     });
 
     return unsubscribe;
-}, [locale]);
+  }, [locale]);
       
 
   useEffect(() => {

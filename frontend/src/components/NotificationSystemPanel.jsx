@@ -189,7 +189,6 @@ const NotificationSystemPlate = ({
     finalsFormat: 3,
     rounds: 3,
     duration: 60,
-    waiting: 10,
   };
   const streamLobby = tourneyCfg?.stream || {
     area: "Any",
@@ -204,7 +203,6 @@ const NotificationSystemPlate = ({
   // Statements for UI
   const [activeSettings, setActiveSettings] = useState(null); // 'startgg', 'challonge', 'discord', 'telegram'
   const roles = systemCfg?.[activeSettings]?.roles || { ru: "", en: "" };
-  const [checkInEnabled, setCheckInEnabled] = useState(false);
   const [copied, setCopied] = useState(false);
   const isReadyToStart =
     activePlatform &&
@@ -232,24 +230,22 @@ const NotificationSystemPlate = ({
   };
 
   const handleStartedSendingToggle = async (locale) => {
-    // Защита от спама: если уже идет отправка запроса на бэкенд — ничего не делаем
     if (isProcessing) return;
 
-    setIsProcessing(true); // Блокируем кнопку на время сетевого запроса
+    setIsProcessing(true);
 
     if (isStartedSending) {
       try {
         await StopSendNotifications();
-        setIsStartedSending(false); // Меняем статус только после успешной остановки
+        setIsStartedSending(false);
       } catch (err) {
         console.error(err);
       } finally {
-        setIsProcessing(false); // В любом случае разблокируем кнопку в конце
+        setIsProcessing(false);
       }
       return;
     }
 
-    // Логика запуска рассылки
     try {
       await StartSendNotifications(
         activeMessenger,
@@ -359,10 +355,9 @@ const NotificationSystemPlate = ({
         </div>
       )}
 
-      {/* Кнопка запуска/остановки рассылки */}
+      {/* Start/stop sending messages */}
       <button
         type="button"
-        // Кнопка недоступна, если нет готовности ИЛИ если сейчас идет обработка запроса
         disabled={!isReadyToStart || isProcessing}
         onClick={() => handleStartedSendingToggle(locale)}
         className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-lg uppercase tracking-wider italic transition-all shadow-xl group text-white ${getButtonStyle()} ${
@@ -373,7 +368,7 @@ const NotificationSystemPlate = ({
       >
         {isProcessing ? (
           <>
-            {/* Спиннер загрузки (можно заменить на любую иконку с анимацией animate-spin) */}
+            {/* Loading process */}
             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             {isStartedSending ? locale.Mailing.Stop : locale.Mailing.Start}
           </>
@@ -403,7 +398,7 @@ const NotificationSystemPlate = ({
     >
       <div className="grid grid-cols-12 gap-8 items-start flex-1">
         {/* Left panel */}
-        <div className="col-span-12 lg:col-span-3 space-y-2">
+        <div className="col-span-12 lg:col-span-4 space-y-2">
           <section className="h-[48px] items-center">
             <div
               className={`w-full flex items-center justify-between p-3 rounded-xl border ${isDark ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50 border-amber-200"}`}
@@ -501,6 +496,27 @@ const NotificationSystemPlate = ({
                   <Plus className="rotate-45" size={14} />
                 </button>
               </div>
+
+              <div className="space-y-1 pt-1 animate-in fade-in duration-300">
+                  <label
+                    className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
+                  >
+                    {locale.Platform.RedirectURL}
+                  </label>
+                  <div
+                    className={`flex items-center gap-2 p-1.5 rounded-lg border border-dashed ${isDark ? "bg-black/20 border-white/10" : "bg-white border-slate-200"}`}
+                  >
+                    <code className="flex-1 text-[10px] font-mono text-blue-500 truncate pl-1">
+                      http://127.0.0.1:7310/callback
+                    </code>
+                    <button
+                      onClick={handleCopy}
+                      className={`p-1.5 rounded-md transition-all ${copied ? "bg-green-500/20 text-green-500" : "hover:bg-blue-500/10 text-slate-500 hover:text-blue-500"}`}
+                    >
+                      {copied ? <Check size={12} /> : <Copy size={12} />}
+                    </button>
+                  </div>
+                </div>
 
               <div className="grid grid-cols-2 gap-2 pt-1 animate-in fade-in slide-in-from-top-1">
                 <div className="space-y-1">
@@ -783,8 +799,8 @@ const NotificationSystemPlate = ({
         </div>
 
         {/* Central and right panels */}
-        <div className="col-span-12 lg:col-span-9 grid grid-cols-12 gap-8">
-          <div className="col-span-12 lg:col-span-5 space-y-6">
+        <div className="col-span-12 lg:col-span-8 grid grid-cols-10 gap-6">
+          <div className="col-span-12 lg:col-span-6 space-y-6">
             <section className="flex gap-4 h-[58px] items-end">
               <div className="flex-1 space-y-1">
                 <label
@@ -872,23 +888,6 @@ const NotificationSystemPlate = ({
               <div className="flex-1">
                 {activeTab === "rules" ? (
                   <div className="animate-in fade-in slide-in-from-left-2 duration-300 space-y-4">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`text-[8px] font-black uppercase ${themeClasses.textMuted}`}
-                      >
-                        Check-in
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setCheckInEnabled(!checkInEnabled)}
-                        className={`w-8 h-4 rounded-full relative transition-all ${checkInEnabled ? "bg-blue-600" : "bg-slate-400"}`}
-                      >
-                        <div
-                          className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${checkInEnabled ? "right-0.5" : "left-0.5"}`}
-                        />
-                      </button>
-                    </div>
-
                     <div className="grid grid-cols-2 gap-x-6 gap-y-4">
                       <RuleInput
                         label={locale.RulesOfTournament.StandardFormat}
@@ -935,24 +934,6 @@ const NotificationSystemPlate = ({
                         themeClasses={themeClasses}
                         onChange={(val) => handleRuleChange("duration", val)}
                       />
-                      <div
-                        className={`col-span-2 p-4 rounded-2xl border transition-all duration-300 ${
-                          checkInEnabled
-                            ? "animate-in slide-in-from-top-2 block"
-                            : "hidden"
-                        } ${isDark ? "bg-blue-600/5 border-blue-600/10" : "bg-blue-50 border-blue-100"}`}
-                      >
-                        <RuleInput
-                          label={locale.RulesOfTournament.Waiting.Label}
-                          value={rules.waiting}
-                          min={5}
-                          max={15}
-                          suffix={locale.RulesOfTournament.Waiting.Minutes}
-                          icon={Clock}
-                          themeClasses={themeClasses}
-                          onChange={(val) => handleRuleChange("waiting", val)}
-                        />
-                      </div>
                     </div>
                   </div>
                 ) : (
@@ -1109,7 +1090,7 @@ const NotificationSystemPlate = ({
               </div>
             </div>
           </div>
-          <div className="col-span-12 lg:col-span-5 space-y-6">
+          <div className="col-span-12 lg:col-span-4 space-y-6">
             <div
               className={`p-6 rounded-[2.5rem] border space-y-6 ${themeClasses.section}`}
             >

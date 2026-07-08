@@ -11,9 +11,9 @@ import (
 
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
+	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/bot/discord"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 )
 
@@ -34,7 +34,6 @@ func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
 
 	client.NamePlatform = "Discord"
 	a.MessengerClient = client
-	a.Log(logger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", client.NamePlatform, client))
 	return nil
 }
 
@@ -55,8 +54,6 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 
 	client.NamePlatform = "Startgg"
 	a.TournamentClient = client
-
-	a.Log(logger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", client.NamePlatform, client))
 	return nil
 }
 
@@ -80,7 +77,7 @@ func (a *App) InitSystemNotification(language string) (discord.Handler, error) {
 	}, 5*time.Minute)
 	dh.Ns = ns
 	if a.ConfigMessenger.DebugMode.Mode {
-		a.Log(logger.Info, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
+		a.Log(logger.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
 	}
 
 	return dh, nil
@@ -198,7 +195,9 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 			a.Log(logger.Error, err.Error())
 			return err
 		}
+		a.Log(logger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.TournamentClient.NamePlatform, a.TournamentClient))
 	}
+	time.Sleep(1 * time.Second)
 
 	if len(cfgTournament.UrlToTournament) == 0 {
 		err := fmt.Errorf("No tournament url/slug for get data tournament\n")
@@ -222,6 +221,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 			a.Log(logger.Error, err.Error())
 			return err
 		}
+		a.Log(logger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.MessengerClient.NamePlatform, a.MessengerClient))
 	}
 
 	slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.UrlToTournament)

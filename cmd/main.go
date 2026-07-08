@@ -15,6 +15,7 @@ import (
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
 	"github.com/dreamervulpi/tourneyBot/internal/db"
 	"github.com/dreamervulpi/tourneyBot/internal/db/repo"
+	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/bot/discord"
 	usecaseDB "github.com/dreamervulpi/tourneyBot/internal/usecase/db"
@@ -129,7 +130,7 @@ func main() {
 			ctx := context.Background()
 			meDiscordPlatform, err := dh.Auth.GetDiscordMe(ctx)
 			if err != nil {
-				logger.Log(logger.Error, fmt.Sprintf("InitBot | Failed to get debug user: %v", err))
+				logger.Log(loggerEntity.Error, fmt.Sprintf("InitBot | Failed to get debug user: %v", err))
 				return
 			}
 			ns := sender.NewNotificationSystem(nil, adapter, &db, cfg.DebugMode.Mode, entitySender.Participant{
@@ -140,7 +141,7 @@ func main() {
 			}, 5*time.Minute)
 			dh.Ns = ns
 			if cfg.DebugMode.Mode {
-				log.Printf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord")
+				logger.Log(loggerEntity.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
 			}
 			if err := dh.Start(ctx, ggAuth, conn, cfg, tournament); err != nil {
 				log.Println(err)

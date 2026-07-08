@@ -5,7 +5,7 @@ import (
 
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/entity/locale/ui"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 )
 
 func (a *App) GetUiLocale(lang string) ui.Ui {
@@ -104,7 +104,6 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 				Rounds:         3,
 				Duration:       60,
 				Crossplatform:  false,
-				Waiting:        10,
 			},
 			Stream: config.StreamLobby{
 				Area:          "Any",

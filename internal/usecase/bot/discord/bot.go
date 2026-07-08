@@ -12,6 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
+	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	usecaseSender "github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 )
@@ -54,7 +55,6 @@ func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform s
 		Duration:       tournament.Rules.Duration,
 		Crossplatform:  tournament.Rules.Crossplatform,
 		Stage:          tournament.Rules.Stage,
-		Waiting:        tournament.Rules.Waiting,
 	}
 	h.params.streamLobby = config.StreamLobby{
 		Area:          tournament.Stream.Area,
@@ -115,7 +115,7 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 }
 
 func (h *Handler) Stop() error {
-	logger.Log(logger.Info, fmt.Sprintf("Starting bot stop procedure. dh pointer: %p\n", h))
+	logger.Log(loggerEntity.Info, fmt.Sprintf("Starting bot stop procedure. dh pointer: %p\n", h))
 	if h == nil {
 		return fmt.Errorf("handler is nil")
 	}
@@ -137,7 +137,7 @@ func (h *Handler) Stop() error {
 	ns := h.Ns
 	h.mtx.Unlock()
 
-	logger.Log(logger.Info, "Removing Discord commands and clearing up roles...")
+	logger.Log(loggerEntity.Info, "Removing Discord commands and clearing up roles...")
 
 	if err := h.deleteTourneyRole(session); err != nil {
 		log.Printf("error deleting tourney role: %v\n", err)
@@ -169,7 +169,7 @@ func (h *Handler) Stop() error {
 		log.Println("dh.Auth is nil, skipping command deleteion")
 	}
 
-	logger.Log(logger.Info, "Closing Discord session...")
+	logger.Log(loggerEntity.Info, "Closing Discord session...")
 	err := session.Close()
 
 	if ns != nil {
@@ -186,6 +186,6 @@ func (h *Handler) Stop() error {
 	h.cancel = nil
 	h.mtx.Unlock()
 
-	logger.Log(logger.Success, "Discord bot and notification system gracefully stopped!")
+	logger.Log(loggerEntity.Success, "Discord bot and notification system gracefully stopped!")
 	return err
 }

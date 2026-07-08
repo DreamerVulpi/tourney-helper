@@ -15,6 +15,7 @@ import (
 
 	"bytes"
 
+	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	"golang.org/x/oauth2"
 )
@@ -115,7 +116,7 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 
 	token, err := GetTokenFromFile(ac.TokenFile)
 	if err != nil || !token.Valid() {
-		logger.Log(logger.Warning, fmt.Sprintf("Token invalid or missing is %s, starting web flow...", ac.TokenFile))
+		logger.Log(loggerEntity.Warning, fmt.Sprintf("Token invalid or missing is %s, starting web flow...", ac.TokenFile))
 
 		codeChan := make(chan string)
 
@@ -126,7 +127,7 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 			code := r.URL.Query().Get("code")
 			_, err := fmt.Fprint(w, "Authurization is success! Back to programm.")
 			if err != nil {
-				logger.Log(logger.Error, fmt.Sprintf("Authurization isn't correct: %v\n", err))
+				logger.Log(loggerEntity.Error, fmt.Sprintf("Authurization isn't correct: %v\n", err))
 				return
 			}
 			codeChan <- code
@@ -135,13 +136,13 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 		// launch server for listening
 		go func() {
 			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				logger.Log(logger.Error, fmt.Sprintf("HTTP Server error: %v", err))
+				logger.Log(loggerEntity.Error, fmt.Sprintf("HTTP Server error: %v", err))
 				return
 			}
 		}()
 
 		authURL := ac.Config.AuthCodeURL("state")
-		logger.Log(logger.Info, fmt.Sprintf("Link to auth: %v", authURL))
+		logger.Log(loggerEntity.Info, fmt.Sprintf("Link to auth: %v", authURL))
 
 		// open browser for os windows
 		if err := exec.Command("rundll32", "url.dll,FileProtocolHandler", authURL).Start(); err != nil {

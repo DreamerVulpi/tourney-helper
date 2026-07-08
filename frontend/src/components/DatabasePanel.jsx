@@ -46,7 +46,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
   const [isAddHovered, setIsAddHovered] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
 
-  // Имена платформ для бэкенда
   const nameMessengerPlatform = "Discord";
   const nameTournamentPlatform = "Startgg";
 
@@ -102,11 +101,11 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
       banned: {
         text: locale.AddButton.One,
         icon: <Ban size={14} className="text-red-400" />,
-        action: () => handleOpenAddModal(), // Можешь открывать эту же модалку или кастомную
+        action: () => handleOpenAddModal(),
       },
     };
     return configs[activeFilter] || configs.all;
-  }, [activeFilter]);
+  }, [activeFilter, locale]);
 
   const handleImportFile = (file) => {
     if (!file) return;
@@ -119,7 +118,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
       return;
     }
 
-    // Сохраняем системный путь в стейт вместо контента данных
     setImportedFileData(systemFilePath);
     setImportFileType(isJson ? "json" : "csv");
     setIsImportModalOpen(true);
@@ -146,11 +144,9 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
         throw new Error("null answer from backend");
       }
 
-      // Достаем переменные по именам JSON-тегов из Go
       const successCount = result.success ?? 0;
       const totalCount = result.total ?? 0;
 
-      // Форматируем для ImportProgressModal (чтобы там отобразилось r1 / r2 строк)
       setImportResult({ r1: successCount, r2: totalCount });
       setImportStatus("success");
       const successImportDBMsgParts = locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportDBMsg.split("%v")
@@ -278,7 +274,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
           data.tournament.login,
         );
 
-        // Проверяем, был ли открыт режим бана в модалке
+        // Open modal window with ban?
         if (data.isDirectBan && data.banInfo) {
           const playerDbId =
             response && typeof response === "object" && "id" in response
@@ -327,7 +323,6 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
     const logActionUpdateRating = locale.Table.LogsActions.UpdateRating;
     const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
     try {
-      // Отправляем уже готовый рейтинг
       await EditParticipantStatsRating(participantId, newRating);
       
       setPlayers((prev) =>
@@ -508,19 +503,48 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
 
   const [copiedPlayerId, setCopiedPlayerId] = useState(null);
 
+  // One horizontal scroll for 2 tables
+  const headerScrollRef = useRef(null);
+  const bodyScrollRef = useRef(null);
+  const syncScroll = (source) => {
+    if (source === "header") {
+      if (headerScrollRef.current && bodyScrollRef.current) {
+        bodyScrollRef.current.scrollLeft =
+          headerScrollRef.current.scrollLeft;
+      }
+    } else {
+      if (headerScrollRef.current && bodyScrollRef.current) {
+        headerScrollRef.current.scrollLeft =
+          bodyScrollRef.current.scrollLeft;
+      }
+    }
+  };
+
+
+  // Small size frame - 2 strings, Bigger? - 3
+  const [hasHorizontalScroll, setHasHorizontalScroll] = useState(false);
+  useEffect(() => {
+    const checkHorizontalScroll = () => {
+      const el = bodyScrollRef.current;
+
+      if (!el) return;
+
+      setHasHorizontalScroll(el.scrollWidth > el.clientWidth);
+    };
+
+    const observer = new ResizeObserver(checkHorizontalScroll);
+
+    if (bodyScrollRef.current) {
+      observer.observe(bodyScrollRef.current);
+    }
+
+    checkHorizontalScroll();
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <PanelTemplate themeClasses={themeClasses}>
-      {/* TODO: Make special file */}
-      <style>{`
-        window::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
-        body { -ms-overflow-style: none; scrollbar-width: none; }
-        .custom-scrollbar { overflow-y: auto; scrollbar-color: rgba(59, 130, 246, 0.5) transparent; scrollbar-width: thin; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; margin-block: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; transition: all 0.3s ease; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.6); }
-      `}</style>
-
       <div className="max-w-[100rem] max-auto space-y-6">
         <div className="space-y-4">
           {/* Main Action Bar */}
@@ -530,7 +554,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
               onMouseEnter={() => setIsAddHovered(true)}
               onMouseLeave={() => setIsAddHovered(false)}
             >
-              {/* Лицевая сторона кнопки */}
+              {/* Front side of the button */}
               <div
                 className={`absolute inset-0 flex items-center justify-center text-white rounded-xl font-black text-xs uppercase italic transition-all duration-300 z-10 ${
                   activeFilter === "banned"
@@ -548,7 +572,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
                   : locale.AddButton.Label}
               </div>
 
-              {/* Задняя сторона (Доступные опции при ховере) */}
+              {/* Back of the button (Available functions inside) */}
               <div
                 className={`absolute inset-0 flex gap-0.5 transition-all duration-300 z-20 ${isAddHovered ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
               >
@@ -601,7 +625,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
               </div>
             </div>
 
-            {/* Поисковая панель */}
+            {/* Search panel */}
             <div className="flex-1 relative w-full lg:w-auto">
               <Search
                 size={16}
@@ -616,7 +640,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
               />
             </div>
 
-            {/* Селектор игр */}
+            {/* Selector of games */}
             <div className="relative group">
               <select
                 value={selectedGame}
@@ -664,7 +688,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
               </div>
             </div>
 
-            {/* Навигация по фильтрам */}
+            {/* Navigation with filters */}
             <div
               className={`flex items-center gap-1 p-1 rounded-xl border shrink-0 h-[56px] ${theme === "dark" ? "bg-black/20 border-white/5" : "bg-slate-100 border-slate-200"}`}
             >
@@ -700,9 +724,11 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
             </div>
           </div>
 
-          {/* Таблица */}
+          {/* Header table */}
           <div
-            className={`${theme === "dark" ? "bg-[#111]" : "bg-slate-100"} border-b border-white/5 overflow-x-auto hide-scrollbar`}
+            ref={headerScrollRef}
+            onScroll={() => syncScroll("header")}
+            className={`${theme === "dark" ? "bg-[#111]" : "bg-slate-100"} border-b border-white/5 overflow-hidden`}
           >
             <table className="w-full text-left text-[11px] table-fixed min-w-[1100px]">
               <thead>
@@ -799,11 +825,15 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
             </table>
           </div>
 
-          {/* Скролл-контейнер тела таблицы */}
+          {/* Body table */}
           <div
+            ref={bodyScrollRef}
+            onScroll={() => syncScroll("body")}
             id="table-scroll-container"
             className="overflow-y-auto overflow-x-auto custom-scrollbar"
-            style={{ maxHeight: "27rem" }}
+            style={{
+              maxHeight: hasHorizontalScroll ? "18rem" : "27rem",
+            }}
           >
             <table className="w-full text-left text-[11px] table-fixed min-w-[1100px] border-collapse">
               <tbody className="divide-y divide-white/5">
@@ -1092,7 +1122,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
             )}
           </div>
 
-          {/* Footer Metadata & Global Actions */}
+          {/* Footer */}
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase italic px-2">
             {activeFilter === "rating" && (
               <button
@@ -1144,7 +1174,7 @@ const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) =>
         </div>
       </div>
 
-      {/* Модальные окна компонентов */}
+      {/* Modal windows */}
       <ParticipantModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

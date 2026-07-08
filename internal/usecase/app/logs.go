@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	loggerUsecase "github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -34,12 +35,19 @@ func parseLogLine(line string) (logger.LogEntry, bool) {
 	entry.Type = line[start+1 : end]
 	entry.Msg = strings.TrimSpace(line[end+1:])
 
-	fields := strings.Fields(line[:start])
-	if len(fields) >= 2 {
-		entry.Time = fields[1]
+	switch entry.Type {
+	case loggerEntity.Info,
+		loggerEntity.Success,
+		loggerEntity.Warning,
+		loggerEntity.Error:
+		fields := strings.Fields(line[:start])
+		if len(fields) >= 2 {
+			entry.Time = fields[1]
+		}
+		return entry, true
+	default:
+		return loggerEntity.LogEntry{}, false
 	}
-
-	return entry, true
 }
 
 func (a *App) GetLogs() ([]logger.LogEntry, error) {
