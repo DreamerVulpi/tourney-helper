@@ -33,11 +33,11 @@ import {
   LoadListPlayers,
 } from "../../wailsjs/go/application/App.js";
 import { debounce } from "../hooks/debounce.jsx";
-import ImportProgressModal from "./ImportProgressModal.jsx";
-import ImportFileModal from "./ImportFileModal.jsx";
-import ParticipantModal from "./ParticipantModal.jsx";
-import PanelTemplate from "./PanelTemplate.jsx";
-import ParticipantActionModal from "./ParticipantActionModal.jsx";
+import ImportProgressModal from "../components/ImportProgressModal.jsx";
+import ImportFileModal from "../components/ImportFileModal.jsx";
+import ParticipantModal from "../components/ParticipantModal.jsx";
+import PanelTemplate from "../components/PanelTemplate.jsx";
+import ParticipantActionModal from "../components/ParticipantActionModal.jsx";
 
 const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) => {
   const [selectedGame, setSelectedGame] = useState("Tekken8");

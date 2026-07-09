@@ -1,5 +1,5 @@
 import "./App.css";
-import HeaderPlate from "./components/HeaderPlate.jsx";
+import HeaderPlate from "./pages/HeaderPlate.jsx";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
@@ -31,9 +31,9 @@ import {
   UserPlus,
   Palette,
 } from "lucide-react";
-import SidePanel from "./components/SidePanel.jsx";
-import NotificationSystemPanel from "./components/NotificationSystemPanel.jsx";
-import DatabasePanel from "./components/DatabasePanel.jsx";
+import SidePanel from "./pages/SidePanel.jsx";
+import NotificationSystemPanel from "./pages/NotificationSystemPanel.jsx";
+import DatabasePanel from "./pages/DatabasePanel.jsx";
 import {
   AuthorizeStartgg,
   LoadSystemConfig,
@@ -46,9 +46,9 @@ import {
   GetLogs,
 } from "../wailsjs/go/application/App.js";
 import { debounce } from "./hooks/debounce.jsx";
-import WidgetBracketPanel from "./components/WidgetBracketPanel.jsx";
-import WidgetScoreboardPanel from "./components/WidgetScoreboardPanel.jsx";
-import LoggerPlate from "./components/LoggerPlate.jsx";
+import WidgetBracketPanel from "./pages/WidgetBracketPanel.jsx";
+import WidgetScoreboardPanel from "./pages/WidgetScoreboardPanel.jsx";
+import LoggerPlate from "./pages/LoggerPlate.jsx";
 import { EventsOn } from "../wailsjs/runtime/runtime";
 
 const App = () => {

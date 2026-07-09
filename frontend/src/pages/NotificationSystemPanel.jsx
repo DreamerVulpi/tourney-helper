@@ -30,8 +30,8 @@ import {
   StartSendNotifications,
   StopSendNotifications,
 } from "../../wailsjs/go/application/App.js";
-import ValidationAlertModal from "./ValidationAlertModal.jsx";
-import PanelTemplate from "./PanelTemplate.jsx";
+import ValidationAlertModal from "../components/ValidationAlertModal.jsx";
+import PanelTemplate from "../components/PanelTemplate.jsx";
 
 const PlatformBtn = ({
   label,
