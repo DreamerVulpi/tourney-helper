@@ -33,6 +33,19 @@ const HeaderPlate = ({theme, setTheme, lang, setLang, locale, updateConfig}) => 
     `}</style>
   );
 
+  const changeTheme = () => {
+    const newTheme =
+        theme === "dark"
+            ? "light"
+            : "dark";
+
+    setTheme(newTheme);
+
+    updateConfig("settings", {
+        Theme: newTheme,
+    });
+};
+
   return (
     <header
       className={`h-[4rem] flex items-center justify-between px-[1.5rem] shrink-0 border-b z-50 transition-colors duration-300 ${
@@ -104,7 +117,7 @@ const HeaderPlate = ({theme, setTheme, lang, setLang, locale, updateConfig}) => 
 
         {/* Theme switcher */}
         <button
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          onClick={changeTheme}
           className={`flex items-center gap-[0.25rem] p-[0.25rem] rounded-full border transition-all duration-300 ${
             theme === "dark"
               ? "bg-white/5 border-white/10"

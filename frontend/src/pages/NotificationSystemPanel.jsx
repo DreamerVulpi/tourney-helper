@@ -101,7 +101,7 @@ const RuleInput = ({
   suffix = "", // for "min." or "sec."
   prefix = "", // for "FT"
 }) => {
-  // Убрали pl-10, так как иконка теперь переехала в label, как в референсе
+  
   const commonClasses = `w-full rounded-xl px-4 py-3 text-sm font-black border outline-none transition-all focus:border-blue-500/50 appearance-none ${themeClasses.input}`;
 
   const handleChange = (val) => {
@@ -166,7 +166,6 @@ const NotificationSystemPlate = ({
   systemCfg,
   tourneyCfg,
   updateConfig,
-  handleAuth,
   locale,
   themeClasses,
   localeValidation,

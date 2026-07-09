@@ -25,6 +25,7 @@ func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
 	if err != nil {
 		nullCfg := config.SettingsApplication{
 			Language: "EN",
+			Theme:    "dark",
 		}
 		return nullCfg, nil
 	}

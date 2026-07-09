@@ -88,6 +88,7 @@ type ConfigTournament struct {
 
 type SettingsApplication struct {
 	Language string `toml:"language"`
+	Theme    string `toml:"theme"`
 }
 
 func GetAbsPath(fileName string) string {
