@@ -1,24 +1,21 @@
 import React from "react";
 import { Database } from "lucide-react";
+import { getThemeClasses } from "../utils/theme/LoggerPlate/themes";
 
 const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
+  const themeClasses = getThemeClasses(theme);
   return (
     <footer
       className={`h-40 border-t backdrop-blur-xl z-40 overflow-hidden flex flex-col ${
-        theme === "dark" 
-          ? "bg-[#080808]/90 border-white/5" 
-          : "bg-white/95 border-slate-200 shadow-2xl"
+        themeClasses.footer
       }`}
     >
       <div className="h-8 flex items-center justify-between px-8 border-b border-white/5 bg-black/10">
         <div className="flex items-center gap-2">
-          <Database size={12} className="text-blue-500" />
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 italic">
+          <Database size={16} style={{ width: "0.875rem", height: "0.875rem", }} className="text-blue-500" />
+          <span className="text-[10px] translate-y-[0.05rem] font-black uppercase tracking-widest text-slate-500 italic">
             {locale.Label}
           </span>
-        </div>
-        <div className="flex items-center gap-4">
-          
         </div>
       </div>
 
@@ -41,11 +38,11 @@ const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
                     : "text-blue-400"
               }`}
             >
-              <span className="opacity-40">[{l.time}]</span>
+              <span className={themeClasses.logText}>[{l.time}]</span>
               <span className="font-bold uppercase">[{l.type}]</span>
               <span
                 className={
-                  theme === "dark" ? "text-slate-300" : "text-slate-700"
+                  themeClasses.logText
                 }
               >
                 {l.msg}
