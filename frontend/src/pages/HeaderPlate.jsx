@@ -12,7 +12,7 @@ import {
 import { getThemeClasses } from "../utils/theme/HeaderPlate/themes";
 import { createThemeChanger } from "../utils/changeTheme";
 import { ExtraButton } from "../components/ui/ExtraButton";
-import { DropdownList } from "../components/ui/DropdownList";
+import { DropdownListHeader } from "../components/ui/DropdownList";
 
 const HeaderPlate = ({
   theme,
@@ -65,8 +65,8 @@ const HeaderPlate = ({
 
       <div className="flex items-center gap-[1rem]">
         {/* Selector language */}
-        <DropdownList
-          value = {lang}
+        <DropdownListHeader
+          selectedValue = {lang}
           icon = {LanguagesIcon}
           themeClasses={themeClasses}
           items={[

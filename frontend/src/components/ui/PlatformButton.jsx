@@ -18,7 +18,7 @@ export function PlatformBtn({
         type="button"
         disabled={disabled}
         onClick={onClick}
-        className={`w-full h-[2.8rem] flex flex-col items-center justify-center py-[0.25rem] rounded-xl border transition-all relative overflow-hidden ${
+        className={`w-full h-[2.8rem] flex flex-col items-center justify-center py-[0.25rem] rounded-xl border transition-all relative overflow-hidden ${themeClasses.input} ${
           disabled
             ? "opacity-30 cursor-not-allowed"
             : active

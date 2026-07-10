@@ -32,131 +32,10 @@ import {
 } from "../../wailsjs/go/application/App.js";
 import ValidationAlertModal from "../components/ValidationAlertModal.jsx";
 import PanelTemplate from "../components/PanelTemplate.jsx";
+import { RuleInput } from "../components/NotificationSystemPanel/RuleInput.jsx"
+import { PlatformBtn } from "../components/ui/PlatformButton.jsx";
+import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
 
-const PlatformBtn = ({
-  label,
-  active,
-  auth,
-  disabled,
-  sub,
-  onClick,
-  onSettingsClick,
-  themeClasses,
-  locale,
-}) => {
-  return (
-    <div className="relative group/btn">
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={onClick}
-        className={`w-full h-[2.8rem] flex flex-col items-center justify-center py-[0.25rem] rounded-xl border transition-all relative overflow-hidden ${
-          disabled
-            ? "opacity-30 cursor-not-allowed"
-            : active
-              ? "bg-blue-600/10 border-blue-600 text-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.1)]"
-              : `${themeClasses.btnSecondary}`
-        }`}
-      >
-        <div className="flex flex-col items-center gap-0.5 z-10">
-          <span className="text-[10px] font-black uppercase italic tracking-wider leading-none">
-            {label}
-          </span>
-          {auth !== undefined && (
-            <span
-              className={`text-[7px] font-black uppercase italic ${auth ? "text-green-500" : "text-red-500"}`}
-            >
-              {auth ? locale.Authorized : locale.Unauthorized}
-            </span>
-          )}
-        </div>
-      </button>
-
-      {/* Кнопка настроек параметров */}
-      {!disabled && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onSettingsClick();
-          }}
-          className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all z-20 
-            ${active ? "text-blue-600 hover:bg-blue-600/20" : "text-slate-500 hover:bg-slate-500/10"}`}
-        >
-          <Settings2 size={14} />
-        </button>
-      )}
-    </div>
-  );
-};
-
-const RuleInput = ({
-  label,
-  value,
-  onChange,
-  icon: Icon,
-  themeClasses,
-  type = "number", // "number" or "select"
-  min = 1,
-  max = 99,
-  suffix = "", // for "min." or "sec."
-  prefix = "", // for "FT"
-}) => {
-  
-  const commonClasses = `w-full rounded-xl px-4 py-3 text-sm font-black border outline-none transition-all focus:border-blue-500/50 appearance-none ${themeClasses.input}`;
-
-  const handleChange = (val) => {
-    let num = parseInt(val);
-    if (isNaN(num)) num = min;
-    if (num > max) num = max;
-    if (num < min) num = min;
-    onChange(num);
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <label
-        className={`text-[9px] font-black uppercase flex items-center gap-2 ${themeClasses.label || themeClasses.textMuted}`}
-      >
-        {Icon && <Icon size={12} className="text-blue-500" />}
-        {label}
-      </label>
-
-      <div className="relative group">
-        {type === "select" ? (
-          <select
-            value={value}
-            onChange={(e) => handleChange(e.target.value)}
-            className={commonClasses}
-          >
-            {Array.from({ length: max - min + 1 }, (_, i) => i + min).map(
-              (n) => (
-                <option key={n} value={n} className="bg-black text-white">
-                  {prefix}
-                  {n}
-                  {suffix}
-                </option>
-              ),
-            )}
-          </select>
-        ) : (
-          <div className="relative">
-            <input
-              type="number"
-              value={value}
-              onChange={(e) => handleChange(e.target.value)}
-              className={commonClasses}
-            />
-            {suffix && (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black opacity-40 uppercase italic pointer-events-none">
-                {suffix}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 const NotificationSystemPlate = ({
   theme,
@@ -262,11 +141,7 @@ const NotificationSystemPlate = ({
     }
   };
 
-  const getButtonStyle = () => {
-    if (isStartedSending) return "bg-red-600 shadow-red-600/40";
-    if (debugMode) return "bg-amber-500 shadow-amber-500/40";
-    return "bg-blue-600 shadow-blue-600/20";
-  };
+  const getButtonStyle = getLaunchButtonStyle(isStartedSending, debugMode);
 
   const handleCopy = () => {
     navigator.clipboard.writeText("http://127.0.0.1:7310/callback");
@@ -359,7 +234,7 @@ const NotificationSystemPlate = ({
         type="button"
         disabled={!isReadyToStart || isProcessing}
         onClick={() => handleStartedSendingToggle(locale)}
-        className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-lg uppercase tracking-wider italic transition-all shadow-xl group text-white ${getButtonStyle()} ${
+        className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-lg uppercase tracking-wider italic transition-all shadow-xl group text-white ${getButtonStyle} ${
           !isReadyToStart || isProcessing
             ? "opacity-40 cursor-not-allowed grayscale"
             : "hover:scale-[1.02] active:scale-95"
