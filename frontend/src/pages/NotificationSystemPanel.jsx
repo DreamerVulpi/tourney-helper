@@ -35,6 +35,7 @@ import PanelTemplate from "../components/PanelTemplate.jsx";
 import { RuleInput } from "../components/NotificationSystemPanel/RuleInput.jsx"
 import { PlatformBtn } from "../components/ui/PlatformButton.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
+import { CopyButton } from "../components/ui/CopyButton.jsx"
 
 
 const NotificationSystemPlate = ({
@@ -142,12 +143,6 @@ const NotificationSystemPlate = ({
   };
 
   const getButtonStyle = getLaunchButtonStyle(isStartedSending, debugMode);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText("http://127.0.0.1:7310/callback");
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
   /////////////
 
   const paramsBotParts = locale.Platform.ParamsBot.split("%v");
@@ -383,12 +378,10 @@ const NotificationSystemPlate = ({
                     <code className="flex-1 text-[10px] font-mono text-blue-500 truncate pl-1">
                       http://127.0.0.1:7310/callback
                     </code>
-                    <button
-                      onClick={handleCopy}
-                      className={`p-1.5 rounded-md transition-all ${copied ? "bg-green-500/20 text-green-500" : "hover:bg-blue-500/10 text-slate-500 hover:text-blue-500"}`}
-                    >
-                      {copied ? <Check size={12} /> : <Copy size={12} />}
-                    </button>
+                    <CopyButton
+                      text="http://127.0.0.1:7310/callback"
+                      className={themeClasses.btnCopy}
+                    />
                   </div>
                 </div>
 
@@ -479,12 +472,10 @@ const NotificationSystemPlate = ({
                     <code className="flex-1 text-[10px] font-mono text-blue-500 truncate pl-1">
                       http://127.0.0.1:7310/callback
                     </code>
-                    <button
-                      onClick={handleCopy}
-                      className={`p-1.5 rounded-md transition-all ${copied ? "bg-green-500/20 text-green-500" : "hover:bg-blue-500/10 text-slate-500 hover:text-blue-500"}`}
-                    >
-                      {copied ? <Check size={12} /> : <Copy size={12} />}
-                    </button>
+                    <CopyButton
+                      text="http://127.0.0.1:7310/callback"
+                      className={themeClasses.btnCopy}
+                    />
                   </div>
                 </div>
               )}
