@@ -39,7 +39,7 @@ import PanelTemplate from "../components/PanelTemplate.jsx";
 import ParticipantActionModal from "../components/ParticipantActionModal.jsx";
 import { debounce } from "../utils/debounce.jsx";
 
-const DatabasePlate = ({ theme, statusDatabase, locale, lang, themeClasses }) => {
+const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   const [selectedGame, setSelectedGame] = useState("Tekken8");
 
   const [searchQuery, setSearchQuery] = useState("");

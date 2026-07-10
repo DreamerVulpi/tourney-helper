@@ -2,20 +2,20 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
 export function DropdownList({
-    value,
-    items,
-    onChange,
-    icon: Icon,
-    themeClasses,
-    className = "",
+  value,
+  items,
+  onChange,
+  icon: Icon,
+  themeClasses,
+  className = "",
 }) {
-    const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
-    return (
-        <div className="relative">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
                     flex items-center gap-[0.5rem]
                     px-[0.625rem]
                     h-[2rem]
@@ -29,33 +29,31 @@ export function DropdownList({
                     ${themeClasses.langButton}
                     ${className}
                 `}
-            >
-                {Icon && (
-                    <Icon
-                        style={{
-                            width: "0.875rem",
-                            height: "0.875rem",
-                        }}
-                        className="text-blue-600"
-                    />
-                )}
+      >
+        {Icon && (
+          <Icon
+            style={{
+              width: "0.875rem",
+              height: "0.875rem",
+            }}
+            className="text-blue-600"
+          />
+        )}
 
-                <span className="leading-none">
-                    {value}
-                </span>
+        <span className="leading-none">{value}</span>
 
-                <ChevronDown
-                    style={{
-                        width: "0.75rem",
-                        height: "0.75rem",
-                    }}
-                    className="opacity-50"
-                />
-            </button>
+        <ChevronDown
+          style={{
+            width: "0.75rem",
+            height: "0.75rem",
+          }}
+          className="opacity-50"
+        />
+      </button>
 
-            {isOpen && (
-                <div
-                    className={`
+      {isOpen && (
+        <div
+          className={`
                         absolute
                         right-0
                         mt-[0.5rem]
@@ -67,15 +65,15 @@ export function DropdownList({
                         z-[100]
                         ${themeClasses.langMenu}
                     `}
-                >
-                    {items.map((item) => (
-                        <button
-                            key={item.value}
-                            onClick={() => {
-                                onChange(item.value);
-                                setIsOpen(false);
-                            }}
-                            className="
+        >
+          {items.map((item) => (
+            <button
+              key={item.value}
+              onClick={() => {
+                onChange(item.value);
+                setIsOpen(false);
+              }}
+              className="
                                 w-full
                                 text-left
                                 px-[1rem]
@@ -87,12 +85,12 @@ export function DropdownList({
                                 hover:text-white
                                 transition-colors
                             "
-                        >
-                            {item.label}
-                        </button>
-                    ))}
-                </div>
-            )}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
-    );
+      )}
+    </div>
+  );
 }

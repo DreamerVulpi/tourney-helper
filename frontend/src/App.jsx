@@ -106,10 +106,6 @@ const App = () => {
 
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
-  const [statusDatabase, setStatusDatabase] = useState(true);
-  const [statusSender, setStatusSender] = useState(true);
-  const [statusWidgetBracket, setStatusWidgetBracket] = useState(false);
-  const [statusWidgetScoreboard, setStatusWidgetScoreboard] = useState(false);
 
   return (
     <div
@@ -138,10 +134,6 @@ const App = () => {
               theme={theme}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
-              statusDatabase={setStatusDatabase}
-              statusSender={setStatusSender}
-              statusWidgetBracket={setStatusWidgetBracket}
-              statusWidgetScoreboard={setStatusWidgetScoreboard}
               locale={locale.SidePanel}
             />
 
@@ -174,7 +166,6 @@ const App = () => {
                 {activeTab === "database" && (
                   <DatabasePanel
                     theme={theme}
-                    statusDatabase={statusDatabase}
                     locale={locale.DatabasePanel}
                     lang={lang}
                     themeClasses={themeClasses}
@@ -182,11 +173,11 @@ const App = () => {
                 )}
                 {/* In future updates */}
                 {/* {activeTab === "bracket" && (
-                    <WidgetBracketPanel theme={theme} statusWidgetBracket={statusWidgetBracket}/>
+                    <WidgetBracketPanel theme={theme}/>
                   )}
 
                   {activeTab === "scoreboard" && (
-                    <WidgetScoreboardPanel theme={theme} statusWidgetScoreboard={statusWidgetScoreboard}/>
+                    <WidgetScoreboardPanel theme={theme}/>
                   )} */}
               </main>
 
