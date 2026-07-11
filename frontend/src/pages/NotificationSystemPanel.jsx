@@ -19,10 +19,14 @@ import {
   Timer,
   Clock,
   Monitor,
-  Globe,
   Languages,
   Zap,
   Cpu,
+  Globe,
+  TextAlignStart,
+  Server,
+  ScrollText,
+  HardDriveDownload,
 } from "lucide-react";
 import {
   AuthorizeDiscord,
@@ -32,13 +36,12 @@ import {
 } from "../../wailsjs/go/application/App.js";
 import ValidationAlertModal from "../components/ValidationAlertModal.jsx";
 import PanelTemplate from "../components/PanelTemplate.jsx";
-import { RuleInput } from "../components/NotificationSystemPanel/RuleInput.jsx"
 import { PlatformBtn } from "../components/ui/PlatformButton.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
-import { CopyButton } from "../components/ui/CopyButton.jsx"
+import { CopyButton } from "../components/ui/CopyButton.jsx";
 import { changeRule } from "../utils/NotificationSystemPanel.jsx/changeRule.jsx";
 import { useStartSendingToggle } from "../hooks/NotificationSystemPanel/useStartSendingToggle.jsx";
-
+import { Field } from "../components/ui/Field.jsx";
 
 const NotificationSystemPlate = ({
   theme,
@@ -77,7 +80,8 @@ const NotificationSystemPlate = ({
     crossplatform: true,
     passcode: "0000",
   };
-  
+  // Get locale for label params bot
+  const localeLabelParamsBot = locale.Platform.ParamsBot.split("%v");
   // State for settings button
   const [activeSettings, setActiveSettings] = useState(null); // 'startgg', 'discord' ...
   // Field of ID roles
@@ -90,24 +94,33 @@ const NotificationSystemPlate = ({
     authStatus?.[activeMessenger];
   // State for selected tab: Tournament Rules || Live Broadcast Lobby
   const [activeTab, setActiveTab] = useState("rules"); // "rules" or "lobby"
-
-  const toggleSettings = (id) => {
-    // open/close settings when click on gear
-    setActiveSettings(activeSettings === id ? null : id);
-  };
-  const isDark = theme === "dark";
-
   // State for revial validation alert
   const [validationAlert, setValidationAlert] = useState({
     isOpen: false,
     message: "",
   });
 
-  const handleStartedSendingToggle = useStartSendingToggle(isStartedSending, setIsStartedSending, isProcessing, setIsProcessing, {activeMessenger, activePlatform, systemCfg, tourneyCfg, lang})
+  
+  const toggleSettings = (id) => {
+    // open/close settings when click on gear
+    setActiveSettings(activeSettings === id ? null : id);
+  };
+  const isDark = theme === "dark";
 
+ 
+
+  // Handler for start proccess - Sending notifications
+  const handleStartedSendingToggle = useStartSendingToggle(
+    isStartedSending,
+    setIsStartedSending,
+    isProcessing,
+    setIsProcessing,
+    { activeMessenger, activePlatform, systemCfg, tourneyCfg, lang },
+  );
+  // Button style for handler which start proccess
   const getButtonStyle = getLaunchButtonStyle(isStartedSending, debugMode);
-  const paramsBotParts = locale.Platform.ParamsBot.split("%v");
 
+  // REFACTOR: Plaftorm buttons must we avaliable everywhere
   const handleMessengerClick = async (messengerName) => {
     const nextMessenger =
       activeMessenger === messengerName ? "" : messengerName;
@@ -137,6 +150,7 @@ const NotificationSystemPlate = ({
     }
   };
 
+  // REFACTOR: Plaftorm buttons must we avaliable everywhere
   const handleTournamentPlatformClick = async (platformName) => {
     const nextPlatform = activePlatform === platformName ? "" : platformName;
     setActivePlatform(nextPlatform);
@@ -228,6 +242,7 @@ const NotificationSystemPlate = ({
         {/* Left panel */}
         <div className="col-span-12 lg:col-span-4 space-y-2">
           <section className="h-[48px] items-center">
+            {/* REFACTOR: Create in main themeClasses.jsx new params */}
             <div
               className={`w-full flex items-center justify-between p-3 rounded-xl border ${isDark ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50 border-amber-200"}`}
             >
@@ -310,12 +325,13 @@ const NotificationSystemPlate = ({
           </div>
 
           {(activeSettings === "startgg" || activeSettings === "challonge") && (
+            // REFACTOR: Create in main themeClasses.jsx new params
             <section
-              className={`p-4 rounded-2xl border space-y-3 animate-in zoom-in-95 duration-300 ${isDark ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50 border-amber-100"}`}
+              className={`p-4 rounded-2xl border space-y-3 ${isDark ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50 border-amber-100"}`}
             >
               <div className="flex items-center justify-between border-b pb-2 border-current/5">
                 <h4 className="text-[9px] font-black uppercase text-amber-500 italic">
-                  {locale.Platform.DownloadSettings} ({activeSettings})
+                  {locale.Platform.DownloadSettings} - {activeSettings}
                 </h4>
                 <button
                   onClick={() => setActiveSettings(null)}
@@ -325,36 +341,22 @@ const NotificationSystemPlate = ({
                 </button>
               </div>
 
-              <div className="space-y-1 pt-1 animate-in fade-in duration-300">
-                  <label
-                    className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                  >
-                    {locale.Platform.RedirectURL}
-                  </label>
-                  <div
-                    className={`flex items-center gap-2 p-1.5 rounded-lg border border-dashed ${isDark ? "bg-black/20 border-white/10" : "bg-white border-slate-200"}`}
-                  >
-                    <code className="flex-1 text-[10px] font-mono text-blue-500 truncate pl-1">
-                      http://127.0.0.1:7310/callback
-                    </code>
-                    <CopyButton
-                      text="http://127.0.0.1:7310/callback"
-                      className={themeClasses.btnCopy}
-                    />
-                  </div>
-                </div>
+              <div className="space-y-1">
+                <Field
+                  label={locale.Platform.RedirectURL}
+                  variant="copy"
+                  value={"http://127.0.0.1:7310/callback"}
+                  icon={HardDriveDownload}
+                  themeClasses={themeClasses}
+                />
+              </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-1 animate-in fade-in slide-in-from-top-1">
-                <div className="space-y-1">
-                  <label
-                    className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                  >
-                    Client ID
-                  </label>
-                  <input
-                    type="text"
-                    value={tourneyCfg[activeSettings]?.clientID || ""}
-                    onChange={(e) => {
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Field
+                  label={"CLIENT ID"}
+                  icon={TextAlignStart}
+                  value={tourneyCfg[activeSettings]?.clientID || ""}
+                  onChange={(value) => {
                       setAuthStatus((prev) => ({
                         ...prev,
                         [activeSettings]: false,
@@ -363,25 +365,21 @@ const NotificationSystemPlate = ({
                         ...tourneyCfg,
                         [activeSettings]: {
                           ...tourneyCfg[activeSettings],
-                          clientID: e.target.value,
+                          clientID: value,
                         },
                       });
                     }}
-                    className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
-                    placeholder="ID приложения"
-                  />
-                </div>
+                  themeClasses={themeClasses}
+                />
 
-                <div className="space-y-1">
-                  <label
-                    className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                  >
-                    Secret Client
-                  </label>
-                  <input
-                    type="password"
-                    value={tourneyCfg[activeSettings]?.secretClient || ""}
-                    onChange={(e) => {
+                <Field
+                  label={"SECRET CLIENT"}
+                  variant="password"
+                  icon={Key}
+                  isSecret
+                  value={tourneyCfg[activeSettings]?.secretClient || ""}
+                  themeClasses={themeClasses}
+                  onChange={(value) => {
                       setAuthStatus((prev) => ({
                         ...prev,
                         [activeSettings]: false,
@@ -390,14 +388,11 @@ const NotificationSystemPlate = ({
                         ...tourneyCfg,
                         [activeSettings]: {
                           ...tourneyCfg[activeSettings],
-                          secretClient: e.target.value,
+                          secretClient: value,
                         },
                       });
                     }}
-                    className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
-                    placeholder="••••••••"
-                  />
-                </div>
+                />
               </div>
             </section>
           )}
@@ -408,7 +403,7 @@ const NotificationSystemPlate = ({
             >
               <div className="flex items-center justify-between border-b pb-2 border-current/5">
                 <h4 className="text-[9px] font-black uppercase text-blue-500 italic">
-                  {paramsBotParts[0]} {activeSettings} {paramsBotParts[1]}
+                  {localeLabelParamsBot[0]} {localeLabelParamsBot[1]} - {activeSettings} 
                 </h4>
                 <button
                   onClick={() => setActiveSettings(null)}
@@ -419,38 +414,25 @@ const NotificationSystemPlate = ({
               </div>
 
               {activeSettings === "discord" && (
-                <div className="space-y-1 pt-1 animate-in fade-in duration-300">
-                  <label
-                    className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                  >
-                    {locale.Platform.RedirectURL}
-                  </label>
-                  <div
-                    className={`flex items-center gap-2 p-1.5 rounded-lg border border-dashed ${isDark ? "bg-black/20 border-white/10" : "bg-white border-slate-200"}`}
-                  >
-                    <code className="flex-1 text-[10px] font-mono text-blue-500 truncate pl-1">
-                      http://127.0.0.1:7310/callback
-                    </code>
-                    <CopyButton
-                      text="http://127.0.0.1:7310/callback"
-                      className={themeClasses.btnCopy}
-                    />
-                  </div>
+                <div className="space-y-1">
+                  <Field
+                    label={locale.Platform.RedirectURL}
+                    variant="copy"
+                    value={"http://127.0.0.1:7310/callback"}
+                    icon={HardDriveDownload}
+                    themeClasses={themeClasses}
+                  />
                 </div>
               )}
 
               <div className="space-y-1">
-                <label
-                  className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                >
-                  {locale.Platform.TokenBot}
-                </label>
-                <div className="relative flex items-center">
-                  <Key size={12} className="absolute left-2.5 text-slate-500" />
-                  <input
-                    type="password"
-                    value={systemCfg[activeSettings]?.token}
-                    onChange={(e) => {
+                <Field
+                  label={locale.Platform.TokenBot}
+                  icon={Key}
+                  variant="password"
+                  value={systemCfg[activeSettings]?.token}
+                  themeClasses={themeClasses}
+                  onChange={(value) => {
                       setAuthStatus((prev) => ({
                         ...prev,
                         [activeSettings]: false,
@@ -459,13 +441,11 @@ const NotificationSystemPlate = ({
                         ...systemCfg,
                         [activeSettings]: {
                           ...systemCfg[activeSettings],
-                          token: e.target.value,
+                          token: value,
                         },
                       });
                     }}
-                    className={`w-full rounded-lg pl-8 pr-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
-                  />
-                </div>
+                />
               </div>
 
               {(activeSettings === "discord" ||
@@ -473,57 +453,45 @@ const NotificationSystemPlate = ({
                 <>
                   <div className="grid grid-cols-2 gap-2 pt-1 animate-in fade-in slide-in-from-top-1">
                     <div className="space-y-1">
-                      <label
-                        className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                      >
-                        Guild ID
-                      </label>
-                      <input
-                        type="text"
+                      <Field
+                        label={"GUILD ID"}
+                        icon={Server}
                         value={systemCfg?.[activeSettings]?.guildID}
-                        onChange={(e) => {
+                        onChange={(value) => {
                           updateConfig("system", {
                             ...systemCfg,
                             [activeSettings]: {
                               ...systemCfg[activeSettings],
-                              guildID: e.target.value,
+                              guildID: value,
                             },
                           });
                         }}
-                        className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
+                        themeClasses={themeClasses}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label
-                        className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                      >
-                        Log Channel ID
-                      </label>
-                      <input
-                        type="text"
+                      <Field
+                        label={"LOG CHANNEL ID"}
+                        icon={ScrollText}
                         value={systemCfg?.[activeSettings]?.debugChannelID}
-                        onChange={(e) => {
+                        themeClasses={themeClasses}
+                        onChange={(value) => {
                           updateConfig("system", {
                             ...systemCfg,
                             [activeSettings]: {
                               ...systemCfg[activeSettings],
-                              debugChannelID: e.target.value,
+                              debugChannelID: value,
                             },
                           });
                         }}
-                        className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label
-                        className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                      >
-                        Client ID
-                      </label>
-                      <input
-                        type="text"
+                      <Field
+                        label={"CLIENT ID"}
                         value={systemCfg?.[activeSettings]?.clientID}
-                        onChange={(e) => {
+                        icon={TextAlignStart}
+                        onChange={(value) => {
                           setAuthStatus((prev) => ({
                             ...prev,
                             [activeSettings]: false,
@@ -532,23 +500,21 @@ const NotificationSystemPlate = ({
                             ...systemCfg,
                             [activeSettings]: {
                               ...systemCfg[activeSettings],
-                              clientID: e.target.value,
+                              clientID: value,
                             },
                           });
                         }}
-                        className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
+                        themeClasses={themeClasses}
                       />
                     </div>
                     <div className="space-y-1">
-                      <label
-                        className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                      >
-                        Client Secret
-                      </label>
-                      <input
-                        type="password"
+                       <Field
+                        label={"SECRET CLIENT"}
+                        icon={Key}
+                        variant={"password"}
+                        themeClasses={themeClasses}
                         value={systemCfg?.[activeSettings]?.secretClient}
-                        onChange={(e) => {
+                        onChange={(value) => {
                           setAuthStatus((prev) => ({
                             ...prev,
                             [activeSettings]: false,
@@ -557,62 +523,50 @@ const NotificationSystemPlate = ({
                             ...systemCfg,
                             [activeSettings]: {
                               ...systemCfg[activeSettings],
-                              secretClient: e.target.value,
+                              secretClient: value,
                             },
                           });
                         }}
-                        className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label
-                        className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                      >
-                        Role ID - RU
-                      </label>
-                      <input
-                        type="text"
-                        value={roles.ru || ""}
-                        onChange={(e) =>
+                    <div className="space-y-1">
+                      <Field
+                      label={"ROLE ID - RU"}
+                      icon={Languages}
+                      themeClasses={themeClasses}
+                      value={roles.ru || ""}
+                        onChange={(value) =>
                           updateConfig("system", {
                             ...systemCfg,
                             [activeSettings]: {
                               ...systemCfg[activeSettings],
                               roles: {
                                 ...systemCfg[activeSettings]?.roles,
-                                ru: e.target.value,
+                                ru: value,
                               },
                             },
                           })
                         }
-                        className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
-                      />
+                    />
                     </div>
-                    <div>
-                      <label
-                        className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                      >
-                        Role ID - EN
-                      </label>
-                      <input
-                        type="text"
-                        value={roles.en || ""}
-                        onChange={(e) =>
+                    <div className="space-y-1">
+                      <Field
+                      label={"ROLE ID - EN"}
+                      icon={Languages}
+                      themeClasses={themeClasses}
+                      value={roles.en || ""}
+                        onChange={(value) =>
                           updateConfig("system", {
                             ...systemCfg,
                             [activeSettings]: {
                               ...systemCfg[activeSettings],
                               roles: {
                                 ...systemCfg[activeSettings]?.roles,
-                                en: e.target.value,
+                                en: value,
                               },
                             },
                           })
                         }
-                        className={`w-full rounded-lg px-2 py-1.5 text-[9px] font-mono border ${themeClasses.input}`}
                       />
                     </div>
                   </div>
@@ -625,15 +579,12 @@ const NotificationSystemPlate = ({
         {/* Central and right panels */}
         <div className="col-span-12 lg:col-span-8 grid grid-cols-10 gap-6">
           <div className="col-span-12 lg:col-span-6 space-y-6">
-            <section className="flex gap-4 h-[58px] items-end">
+            <section className="flex gap-4 h-[48px] items-end">
               <div className="flex-1 space-y-1">
-                <label
-                  className={`text-[9px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                >
-                  {locale.UrlToTournamentLabel}
-                </label>
-                <input
-                  type="text"
+                <Field
+                  label={locale.UrlToTournamentLabel}
+                  witdh="320"
+                  icon={Globe}
                   value={urlToTournament}
                   onChange={(e) =>
                     updateConfig("tournament", {
@@ -641,37 +592,35 @@ const NotificationSystemPlate = ({
                       urlToTournament: e.target.value,
                     })
                   }
-                  className={`w-full rounded-xl px-4 py-2 text-xs font-bold border outline-none focus:border-blue-600 transition-all ${themeClasses.input}`}
-                  placeholder="tekken-world-tour"
+                  themeClasses={themeClasses}
                 />
               </div>
               <div className="w-[180px] space-y-1">
-                <label
-                  className={`text-[9px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                >
-                  {locale.GenreOrGameLabel}
-                </label>
-                <div className="relative flex items-center">
-                  <Search
-                    size={14}
-                    className="absolute left-3 text-slate-500 pointer-events-none z-10"
-                  />
-                  <select
-                    value={tourneyCfg?.game?.name}
-                    className={`w-full rounded-xl pl-9 pr-4 py-2 text-xs font-bold border outline-none appearance-none transition-all ${themeClasses.input}`}
-                    onChange={(e) =>
-                      updateConfig("tournament", {
-                        game: {
-                          ...tourneyCfg.game,
-                          name: e.target.value,
-                        },
-                      })
-                    }
-                  >
-                    <option value="tekken">Tekken 8</option>
-                    <option value="sf6">Street Fighter 6</option>
-                  </select>
-                </div>
+                <Field
+                  variant="select"
+                  label={locale.GenreOrGameLabel}
+                  icon={Search}
+                  value={tourneyCfg.game.name}
+                  onChange={(value) =>
+                    updateConfig("tournament", {
+                      game: {
+                        ...tourneyCfg.game,
+                        name: value,
+                      },
+                    })
+                  }
+                  items={[
+                    {
+                      label: "Tekken 8",
+                      value: "tekken",
+                    },
+                    {
+                      label: "Street Fighter 6",
+                      value: "sf6",
+                    },
+                  ]}
+                  themeClasses={themeClasses}
+                />
               </div>
             </section>
 
@@ -688,7 +637,7 @@ const NotificationSystemPlate = ({
                   >
                     <FileSignature size={16} className="text-blue-500" />
                     <span
-                      className={`text-[10px] font-black uppercase italic ${themeClasses.textMuted}`}
+                      className={`text-[10px] font-black uppercase italic ${themeClasses.label}`}
                     >
                       {locale.RulesOfTournament.Label}
                     </span>
@@ -700,7 +649,7 @@ const NotificationSystemPlate = ({
                   >
                     <Monitor size={16} className="text-blue-500" />
                     <span
-                      className={`text-[10px] font-black uppercase italic ${themeClasses.textMuted}`}
+                      className={`text-[10px] font-black uppercase italic ${themeClasses.label}`}
                     >
                       {locale.LobbyLiveBroadcast.Label}
                     </span>
@@ -711,52 +660,110 @@ const NotificationSystemPlate = ({
               {/* Content tabs */}
               <div className="flex-1">
                 {activeTab === "rules" ? (
-                  <div className="animate-in fade-in slide-in-from-left-2 duration-300 space-y-4">
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      <RuleInput
-                        label={locale.RulesOfTournament.StandardFormat}
-                        type="select"
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                      <Field
+                        label={`${locale.RulesOfTournament.StandardFormat} (1-5)`}
+                        variant="select"
                         value={rules.standardFormat}
-                        min={1}
-                        max={5}
-                        prefix="FT"
                         icon={Settings2}
                         themeClasses={themeClasses}
                         onChange={(val) =>
                           changeRule("standardFormat", val, updateConfig)
                         }
+                        // REFACTOR: TO VARIABLE
+                        items={[
+                        {
+                          label: "FT1",
+                          value: "1",
+                        },
+                        {
+                          label: "FT2",
+                          value: "2",
+                        },
+                        {
+                          label: "FT3",
+                          value: "3",
+                        },
+                        {
+                          label: "FT4",
+                          value: "4",
+                        },
+                        {
+                          label: "FT5",
+                          value: "5",
+                        },
+                      ]}
                       />
-                      <RuleInput
-                        label={locale.RulesOfTournament.FinalFormat}
-                        type="select"
+                      <Field
+                        label={`${locale.RulesOfTournament.FinalFormat} (1-5)`}
+                        variant="select"
                         value={rules.finalsFormat}
-                        min={1}
-                        max={5}
-                        prefix="FT"
-                        icon={Trophy}
                         themeClasses={themeClasses}
+                        icon={Trophy}
                         onChange={(val) =>
                           changeRule("finalsFormat", val, updateConfig)
                         }
+                        // REFACTOR: TO VARIABLE
+                        items={[
+                        {
+                          label: "FT1",
+                          value: "1",
+                        },
+                        {
+                          label: "FT2",
+                          value: "2",
+                        },
+                        {
+                          label: "FT3",
+                          value: "3",
+                        },
+                        {
+                          label: "FT4",
+                          value: "4",
+                        },
+                        {
+                          label: "FT5",
+                          value: "5",
+                        },
+                        ]}
                       />
-                      <RuleInput
-                        label={locale.RulesOfTournament.Rounds}
+                      <Field
+                        label={`${locale.RulesOfTournament.Rounds} (1-5)`}
                         value={rules.rounds}
-                        min={1}
-                        max={5}
                         icon={Trophy}
                         themeClasses={themeClasses}
-                        onChange={(val) => changeRule("rounds", val, updateConfig)}
+                        onChange={(val) =>
+                          changeRule("rounds", val, updateConfig)
+                        }
                       />
-                      <RuleInput
+                      <Field
                         label={locale.RulesOfTournament.Time}
+                        variant="select"
                         value={rules.duration}
-                        min={30}
-                        max={99}
-                        suffix={locale.RulesOfTournament.Seconds}
-                        icon={Timer}
                         themeClasses={themeClasses}
-                        onChange={(val) => changeRule("duration", val, updateConfig)}
+                        icon={Timer}
+                        items={[
+                          {
+                            label: "30",
+                            value: 30,
+                          },
+                          {
+                            label: "45",
+                            value: 45,
+                          },
+                          {
+                            label: "60",
+                            value: 60,
+                          },
+                          {
+                            label: "99",
+                            value: 99,
+                          },
+                        ]}
+                        onChange={(val) =>
+                          changeRule("duration", val, updateConfig)
+                        }
                       />
                     </div>
                   </div>
@@ -764,150 +771,120 @@ const NotificationSystemPlate = ({
                   <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       {/* 1. Region */}
-                      <div className="space-y-1.5">
-                        <label
-                          className={`text-[9px] font-black uppercase flex items-center gap-2 ${themeClasses.textMuted}`}
-                        >
-                          <Globe size={12} className="text-blue-500" />{" "}
-                          {locale.LobbyLiveBroadcast.RegionLabel}
-                        </label>
-                        <select
-                          className={`w-full bg-transparent border rounded-xl px-3 py-2 text-[11px] font-bold outline-none ${isDark ? "border-white/10 text-white" : "border-slate-200 text-slate-700"}`}
+                      <div className="space-y-1">
+                        <Field
+                          variant="select"
+                          label={locale.LobbyLiveBroadcast.RegionLabel}
+                          icon={Globe}
+                          themeClasses={themeClasses}
                           value={streamLobby.area}
-                          onChange={(e) =>
+                          onChange={(value) =>
                             updateConfig("tournament", {
                               stream: {
                                 ...streamLobby,
-                                area: e.target.value,
+                                area: value,
                               },
                             })
                           }
-                        >
-                          <option value="Any">
-                            {locale.LobbyLiveBroadcast.ListRegions.Any}
-                          </option>
-                          <option value="Europe">
-                            {locale.LobbyLiveBroadcast.ListRegions.Europe}
-                          </option>
-                          <option value="Asia">
-                            {locale.LobbyLiveBroadcast.ListRegions.Asia}
-                          </option>
-                          <option value="North America">
-                            {locale.LobbyLiveBroadcast.ListRegions.NorthAmerica}
-                          </option>
-                          <option value="South America">
-                            {locale.LobbyLiveBroadcast.ListRegions.SouthAmerica}
-                          </option>
-                          <option value="Africa">
-                            {locale.LobbyLiveBroadcast.ListRegions.Africa}
-                          </option>
-                        </select>
-                      </div>
-
-                      {/* 2. Language */}
-                      <div className="space-y-1.5 opacity-70">
-                        <label
-                          className={`text-[9px] font-black uppercase flex items-center gap-2 ${themeClasses.textMuted}`}
-                        >
-                          <Languages size={12} className="text-blue-500" />{" "}
-                          {locale.LobbyLiveBroadcast.LanguageLabel}
-                        </label>
-                        <input
-                          type="text"
-                          value={locale.LobbyLiveBroadcast.TypeConnection.Any}
-                          readOnly
-                          className={`w-full bg-slate-500/5 border border-dashed rounded-xl px-3 py-2 text-[11px] font-bold cursor-not-allowed ${themeClasses.textMuted}`}
+                          items={[
+                            {
+                              label: locale.LobbyLiveBroadcast.ListRegions.Any,
+                              value: "Any",
+                            },
+                            {
+                              label: locale.LobbyLiveBroadcast.ListRegions.Europe,
+                              value: "Europe",
+                            },
+                            {
+                              label: locale.LobbyLiveBroadcast.ListRegions.Asia,
+                              value: "Asia",
+                            },
+                            {
+                              label: locale.LobbyLiveBroadcast.ListRegions.NorthAmerica,
+                              value: "North America",
+                            },
+                            {
+                              label: locale.LobbyLiveBroadcast.ListRegions.SouthAmerica,
+                              value: "South America",
+                            },
+                            {
+                              label: locale.LobbyLiveBroadcast.ListRegions.Africa,
+                              value: "Africa",
+                            },
+                          ]}
                         />
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* 3. Type connection */}
-                      <div className="space-y-1.5">
-                        <label
-                          className={`text-[9px] font-black uppercase flex items-center gap-2 ${themeClasses.textMuted}`}
-                        >
-                          <Zap
-                            size={12}
-                            className="text-amber-500 text-blue-500"
-                          />{" "}
-                          {locale.LobbyLiveBroadcast.TypeConnection.Label}
-                        </label>
-                        <select
-                          className={`w-full bg-transparent border rounded-xl px-3 py-2 text-[11px] font-bold outline-none ${isDark ? "border-white/10" : "border-slate-200"}`}
+                      <div className="space-y-1">
+                        <Field
+                          variant="select"
+                          icon={Zap}
+                          label={locale.LobbyLiveBroadcast.TypeConnection.Label}
+                          themeClasses={themeClasses}
                           value={streamLobby.connection}
-                          onChange={(e) =>
+                          onChange={(value) =>
                             updateConfig("tournament", {
                               stream: {
                                 ...streamLobby,
-                                connection: e.target.value,
+                                connection: value,
                               },
                             })
                           }
-                        >
-                          <option value="Any">
-                            {locale.LobbyLiveBroadcast.TypeConnection.Any}
-                          </option>
-                          <option value="LAN">
-                            {locale.LobbyLiveBroadcast.TypeConnection.Lan}
-                          </option>
-                        </select>
+                          items={[
+                            {
+                              label: locale.LobbyLiveBroadcast.TypeConnection.Any,
+                              value: "Any",
+                            },
+                            {
+                              label: locale.LobbyLiveBroadcast.TypeConnection.Lan,
+                              value: "LAN",
+                            },
+                          ]}
+                        />
                       </div>
-
-                      {/* 4. Crossplatform */}
-                      <div className="space-y-1.5">
-                        <label
-                          className={`text-[9px] font-black uppercase flex items-center gap-2 ${themeClasses.textMuted}`}
-                        >
-                          <Cpu size={12} className="text-blue-500" />{" "}
-                          {locale.LobbyLiveBroadcast.CrossplatformLabel}
-                        </label>
-                        <select
-                          className={`w-full bg-transparent border rounded-xl px-3 py-2 text-[11px] font-bold outline-none ${isDark ? "border-white/10" : "border-slate-200"}`}
-                          value={streamLobby.crossplatform}
-                          onChange={(e) => {
-                            // КРИТИЧЕСКИЙ МОМЕНТ: сравниваем строку с "true", чтобы получить чистый bool
-                            const boolValue = e.target.value === "true";
+                      <div className="space-y-1">
+                          <Field
+                            variant="select"
+                            icon={Cpu}
+                            label={locale.LobbyLiveBroadcast.CrossplatformLabel}
+                            themeClasses={themeClasses}
+                            value={streamLobby.crossplatform}
+                            onChange={(value) => {
+                              const boolValue = value === "true";
+                              updateConfig("tournament", {
+                                stream: {
+                                  ...streamLobby,
+                                  crossplatform: boolValue,
+                                },
+                              });
+                            }}
+                            items={[
+                            {
+                              label: locale.LobbyLiveBroadcast.ListCrossplatform.Yes,
+                              value: "true",
+                            },
+                            {
+                              label: locale.LobbyLiveBroadcast.ListCrossplatform.No,
+                              value: "false",
+                            },
+                          ]}
+                          />
+                      </div>
+                      <div className="space-y-1">
+                        <Field
+                          icon={Key}
+                          label={locale.LobbyLiveBroadcast.AccessCodeLabel}
+                          themeClasses={themeClasses}
+                          value={streamLobby.passcode}
+                          onChange={(value) =>
                             updateConfig("tournament", {
                               stream: {
                                 ...streamLobby,
-                                crossplatform: boolValue,
+                                passcode: value,
                               },
-                            });
-                          }}
-                        >
-                          <option value="true">
-                            {locale.LobbyLiveBroadcast.ListCrossplatform.Yes}
-                          </option>
-                          <option value="false">
-                            {locale.LobbyLiveBroadcast.ListCrossplatform.No}
-                          </option>
-                        </select>
+                            })
+                          }
+                        />
                       </div>
-                    </div>
-
-                    {/* 5. Passcode */}
-                    <div className="space-y-1.5 pt-2">
-                      <label
-                        className={`text-[9px] font-black uppercase flex items-center gap-2 ${themeClasses.textMuted}`}
-                      >
-                        <Key size={12} className="text-blue-500" />{" "}
-                        {locale.LobbyLiveBroadcast.AccessCodeLabel}
-                      </label>
-                      <input
-                        type="number"
-                        value={streamLobby.passcode}
-                        onChange={(e) =>
-                          updateConfig("tournament", {
-                            stream: {
-                              ...streamLobby,
-                              passcode: e.target.value,
-                            },
-                          })
-                        }
-                        placeholder="0000"
-                        className={`w-full bg-transparent border rounded-xl px-3 py-2 text-[11px] font-black tracking-widest outline-none transition-all focus:border-emerald-500/50 ${isDark ? "border-white/10" : "border-slate-200"}`}
-                      />
                     </div>
                   </div>
                 )}
@@ -923,7 +900,7 @@ const NotificationSystemPlate = ({
               >
                 <ImagePlus size={16} className="text-blue-500" />
                 <span
-                  className={`text-[10px] font-black uppercase italic ${themeClasses.textMuted}`}
+                  className={`text-[10px] font-black uppercase italic ${themeClasses.label}`}
                 >
                   {locale.ConfigurationLogo.Label}
                 </span>
@@ -944,37 +921,18 @@ const NotificationSystemPlate = ({
                 </div>
                 <div className="flex-1 space-y-4">
                   <div className="space-y-1">
-                    <label
-                      className={`text-[8px] font-black uppercase italic px-1 ${themeClasses.textMuted}`}
-                    >
-                      {locale.ConfigurationLogo.UrlImageLabel}
-                    </label>
-                    {tourneyCfg?.logo?.img ? (
-                      <input
-                        type="text"
-                        placeholder="https://imgur.com/..."
-                        value={tourneyCfg?.logo?.img}
-                        onChange={(e) =>
+                    <Field
+                      label={locale.ConfigurationLogo.UrlImageLabel}
+                      icon={Globe}
+                      value={tourneyCfg?.logo?.img}
+                        onChange={(value) =>
                           updateConfig("tournament", {
                             ...tourneyCfg,
-                            logo: { img: e.target.value },
+                            logo: { img: value },
                           })
                         }
-                        className={`w-full rounded-xl px-3 py-2 text-[10px] border font-mono transition-all ${themeClasses.input}`}
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder="https://imgur.com/..."
-                        value={""}
-                        onChange={(e) =>
-                          updateConfig("tournament", {
-                            logo: { img: e.target.value },
-                          })
-                        }
-                        className={`w-full rounded-xl px-3 py-2 text-[10px] border font-mono transition-all ${themeClasses.input}`}
-                      />
-                    )}
+                      themeClasses={themeClasses}
+                    />
                   </div>
                 </div>
               </div>

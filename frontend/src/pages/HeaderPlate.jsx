@@ -9,10 +9,11 @@ import {
   HelpCircle,
   Info,
 } from "lucide-react";
-import { getThemeClasses } from "../utils/theme/HeaderPlate/themes";
+import { getThemeClasses } from "../utils/theme/HeaderPlate/themes.jsx";
 import { createThemeChanger } from "../utils/changeTheme";
 import { ExtraButton } from "../components/ui/ExtraButton";
-import { DropdownListHeader } from "../components/ui/DropdownList";
+import { DropdownList } from "../components/ui/DropdownList";
+import { Field } from "../components/ui/Field.jsx";
 
 const HeaderPlate = ({
   theme,
@@ -65,11 +66,13 @@ const HeaderPlate = ({
 
       <div className="flex items-center gap-[1rem]">
         {/* Selector language */}
-        <DropdownListHeader
-          selectedValue = {lang}
-          icon = {LanguagesIcon}
-          themeClasses={themeClasses}
-          items={[
+        <Field
+        variant="select"
+        value={lang}
+        width={"6.5rem"}
+        icon = {LanguagesIcon}
+        themeClasses={themeClasses}
+        items={[
             {
               label: "RU",
               value: "RU",
@@ -79,12 +82,12 @@ const HeaderPlate = ({
               value: "EN",
             }
           ]}
-          onChange={(value) => {
-              setLang(value);
-              updateConfig?.("settings", {
-                language: value,
-              });
-            }}
+        onChange={(value) => {
+            setLang(value);
+            updateConfig?.("settings", {
+              language: value,
+            });
+          }}
         />
 
         {/* Theme switcher */}

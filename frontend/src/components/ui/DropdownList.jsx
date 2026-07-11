@@ -6,178 +6,88 @@ export function DropdownList({
   items,
   onChange,
   icon: Icon,
+  iconSize = 16,
   themeClasses,
   className = "",
+  style = {},
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        type="button"
+        style={style}
+        onClick={() => setIsOpen((prev) => !prev)}
         className={`
-                    flex items-center gap-[0.5rem]
-                    px-[0.625rem]
-                    h-[2rem]
-                    rounded-[0.5rem]
-                    border
-                    text-[0.625rem]
-                    font-bold
-                    uppercase
-                    tracking-widest
-                    transition-all
-                    ${themeClasses.langButton}
-                    ${className}
-                `}
+          w-full
+          flex
+          items-center
+          justify-between
+          rounded-xl
+          border
+          transition-all
+          ${themeClasses.field}
+          ${className}
+        `}
       >
-        {Icon && (
-          <Icon
-            style={{
-              width: "0.875rem",
-              height: "0.875rem",
-            }}
-            className="text-blue-600"
-          />
-        )}
+        <div className="flex items-center gap-2 min-w-0">
+          {Icon && (
+            <Icon
+              size={iconSize}
+              className="text-blue-600 shrink-0"
+            />
+          )}
 
-        <span className="leading-none">{selectedValue}</span>
-
-        <ChevronDown
-          style={{
-            width: "0.75rem",
-            height: "0.75rem",
-          }}
-          className="opacity-50"
-        />
-      </button>
-
-      {isOpen && (
-        <div
-          className={`
-                        absolute
-                        mt-[0.5rem]
-                        w-[7rem]
-                        border
-                        rounded-[0.5rem]
-                        shadow-xl
-                        py-[0.25rem]
-                        z-[100]
-                        ${themeClasses.langMenu}
-                    `}
-        >
-          {items.map((item) => (
-            <button
-              key={item.value}
-              onClick={() => {
-                onChange(item.value);
-                setIsOpen(false);
-              }}
-              className="
-                                w-full
-                                text-left
-                                px-[1rem]
-                                py-[0.45rem]
-                                text-[0.625rem]
-                                font-bold
-                                uppercase
-                                hover:bg-blue-600
-                                hover:text-white
-                                transition-colors
-                            "
-            >
-              {item.label}
-            </button>
-          ))}
+          <span className="truncate text-xs font-bold">
+            {selectedValue}
+          </span>
         </div>
-      )}
-    </div>
-  );
-}
-
-export function DropdownListHeader({
-  selectedValue,
-  items,
-  onChange,
-  icon: Icon,
-  themeClasses,
-  className = "",
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-                    flex items-center gap-[0.5rem]
-                    px-[0.625rem]
-                    h-[2rem]
-                    rounded-[0.5rem]
-                    border
-                    text-[0.625rem]
-                    font-bold
-                    uppercase
-                    tracking-widest
-                    transition-all
-                    ${themeClasses.langButton}
-                    ${className}
-                `}
-      >
-        {Icon && (
-          <Icon
-            style={{
-              width: "0.875rem",
-              height: "0.875rem",
-            }}
-            className="text-blue-600"
-          />
-        )}
-
-        <span className="leading-none">{selectedValue}</span>
 
         <ChevronDown
-          style={{
-            width: "0.75rem",
-            height: "0.75rem",
-          }}
-          className="opacity-50"
+          size={iconSize}
+          className={`opacity-60 shrink-0 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
         />
       </button>
 
       {isOpen && (
         <div
           className={`
-                        absolute
-                        right-0
-                        mt-[0.5rem]
-                        w-[7rem]
-                        border
-                        rounded-[0.5rem]
-                        shadow-xl
-                        py-[0.25rem]
-                        z-[100]
-                        ${themeClasses.langMenu}
-                    `}
+            absolute
+            left-0
+            top-full
+            mt-2
+            w-full
+            overflow-hidden
+            rounded-xl
+            border
+            shadow-xl
+            z-50
+            ${themeClasses.field}
+          `}
         >
           {items.map((item) => (
             <button
               key={item.value}
+              type="button"
               onClick={() => {
                 onChange(item.value);
                 setIsOpen(false);
               }}
-              className="
-                                w-full
-                                text-left
-                                px-[1rem]
-                                py-[0.45rem]
-                                text-[0.625rem]
-                                font-bold
-                                uppercase
-                                hover:bg-blue-600
-                                hover:text-white
-                                transition-colors
-                            "
+              className={`
+                w-full
+                text-left
+                px-4
+                py-2
+                text-xs
+                font-bold
+                transition-colors
+                hover:bg-blue-600
+                hover:text-white
+                ${themeClasses.listMenu}
+              `}
             >
               {item.label}
             </button>
