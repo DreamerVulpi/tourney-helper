@@ -36,6 +36,8 @@ import { RuleInput } from "../components/NotificationSystemPanel/RuleInput.jsx"
 import { PlatformBtn } from "../components/ui/PlatformButton.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
 import { CopyButton } from "../components/ui/CopyButton.jsx"
+import { changeRule } from "../utils/NotificationSystemPanel.jsx/changeRule.jsx";
+import { useStartSendingToggle } from "../hooks/NotificationSystemPanel/useStartSendingToggle.jsx";
 
 
 const NotificationSystemPlate = ({
@@ -59,7 +61,6 @@ const NotificationSystemPlate = ({
   isProcessing,
   setIsProcessing,
 }) => {
-  /////////////
   // Get data from configs
   const debugMode = systemCfg?.debug?.mode || false;
   const urlToTournament = tourneyCfg?.urlToTournament || "-";
@@ -76,78 +77,36 @@ const NotificationSystemPlate = ({
     crossplatform: true,
     passcode: "0000",
   };
-  /////////////
-
-  /////////////
-  // Statements for UI
-  const [activeSettings, setActiveSettings] = useState(null); // 'startgg', 'challonge', 'discord', 'telegram'
+  
+  // State for settings button
+  const [activeSettings, setActiveSettings] = useState(null); // 'startgg', 'discord' ...
+  // Field of ID roles
   const roles = systemCfg?.[activeSettings]?.roles || { ru: "", en: "" };
-  const [copied, setCopied] = useState(false);
+  // State for ready of notification system
   const isReadyToStart =
     activePlatform &&
     authStatus?.[activePlatform] &&
     activeMessenger &&
     authStatus?.[activeMessenger];
+  // State for selected tab: Tournament Rules || Live Broadcast Lobby
   const [activeTab, setActiveTab] = useState("rules"); // "rules" or "lobby"
+
   const toggleSettings = (id) => {
     // open/close settings when click on gear
     setActiveSettings(activeSettings === id ? null : id);
   };
   const isDark = theme === "dark";
+
+  // State for revial validation alert
   const [validationAlert, setValidationAlert] = useState({
     isOpen: false,
     message: "",
   });
-  /////////////
 
-  /////////////
-  // handlers for text fields
-  const handleRuleChange = (field, newValue) => {
-    updateConfig("tournament", {
-      rules: { ...rules, [field]: newValue },
-    });
-  };
-
-  const handleStartedSendingToggle = async (locale) => {
-    if (isProcessing) return;
-
-    setIsProcessing(true);
-
-    if (isStartedSending) {
-      try {
-        await StopSendNotifications();
-        setIsStartedSending(false);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsProcessing(false);
-      }
-      return;
-    }
-
-    try {
-      await StartSendNotifications(
-        activeMessenger,
-        activePlatform,
-        systemCfg,
-        tourneyCfg,
-        lang,
-      );
-      setIsStartedSending(true);
-    } catch (err) {
-      console.error(err);
-      setIsStartedSending(false);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  const handleStartedSendingToggle = useStartSendingToggle(isStartedSending, setIsStartedSending, isProcessing, setIsProcessing, {activeMessenger, activePlatform, systemCfg, tourneyCfg, lang})
 
   const getButtonStyle = getLaunchButtonStyle(isStartedSending, debugMode);
-  /////////////
-
   const paramsBotParts = locale.Platform.ParamsBot.split("%v");
-  const launchMsgParts = locale.Platform.LaunchMsg.split("%v");
-  const successMsgParts = locale.Platform.SuccessMsg.split("%v");
 
   const handleMessengerClick = async (messengerName) => {
     const nextMessenger =
@@ -228,7 +187,7 @@ const NotificationSystemPlate = ({
       <button
         type="button"
         disabled={!isReadyToStart || isProcessing}
-        onClick={() => handleStartedSendingToggle(locale)}
+        onClick={handleStartedSendingToggle}
         className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-lg uppercase tracking-wider italic transition-all shadow-xl group text-white ${getButtonStyle} ${
           !isReadyToStart || isProcessing
             ? "opacity-40 cursor-not-allowed grayscale"
@@ -764,7 +723,7 @@ const NotificationSystemPlate = ({
                         icon={Settings2}
                         themeClasses={themeClasses}
                         onChange={(val) =>
-                          handleRuleChange("standardFormat", val)
+                          changeRule("standardFormat", val, updateConfig)
                         }
                       />
                       <RuleInput
@@ -777,7 +736,7 @@ const NotificationSystemPlate = ({
                         icon={Trophy}
                         themeClasses={themeClasses}
                         onChange={(val) =>
-                          handleRuleChange("finalsFormat", val)
+                          changeRule("finalsFormat", val, updateConfig)
                         }
                       />
                       <RuleInput
@@ -787,7 +746,7 @@ const NotificationSystemPlate = ({
                         max={5}
                         icon={Trophy}
                         themeClasses={themeClasses}
-                        onChange={(val) => handleRuleChange("rounds", val)}
+                        onChange={(val) => changeRule("rounds", val, updateConfig)}
                       />
                       <RuleInput
                         label={locale.RulesOfTournament.Time}
@@ -797,7 +756,7 @@ const NotificationSystemPlate = ({
                         suffix={locale.RulesOfTournament.Seconds}
                         icon={Timer}
                         themeClasses={themeClasses}
-                        onChange={(val) => handleRuleChange("duration", val)}
+                        onChange={(val) => changeRule("duration", val, updateConfig)}
                       />
                     </div>
                   </div>
