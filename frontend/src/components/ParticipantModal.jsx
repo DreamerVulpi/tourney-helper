@@ -469,4 +469,197 @@ const ParticipantModal = ({
     );
 };
 
+
+// import { useEffect, useState } from "react";
+
+// import {
+//   Ban,
+//   ShieldCheck,
+//   Trash2,
+//   RotateCcw,
+// } from "lucide-react";
+
+// import { Modal } from "../components/layout/Modal.jsx";
+
+// export function ParticipantModal({
+//   isOpen,
+//   onClose,
+//   onConfirm,
+
+//   actionType,
+//   participantData,
+//   currentGame,
+
+//   loading = false,
+
+//   locale,
+//   themeClasses,
+// }) {
+//   if (!isOpen || (!participantData && actionType !== "reset_rating_all"))
+//     return null;
+
+//   const banReasons = [
+//     {
+//       value: "software/cheats",
+//       label:
+//         locale.AddButton.AddBanFields.ListViolationCategories
+//           .UsingSoftwareOrCheats,
+//     },
+//     {
+//       value: "toxic/insults",
+//       label:
+//         locale.AddButton.AddBanFields.ListViolationCategories
+//           .ToxicBehavior,
+//     },
+//     {
+//       value: "rules/violation",
+//       label:
+//         locale.AddButton.AddBanFields.ListViolationCategories
+//           .ViolationOfRules,
+//     },
+//     {
+//       value: "match/sabotage",
+//       label:
+//         locale.AddButton.AddBanFields.ListViolationCategories
+//           .SabotageMatches,
+//     },
+//     {
+//       value: "smurfing",
+//       label:
+//         locale.AddButton.AddBanFields.ListViolationCategories
+//           .Smurfing,
+//     },
+//   ];
+
+//   const [typeBan, setTypeBan] = useState(banReasons[0].value);
+//   const [reason, setReason] = useState("");
+//   const [duration, setDuration] = useState("1");
+//   const [unit, setUnit] = useState("days");
+//   const [isPermanent, setIsPermanent] = useState(false);
+
+//   useEffect(() => {
+//     if (!isOpen) return;
+
+//     setTypeBan(banReasons[0].value);
+//     setReason("");
+//     setDuration("1");
+//     setUnit("days");
+//     setIsPermanent(false);
+//   }, [isOpen, actionType]);
+
+//   const config = {
+//     ban: {
+//       title: locale.AddButton.BanTitle,
+//       icon: Ban,
+//       iconColor: "red",
+
+//       btnBg: "bg-red-600 hover:bg-red-500",
+//       btnText: locale.AddButton.BanButtonLabel,
+//       confirmIcon: Ban,
+//     },
+
+//     unban: {
+//       title: locale.AddButton.UnbanTitle,
+//       icon: ShieldCheck,
+//       iconColor: "green",
+
+//       btnBg: "bg-green-600 hover:bg-green-500",
+//       btnText: locale.AddButton.UnbanButtonLabel,
+//       confirmIcon: ShieldCheck,
+//     },
+
+//     delete: {
+//       title: locale.AddButton.DeleteTitle,
+//       icon: Trash2,
+//       iconColor: "red",
+
+//       btnBg: "bg-rose-600 hover:bg-rose-500",
+//       btnText: locale.AddButton.DeleteButtonLabel,
+//       confirmIcon: Trash2,
+//     },
+
+//     reset_rating_all: {
+//       title: locale.AddButton.ResetRatingTitle,
+//       icon: RotateCcw,
+//       iconColor: "red",
+
+//       btnBg: "bg-red-600 hover:bg-red-500",
+//       btnText: locale.AddButton.ResetRatingButtonLabel,
+//       confirmIcon: RotateCcw,
+//     },
+//   }[actionType];
+
+//   const ConfirmIcon = config.confirmIcon;
+
+//   const handleConfirm = () => {
+//     if (actionType === "ban") {
+//       onConfirm({
+//         action: "ban",
+//         id: participantData.id,
+//         typeBan,
+//         reason: reason.trim(),
+//         isPermanent,
+//         duration: isPermanent ? 0 : parseInt(duration),
+//         unit: isPermanent ? "infinite" : unit,
+//       });
+
+//       return;
+//     }
+
+//     onConfirm({
+//       action: actionType,
+//     });
+//   };
+
+//   return (
+//     <Modal
+//       isOpen={isOpen}
+//       onClose={onClose}
+//       title={config.title}
+//       titleSuffix={participantData?.nickname}
+//       icon={config.icon}
+//       iconColor={config.iconColor}
+//       disableClose={loading}
+//       themeClasses={themeClasses}
+//       footer={
+//         <div className={`p-6 border-t ${themeClasses.divider}`}>
+//           <button
+//             onClick={handleConfirm}
+//             disabled={loading}
+//             className={`
+//                 w-full
+//                 h-14
+//                 rounded-xl
+//                 flex
+//                 items-center
+//                 justify-center
+//                 gap-3
+//                 font-black
+//                 uppercase
+//                 italic
+//                 tracking-wider
+//                 text-white
+//                 transition-all
+//                 ${config.btnBg}
+//                 ${loading ? "opacity-50 cursor-not-allowed" : ""}
+//             `}
+//           >
+//             <ConfirmIcon size={18} />
+
+//             {loading
+//               ? locale.AddButton.AddModalWindow.ProcessingButtonLabel
+//               : config.btnText}
+//           </button>
+//         </div>
+//       }
+//     >
+//       {/* Здесь дальше будет содержимое */}
+//       {/* BanForm */}
+//       {/* DeleteContent */}
+//       {/* UnbanContent */}
+//       {/* ResetRatingContent */}
+//     </Modal>
+//   );
+// }
+
 export default ParticipantModal;

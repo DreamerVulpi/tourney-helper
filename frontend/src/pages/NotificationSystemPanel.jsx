@@ -35,7 +35,7 @@ import {
   StopSendNotifications,
 } from "../../wailsjs/go/application/App.js";
 import ValidationAlertModal from "../components/ValidationAlertModal.jsx";
-import PanelTemplate from "../components/PanelTemplate.jsx";
+import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { PlatformBtn } from "../components/ui/PlatformButton.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
 import { CopyButton } from "../components/ui/CopyButton.jsx";
@@ -43,6 +43,9 @@ import { changeRule } from "../utils/NotificationSystemPanel.jsx/changeRule.jsx"
 import { useStartSendingToggle } from "../hooks/NotificationSystemPanel/useStartSendingToggle.jsx";
 import { Field } from "../components/ui/Field.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
+import { ValidationModal } from "../components/ValidationModal.jsx";
+import { useMessengerAuth } from "../hooks/useMessengerAuth.jsx";
+import { useTournamentPlatform } from "../hooks/useTournamentPlatform.jsx";
 
 const NotificationSystemPlate = ({
   theme,
@@ -101,12 +104,11 @@ const NotificationSystemPlate = ({
     message: "",
   });
 
-  
+  // Settings icon button for platforms
   const toggleSettings = (id) => {
-    // open/close settings when click on gear
+    // open/close settings when click on icon
     setActiveSettings(activeSettings === id ? null : id);
   };
-  const isDark = theme === "dark";
 
   // Array for 2 fields
   const listFT = [
@@ -143,63 +145,25 @@ const NotificationSystemPlate = ({
   // Button style for handler which start proccess
   const getButtonStyle = getLaunchButtonStyle(isStartedSending, debugMode);
 
-  // REFACTOR: Plaftorm buttons must we avaliable everywhere
-  const handleMessengerClick = async (messengerName) => {
-    const nextMessenger =
-      activeMessenger === messengerName ? "" : messengerName;
-    setActiveMessenger(nextMessenger);
-
-    if (nextMessenger === "discord") {
-      const token = systemCfg[nextMessenger]?.token;
-      const clientID = systemCfg[nextMessenger]?.clientID;
-      const secretClient = systemCfg[nextMessenger]?.secretClient;
-
-      if (!token || !clientID || !secretClient) {
-        setActiveMessenger("");
-        setValidationAlert({
-          isOpen: true,
-          message: locale.Platform.RequireMsg,
-        });
-        return;
-      }
-
-      try {
-        await AuthorizeDiscord(clientID, secretClient);
-        setAuthStatus((prev) => ({ ...prev, discord: true }));
-      } catch (err) {
-        console.error(err);
-        setAuthStatus((prev) => ({ ...prev, discord: false }));
-      }
-    }
-  };
-
-  // REFACTOR: Plaftorm buttons must we avaliable everywhere
-  const handleTournamentPlatformClick = async (platformName) => {
-    const nextPlatform = activePlatform === platformName ? "" : platformName;
-    setActivePlatform(nextPlatform);
-
-    if (nextPlatform === "startgg") {
-      const clientID = tourneyCfg[nextPlatform]?.clientID;
-      const secretClient = tourneyCfg[nextPlatform]?.secretClient;
-
-      if (!clientID || !secretClient) {
-        setActivePlatform("");
-        setValidationAlert({
-          isOpen: true,
-          message: locale.Platform.RequireMsg,
-        });
-        return;
-      }
-
-      try {
-        await AuthorizeStartgg(clientID, secretClient);
-        setAuthStatus((prev) => ({ ...prev, startgg: true }));
-      } catch (err) {
-        console.error(err);
-        setAuthStatus((prev) => ({ ...prev, startgg: false }));
-      }
-    }
-  };
+  // Handler for messenger auth button
+  const { handleMessengerClick } = useMessengerAuth({
+    systemCfg,
+    locale,
+    activeMessenger,
+    setActiveMessenger,
+    setAuthStatus,
+    setValidationAlert,
+  });
+  // Handler for tournament platform auth button
+  const { handleTournamentPlatformClick } =
+  useTournamentPlatform({
+    tourneyCfg,
+    locale,
+    activePlatform,
+    setActivePlatform,
+    setAuthStatus,
+    setValidationAlert,
+  });
 
   const rightPanelFooter = (
     <div className="flex flex-col items-end gap-3">
@@ -635,7 +599,7 @@ const NotificationSystemPlate = ({
               className={`p-6 rounded-[2.5rem] border space-y-6 ${themeClasses.section}`}
             >
               <div
-                className={`flex items-center justify-between border-b pb-3 ${isDark ? "border-white/5" : "border-slate-100"}`}
+                className={`flex items-center justify-between border-b pb-3 ${themeClasses.divider}`}
               >
                 <div className="flex items-center gap-4">
                   <button
@@ -731,9 +695,8 @@ const NotificationSystemPlate = ({
                     </div>
                   </div>
                 ) : (
-                  <div className=" space-y-4">
+                  <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-2">
-                      {/* 1. Region */}
                       <div className="space-y-1">
                         <Field
                           variant="select"
@@ -859,7 +822,7 @@ const NotificationSystemPlate = ({
               className={`p-6 rounded-[2.5rem] border space-y-6 ${themeClasses.section}`}
             >
               <div
-                className={`flex items-center gap-2 border-b pb-3 ${isDark ? "border-white/5" : "border-slate-100"}`}
+                className={`flex items-center gap-2 border-b pb-3 ${themeClasses.divider}`}
               >
                 <ImagePlus size={16} className="text-blue-500" />
                 <span
@@ -870,7 +833,7 @@ const NotificationSystemPlate = ({
               </div>
               <div className="flex gap-4 items-start">
                 <div
-                  className={`w-24 h-24 rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden shrink-0 transition-all ${isDark ? "border-white/10 bg-black/40" : "border-slate-200 bg-white shadow-inner"}`}
+                  className={`w-24 h-24 rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden shrink-0 transition-all ${themeClasses.divider}`}
                 >
                   {tourneyCfg?.logo?.img ? (
                     <img
@@ -903,12 +866,13 @@ const NotificationSystemPlate = ({
           </div>
         </div>
       </div>
-      <ValidationAlertModal
+      <ValidationModal
         isOpen={validationAlert.isOpen}
+        onClose={() => setValidationAlert({ isOpen: false, message: "" })}
         message={validationAlert.message}
         theme={theme}
-        onClose={() => setValidationAlert({ isOpen: false, message: "" })}
         locale={localeValidation}
+        themeClasses={themeClasses}
       />
     </PanelTemplate>
   );

@@ -27,6 +27,12 @@ export function getThemeClasses(theme) {
         tempSection: isDark
             ? "bg-blue-600/5 border-blue-600/10"
             : "bg-blue-50 border-blue-100",
+        validationError: isDark
+            ? "bg-red-500/5 border-red-500/20 text-red-400"
+            : "bg-red-500/[0.02] border-red-200 text-red-700",
+        divider: isDark
+            ? "border-white/5"
+            : "border-slate-200",
     };
 }
 

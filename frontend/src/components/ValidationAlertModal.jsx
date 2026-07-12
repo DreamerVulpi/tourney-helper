@@ -48,7 +48,6 @@ const ValidationAlertModal = ({ isOpen, message, onClose, theme = 'dark', locale
             {locale.NeedCorrectConfig}
           </p>
 
-          {/* Информационная плашка с текстом ошибки в стиле исходного модального окна */}
           <div className={`flex flex-col items-center text-center p-5 rounded-xl border ${
             isDark 
               ? 'bg-red-500/5 border-red-500/20 text-red-400' 
@@ -60,7 +59,6 @@ const ValidationAlertModal = ({ isOpen, message, onClose, theme = 'dark', locale
           </div>
         </div>
 
-        {/* Footer (Футер с кнопкой подтверждения) */}
         <div className={`p-6 border-t ${
           isDark ? 'border-white/5' : 'border-slate-100'
         }`}>
