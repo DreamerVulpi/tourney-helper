@@ -24,6 +24,9 @@ export function getThemeClasses(theme) {
         listMenu: isDark
             ? "bg-[#121212] border-white/10 text-white"
             : "bg-white border-slate-200 text-slate-900",
+        tempSection: isDark
+            ? "bg-blue-600/5 border-blue-600/10"
+            : "bg-blue-50 border-blue-100",
     };
 }
 

@@ -42,6 +42,7 @@ import { CopyButton } from "../components/ui/CopyButton.jsx";
 import { changeRule } from "../utils/NotificationSystemPanel.jsx/changeRule.jsx";
 import { useStartSendingToggle } from "../hooks/NotificationSystemPanel/useStartSendingToggle.jsx";
 import { Field } from "../components/ui/Field.jsx";
+import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 
 const NotificationSystemPlate = ({
   theme,
@@ -107,7 +108,29 @@ const NotificationSystemPlate = ({
   };
   const isDark = theme === "dark";
 
- 
+  // Array for 2 fields
+  const listFT = [
+    {
+      label: "FT1",
+      value: "1",
+    },
+    {
+      label: "FT2",
+      value: "2",
+    },
+    {
+      label: "FT3",
+      value: "3",
+    },
+    {
+      label: "FT4",
+      value: "4",
+    },
+    {
+      label: "FT5",
+      value: "5",
+    },
+  ]
 
   // Handler for start proccess - Sending notifications
   const handleStartedSendingToggle = useStartSendingToggle(
@@ -180,7 +203,6 @@ const NotificationSystemPlate = ({
 
   const rightPanelFooter = (
     <div className="flex flex-col items-end gap-3">
-      {/* Текстовое предупреждение отладки (отображается только если рассылка НЕ запущена) */}
       {!isStartedSending && debugMode && (
         <div
           className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-amber-500 animate-in fade-in slide-in-from-bottom-2 duration-300 ${
@@ -239,39 +261,27 @@ const NotificationSystemPlate = ({
       exceptionElement={rightPanelFooter}
     >
       <div className="grid grid-cols-12 gap-8 items-start flex-1">
-        {/* Left panel */}
-        <div className="col-span-12 lg:col-span-4 space-y-2">
-          <section className="h-[48px] items-center">
-            {/* REFACTOR: Create in main themeClasses.jsx new params */}
-            <div
-              className={`w-full flex items-center justify-between p-3 rounded-xl border ${isDark ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50 border-amber-200"}`}
-            >
-              <div className="flex items-center gap-3">
-                <Bug size={18} className="text-amber-500" />
-                <span className="text-[10px] font-black uppercase italic leading-none">
-                  {locale.DebugModeSwitchLabel}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() =>
-                  updateConfig("system", {
-                    ...systemCfg,
-                    debug: {
-                      ...systemCfg.debug,
-                      mode: !systemCfg.debug.mode,
-                    },
-                  })
+        {/* Left part */}
+        <div className="lg:col-span-4 space-y-4">
+          <section className="h-[3rem]">
+            <ToggleSwitch
+                label={locale.DebugModeSwitchLabel}
+                icon={Bug}
+                checked={systemCfg.debug.mode}
+                color="amber"
+                themeClasses={themeClasses}
+                onChange={(value) =>
+                    updateConfig("system", {
+                        debug: {
+                            ...systemCfg.debug,
+                            mode: value,
+                        },
+                    })
                 }
-                className={`w-10 h-5 rounded-full relative transition-all ${debugMode ? "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)]" : "bg-slate-700"}`}
-              >
-                <div
-                  className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${debugMode ? "right-0.5" : "left-0.5"}`}
-                />
-              </button>
-            </div>
+            />
           </section>
 
+          {/* Platform buttons */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <span className="text-[9px] font-black uppercase text-blue-500 italic px-1">
@@ -325,12 +335,11 @@ const NotificationSystemPlate = ({
           </div>
 
           {(activeSettings === "startgg" || activeSettings === "challonge") && (
-            // REFACTOR: Create in main themeClasses.jsx new params
             <section
-              className={`p-4 rounded-2xl border space-y-3 ${isDark ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50 border-amber-100"}`}
+              className={`p-4 rounded-2xl border space-y-3 ${themeClasses.tempSection}`}
             >
               <div className="flex items-center justify-between border-b pb-2 border-current/5">
-                <h4 className="text-[9px] font-black uppercase text-amber-500 italic">
+                <h4 className="text-[0.625rem] font-black uppercase text-amber-500 italic">
                   {locale.Platform.DownloadSettings} - {activeSettings}
                 </h4>
                 <button
@@ -341,16 +350,14 @@ const NotificationSystemPlate = ({
                 </button>
               </div>
 
-              <div className="space-y-1">
-                <Field
+              <Field
                   label={locale.Platform.RedirectURL}
                   variant="copy"
                   value={"http://127.0.0.1:7310/callback"}
                   icon={HardDriveDownload}
                   themeClasses={themeClasses}
-                />
-              </div>
-
+              />
+              
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <Field
                   label={"CLIENT ID"}
@@ -399,7 +406,7 @@ const NotificationSystemPlate = ({
 
           {(activeSettings === "discord" || activeSettings == "telegram") && (
             <section
-              className={`p-4 rounded-2xl border space-y-3 animate-in zoom-in-95 duration-300 ${isDark ? "bg-blue-600/5 border-blue-600/10" : "bg-blue-50 border-blue-100"}`}
+              className={`p-4 rounded-2xl border space-y-3 animate-in zoom-in-95 duration-300 ${themeClasses.tempSection}`}
             >
               <div className="flex items-center justify-between border-b pb-2 border-current/5">
                 <h4 className="text-[9px] font-black uppercase text-blue-500 italic">
@@ -451,7 +458,7 @@ const NotificationSystemPlate = ({
               {(activeSettings === "discord" ||
                 activeSettings === "telegram") && (
                 <>
-                  <div className="grid grid-cols-2 gap-2 pt-1 animate-in fade-in slide-in-from-top-1">
+                  <div className="grid grid-cols-2 gap-2 pt-1">
                     <div className="space-y-1">
                       <Field
                         label={"GUILD ID"}
@@ -577,7 +584,7 @@ const NotificationSystemPlate = ({
         </div>
 
         {/* Central and right panels */}
-        <div className="col-span-12 lg:col-span-8 grid grid-cols-10 gap-6">
+        <div className="col-span-12 lg:col-span-8 grid grid-cols-10 gap-8">
           <div className="col-span-12 lg:col-span-6 space-y-6">
             <section className="flex gap-4 h-[48px] items-end">
               <div className="flex-1 space-y-1">
@@ -661,7 +668,7 @@ const NotificationSystemPlate = ({
               <div className="flex-1">
                 {activeTab === "rules" ? (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-2">
                       <Field
                         label={`${locale.RulesOfTournament.StandardFormat} (1-5)`}
                         variant="select"
@@ -671,29 +678,7 @@ const NotificationSystemPlate = ({
                         onChange={(val) =>
                           changeRule("standardFormat", val, updateConfig)
                         }
-                        // REFACTOR: TO VARIABLE
-                        items={[
-                        {
-                          label: "FT1",
-                          value: "1",
-                        },
-                        {
-                          label: "FT2",
-                          value: "2",
-                        },
-                        {
-                          label: "FT3",
-                          value: "3",
-                        },
-                        {
-                          label: "FT4",
-                          value: "4",
-                        },
-                        {
-                          label: "FT5",
-                          value: "5",
-                        },
-                      ]}
+                        items={listFT}
                       />
                       <Field
                         label={`${locale.RulesOfTournament.FinalFormat} (1-5)`}
@@ -704,29 +689,7 @@ const NotificationSystemPlate = ({
                         onChange={(val) =>
                           changeRule("finalsFormat", val, updateConfig)
                         }
-                        // REFACTOR: TO VARIABLE
-                        items={[
-                        {
-                          label: "FT1",
-                          value: "1",
-                        },
-                        {
-                          label: "FT2",
-                          value: "2",
-                        },
-                        {
-                          label: "FT3",
-                          value: "3",
-                        },
-                        {
-                          label: "FT4",
-                          value: "4",
-                        },
-                        {
-                          label: "FT5",
-                          value: "5",
-                        },
-                        ]}
+                        items={listFT}
                       />
                       <Field
                         label={`${locale.RulesOfTournament.Rounds} (1-5)`}
@@ -768,8 +731,8 @@ const NotificationSystemPlate = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="animate-in fade-in slide-in-from-right-2 duration-300 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                  <div className=" space-y-4">
+                    <div className="grid grid-cols-2 gap-2">
                       {/* 1. Region */}
                       <div className="space-y-1">
                         <Field
