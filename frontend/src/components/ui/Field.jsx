@@ -11,9 +11,12 @@ export function Field({
 
   variant = "input", // input | password | select | copy
   type = "text",
+  isNumber,
 
   value,
   onChange,
+  onClick,
+  labelButton,
 
   items = [],
 
@@ -77,6 +80,51 @@ export function Field({
 
           <CopyButton text={value} className="absolute right-2" />
         </div>
+      ) : variant === "button" ? (
+            <button
+              type="button"
+              onClick={onClick}
+              style={{ height }}
+              className={`
+                w-full
+                flex
+                w-full
+                rounded-xl
+                border
+                transition-all
+                gap-2
+                text-xs
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                text-xs
+                font-black
+                uppercase
+                italic
+                text-black
+                transition-all
+                ${themeClasses.button}
+              `}
+            >
+              {Icon && (
+                <Icon
+                  size={iconSize}
+                  className="left-3 text-blue-600 pointer-events-none z-10"
+                />
+              )}
+
+              <span>
+                {labelButton}
+              </span>
+            </button>
+      ) : variant === "textarea" ? (
+        <textarea
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          className={`w-full h-24 p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${themeClasses.field}`}
+        />
       ) : (
         <div className="relative flex items-center">
           {Icon && (
@@ -87,7 +135,7 @@ export function Field({
           )}
 
           <input
-            type={inputType}
+            type={isNumber ? "number" : inputType}
             value={value}
             placeholder={placeholder}
             onChange={(e) => onChange(e.target.value)}

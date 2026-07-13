@@ -112,7 +112,9 @@ export function Modal({
         {children}
 
         {/* Footer */}
-        {footer}
+        <div className={`p-6 border-t ${themeClasses.divider}`}>
+            {footer}
+        </div>
       </div>
     </div>
   );

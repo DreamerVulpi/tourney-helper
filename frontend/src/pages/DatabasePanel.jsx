@@ -34,7 +34,7 @@ import {
 } from "../../wailsjs/go/application/App.js";
 import ImportProgressModal from "../components/ImportProgressModal.jsx";
 import ImportFileModal from "../components/ImportFileModal.jsx";
-import ParticipantModal from "../components/ParticipantModal.jsx";
+import ParticipantModal from "../components/modals/ParticipantModal.jsx";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import ParticipantActionModal from "../components/ParticipantActionModal.jsx";
 import { debounce } from "../utils/debounce.jsx";
@@ -839,6 +839,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
               <tbody className="divide-y divide-white/5">
                 {filteredPlayers.length > 0 ? (
                   filteredPlayers.map((p) => (
+                    
                     <tr
                       key={p.id}
                       className="hover:bg-blue-600/5 transition-colors align-middle"
@@ -1179,11 +1180,11 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveParticipant}
-        initialData={editingParticipant}
-        loading={modalLoading}
-        theme={theme}
+        participantData={editingParticipant}
         activeFilter={activeFilter}
         locale={locale.AddButton}
+        themeClasses={themeClasses}
+        loading={modalLoading}
       />
       <ParticipantActionModal
         isOpen={isActionModalOpen}

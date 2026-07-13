@@ -1,6 +1,6 @@
 import { AlertTriangle, Check } from "lucide-react";
 
-import { Modal } from "../components/layout/Modal.jsx";
+import { Modal } from "../components/modals/Modal.jsx";
 
 export function ValidationModal({
   isOpen,
@@ -18,7 +18,6 @@ export function ValidationModal({
       iconColor="red"
       themeClasses={themeClasses}
       footer={
-        <div className={`p-6 border-t ${themeClasses.divider}`}>
           <button
             type="button"
             onClick={onClose}
@@ -44,7 +43,6 @@ export function ValidationModal({
             <Check size={18} />
             {locale.OkButtonLabel}
           </button>
-        </div>
       }
     >
       <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-4">
