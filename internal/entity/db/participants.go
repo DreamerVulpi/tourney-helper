@@ -36,7 +36,9 @@ type ParticipantRepo interface {
 		ctx context.Context,
 		nickname string) (Participant, error)
 	GetList(ctx context.Context, nameMessengerPlatform, nameTournamentPlatform, nameGame string, offset, limit int, search string) ([]entitySender.Participant, error)
-	TotalCount(ctx context.Context) (int, error)
+	GetListSortByRating(ctx context.Context, nameMessengerPlatform, nameTournamentPlatform, nameGame string, offset, limit int, search string) ([]entitySender.Participant, error)
+	TotalCount(ctx context.Context, nameGame string) (int, error)
+	TotalCountInRatingLeague(ctx context.Context, gameName string) (int, error)
 	WithTx(tx SQLHandler) ParticipantRepo
 }
 
@@ -71,6 +73,10 @@ type ParticipantGetRequestById struct {
 
 type ParticipantGetRequestByNickname struct {
 	Nickname string `json:"nickname"`
+}
+
+type ParticipantGetTotalCountRequest struct {
+	GameName string `json:"gameName"`
 }
 
 type ParticipantGetParticipantsListRequest struct {

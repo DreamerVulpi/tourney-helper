@@ -34,11 +34,9 @@ import {
   StartSendNotifications,
   StopSendNotifications,
 } from "../../wailsjs/go/application/App.js";
-import ValidationAlertModal from "../components/ValidationAlertModal.jsx";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { PlatformBtn } from "../components/ui/PlatformButton.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
-import { CopyButton } from "../components/ui/CopyButton.jsx";
 import { changeRule } from "../utils/NotificationSystemPanel.jsx/changeRule.jsx";
 import { useStartSendingToggle } from "../hooks/NotificationSystemPanel/useStartSendingToggle.jsx";
 import { Field } from "../components/ui/Field.jsx";
@@ -114,23 +112,23 @@ const NotificationSystemPlate = ({
   const listFT = [
     {
       label: "FT1",
-      value: "1",
+      value: 1,
     },
     {
       label: "FT2",
-      value: "2",
+      value: 2,
     },
     {
       label: "FT3",
-      value: "3",
+      value: 3,
     },
     {
       label: "FT4",
-      value: "4",
+      value: 4,
     },
     {
       label: "FT5",
-      value: "5",
+      value: 5,
     },
   ]
 

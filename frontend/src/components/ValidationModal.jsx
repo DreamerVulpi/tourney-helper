@@ -45,7 +45,7 @@ export function ValidationModal({
           </button>
       }
     >
-      <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar space-y-4">
+      <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar custom-scrollbar-red space-y-4">
         <p
           className={`text-xs leading-relaxed ${themeClasses.textMuted}`}
         >

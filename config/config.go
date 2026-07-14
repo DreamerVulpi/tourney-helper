@@ -106,8 +106,6 @@ func GetAbsPath(fileName string) string {
 	return filepath.Join(exPath, fileName)
 }
 
-// TODO: REFACTOR CODE
-
 func LoadConfig(file string) (ConfigMessenger, error) {
 	var cfg ConfigMessenger
 

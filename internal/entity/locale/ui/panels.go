@@ -58,4 +58,5 @@ type DatabasePanel struct {
 	ResetRatingButton              ResetRatingModal
 	TotalCountNotesInDBLabel       string
 	TotalCountBannedNotesInDBLabel string
+	TotalCountRatingParticipants   string
 }

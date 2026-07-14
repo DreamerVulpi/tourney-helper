@@ -172,6 +172,14 @@ func (a *App) GetParticipants(messengerName, tournamentPlatformName, gameName st
 	}
 	return result, nil
 }
+func (a *App) GetParticipantsSortedByRatingList(messengerName, tournamentPlatformName, gameName string, limit, offset int, search string) (db.ParticipantGetParticipantsListWithTotalCountResponse, error) {
+	result, err := a.Db.GetParticipantsSortedByRatingList(a.ctx, messengerName, tournamentPlatformName, gameName, limit, offset, search)
+	if err != nil {
+		a.Log(logger.Error, err.Error())
+		return db.ParticipantGetParticipantsListWithTotalCountResponse{}, err
+	}
+	return result, nil
+}
 
 func (a *App) GetBanned(gameName string, limit, offset int, search string) (db.ParticipantGetListResponse, error) {
 	log.Printf("Request: GameName = %v Limit = %v, Offset = %v, Search = \"%v\"", gameName, limit, offset, search)

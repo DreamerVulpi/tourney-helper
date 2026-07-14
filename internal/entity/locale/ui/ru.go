@@ -266,5 +266,6 @@ var Ru = Ui{
 		},
 		TotalCountNotesInDBLabel:       "Всего игроков в базе данных",
 		TotalCountBannedNotesInDBLabel: "Всего игроков в бан-листе",
+		TotalCountRatingParticipants:   "Всего игроков в рейтинговой лиге",
 	},
 }

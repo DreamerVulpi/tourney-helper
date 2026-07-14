@@ -13,7 +13,7 @@ export function Modal({
   footer = null,
 
   themeClasses,
-
+  scrollBarClass="",
   closeOnOverlay = true,
 
   width = "max-w-lg",
@@ -109,7 +109,9 @@ export function Modal({
         </div>
 
         {/* Content */}
-        {children}
+        <div className={`custom-scrollbar ${scrollBarClass}`}>
+          {children}
+        </div>
 
         {/* Footer */}
         <div className={`p-6 border-t ${themeClasses.divider}`}>

@@ -63,6 +63,11 @@ func (db *Database) DelParticipant(ctx context.Context, participantId int) error
 }
 
 func (db *Database) GetBanned(ctx context.Context, gameName string, limit, offset int, search string) (entityDB.ParticipantGetListResponse, error) {
+	tc, err := db.Bans.TotalCount(ctx)
+	if err != nil {
+		return entityDB.ParticipantGetListResponse{}, err
+	}
+
 	responseList, err := db.Bans.GetPartipantsListBans(ctx, entityDB.ParticipantBansGetListRequest{
 		GameName: gameName,
 		Limit:    limit,
@@ -75,6 +80,7 @@ func (db *Database) GetBanned(ctx context.Context, gameName string, limit, offse
 
 	return entityDB.ParticipantGetListResponse{
 		ListBanned: responseList.ListBanned,
+		TotalCount: tc.TotalCount,
 	}, err
 }
 
@@ -83,12 +89,39 @@ func (db *Database) GetParticipants(ctx context.Context, messengerName, tourname
 		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
 	}
 
-	responseTc, err := db.Participant.GetTotalCount(ctx)
+	responseTc, err := db.Participant.GetTotalCount(ctx, entityDB.ParticipantGetTotalCountRequest{GameName: gameName})
 	if err != nil {
 		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
 	}
 
 	responseList, err := db.Participant.GetParticipantsList(ctx, entityDB.ParticipantGetParticipantsListRequest{
+		MessengerName:          messengerName,
+		TournamentPlatformName: tournamentPlatformName,
+		GameName:               gameName,
+		Limit:                  limit,
+		Offset:                 offset,
+		Search:                 search,
+	})
+	if err != nil {
+		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
+	}
+
+	return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{
+		Items:      responseList.ListParticipants,
+		TotalCount: responseTc.TotalCount,
+	}, err
+}
+func (db *Database) GetParticipantsSortedByRatingList(ctx context.Context, messengerName, tournamentPlatformName, gameName string, limit, offset int, search string) (entityDB.ParticipantGetParticipantsListWithTotalCountResponse, error) {
+	if err := ctx.Err(); err != nil {
+		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
+	}
+
+	responseTc, err := db.Participant.GetTotalCountInRatingLeague(ctx, entityDB.ParticipantGetTotalCountRequest{GameName: gameName})
+	if err != nil {
+		return entityDB.ParticipantGetParticipantsListWithTotalCountResponse{}, err
+	}
+
+	responseList, err := db.Participant.GetParticipantsSortedByRatingList(ctx, entityDB.ParticipantGetParticipantsListRequest{
 		MessengerName:          messengerName,
 		TournamentPlatformName: tournamentPlatformName,
 		GameName:               gameName,
@@ -133,6 +166,7 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 	return db.buildDataOfParticipant(responseParticipant, responseMessenger, responseTournamentAccount, responseStats, p), nil
 }
 
+// FIXME:
 func (db *Database) EditParticipant(ctx context.Context, p entitySender.Participant, ban *entityApp.BanRequest) error {
 	log.Printf("Id: %v\n", p.Id)
 	log.Printf("MessengerID: %v\n", p.MessenagerID)

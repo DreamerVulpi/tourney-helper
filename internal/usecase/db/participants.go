@@ -67,8 +67,15 @@ func (p *Participant) DelParticipant(ctx context.Context, request entity.Partici
 	return entity.ParticipantDeleteResponse{}, nil
 }
 
-func (p *Participant) GetTotalCount(ctx context.Context) (entity.ParticipantGetTotalCountResponse, error) {
-	totalCount, err := p.Repo.TotalCount(ctx)
+func (p *Participant) GetTotalCount(ctx context.Context, request entity.ParticipantGetTotalCountRequest) (entity.ParticipantGetTotalCountResponse, error) {
+	totalCount, err := p.Repo.TotalCount(ctx, request.GameName)
+	if err != nil {
+		return entity.ParticipantGetTotalCountResponse{}, err
+	}
+	return entity.ParticipantGetTotalCountResponse{TotalCount: totalCount}, nil
+}
+func (p *Participant) GetTotalCountInRatingLeague(ctx context.Context, request entity.ParticipantGetTotalCountRequest) (entity.ParticipantGetTotalCountResponse, error) {
+	totalCount, err := p.Repo.TotalCountInRatingLeague(ctx, request.GameName)
 	if err != nil {
 		return entity.ParticipantGetTotalCountResponse{}, err
 	}
@@ -77,6 +84,13 @@ func (p *Participant) GetTotalCount(ctx context.Context) (entity.ParticipantGetT
 
 func (p *Participant) GetParticipantsList(ctx context.Context, request entity.ParticipantGetParticipantsListRequest) (entity.ParticipantGetParticipantsListResponse, error) {
 	list, err := p.Repo.GetList(ctx, request.MessengerName, request.TournamentPlatformName, request.GameName, request.Limit, request.Offset, request.Search)
+	if err != nil {
+		return entity.ParticipantGetParticipantsListResponse{}, err
+	}
+	return entity.ParticipantGetParticipantsListResponse{ListParticipants: list}, err
+}
+func (p *Participant) GetParticipantsSortedByRatingList(ctx context.Context, request entity.ParticipantGetParticipantsListRequest) (entity.ParticipantGetParticipantsListResponse, error) {
+	list, err := p.Repo.GetListSortByRating(ctx, request.MessengerName, request.TournamentPlatformName, request.GameName, request.Limit, request.Offset, request.Search)
 	if err != nil {
 		return entity.ParticipantGetParticipantsListResponse{}, err
 	}

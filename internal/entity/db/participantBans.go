@@ -35,6 +35,9 @@ type ParticipantBansRepo interface {
 	IsBanned(
 		ctx context.Context,
 		id int) (bool, error)
+	TotalCount(
+		ctx context.Context,
+	) (int, error)
 	WithTx(tx SQLHandler) ParticipantBansRepo
 }
 
@@ -78,6 +81,7 @@ type ParticipantBansGetListRequest struct {
 
 type ParticipantGetListResponse struct {
 	ListBanned []entitySender.Participant `json:"list"`
+	TotalCount int                        `json:"totalCount"`
 }
 
 type ParticipantIsBannedRequest struct {

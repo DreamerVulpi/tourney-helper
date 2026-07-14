@@ -26,7 +26,11 @@ export function Field({
 
   themeClasses,
 }) {
-  const iconSize = Math.round(parseFloat(height) * 16 * 0.45);
+  const iconSize = height.endsWith("rem")
+  ? Math.round(parseFloat(height) * 16 * 0.45)
+  : height.endsWith("px")
+  ? Math.round(parseFloat(height) * 0.45)
+  : 16;
 
   const [showSecret, setShowSecret] = useState(false);
 
@@ -135,7 +139,9 @@ export function Field({
           )}
 
           <input
-            type={isNumber ? "number" : inputType}
+            type={inputType}
+            inputMode={isNumber ? "numeric" : ""}
+            pattern={isNumber ? "[0-9]*" : ""}
             value={value}
             placeholder={placeholder}
             onChange={(e) => onChange(e.target.value)}

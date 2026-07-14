@@ -185,8 +185,6 @@ const ParticipantModal = ({
 
   if (!isOpen) return null;
 
-//   const isDark = "dark";
-
   const handleSave = () => {
     const trimmedNickname = formData.nickname.trim();
     const trimmedGameId = formData.gameId.trim();
@@ -246,7 +244,7 @@ const ParticipantModal = ({
   };
 
   const footer = (
-        <button
+    <button
       onClick={handleSave}
       disabled={loading}
       className={`
@@ -289,29 +287,8 @@ const ParticipantModal = ({
     </button>
   );
 
-  //   const focusRingClass =
-  //     isBanMode || isEditingBannedPlayer
-  //       ? "focus:border-red-500/50 focus:ring-2 focus:ring-red-500/10"
-  //       : isEditMode
-  //         ? "focus:border-amber-500/50 focus:ring-2 focus:ring-amber-500/10"
-  //         : isDark
-  //           ? "focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/10"
-  //           : "focus:border-blue-600 focus:ring-2 focus:ring-blue-600/10";
-
-  //   const inputClasses = `w-full bg-transparent border rounded-xl p-3 outline-none transition-all text-sm font-medium ${focusRingClass} ${
-  //     isDark
-  //       ? "border-white/10 text-white placeholder:text-slate-600"
-  //       : "border-slate-200 text-slate-900 placeholder:text-slate-400"
-  //   }`;
-
   const labelClasses = `text-[9px] font-black uppercase italic px-1 ${themeClasses.label}'
     }`;
-
-  //   const sectionBtnClasses = `flex items-center gap-2 p-3 rounded-xl border text-[10px] font-black uppercase tracking-tight transition-all mb-4 ${
-  //     isDark
-  //       ? "bg-white/5 border-white/5 text-slate-400 hover:text-white hover:bg-white/10"
-  //       : `bg-slate-50 border-slate-200 text-slate-500 ${isBanMode || isEditingBannedPlayer ? "hover:text-red-600 hover:border-red-200" : "hover:text-blue-600 hover:border-blue-200"}`
-  //   }`;
 
   return (
     <Modal
@@ -339,9 +316,16 @@ const ParticipantModal = ({
       }
       variant={isBanMode || isEditingBannedPlayer ? "banned" : "default"}
       themeClasses={themeClasses}
+      scrollBarClass={
+        isBanMode || isEditingBannedPlayer
+          ? "custom-scrollbar-red"
+          : isEditMode
+            ? "custom-scrollbar-orange"
+            : ""
+      }
       footer={footer}
     >
-      <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar custom-scrollbar-red space-y-6">
+      <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
         <div className="grid grid-cols-2 gap-2">
           <div className="col-span-2 sm:col-span-1">
             <Field
@@ -442,7 +426,7 @@ const ParticipantModal = ({
         <div className="space-y-4">
           {formData.messenger.active ? (
             <div
-             className={`p-4 rounded-xl border relative ${themeClasses.divider}`}
+              className={`p-4 rounded-xl border relative ${themeClasses.divider}`}
             >
               <div className="flex justify-between items-center mb-2">
                 <label className={labelClasses}>
@@ -475,6 +459,12 @@ const ParticipantModal = ({
                       messenger: { ...formData.messenger, platform: value },
                     })
                   }
+                  items={[
+                    {
+                      label: "Discord",
+                      value: "Discord",
+                    },
+                  ]}
                   themeClasses={themeClasses}
                 />
                 <Field

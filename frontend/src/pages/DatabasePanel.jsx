@@ -23,6 +23,7 @@ import {
 import {
   AddParticipant,
   GetParticipants,
+  GetParticipantsSortedByRatingList,
   GetBanned,
   EditParticipant,
   EditParticipantStatsRating,
@@ -36,8 +37,10 @@ import ImportProgressModal from "../components/ImportProgressModal.jsx";
 import ImportFileModal from "../components/ImportFileModal.jsx";
 import ParticipantModal from "../components/modals/ParticipantModal.jsx";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
-import ParticipantActionModal from "../components/ParticipantActionModal.jsx";
+import ParticipantActionModal from "../components/modals/ParticipantActionModal.jsx";
 import { debounce } from "../utils/debounce.jsx";
+import { CopyButton } from "../components/ui/CopyButton.jsx";
+import { Field } from "../components/ui/Field.jsx"
 
 const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   const [selectedGame, setSelectedGame] = useState("Tekken8");
@@ -49,18 +52,18 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   const nameMessengerPlatform = "Discord";
   const nameTournamentPlatform = "Startgg";
 
-  const sizeColumnOfNickname = 50;
+  const sizeColumnOfNickname = 40;
   const sizeColumnOfGameID = 30;
   const sizeColumnOfRegion = 10;
   const sizeColumnOfLanguage = 10;
-  const sizeColumnOfMMR = 40;
-  const sizeColumnOfMMRPoints = 40;
+  const sizeColumnOfMMR = 10;
+  const sizeColumnOfMMRPoints = 50;
   const sizeColumnOfPlatforms = 30;
   const sizeColumnOfUpdateDate = 30;
   const sizeColumnOfControl = 20;
-  const sizeColumnOfTypeBan = 50;
-  const sizeColumnOfDescriptionBan = 150;
-  const sizeColumnOfBannedAtDate = 40;
+  const sizeColumnOfTypeBan = 40;
+  const sizeColumnOfDescriptionBan = 40;
+  const sizeColumnOfBannedAtDate = 30;
   const sizeColumnOfExpiresDate = 40;
 
   const [players, setPlayers] = useState([]);
@@ -344,63 +347,87 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
       handleUpdateRatingRef.current(participantId, newValue, nickname);
     }, 600),
   [],
-);
+  );
 
   const fetchData = async (isNextPage = false, search = undefined) => {
-    setLoading(true);
-    try {
-      const currentOffset = isNextPage ? players.length : 0;
-      const currentSearch = search !== undefined ? search : searchQuery;
-      const trimmedSearch = currentSearch ? currentSearch.trim() : "";
+  setLoading(true);
 
-      let items = [];
-      let total = 0;
+  try {
+    const currentOffset = isNextPage ? players.length : 0;
+    const currentSearch = search !== undefined ? search : searchQuery;
+    const trimmedSearch = currentSearch ? currentSearch.trim() : "";
 
-      if (activeFilter === "banned") {
-        const response = await GetBanned(
-          selectedGame,
-          limit,
-          currentOffset,
-          trimmedSearch,
-        );
-        if (response) {
-          const rawList = response.list || [];
-          items = rawList.map((b) => ({
-            ...b,
-            id: b.id !== undefined ? b.id : b.Id,
-            nickname: b.gameNickname || b.nickname,
-            gameId: b.gameId || b.gameID,
-          }));
-          total = response.totalCount || items.length;
-        }
-      } else {
-        const response = await GetParticipants(
-          nameMessengerPlatform,
-          nameTournamentPlatform,
-          selectedGame,
-          limit,
-          currentOffset,
-          trimmedSearch,
-        );
+    let items = [];
+    let total = 0;
+    console.log("activeFilter:", activeFilter)
+    if (activeFilter === "banned") {
+      console.log("limit:", limit)
+      console.log("currentOffset:", currentOffset)
+      const response = await GetBanned(
+        selectedGame,
+        limit,
+        currentOffset,
+        trimmedSearch,
+      );
 
-        if (response) {
-          items = response.items || [];
-          total = response.totalCount || 0;
-        }
+      if (response) {
+        const rawList = response.list || [];
+
+        items = rawList.map((b) => ({
+          ...b,
+          id: b.id !== undefined ? b.id : b.Id,
+          nickname: b.gameNickname || b.nickname,
+          gameId: b.gameId || b.gameID,
+        }));
+
+        total = response.totalCount || items.length;
       }
 
-      if (isNextPage) {
-        setPlayers((prev) => [...prev, ...items]);
-      } else {
-        setPlayers(items);
+    } else if (activeFilter === "rating") {
+      const response = await GetParticipantsSortedByRatingList(
+        nameMessengerPlatform,
+        nameTournamentPlatform,
+        selectedGame,
+        limit,
+        currentOffset,
+        trimmedSearch,
+      );
+
+      if (response) {
+        items = response.items || [];
+        total = response.totalCount ?? 0;
       }
-      setTotalCount(total);
-    } catch (err) {
-        console.error(`Failed to get list: ${err.message || err}`)
-    } finally {
-      setLoading(false);
+
+    } else {
+      const response = await GetParticipants(
+        nameMessengerPlatform,
+        nameTournamentPlatform,
+        selectedGame,
+        limit,
+        currentOffset,
+        trimmedSearch,
+      );
+
+      if (response) {
+        items = response.items || [];
+        total = response.totalCount ?? 0;
+      }
     }
-  };
+
+    if (isNextPage) {
+      setPlayers((prev) => [...prev, ...items]);
+    } else {
+      setPlayers(items);
+    }
+
+    setTotalCount(total);
+
+  } catch (err) {
+    console.error(`Failed to get list: ${err.message || err}`);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const debouncedFetch = useMemo(
     () => debounce((query) => fetchData(false, query), 500),
@@ -462,29 +489,24 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     return list;
   }, [players, activeFilter]);
 
-
-  const handleCopyText = (participant) => {
-  console.log(participant);
-  const realId = participant.id ?? participant.Id ?? 0;
-
+const getParticipantCopyText = (participant) => {
   const isTournamentValid =
     participant.tournamentPlatformLogin &&
     participant.tournamentPlatformLogin !== "N/D";
+
   const tournamentLine = isTournamentValid
     ? `${nameTournamentPlatform} | Login: ${participant.tournamentPlatformLogin}`
     : `${nameTournamentPlatform} | Login: "N/D"`;
 
   const isMessengerValid =
-    participant.messenagerLogin && participant.messenagerLogin !== "N/D";
+    participant.messenagerLogin &&
+    participant.messenagerLogin !== "N/D";
+
   const messengerLine = isMessengerValid
     ? `${nameMessengerPlatform} | Login: ${participant.messenagerLogin}`
     : `${nameMessengerPlatform} | Login: "N/D"`;
 
-  const fullText = `${tournamentLine}\n${messengerLine}`;
-  navigator.clipboard.writeText(fullText);
-
-  setCopiedPlayerId(realId);
-  setTimeout(() => setCopiedPlayerId(null), 2000);
+  return `${tournamentLine}\n${messengerLine}`;
 };
 
   const getRelativeTime = (dateString) => {
@@ -501,7 +523,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     return date.toLocaleDateString(lang === "EN" ? "en-US" : "ru-RU");
   };
 
-  const [copiedPlayerId, setCopiedPlayerId] = useState(null);
 
   // One horizontal scroll for 2 tables
   const headerScrollRef = useRef(null);
@@ -520,8 +541,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     }
   };
 
-
-  // Small size frame - 2 strings, Bigger? - 3
+  // Horizontal scroll for double table
   const [hasHorizontalScroll, setHasHorizontalScroll] = useState(false);
   useEffect(() => {
     const checkHorizontalScroll = () => {
@@ -642,50 +662,23 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
 
             {/* Selector of games */}
             <div className="relative group">
-              <select
+              <Field
+                variant="select"
                 value={selectedGame}
-                onChange={(e) => setSelectedGame(e.target.value)}
-                disabled={loading}
-                className={`appearance-none flex items-center w-[160px] h-[56px] pl-4 pr-10 rounded-xl border transition-all cursor-pointer outline-none text-[11px] font-black uppercase tracking-tight ${
-                  theme === "dark"
-                    ? "bg-[#121212] border-white/5 text-slate-400 hover:text-blue-500 hover:border-blue-500/50"
-                    : "bg-slate-100 border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-300"
-                } ${loading ? "opacity-50 cursor-not-allowed" : ""}`}
-              >
-                <option
-                  value="Tekken8"
-                  className={
-                    theme === "dark"
-                      ? "bg-[#1a1a1a] text-slate-300"
-                      : "bg-white text-slate-900"
-                  }
-                >
-                  Tekken 8
-                </option>
-                <option
-                  value="SF6"
-                  className={
-                    theme === "dark"
-                      ? "bg-[#1a1a1a] text-slate-300"
-                      : "bg-white text-slate-900"
-                  }
-                >
-                  SF6
-                </option>
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
-                {loading ? (
-                  <RefreshCcw
-                    size={14}
-                    className="animate-spin text-blue-500"
-                  />
-                ) : (
-                  <ChevronDown
-                    size={16}
-                    className={`transition-colors ${theme === "dark" ? "text-slate-600 group-hover:text-blue-500" : "text-slate-400 group-hover:text-blue-600"}`}
-                  />
-                )}
-              </div>
+                onChange={(value) => setSelectedGame(value)}
+                items={[
+                  {
+                    label: "Tekken 8",
+                    value: "Tekken8",
+                  },
+                  {
+                    label: "Street Fighter 6",
+                    value: "SF6",
+                  },
+                ]}
+                themeClasses={themeClasses}
+                height="56px"
+              />
             </div>
 
             {/* Navigation with filters */}
@@ -832,7 +825,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
             id="table-scroll-container"
             className="overflow-y-auto overflow-x-auto custom-scrollbar"
             style={{
-              maxHeight: hasHorizontalScroll ? "18rem" : "27rem",
+              maxHeight: hasHorizontalScroll ? "23rem" : "28rem",
             }}
           >
             <table className="w-full text-left text-[11px] table-fixed min-w-[1100px] border-collapse">
@@ -905,7 +898,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                               </span>
                             ) : (
                               <span className="text-red-600 uppercase font-black tracking-wider text-[9px] bg-red-600/10 px-1.5 py-0.5 rounded border border-red-600/20">
-                                Никогда
+                                {locale.AddButton.AddBanFields.PermanentBanLabel}
                               </span>
                             )}
                           </td>
@@ -1023,17 +1016,9 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                                     : `${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: "N/D"`}
                                 </span>
                               </div>
-                              <button
-                                onClick={() => handleCopyText(p)}
-                                className={`p-1.5 rounded-md border transition-all shrink-0 ${
-                                  copiedPlayerId === (p.id ?? p.Id)
-                                    ? "bg-green-500/20 text-green-500 !border-green-500/30"
-                                    : "border-slate-200 dark:border-[#222222] hover:bg-blue-500/10 text-slate-500 hover:text-blue-500 hover:border-blue-500/30 dark:hover:border-blue-500/30"
-                                }`}
-                                title={copiedPlayerId === (p.id ?? p.Id) ? locale.Table.Management.Copied : locale.Table.Management.Copy}
-                              >
-                                {copiedPlayerId === (p.id ?? p.Id) ? <Check size={12} /> : <Copy size={12} />}
-                              </button>
+                              <CopyButton
+                                text={getParticipantCopyText(p)}
+                              />
                             </div>
                           </td>
                           <td
@@ -1160,6 +1145,15 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                     {totalCount}
                   </span>
                 </span>
+              ) : activeFilter === "rating" ? (
+                <span>
+                  {locale.TotalCountRatingParticipants}:{" "}
+                  <span
+                    className={`ml-1 font-mono text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}
+                  >
+                    {totalCount}
+                  </span>
+                </span>
               ) : (
                 <span>
                   {locale.TotalCountNotesInDBLabel}:{" "}
@@ -1194,9 +1188,9 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
         participantData={selectedParticipantForAction}
         currentGame={selectedGame}
         loading={actionLoading}
-        theme={theme}
-        activeFilter={activeFilter}
         locale={locale}
+        theme={theme}
+        themeClasses={themeClasses}
       />
       <ImportFileModal
         isOpen={isImportModalOpen}

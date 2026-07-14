@@ -267,5 +267,6 @@ var En = Ui{
 		},
 		TotalCountNotesInDBLabel:       "Total players in database",
 		TotalCountBannedNotesInDBLabel: "Total players in ban list",
+		TotalCountRatingParticipants:   "Total players in rating league",
 	},
 }

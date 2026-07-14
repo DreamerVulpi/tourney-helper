@@ -84,6 +84,7 @@ func (p *ParticipantBans) DeleteExpired(ctx context.Context) error {
 	return nil
 }
 
+// FIXME: Add contact data
 func (p *ParticipantBans) Get(ctx context.Context, id int) (entity.ParticipantBans, error) {
 	const sql = `
 		SELECT pb.id, pb_participant_id, pb.type_ban, pb.reason, pb.banned_at, pb.expires_at
@@ -117,6 +118,19 @@ func (p *ParticipantBans) IsBanned(ctx context.Context, participantId int) (bool
 	return isBanned, err
 }
 
+func (p *ParticipantBans) TotalCount(ctx context.Context) (int, error) {
+	const sql = `
+		SELECT COUNT(id) FROM participant_bans;
+	`
+	var id int
+	err := p.Conn.QueryRowContext(ctx, sql).Scan(&id)
+	if err != nil {
+		return 0, fmt.Errorf("unable to count banned participants in database, %w", err)
+	}
+	return id, nil
+}
+
+// FIXME: Add contact data to results
 func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, offset int, search string) ([]entitySender.Participant, error) {
 	const sql1 = `SELECT
 			p.id,
@@ -143,7 +157,7 @@ func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, o
 				LOWER(p.nickname) LIKE '%' || LOWER($4) || '%' OR
 				LOWER(s.game_id) LIKE '%' || LOWER($4) || '%'
 			)
-		ORDER BY b.banned_at DESC
+		ORDER BY b.banned_at
 		LIMIT $2 OFFSET $3;`
 
 	rows, err := p.Conn.QueryContext(ctx, sql1, nameGame, limit, offset, search)

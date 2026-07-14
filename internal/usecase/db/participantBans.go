@@ -76,3 +76,11 @@ func (p *ParticipantBans) IsBanned(ctx context.Context, request entity.Participa
 	}
 	return entity.ParticipantIsBannedResponse{IsBanned: state}, nil
 }
+
+func (p *ParticipantBans) TotalCount(ctx context.Context) (entity.ParticipantGetTotalCountResponse, error) {
+	total, err := p.Repo.TotalCount(ctx)
+	if err != nil {
+		return entity.ParticipantGetTotalCountResponse{}, err
+	}
+	return entity.ParticipantGetTotalCountResponse{TotalCount: total}, nil
+}
