@@ -55,7 +55,7 @@ func (p *ParticipantAccounts) Edit(ctx context.Context, participantId int, platf
 			updated_at = CURRENT_TIMESTAMP
 		RETURNING id`
 
-	_, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, platformId, platformLogin, isFound)
+	_, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, platformId, dmChannelId, platformLogin, isFound)
 	if err != nil {
 		return fmt.Errorf("failed edit participant account (PlatformName: %v) from database, %w", platformName, err)
 	}

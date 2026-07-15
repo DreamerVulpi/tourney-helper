@@ -161,7 +161,7 @@ const ParticipantActionModal = ({
         action: "ban",
         id: participantData.id,
         typeBan: banData.typeBan,
-        reason: banData.reason.trim(),
+        reason: banData.reason,
         isPermanent: banData.isPermanent,
         duration: isPermanent ? 0 : parseInt(banData.duration),
         unit: banData.isPermanent ? "infinite" : banData.unit,

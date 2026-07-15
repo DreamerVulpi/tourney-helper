@@ -227,6 +227,7 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 			PlatformId:    p.MessenagerID,
 			PlatformLogin: p.MessenagerLogin,
 			IsFound:       p.IsFound,
+			DmChannelId:   p.DmChannelId,
 		}
 		_, err = accountsTxUc.EditParticipantAccount(ctx, aEditMessRequest)
 		if err != nil {
@@ -241,6 +242,7 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 			PlatformId:    p.TournamentPlatformID,
 			PlatformLogin: p.TournamentPlatformLogin,
 			IsFound:       p.IsFound,
+			DmChannelId:   p.DmChannelId,
 		}
 		_, err = accountsTxUc.EditParticipantAccount(ctx, aEditTourRequest)
 		if err != nil {

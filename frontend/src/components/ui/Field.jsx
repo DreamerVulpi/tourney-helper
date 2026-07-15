@@ -92,7 +92,6 @@ export function Field({
               className={`
                 w-full
                 flex
-                w-full
                 rounded-xl
                 border
                 transition-all
@@ -100,14 +99,10 @@ export function Field({
                 text-xs
                 items-center
                 justify-center
-                gap-2
-                rounded-xl
-                text-xs
                 font-black
                 uppercase
                 italic
                 text-black
-                transition-all
                 ${themeClasses.button}
               `}
             >
@@ -126,7 +121,7 @@ export function Field({
         <textarea
           placeholder={placeholder}
           value={value}
-          onChange={onChange}
+          onChange={(e) => onChange(e.target.value)}
           className={`w-full h-24 p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${themeClasses.field}`}
         />
       ) : (

@@ -87,7 +87,7 @@ func (p *ParticipantBans) DeleteExpired(ctx context.Context) error {
 // FIXME: Add contact data
 func (p *ParticipantBans) Get(ctx context.Context, id int) (entity.ParticipantBans, error) {
 	const sql = `
-		SELECT pb.id, pb_participant_id, pb.type_ban, pb.reason, pb.banned_at, pb.expires_at
+		SELECT pb.id, pb.participant_id, pb.type_ban, pb.reason, pb.banned_at, pb.expires_at
 		FROM participant_bans pb
 		WHERE id = $1
 	`
@@ -132,33 +132,56 @@ func (p *ParticipantBans) TotalCount(ctx context.Context) (int, error) {
 
 // FIXME: Add contact data to results
 func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, offset int, search string) ([]entitySender.Participant, error) {
-	const sql1 = `SELECT
+	const sql1 = `
+		SELECT
 			p.id,
+			a_mess.platform_id as messenger_id,
+			a_mess.platform_login as mess_nickname,
+			a_mess.platform_name as mess_platform,
+			a_tour.platform_name as tour_platform,
+			a_tour.platform_login as tour_nickname,
+			a_tour.platform_id as tourney_id,
+			s.game_name,
 			p.nickname,
 			s.game_id,
-			'banned' as status,
+			p.region,
+			p.locale,
+			s.rating,
+			a_mess.is_found,
+			s.updated_at as stats_updates_at,
+			CASE 
+				WHEN b.participant_id IS NOT NULL AND (b.expires_at IS NULL OR b.expires_at > DATETIME('now')) THEN 'banned'
+				ELSE 'active'
+			END as status,
 			b.type_ban,
 			b.reason,
 			b.banned_at,
 			b.expires_at
 		FROM participants p
-		INNER JOIN participant_bans b ON p.id = b.participant_id AND (b.expires_at IS NULL OR b.expires_at > DATETIME('now')) 
-		LEFT JOIN participant_stats s ON p.id = s.participant_id AND s.game_name = $1
+		INNER JOIN participant_bans b ON p.id = b.participant_id
+		LEFT JOIN participant_accounts a_mess ON p.id = a_mess.participant_id AND a_mess.platform_name = $1
+		LEFT JOIN participant_accounts a_tour ON p.id = a_tour.participant_id AND a_tour.platform_name = $2
+		LEFT JOIN participant_stats s ON p.id = s.participant_id AND s.game_name = $3
 		WHERE 
+		(
+			b.expires_at IS NULL
+			OR b.expires_at > DATETIME('now')
+		) AND
 			(
-                s.game_name = $1
-				OR NOT EXISTS (SELECT 1 FROM participant_stats WHERE participant_id = p.id)
-				OR $1 = ''
-				OR $1 IS NULL
+                s.game_name = $3 OR NOT EXISTS (SELECT 1 FROM participant_stats WHERE participant_id = p.id) OR $3 = '' OR $3 IS NULL
             )
 			AND 
 			(
-				$4 IS NULL OR $4 = '' OR 
-				LOWER(p.nickname) LIKE '%' || LOWER($4) || '%' OR
-				LOWER(s.game_id) LIKE '%' || LOWER($4) || '%'
+				$6 IS NULL OR $6 = '' OR 
+				LOWER(p.nickname) LIKE '%' || LOWER($6) || '%' OR
+				LOWER(a_tour.platform_login) LIKE '%' || LOWER($6) || '%' OR 
+				LOWER(a_mess.platform_login) LIKE '%' || LOWER($6) || '%' OR 
+				LOWER(a_mess.platform_id) LIKE '%' || LOWER($6) || '%' OR 
+				LOWER(s.game_id) LIKE '%' || LOWER($6) || '%' OR
+				LOWER(p.region) LIKE '%' || LOWER($6) || '%'
 			)
-		ORDER BY b.banned_at
-		LIMIT $2 OFFSET $3;`
+		ORDER BY p.id
+		LIMIT $4 OFFSET $5`
 
 	rows, err := p.Conn.QueryContext(ctx, sql1, nameGame, limit, offset, search)
 	if err != nil {
@@ -170,19 +193,42 @@ func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, o
 	for rows.Next() {
 		var row entitySender.Participant
 		var (
-			tempID        int
-			tempNickname  sql.NullString
-			tempGameID    sql.NullString
-			tempStatus    sql.NullString
-			tempTypeBan   sql.NullString
-			tempReason    sql.NullString
-			tempBannedAt  sql.NullTime
-			tempExpiresAt sql.NullTime
+			tempID                  int
+			tempRegion              sql.NullString
+			tempMessID              sql.NullString
+			tempTourID              sql.NullString
+			tempNicknameMessenger   sql.NullString
+			tempMessengerName       sql.NullString
+			tempTourneyPlatformName sql.NullString
+			tempNicknameTournament  sql.NullString
+			tempGameID              sql.NullString
+			tempGameName            sql.NullString
+			tempGameNickname        sql.NullString
+			tempRating              sql.NullInt32
+			tempIsFound             sql.NullBool
+			tempUpdatedAt           sql.NullTime
+			tempStatus              sql.NullString
+			tempTypeBan             sql.NullString
+			tempReason              sql.NullString
+			tempBannedAt            sql.NullTime
+			tempExpiresAt           sql.NullTime
 		)
 		err := rows.Scan(
 			&tempID,
-			&tempNickname,
+			&tempMessID,
+			&tempNicknameMessenger,
+			&tempMessengerName,
+			&tempTourneyPlatformName,
+			&tempNicknameTournament,
+			&tempTourID,
+			&tempGameName,
+			&tempGameNickname,
 			&tempGameID,
+			&tempRegion,
+			&row.Locale,
+			&tempRating,
+			&tempIsFound,
+			&tempUpdatedAt,
 			&tempStatus,
 			&tempTypeBan,
 			&tempReason,
@@ -192,9 +238,21 @@ func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, o
 		if err != nil {
 			return nil, fmt.Errorf("scan error: %w", err)
 		}
+
 		row.Id = tempID
-		row.GameNickname = tempNickname.String
+		row.MessenagerID = tempMessID.String
+		row.MessenagerLogin = tempNicknameMessenger.String
+		row.TournamentPlatformLogin = tempNicknameTournament.String
+		row.TournamentPlatformID = tempTourID.String
+		row.GameName = tempGameName.String
+		row.GameNickname = tempGameNickname.String
 		row.GameID = tempGameID.String
+		row.Rating = int(tempRating.Int32)
+		row.Region = tempRegion.String
+		row.IsFound = tempMessID.Valid || tempNicknameTournament.Valid
+		row.UpdatedAt = tempUpdatedAt.Time
+		row.MessenagerName = tempMessengerName.String
+		row.TournamentPlatformName = tempTourneyPlatformName.String
 		row.IsBanned = tempStatus.String
 		row.TypeBan = tempTypeBan.String
 		row.Reason = tempReason.String

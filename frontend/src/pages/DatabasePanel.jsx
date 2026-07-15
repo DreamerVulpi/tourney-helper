@@ -18,7 +18,8 @@ import {
   RefreshCcw,
   SearchX,
   Copy,
-  Check
+  Check,
+  ShieldOff,
 } from "lucide-react";
 import {
   AddParticipant,
@@ -40,7 +41,7 @@ import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import ParticipantActionModal from "../components/modals/ParticipantActionModal.jsx";
 import { debounce } from "../utils/debounce.jsx";
 import { CopyButton } from "../components/ui/CopyButton.jsx";
-import { Field } from "../components/ui/Field.jsx"
+import { Field } from "../components/ui/Field.jsx";
 
 const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   const [selectedGame, setSelectedGame] = useState("Tekken8");
@@ -152,8 +153,14 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
 
       setImportResult({ r1: successCount, r2: totalCount });
       setImportStatus("success");
-      const successImportDBMsgParts = locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportDBMsg.split("%v")
-      const successImportBanListMsgParts = locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportBanListMsg.split("%v")
+      const successImportDBMsgParts =
+        locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportDBMsg.split(
+          "%v",
+        );
+      const successImportBanListMsgParts =
+        locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportBanListMsg.split(
+          "%v",
+        );
 
       setImportedFileData(null);
       setImportFileType(null);
@@ -162,8 +169,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
         fetchData(false);
       }, 300);
     } catch (err) {
-      const errorText =
-        err?.message || err?.toString() || "Unknown error";
+      const errorText = err?.message || err?.toString() || "Unknown error";
       setImportError(errorText);
       setImportStatus("idle");
     }
@@ -174,8 +180,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
       const realId = participant.id ?? participant.Id ?? 0;
       setSelectedParticipantForAction({
         id: realId,
-        nickname:
-          participant.gameNickname || participant.nickname || "Unknown",
+        nickname: participant.gameNickname || participant.nickname || "Unknown",
       });
     } else {
       setSelectedParticipantForAction(null);
@@ -229,10 +234,10 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
 
   const handleSaveParticipant = async (data) => {
     setModalLoading(true);
-    const logActionAddParts = locale.Table.LogsActions.Add.split("%v")
-    const logActionAddBanParts = locale.Table.LogsActions.AddBan.split("%v")
-    const logActionEditParts = locale.Table.LogsActions.Edit.split("%v")
-    const logActionErrParts = locale.Table.LogsActions.Err.split("%v")
+    const logActionAddParts = locale.Table.LogsActions.Add.split("%v");
+    const logActionAddBanParts = locale.Table.LogsActions.AddBan.split("%v");
+    const logActionEditParts = locale.Table.LogsActions.Edit.split("%v");
+    const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
     try {
       if (editingParticipant) {
         const updateRequest = {
@@ -258,7 +263,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
               }
             : null,
         };
- 
+
         await EditParticipant(updateRequest);
         setIsModalOpen(false);
         await fetchData(false, searchQuery);
@@ -305,7 +310,10 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
         }
       }
     } catch (err) {
-      console.error(`${logActionErrParts[0]} ${data.nickname} ${logActionErrParts[1]} ${err}`, err);
+      console.error(
+        `${logActionErrParts[0]} ${data.nickname} ${logActionErrParts[1]} ${err}`,
+        err,
+      );
     } finally {
       setModalLoading(false);
     }
@@ -316,18 +324,18 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   };
 
   const handleLocalRatingChange = (participantId, val, nickname) => {
-  setPlayers((prev) =>
-    prev.map((p) => (p.id === participantId ? { ...p, rating: val } : p)),
-  );
-  debouncedRatingUpdate(participantId, val, nickname);
-};
+    setPlayers((prev) =>
+      prev.map((p) => (p.id === participantId ? { ...p, rating: val } : p)),
+    );
+    debouncedRatingUpdate(participantId, val, nickname);
+  };
 
   const handleUpdateRating = async (participantId, newRating, nickname) => {
     const logActionUpdateRating = locale.Table.LogsActions.UpdateRating;
     const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
     try {
       await EditParticipantStatsRating(participantId, newRating);
-      
+
       setPlayers((prev) =>
         prev.map((p) =>
           p.id === participantId ? { ...p, rating: newRating } : p,
@@ -336,98 +344,92 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     } catch (err) {
       console.error(`${logActionErrParts[0]} ${nickname || "User"}`);
     }
-};
+  };
 
   const handleUpdateRatingRef = useRef(handleUpdateRating);
   handleUpdateRatingRef.current = handleUpdateRating;
 
   const debouncedRatingUpdate = useMemo(
-  () =>
-    debounce((participantId, newValue, nickname) => {
-      handleUpdateRatingRef.current(participantId, newValue, nickname);
-    }, 600),
-  [],
+    () =>
+      debounce((participantId, newValue, nickname) => {
+        handleUpdateRatingRef.current(participantId, newValue, nickname);
+      }, 600),
+    [],
   );
 
   const fetchData = async (isNextPage = false, search = undefined) => {
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const currentOffset = isNextPage ? players.length : 0;
-    const currentSearch = search !== undefined ? search : searchQuery;
-    const trimmedSearch = currentSearch ? currentSearch.trim() : "";
+    try {
+      const currentOffset = isNextPage ? players.length : 0;
+      const currentSearch = search !== undefined ? search : searchQuery;
+      const trimmedSearch = currentSearch ? currentSearch.trim() : "";
 
-    let items = [];
-    let total = 0;
-    console.log("activeFilter:", activeFilter)
-    if (activeFilter === "banned") {
-      console.log("limit:", limit)
-      console.log("currentOffset:", currentOffset)
-      const response = await GetBanned(
-        selectedGame,
-        limit,
-        currentOffset,
-        trimmedSearch,
-      );
+      let items = [];
+      let total = 0;
+      if (activeFilter === "banned") {
+        const response = await GetBanned(
+          selectedGame,
+          limit,
+          currentOffset,
+          trimmedSearch,
+        );
 
-      if (response) {
-        const rawList = response.list || [];
+        if (response) {
+          const rawList = response.list || [];
 
-        items = rawList.map((b) => ({
-          ...b,
-          id: b.id !== undefined ? b.id : b.Id,
-          nickname: b.gameNickname || b.nickname,
-          gameId: b.gameId || b.gameID,
-        }));
+          items = rawList.map((b) => ({
+            ...b,
+            id: b.id !== undefined ? b.id : b.Id,
+            nickname: b.gameNickname || b.nickname,
+            gameId: b.gameId || b.gameID,
+          }));
 
-        total = response.totalCount || items.length;
+          total = response.totalCount || items.length;
+        }
+      } else if (activeFilter === "rating") {
+        const response = await GetParticipantsSortedByRatingList(
+          nameMessengerPlatform,
+          nameTournamentPlatform,
+          selectedGame,
+          limit,
+          currentOffset,
+          trimmedSearch,
+        );
+
+        if (response) {
+          items = response.items || [];
+          total = response.totalCount ?? 0;
+        }
+      } else {
+        const response = await GetParticipants(
+          nameMessengerPlatform,
+          nameTournamentPlatform,
+          selectedGame,
+          limit,
+          currentOffset,
+          trimmedSearch,
+        );
+
+        if (response) {
+          items = response.items || [];
+          total = response.totalCount ?? 0;
+        }
       }
 
-    } else if (activeFilter === "rating") {
-      const response = await GetParticipantsSortedByRatingList(
-        nameMessengerPlatform,
-        nameTournamentPlatform,
-        selectedGame,
-        limit,
-        currentOffset,
-        trimmedSearch,
-      );
-
-      if (response) {
-        items = response.items || [];
-        total = response.totalCount ?? 0;
+      if (isNextPage) {
+        setPlayers((prev) => [...prev, ...items]);
+      } else {
+        setPlayers(items);
       }
 
-    } else {
-      const response = await GetParticipants(
-        nameMessengerPlatform,
-        nameTournamentPlatform,
-        selectedGame,
-        limit,
-        currentOffset,
-        trimmedSearch,
-      );
-
-      if (response) {
-        items = response.items || [];
-        total = response.totalCount ?? 0;
-      }
+      setTotalCount(total);
+    } catch (err) {
+      console.error(`Failed to get list: ${err.message || err}`);
+    } finally {
+      setLoading(false);
     }
-
-    if (isNextPage) {
-      setPlayers((prev) => [...prev, ...items]);
-    } else {
-      setPlayers(items);
-    }
-
-    setTotalCount(total);
-
-  } catch (err) {
-    console.error(`Failed to get list: ${err.message || err}`);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const debouncedFetch = useMemo(
     () => debounce((query) => fetchData(false, query), 500),
@@ -470,7 +472,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     fetchData(false);
   }, [selectedGame, activeFilter]);
 
-
   const filteredPlayers = useMemo(() => {
     let list = players ? [...players] : [];
 
@@ -489,25 +490,24 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     return list;
   }, [players, activeFilter]);
 
-const getParticipantCopyText = (participant) => {
-  const isTournamentValid =
-    participant.tournamentPlatformLogin &&
-    participant.tournamentPlatformLogin !== "N/D";
+  const getParticipantCopyText = (participant) => {
+    const isTournamentValid =
+      participant.tournamentPlatformLogin &&
+      participant.tournamentPlatformLogin !== "N/D";
 
-  const tournamentLine = isTournamentValid
-    ? `${nameTournamentPlatform} | Login: ${participant.tournamentPlatformLogin}`
-    : `${nameTournamentPlatform} | Login: "N/D"`;
+    const tournamentLine = isTournamentValid
+      ? `${nameTournamentPlatform} | Login: ${participant.tournamentPlatformLogin}`
+      : `${nameTournamentPlatform} | Login: "N/D"`;
 
-  const isMessengerValid =
-    participant.messenagerLogin &&
-    participant.messenagerLogin !== "N/D";
+    const isMessengerValid =
+      participant.messenagerLogin && participant.messenagerLogin !== "N/D";
 
-  const messengerLine = isMessengerValid
-    ? `${nameMessengerPlatform} | Login: ${participant.messenagerLogin}`
-    : `${nameMessengerPlatform} | Login: "N/D"`;
+    const messengerLine = isMessengerValid
+      ? `${nameMessengerPlatform} | Login: ${participant.messenagerLogin}`
+      : `${nameMessengerPlatform} | Login: "N/D"`;
 
-  return `${tournamentLine}\n${messengerLine}`;
-};
+    return `${tournamentLine}\n${messengerLine}`;
+  };
 
   const getRelativeTime = (dateString) => {
     if (!dateString || dateString.startsWith("0001")) return "—";
@@ -523,20 +523,17 @@ const getParticipantCopyText = (participant) => {
     return date.toLocaleDateString(lang === "EN" ? "en-US" : "ru-RU");
   };
 
-
   // One horizontal scroll for 2 tables
   const headerScrollRef = useRef(null);
   const bodyScrollRef = useRef(null);
   const syncScroll = (source) => {
     if (source === "header") {
       if (headerScrollRef.current && bodyScrollRef.current) {
-        bodyScrollRef.current.scrollLeft =
-          headerScrollRef.current.scrollLeft;
+        bodyScrollRef.current.scrollLeft = headerScrollRef.current.scrollLeft;
       }
     } else {
       if (headerScrollRef.current && bodyScrollRef.current) {
-        headerScrollRef.current.scrollLeft =
-          bodyScrollRef.current.scrollLeft;
+        headerScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft;
       }
     }
   };
@@ -605,7 +602,7 @@ const getParticipantCopyText = (participant) => {
                   }`}
                 >
                   {addButtonConfig.icon}
-                  <span className="text-[7px] font-black uppercase mt-1 text-center px-1">
+                  <span className="text-[0.625rem] font-black uppercase mt-1 text-center px-1">
                     {addButtonConfig.text}
                   </span>
                 </button>
@@ -832,7 +829,6 @@ const getParticipantCopyText = (participant) => {
               <tbody className="divide-y divide-white/5">
                 {filteredPlayers.length > 0 ? (
                   filteredPlayers.map((p) => (
-                    
                     <tr
                       key={p.id}
                       className="hover:bg-blue-600/5 transition-colors align-middle"
@@ -862,7 +858,7 @@ const getParticipantCopyText = (participant) => {
                             className="p-4 text-red-500 font-bold italic truncate"
                             style={{ width: `${sizeColumnOfTypeBan}px` }}
                           >
-                            {p.typeBan || "Бан"}
+                            {p.typeBan || "Ban"}
                           </td>
                           <td
                             className="p-4"
@@ -898,7 +894,10 @@ const getParticipantCopyText = (participant) => {
                               </span>
                             ) : (
                               <span className="text-red-600 uppercase font-black tracking-wider text-[9px] bg-red-600/10 px-1.5 py-0.5 rounded border border-red-600/20">
-                                {locale.AddButton.AddBanFields.PermanentBanLabel}
+                                {
+                                  locale.AddButton.AddBanFields
+                                    .PermanentBanLabel
+                                }
                               </span>
                             )}
                           </td>
@@ -909,28 +908,44 @@ const getParticipantCopyText = (participant) => {
                             <div className="flex flex-col gap-1.5 py-2">
                               <button
                                 onClick={() => handleOpenEditModal(p)}
-                                className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
+                                className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
                               >
                                 <Edit2 size={11} />{" "}
                                 {locale.Table.Management.Edit}
                               </button>
                               <button
                                 onClick={() =>
-                                  triggerParticipantAction(p, "unban")
+                                  triggerParticipantAction(
+                                    p,
+                                    activeFilter === "banned" ? "unban" : "ban",
+                                  )
                                 }
-                                className="flex items-center justify-center gap-1.5 px-2 py-2 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white rounded-lg font-black uppercase text-[8px] transition-all w-full"
+                                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg font-black uppercase text-[0.725rem] transition-all w-full ${
+                                  activeFilter === "banned"
+                                    ? "bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white"
+                                    : "bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white"
+                                }`}
                               >
-                                <ShieldCheck size={11} />{" "}
-                                {locale.Table.Management.Ban}
+                                {activeFilter === "banned" ? (
+                                  <>
+                                    <ShieldOff size={11} />
+                                    {locale.Table.Management.Unban}
+                                  </>
+                                ) : (
+                                  <>
+                                    <ShieldCheck size={11} />
+                                    {locale.Table.Management.Ban}
+                                  </>
+                                )}
                               </button>
                               <button
                                 onClick={() =>
                                   triggerParticipantAction(p, "delete")
                                 }
-                                className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg font-black uppercase text-[8px] transition-all w-full"
+                                className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg font-black uppercase text-[0.725rem] transition-all w-full"
                               >
                                 <Trash2 size={11} />{" "}
-                                {locale.Table.Management.Unban}
+                                {locale.Table.Management.Delete}
                               </button>
                             </div>
                           </td>
@@ -964,7 +979,11 @@ const getParticipantCopyText = (participant) => {
                               onChange={(e) => {
                                 const val = parseInt(e.target.value) || 0;
                                 if (val >= 0)
-                                  handleLocalRatingChange(p.id, val, p.gameNickname);
+                                  handleLocalRatingChange(
+                                    p.id,
+                                    val,
+                                    p.gameNickname,
+                                  );
                               }}
                               className="bg-transparent text-blue-500 font-black text-sm italic outline-none border-b border-transparent focus:border-blue-500/30 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               style={{ width: `${sizeColumnOfMMRPoints}px` }}
@@ -973,7 +992,11 @@ const getParticipantCopyText = (participant) => {
                               {/* Кнопка ПЛЮС */}
                               <button
                                 onClick={() =>
-                                  handleUpdateRating(p.id, Math.max(0, (p.rating || 0) + 10), p.gameNickname)
+                                  handleUpdateRating(
+                                    p.id,
+                                    Math.max(0, (p.rating || 0) + 10),
+                                    p.gameNickname,
+                                  )
                                 }
                                 className="w-7 h-7 flex items-center justify-center bg-green-600/10 text-green-500 rounded-lg border border-green-600/20 hover:bg-green-600/20 transition-colors"
                               >
@@ -983,7 +1006,11 @@ const getParticipantCopyText = (participant) => {
                               {/* Кнопка МИНУС */}
                               <button
                                 onClick={() =>
-                                  handleUpdateRating(p.id, Math.max(0, (p.rating || 0) - 10), p.gameNickname)
+                                  handleUpdateRating(
+                                    p.id,
+                                    Math.max(0, (p.rating || 0) - 10),
+                                    p.gameNickname,
+                                  )
                                 }
                                 className="w-7 h-7 flex items-center justify-center bg-red-600/10 text-red-500 rounded-lg border border-red-500/20 hover:bg-red-600/20 transition-colors"
                               >
@@ -1016,9 +1043,7 @@ const getParticipantCopyText = (participant) => {
                                     : `${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: "N/D"`}
                                 </span>
                               </div>
-                              <CopyButton
-                                text={getParticipantCopyText(p)}
-                              />
+                              <CopyButton text={getParticipantCopyText(p)} />
                             </div>
                           </td>
                           <td
@@ -1034,7 +1059,7 @@ const getParticipantCopyText = (participant) => {
                             <div className="flex flex-col gap-1.5">
                               <button
                                 onClick={() => handleOpenEditModal(p)}
-                                className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
+                                className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
                               >
                                 <Edit2 size={11} />{" "}
                                 {locale.Table.Management.Edit}
@@ -1044,7 +1069,7 @@ const getParticipantCopyText = (participant) => {
                                   onClick={() =>
                                     triggerParticipantAction(p, "unban")
                                   }
-                                  className="w-full flex items-center justify-center gap-2 p-2 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
+                                  className="w-full flex items-center justify-center gap-2 p-2 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
                                 >
                                   <ShieldCheck size={11} />{" "}
                                   {locale.Table.Management.Unban}
@@ -1054,7 +1079,7 @@ const getParticipantCopyText = (participant) => {
                                   onClick={() =>
                                     triggerParticipantAction(p, "ban")
                                   }
-                                  className="w-full flex items-center justify-center gap-2 p-2 bg-orange-600/10 hover:bg-orange-600 text-orange-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
+                                  className="w-full flex items-center justify-center gap-2 p-2 bg-orange-600/10 hover:bg-orange-600 text-orange-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
                                 >
                                   <Ban size={11} />{" "}
                                   {locale.Table.Management.Ban}
@@ -1064,7 +1089,7 @@ const getParticipantCopyText = (participant) => {
                                 onClick={() =>
                                   triggerParticipantAction(p, "delete")
                                 }
-                                className="w-full flex items-center justify-center gap-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg text-[8px] font-black uppercase"
+                                className="w-full flex items-center justify-center gap-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
                               >
                                 <Trash2 size={11} />{" "}
                                 {locale.Table.Management.Delete}

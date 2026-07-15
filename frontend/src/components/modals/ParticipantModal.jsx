@@ -229,12 +229,13 @@ const ParticipantModal = ({
     };
 
     if (isBanMode || isAlreadyBanned) {
+      console.log(banData)
       onSave({
         ...basePayload,
         isDirectBan: isBanMode,
         banInfo: {
           ...banData,
-          reason: banData.reason.trim() || "No reason",
+          reason: banData.reason || "No reason",
           duration: banData.isPermanent ? 0 : Number(banData.duration),
         },
       });
