@@ -55,7 +55,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
 
   const sizeColumnOfNickname = 40;
   const sizeColumnOfGameID = 30;
-  const sizeColumnOfRegion = 10;
+  const sizeColumnOfRegion = 30;
   const sizeColumnOfLanguage = 10;
   const sizeColumnOfMMR = 10;
   const sizeColumnOfMMRPoints = 50;
@@ -89,6 +89,40 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   const [importStatus, setImportStatus] = useState("idle"); // "idle" | "loading" | "success"
   const [importError, setImportError] = useState(null);
   const [importResult, setImportResult] = useState(null);
+
+  const listRegions = [
+    {
+      label: locale.AddButton.AddModalWindow.ListRegions.Europe,
+      value: "Europe",
+    },
+    {
+      label: locale.AddButton.AddModalWindow.ListRegions.Asia,
+      value: "Asia",
+    },
+    {
+      label: locale.AddButton.AddModalWindow.ListRegions.Africa,
+      value: "Africa",
+    },
+    {
+      label: locale.AddButton.AddModalWindow.ListRegions.NorthAmerica,
+      value: "NorthAmerica",
+    },
+    {
+      label: locale.AddButton.AddModalWindow.ListRegions.SouthAmerica,
+      value: "SouthAmerica",
+    },
+    {
+      label: locale.AddButton.AddModalWindow.ListRegions.Other,
+      value: "Other",
+    },
+    {
+      label: locale.AddButton.AddModalWindow.ListRegions.ND,
+      value: "N/D",
+    },
+  ]
+  const regionsMap = Object.fromEntries(
+    listRegions.map(region => [region.value, region.label])
+  );
 
   const addButtonConfig = useMemo(() => {
     const configs = {
@@ -369,6 +403,8 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
       let total = 0;
       if (activeFilter === "banned") {
         const response = await GetBanned(
+          nameMessengerPlatform,
+          nameTournamentPlatform,
           selectedGame,
           limit,
           currentOffset,
@@ -497,14 +533,14 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
 
     const tournamentLine = isTournamentValid
       ? `${nameTournamentPlatform} | Login: ${participant.tournamentPlatformLogin}`
-      : `${nameTournamentPlatform} | Login: "N/D"`;
+      : `${nameTournamentPlatform} | Login: ${locale.AddButton.AddModalWindow.ListRegions.ND}`;
 
     const isMessengerValid =
-      participant.messenagerLogin && participant.messenagerLogin !== "N/D";
+      participant.messengerLogin && participant.messengerLogin !== "N/D";
 
     const messengerLine = isMessengerValid
-      ? `${nameMessengerPlatform} | Login: ${participant.messenagerLogin}`
-      : `${nameMessengerPlatform} | Login: "N/D"`;
+      ? `${nameMessengerPlatform} | Login: ${participant.messengerLogin}`
+      : `${nameMessengerPlatform} | Login: ${locale.AddButton.AddModalWindow.ListRegions.ND}`;
 
     return `${tournamentLine}\n${messengerLine}`;
   };
@@ -575,7 +611,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
               <div
                 className={`absolute inset-0 flex items-center justify-center text-white rounded-xl font-black text-xs uppercase italic transition-all duration-300 z-10 ${
                   activeFilter === "banned"
-                    ? "bg-red-900/40 border border-red-500/30 text-red-400"
+                    ? "bg-red-600 border border-red-500/30 text-red-400"
                     : "bg-blue-600"
                 } ${isAddHovered ? "opacity-0 scale-95 pointer-events-none" : "opacity-100 scale-100"}`}
               >
@@ -840,7 +876,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                         <span
                           className={`font-black text-[13px] italic tracking-tight break-all block ${p.isBanned === "banned" ? "text-red-500" : ""}`}
                         >
-                          {p.gameNickname || p.messenagerLogin || "N/D"}
+                          {p.gameNickname || p.messengerLogin || "N/D"}
                         </span>
                       </td>
                       <td
@@ -848,7 +884,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                         style={{ width: `${sizeColumnOfGameID}px` }}
                       >
                         <span className="font-mono text-slate-500 font-bold block">
-                          {p.gameId}
+                          {p.gameId === "N/D" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.gameId}
                         </span>
                       </td>
 
@@ -957,16 +993,18 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                             style={{ width: `${sizeColumnOfRegion}px` }}
                           >
                             <span
-                              className={`px-2 py-1 rounded-lg text-[9px] font-black ${theme === "dark" ? "bg-white/5" : "bg-slate-100"}`}
+                              className={`inline-block px-2 py-1 rounded-lg text-[9px] font-black text-left ${
+                                theme === "dark" ? "bg-white/5" : "bg-slate-100"
+                              }`}
                             >
-                              {p.region}
+                              {regionsMap[p.region]}
                             </span>
                           </td>
                           <td
                             className="p-4 font-bold italic opacity-70 uppercase whitespace-nowrap"
                             style={{ width: `${sizeColumnOfLanguage}px` }}
                           >
-                            {p.locale}
+                            {p.locale === "N/D" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.locale}
                           </td>
                           <td
                             className="p-4"
@@ -989,7 +1027,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                               style={{ width: `${sizeColumnOfMMRPoints}px` }}
                             />
                             <div className="flex gap-1 mt-1">
-                              {/* Кнопка ПЛЮС */}
+                              {/* Button plus */}
                               <button
                                 onClick={() =>
                                   handleUpdateRating(
@@ -1003,7 +1041,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                                 <Plus size={12} />
                               </button>
 
-                              {/* Кнопка МИНУС */}
+                              {/* Button minus */}
                               <button
                                 onClick={() =>
                                   handleUpdateRating(
@@ -1028,19 +1066,13 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                                   {nameTournamentPlatform}
                                 </span>
                                 <span className="opacity-60 text-[10px] truncate">
-                                  {p.tournamentPlatformLogin &&
-                                  p.tournamentPlatformLogin !== "N/D"
-                                    ? `${locale.AddButton.AddContactOfMessenger.Login}: ${p.tournamentPlatformLogin}`
-                                    : `${locale.AddButton.AddContactOfMessenger.Login}: "N/D"`}
+                                  {`${locale.AddButton.AddContactOfMessenger.Login}: ${p.tournamentPlatformLogin === "N/D" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.tournamentPlatformLogin}`}
                                 </span>
                                 <span className="text-purple-500 font-black mt-1">
                                   {nameMessengerPlatform}
                                 </span>
                                 <span className="opacity-60 text-[10px] truncate">
-                                  {p.messenagerLogin &&
-                                  p.messenagerLogin !== "N/D"
-                                    ? `${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: ${p.messenagerLogin}`
-                                    : `${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: "N/D"`}
+                                  {`${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: ${p.messengerLogin === "N/D" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.messengerLogin}`}
                                 </span>
                               </div>
                               <CopyButton text={getParticipantCopyText(p)} />
@@ -1230,6 +1262,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
         theme={theme}
         activeFilter={activeFilter}
         locale={locale.AddButton.ImportFile}
+        themeClasses={themeClasses}
       />
       <ImportProgressModal
         isOpen={isProgressModalOpen}

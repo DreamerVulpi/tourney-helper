@@ -12,6 +12,7 @@ export function Field({
   variant = "input", // input | password | select | copy
   type = "text",
   isNumber,
+  isTextArea,
 
   value,
   onChange,
@@ -124,6 +125,24 @@ export function Field({
           onChange={(e) => onChange(e.target.value)}
           className={`w-full h-24 p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${themeClasses.field}`}
         />
+      ) : variant === "mono" ? (
+        <div
+          className={`
+            p-4
+            rounded-xl
+            border
+            space-y-2.5
+            font-mono
+            text-xs
+            whitespace-pre-wrap
+            break-words
+            ${
+              themeClasses.field
+            }
+          `}
+        >
+          {value}
+        </div>
       ) : (
         <div className="relative flex items-center">
           {Icon && (

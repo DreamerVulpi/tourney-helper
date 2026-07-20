@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import { ModalContainer } from "./ModalContainter";
 
 export function Modal({
   isOpen,
@@ -43,21 +44,13 @@ export function Modal({
   };
 
   const color = iconColors[iconColor] ?? iconColors.blue;
-
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={closeOnOverlay ? onClose : undefined}
-      />
-
-      {/* Window */}
+  <ModalContainer 
+    isOpen={isOpen}
+    onClose={onClose}>
+    {/* Window */}
       <div
         className={`
-          relative
-          w-full
-          ${width}
           rounded-2xl
           shadow-2xl
           overflow-hidden
@@ -117,7 +110,9 @@ export function Modal({
         <div className={`p-6 border-t ${themeClasses.divider}`}>
             {footer}
         </div>
-      </div>
-    </div>
-  );
+        </div>
+
+  </ModalContainer>
+
+  ); 
 }

@@ -14,7 +14,9 @@ import (
 	"strconv"
 	"strings"
 
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 type Client struct {
@@ -124,8 +126,8 @@ func (c *Client) LoadDataFromJSON(path string, gameName string) ([]startgg.Impor
 	for _, row := range rows {
 		nickname := row.GameNickname
 		if nickname == "" {
-			if row.MessenagerLogin != "" {
-				nickname = row.MessenagerLogin
+			if row.MessengerLogin != "" {
+				nickname = row.MessengerLogin
 			} else {
 				nickname = "N/D"
 			}
@@ -141,19 +143,19 @@ func (c *Client) LoadDataFromJSON(path string, gameName string) ([]startgg.Impor
 			gameID = "N/D"
 		}
 
-		messengerName := row.MessenagerName
+		messengerName := row.MessengerName
 		if messengerName == "" {
 			messengerName = "N/D"
 		}
 
-		messengerLogin := row.MessenagerLogin
+		messengerLogin := row.MessengerLogin
 		if messengerLogin == "" {
 			messengerLogin = "N/D"
 		}
 
 		locale := row.Locale
-		if locale == "" {
-			locale = "en"
+		if locale == "" || locale == "N/D" {
+			locale = "EN"
 		}
 
 		participants = append(participants, startgg.ImportedParticipantContact{
@@ -180,7 +182,6 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 	if path == "" {
 		return nil, errors.New("loadCSV: filename is empty")
 	}
-	log.Println(path)
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -188,8 +189,6 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadCSV: open file, %v", err)
 	}
 	defer f.Close() //nolint:errcheck
-
-	log.Println("test")
 
 	csvReader := csv.NewReader(f)
 	records, err := csvReader.ReadAll()
@@ -201,7 +200,7 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadCSV: 0 records CSV, %v", err)
 	}
 
-	log.Printf("CSV Read complete. Total rows: %d. First row column count: %d. First row layout: %v", len(records), len(records[0]), records[0])
+	logger.Log(entityLogger.Success, fmt.Sprintf("CSV Read complete. Total rows: %d. First row column count: %d. First row layout: %v", len(records), len(records[0]), records[0]))
 
 	// Search index for get data
 	var idxDiscordColumn, idxGamerTagColumn, idxConnectColumn, idxDiscriminatorColumn, idxDiscordIDColumn int

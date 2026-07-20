@@ -8,6 +8,7 @@ var listRegions = ListRegions{
 	SouthAmerica: "Южная Америка",
 	Africa:       "Африка",
 	Other:        "Другое",
+	ND:           "Нет данных",
 }
 
 var Ru = Ui{
@@ -217,7 +218,7 @@ var Ru = Ui{
 		},
 		Table: Table{
 			Nickname:               "Никнейм",
-			GameID:                 "Игровой идентификатор",
+			GameID:                 "Игровой тэг",
 			Region:                 "Регион",
 			Language:               "Язык",
 			Rating:                 "Рейтинг",

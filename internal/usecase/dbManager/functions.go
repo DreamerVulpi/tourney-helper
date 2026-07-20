@@ -17,14 +17,14 @@ func (db *Database) findMessengerAccount(ctx context.Context, p entitySender.Par
 	var responseMessenger entityDB.ParticipantAccountGetResponse
 	var errMessenger error
 	// Request check messenger account from database using ID
-	if p.MessenagerID != "" && p.MessenagerID != "N/D" {
+	if p.MessengerID != "" && p.MessengerID != "N/D" {
 		responseMessenger, errMessenger = db.Accounts.GetParticipantAccountByPlatform(ctx, entityDB.ParticipantAccountGetRequestByPlatform{
-			PlatformName: p.MessenagerName,
-			PlatformId:   p.MessenagerID,
+			PlatformName: p.MessengerName,
+			PlatformId:   p.MessengerID,
 		})
 		if errMessenger != nil {
 			if errors.Is(errMessenger, sql.ErrNoRows) {
-				log.Printf("db | failed to get participantAccount using ID %v - %v | %v", p.MessenagerName, p.MessenagerID, errMessenger)
+				log.Printf("db | failed to get participantAccount using ID %v - %v | %v", p.MessengerName, p.MessengerID, errMessenger)
 			} else {
 				return entityDB.ParticipantAccountGetResponse{}, fmt.Errorf("db | critical error: %w", errMessenger)
 			}
@@ -32,14 +32,14 @@ func (db *Database) findMessengerAccount(ctx context.Context, p entitySender.Par
 	}
 
 	// Request check messenger account from database using login
-	if responseMessenger.ParticipantId == 0 && p.MessenagerLogin != "" && p.MessenagerLogin != "N/D" {
+	if responseMessenger.ParticipantId == 0 && p.MessengerLogin != "" && p.MessengerLogin != "N/D" {
 		responseMessenger, errMessenger = db.Accounts.GetParticipantAccountByLogin(ctx, entityDB.ParticipantAccountGetRequestByLogin{
-			PlatformName:  p.MessenagerName,
-			PlatformLogin: p.MessenagerLogin,
+			PlatformName:  p.MessengerName,
+			PlatformLogin: p.MessengerLogin,
 		})
 		if errMessenger != nil {
 			if errors.Is(errMessenger, sql.ErrNoRows) {
-				log.Printf("db | failed to get participantAccount using login %v - %v | %v", p.MessenagerName, p.MessenagerLogin, errMessenger)
+				log.Printf("db | failed to get participantAccount using login %v - %v | %v", p.MessengerName, p.MessengerLogin, errMessenger)
 			} else {
 				return entityDB.ParticipantAccountGetResponse{}, fmt.Errorf("db | critical error: %w", errMessenger)
 			}
@@ -125,14 +125,14 @@ func (db *Database) buildDataOfParticipant(participantData entityDB.ParticipantG
 	if messengerData.PlatformId != "" {
 		messengerID = messengerData.PlatformId
 	} else {
-		messengerID = apiData.MessenagerID
+		messengerID = apiData.MessengerID
 	}
 
 	var messengerLogin string
 	if messengerData.PlatformLogin != "" {
 		messengerLogin = messengerData.PlatformLogin
 	} else {
-		messengerLogin = apiData.MessenagerLogin
+		messengerLogin = apiData.MessengerLogin
 	}
 
 	var tournamentPlatformID string
@@ -165,9 +165,9 @@ func (db *Database) buildDataOfParticipant(participantData entityDB.ParticipantG
 
 	return entitySender.Participant{
 		Id:                      participantData.Id,
-		MessenagerID:            messengerID,
-		MessenagerLogin:         messengerLogin,
-		MessenagerName:          apiData.MessenagerName,
+		MessengerID:             messengerID,
+		MessengerLogin:          messengerLogin,
+		MessengerName:           apiData.MessengerName,
 		TournamentPlatformName:  apiData.TournamentPlatformName,
 		TournamentPlatformLogin: tournamentNickname,
 		TournamentPlatformID:    tournamentPlatformID,

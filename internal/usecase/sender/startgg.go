@@ -116,10 +116,10 @@ func LoadCSV(path string) (map[string]sender.Participant, error) {
 		key := attendee[idxGamerTagColumn]
 		if key != "" {
 			contacts[key] = sender.Participant{
-				MessenagerLogin: discordLogin,
-				MessenagerName:  "Discord",
-				GameID:          gameID,
-				GameNickname:    gameNickname,
+				MessengerLogin: discordLogin,
+				MessengerName:  "Discord",
+				GameID:         gameID,
+				GameNickname:   gameNickname,
 			}
 		}
 	}
@@ -225,16 +225,16 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) sender.Participant {
 	p := sender.Participant{
 		GameNickname:            data.GamerTag,
-		MessenagerName:          s.MessengerName,
+		MessengerName:           s.MessengerName,
 		TournamentPlatformName:  s.GetPlatformTournamentName(),
 		TournamentPlatformID:    strconv.FormatInt(data.User.ID, 10),
 		TournamentPlatformLogin: data.GamerTag,
 	}
 
 	if len(data.User.Authorizations) > 0 {
-		p.MessenagerLogin = data.User.Authorizations[0].Discord
+		p.MessengerLogin = data.User.Authorizations[0].Discord
 	} else {
-		p.MessenagerLogin = "N/D"
+		p.MessengerLogin = "N/D"
 	}
 
 	gameLower := strings.ToLower(s.Game)
@@ -246,20 +246,20 @@ func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) send
 		p.GameName = "SF6"
 	}
 
-	if p.GameID == "" || p.MessenagerLogin == "" || p.GameNickname == "" || p.MessenagerID == "" {
+	if p.GameID == "" || p.MessengerLogin == "" || p.GameNickname == "" || p.MessengerID == "" {
 		if val, ok := s.Contacts[strings.ToLower(data.GamerTag)]; ok {
 			if p.GameID == "" {
 				p.GameID = val.GameID
 				p.GameName = val.GameName
 			}
-			if p.MessenagerLogin == "" {
-				p.MessenagerLogin = val.MessenagerLogin
+			if p.MessengerLogin == "" {
+				p.MessengerLogin = val.MessengerLogin
 			}
 			if p.GameNickname == "" {
 				p.GameNickname = val.GameNickname
 			}
-			if p.MessenagerID == "" {
-				p.MessenagerID = val.MessenagerID
+			if p.MessengerID == "" {
+				p.MessengerID = val.MessengerID
 			}
 		}
 	}
@@ -270,11 +270,11 @@ func (s *StartggSetAdapter) ConvertContacts(data entityStartgg.Participant) send
 	if p.GameName == "" {
 		p.GameName = "N/D"
 	}
-	if p.MessenagerLogin == "" {
-		p.MessenagerLogin = "N/D"
+	if p.MessengerLogin == "" {
+		p.MessengerLogin = "N/D"
 	}
-	if p.MessenagerID == "" {
-		p.MessenagerID = "N/D"
+	if p.MessengerID == "" {
+		p.MessengerID = "N/D"
 	}
 
 	return p

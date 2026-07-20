@@ -237,8 +237,8 @@ func (p *Participants) GetList(ctx context.Context, nameMessengerPlatform, nameT
 		}
 
 		row.Id = tempID
-		row.MessenagerID = tempMessID.String
-		row.MessenagerLogin = tempNicknameMessenger.String
+		row.MessengerID = tempMessID.String
+		row.MessengerLogin = tempNicknameMessenger.String
 		row.TournamentPlatformLogin = tempNicknameTournament.String
 		row.TournamentPlatformID = tempTourID.String
 		row.GameName = tempGameName.String
@@ -248,7 +248,7 @@ func (p *Participants) GetList(ctx context.Context, nameMessengerPlatform, nameT
 		row.Region = tempRegion.String
 		row.IsFound = tempMessID.Valid || tempNicknameTournament.Valid
 		row.UpdatedAt = tempUpdatedAt.Time
-		row.MessenagerName = nameMessengerPlatform
+		row.MessengerName = nameMessengerPlatform
 		row.TournamentPlatformName = nameTournamentPlatform
 		row.IsBanned = tempStatus.String
 		row.TypeBan = tempTypeBan.String
@@ -374,8 +374,8 @@ func (p *Participants) GetListSortByRating(ctx context.Context, nameMessengerPla
 		}
 
 		row.Id = tempID
-		row.MessenagerID = tempMessID.String
-		row.MessenagerLogin = tempNicknameMessenger.String
+		row.MessengerID = tempMessID.String
+		row.MessengerLogin = tempNicknameMessenger.String
 		row.TournamentPlatformLogin = tempNicknameTournament.String
 		row.TournamentPlatformID = tempTourID.String
 		row.GameName = tempGameName.String
@@ -385,7 +385,7 @@ func (p *Participants) GetListSortByRating(ctx context.Context, nameMessengerPla
 		row.Region = tempRegion.String
 		row.IsFound = tempMessID.Valid || tempNicknameTournament.Valid
 		row.UpdatedAt = tempUpdatedAt.Time
-		row.MessenagerName = nameMessengerPlatform
+		row.MessengerName = nameMessengerPlatform
 		row.TournamentPlatformName = nameTournamentPlatform
 		row.IsBanned = tempStatus.String
 		row.TypeBan = tempTypeBan.String

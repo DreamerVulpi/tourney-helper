@@ -134,10 +134,10 @@ func main() {
 				return
 			}
 			ns := sender.NewNotificationSystem(nil, adapter, &db, cfg.DebugMode.Mode, entitySender.Participant{
-				MessenagerID:    meDiscordPlatform.ID,
-				MessenagerLogin: meDiscordPlatform.Username,
-				Locale:          "ru",
-				GameName:        tournament.Game.Name,
+				MessengerID:    meDiscordPlatform.ID,
+				MessengerLogin: meDiscordPlatform.Username,
+				Locale:         "ru",
+				GameName:       tournament.Game.Name,
 			}, 5*time.Minute)
 			dh.Ns = ns
 			if cfg.DebugMode.Mode {

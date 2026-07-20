@@ -9,9 +9,9 @@ const NotificationDelay = 1000 * time.Millisecond
 
 type Participant struct {
 	Id                      int        `json:"id"`
-	MessenagerID            string     `json:"messenagerId"`
-	MessenagerLogin         string     `json:"messenagerLogin"`
-	MessenagerName          string     `json:"messenagerName"`
+	MessengerID             string     `json:"messengerId"`
+	MessengerLogin          string     `json:"messengerLogin"`
+	MessengerName           string     `json:"messengerName"`
 	TournamentPlatformName  string     `json:"tournamentPlatformName"`
 	TournamentPlatformLogin string     `json:"tournamentPlatformLogin"`
 	TournamentPlatformID    string     `json:"tournamentPlatformId"`
@@ -49,7 +49,7 @@ type SetData struct {
 type NotificationSender interface {
 	FindContactOfParticipant(ctx context.Context, participant Participant) (Participant, error)
 	SendMessage(ctx context.Context, targetID string, dmChannelID *string, data SetData) (string, error)
-	GetPlatformMessenagerName() string
+	GetPlatformMessengerName() string
 }
 
 type NotificationData interface {

@@ -62,17 +62,19 @@ func (db *Database) DelParticipant(ctx context.Context, participantId int) error
 	return nil
 }
 
-func (db *Database) GetBanned(ctx context.Context, gameName string, limit, offset int, search string) (entityDB.ParticipantGetListResponse, error) {
+func (db *Database) GetBanned(ctx context.Context, nameMessenger string, nameTournamentPlatform string, gameName string, limit, offset int, search string) (entityDB.ParticipantGetListResponse, error) {
 	tc, err := db.Bans.TotalCount(ctx)
 	if err != nil {
 		return entityDB.ParticipantGetListResponse{}, err
 	}
 
 	responseList, err := db.Bans.GetPartipantsListBans(ctx, entityDB.ParticipantBansGetListRequest{
-		GameName: gameName,
-		Limit:    limit,
-		Offset:   offset,
-		Search:   search,
+		NameMessenger:          nameMessenger,
+		NameTournamentPlatform: nameTournamentPlatform,
+		GameName:               gameName,
+		Limit:                  limit,
+		Offset:                 offset,
+		Search:                 search,
 	})
 	if err != nil {
 		return entityDB.ParticipantGetListResponse{}, err
@@ -169,9 +171,9 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 // FIXME:
 func (db *Database) EditParticipant(ctx context.Context, p entitySender.Participant, ban *entityApp.BanRequest) error {
 	log.Printf("Id: %v\n", p.Id)
-	log.Printf("MessengerID: %v\n", p.MessenagerID)
-	log.Printf("MessengerLogin: %v\n", p.MessenagerLogin)
-	log.Printf("MessengerName: %v\n", p.MessenagerName)
+	log.Printf("MessengerID: %v\n", p.MessengerID)
+	log.Printf("MessengerLogin: %v\n", p.MessengerLogin)
+	log.Printf("MessengerName: %v\n", p.MessengerName)
 	log.Printf("TournamentPlatformName: %v\n", p.TournamentPlatformName)
 	log.Printf("TournamentPlatformLogin: %v\n", p.TournamentPlatformLogin)
 	log.Printf("TournamentPlatformID: %v\n", p.TournamentPlatformID)
@@ -220,12 +222,12 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 		}
 	}
 
-	if p.MessenagerName != "" && p.MessenagerLogin != "" {
+	if p.MessengerName != "" && p.MessengerLogin != "" {
 		aEditMessRequest := entityDB.ParticipantAccountEditRequest{
 			ParticipantId: p.Id,
-			PlatformName:  p.MessenagerName,
-			PlatformId:    p.MessenagerID,
-			PlatformLogin: p.MessenagerLogin,
+			PlatformName:  p.MessengerName,
+			PlatformId:    p.MessengerID,
+			PlatformLogin: p.MessengerLogin,
 			IsFound:       p.IsFound,
 			DmChannelId:   p.DmChannelId,
 		}
@@ -310,10 +312,10 @@ func (db *Database) addParticipantWithTx(ctx context.Context, tx *sql.Tx, p enti
 
 	mainNickname := p.GameNickname
 	if len(mainNickname) == 0 || mainNickname == "N/D" {
-		if len(p.MessenagerLogin) == 0 || p.MessenagerLogin == "N/D" {
+		if len(p.MessengerLogin) == 0 || p.MessengerLogin == "N/D" {
 			return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to add participant: both game nicknames are empty")
 		}
-		mainNickname = p.MessenagerLogin
+		mainNickname = p.MessengerLogin
 	}
 
 	tempGameID := p.GameID
@@ -340,23 +342,23 @@ func (db *Database) addParticipantWithTx(ctx context.Context, tx *sql.Tx, p enti
 
 	pAddResponse, err := participantTxUc.AddParticipant(ctx, pAddRequest)
 	if err != nil {
-		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to save participant %v: %v", p.MessenagerLogin, err)
+		return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | failed to save participant %v: %v", p.MessengerLogin, err)
 	} else {
 		log.Printf("db | successfully saved participant %v", mainNickname)
 	}
 
-	if len(p.MessenagerLogin) != 0 {
+	if len(p.MessengerLogin) != 0 {
 		pAddMessengerRequest := entityDB.ParticipantAccountAddRequest{
 			ParticipantId: pAddResponse.Id,
-			PlatformName:  p.MessenagerName,
-			PlatformId:    p.MessenagerID,
+			PlatformName:  p.MessengerName,
+			PlatformId:    p.MessengerID,
 			DmChannelId:   p.DmChannelId,
-			PlatformLogin: p.MessenagerLogin,
+			PlatformLogin: p.MessengerLogin,
 			IsFound:       p.IsFound,
 		}
 		log.Printf("Add request participant Account - Messenger: %v", pAddMessengerRequest)
 
-		if p.MessenagerName == "" {
+		if p.MessengerName == "" {
 			return entityDB.ParticipantAddResponse{}, fmt.Errorf("db | messenger name is empty")
 		}
 
@@ -428,6 +430,8 @@ func (db *Database) AddParticipants(ctx context.Context, list []entityStartgg.Im
 	if len(list) == 0 {
 		return 0, 0, nil
 	}
+
+	log.Println(list)
 
 	tx, err := db.Conn.BeginTx(ctx, nil)
 	if err != nil {

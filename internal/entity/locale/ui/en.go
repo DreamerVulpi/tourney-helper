@@ -8,6 +8,7 @@ var listRegionsEn = ListRegions{
 	SouthAmerica: "South America",
 	Africa:       "Africa",
 	Other:        "Other",
+	ND:           "No data",
 }
 
 var En = Ui{

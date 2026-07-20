@@ -54,7 +54,7 @@ func (h *Handler) msgContactData(nickname, gameName string, listContacts db.Part
 
 	player := listContacts.Items[0]
 	clearGameNickname := escapeMarkdown(player.GameNickname)
-	clearMessenagerLogin := escapeMarkdown(player.MessenagerLogin)
+	clearMessengerLogin := escapeMarkdown(player.MessengerLogin)
 	contactEmbed := &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("🔎 %s: %s", local.contactMsg.Title, clearGameNickname),
 		Color:       ColorSuccess,
@@ -66,8 +66,8 @@ func (h *Handler) msgContactData(nickname, gameName string, listContacts db.Part
 				Inline: true,
 			},
 			{
-				Name:   fmt.Sprintf("💬 %s", local.contactMsg.MessenagerContact),
-				Value:  fmt.Sprintf("✉️ <@%s>\n✏️ %s```fix\n%s\n```", clearMessenagerLogin, local.contactMsg.MessenagerLogin, player.MessenagerLogin),
+				Name:   fmt.Sprintf("💬 %s", local.contactMsg.MessengerContact),
+				Value:  fmt.Sprintf("✉️ <@%s>\n✏️ %s```fix\n%s\n```", clearMessengerLogin, local.contactMsg.MessengerLogin, player.MessengerLogin),
 				Inline: true,
 			},
 		},
@@ -106,8 +106,8 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 		gameID = local.ErrorMessage.NoData
 	}
 
-	rawID := opponent.MessenagerID
-	login := opponent.MessenagerLogin
+	rawID := opponent.MessengerID
+	login := opponent.MessengerLogin
 
 	var discordDisplay string
 	if len(rawID) == 5 && len(login) == 0 {
@@ -123,7 +123,7 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 			}
 		}
 	}
-	log.Printf("prepareSetData | Set: %v | Recipient: %s vs Opponent: %s | Link: %s", set.SetID, recipient.MessenagerLogin, opponent.MessenagerLogin, set.FullInviteLink)
+	log.Printf("prepareSetData | Set: %v | Recipient: %s vs Opponent: %s | Link: %s", set.SetID, recipient.MessengerLogin, opponent.MessengerLogin, set.FullInviteLink)
 
 	if len(set.StreamSourse) == 0 {
 		fields := []*discordgo.MessageEmbedField{
@@ -174,7 +174,7 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*d
 	var opponent entitySender.Participant
 	var sidePrefix string
 
-	if targetID == set.ContactPlayer1.MessenagerID {
+	if targetID == set.ContactPlayer1.MessengerID {
 		recipient = set.ContactPlayer1
 		opponent = set.ContactPlayer2
 		sidePrefix = "[P1] "

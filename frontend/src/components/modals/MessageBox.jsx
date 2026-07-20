@@ -2,7 +2,7 @@ export function MessageBox({
     icon: Icon,
     iconColor,
     borderClass,
-    textClass,
+    textClass = "text-[11px] font-semibold leading-relaxed",
     children,
     footer,
 }) {

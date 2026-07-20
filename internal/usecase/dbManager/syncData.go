@@ -49,21 +49,21 @@ func (db *Database) syncParticipant(ctx context.Context, api, database entitySen
 func (db *Database) syncMessengerAccount(ctx context.Context, api, database entitySender.Participant) error {
 	request := entityDB.ParticipantAccountEditRequest{
 		ParticipantId: database.Id,
-		PlatformName:  database.MessenagerName,
-		PlatformId:    database.MessenagerID,
+		PlatformName:  database.MessengerName,
+		PlatformId:    database.MessengerID,
 		DmChannelId:   database.DmChannelId,
-		PlatformLogin: database.MessenagerLogin,
+		PlatformLogin: database.MessengerLogin,
 		IsFound:       database.IsFound,
 	}
 	needUpdate := false
 
-	if shouldReplace(api.MessenagerID, database.MessenagerID) {
-		request.PlatformId = api.MessenagerID
+	if shouldReplace(api.MessengerID, database.MessengerID) {
+		request.PlatformId = api.MessengerID
 		needUpdate = true
 	}
 
-	if shouldReplace(api.MessenagerLogin, database.MessenagerLogin) {
-		request.PlatformLogin = api.MessenagerLogin
+	if shouldReplace(api.MessengerLogin, database.MessengerLogin) {
+		request.PlatformLogin = api.MessengerLogin
 		needUpdate = true
 	}
 

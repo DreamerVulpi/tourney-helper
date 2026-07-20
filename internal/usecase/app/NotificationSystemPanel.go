@@ -70,10 +70,10 @@ func (a *App) InitSystemNotification(language string) (discord.Handler, error) {
 	}
 
 	ns := sender.NewNotificationSystem(nil, adapter, a.Db, a.ConfigMessenger.DebugMode.Mode, entitySender.Participant{
-		MessenagerID:    meDiscordPlatform.ID,
-		MessenagerLogin: meDiscordPlatform.Username,
-		Locale:          strings.ToLower(language),
-		GameName:        a.ConfigTournament.Game.Name,
+		MessengerID:    meDiscordPlatform.ID,
+		MessengerLogin: meDiscordPlatform.Username,
+		Locale:         strings.ToLower(language),
+		GameName:       a.ConfigTournament.Game.Name,
 	}, 5*time.Minute)
 	dh.Ns = ns
 	if a.ConfigMessenger.DebugMode.Mode {

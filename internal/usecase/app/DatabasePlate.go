@@ -148,8 +148,8 @@ func (a *App) AddParticipant(
 		GameName:                gameName,
 		Region:                  region,
 		Locale:                  locale,
-		MessenagerName:          messengerName,
-		MessenagerLogin:         messengerLogin,
+		MessengerName:           messengerName,
+		MessengerLogin:          messengerLogin,
 		TournamentPlatformName:  tournamentPlatformName,
 		TournamentPlatformLogin: tournamentPlatformLogin,
 		Rating:                  rating,
@@ -181,9 +181,9 @@ func (a *App) GetParticipantsSortedByRatingList(messengerName, tournamentPlatfor
 	return result, nil
 }
 
-func (a *App) GetBanned(gameName string, limit, offset int, search string) (db.ParticipantGetListResponse, error) {
+func (a *App) GetBanned(nameMessenger string, nameTournamentPlatform string, gameName string, limit, offset int, search string) (db.ParticipantGetListResponse, error) {
 	log.Printf("Request: GameName = %v Limit = %v, Offset = %v, Search = \"%v\"", gameName, limit, offset, search)
-	result, err := a.Db.GetBanned(a.ctx, gameName, limit, offset, search)
+	result, err := a.Db.GetBanned(a.ctx, nameMessenger, nameTournamentPlatform, gameName, limit, offset, search)
 	if err != nil {
 		a.Log(logger.Error, err.Error())
 		return db.ParticipantGetListResponse{}, err
@@ -204,8 +204,8 @@ func (a *App) EditParticipantStatsRating(id, rating int) (db.ParticipantEditResp
 func (a *App) EditParticipant(request app.EditParticipantRequest) error {
 	p := sender.Participant{
 		Id:                      request.Id,
-		MessenagerLogin:         request.MessengerLogin,
-		MessenagerName:          request.MessengerName,
+		MessengerLogin:          request.MessengerLogin,
+		MessengerName:           request.MessengerName,
 		TournamentPlatformName:  request.TournamentPlatformName,
 		TournamentPlatformLogin: request.TournamentPlatformLogin,
 		GameName:                request.GameName,

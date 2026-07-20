@@ -105,9 +105,9 @@ func (c ChallongeMatchAdapter) GetSetsData(ctx context.Context, slug string) ([]
 
 func (c *ChallongeMatchAdapter) ConvertContacts(data entityChallonge.ParticipantOutput) entitySender.Participant {
 	p := entitySender.Participant{
-		MessenagerLogin: "N/D",
-		GameID:          "N/D",
-		GameNickname:    "N/D",
+		MessengerLogin: "N/D",
+		GameID:         "N/D",
+		GameNickname:   "N/D",
 	}
 
 	if len(data.Name) != 0 {

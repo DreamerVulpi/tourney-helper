@@ -33,7 +33,7 @@ func (p *ParticipantAccounts) Add(ctx context.Context, participantId int, platfo
 			updated_at = CURRENT_TIMESTAMP
 		RETURNING id`
 	var id int
-	err := p.Conn.QueryRowContext(ctx, sql, participantId, platformName, platformId, platformLogin, isFound).Scan(&id)
+	err := p.Conn.QueryRowContext(ctx, sql, participantId, platformName, platformId, dmChannelId, platformLogin, isFound).Scan(&id)
 	if err != nil {
 		return 0, fmt.Errorf("unable to create participant account (%v - %v) in database, %w", platformName, platformLogin, err)
 	}

@@ -15,7 +15,7 @@ type DiscordSender struct {
 	params  params
 }
 
-func (s *DiscordSender) GetPlatformMessenagerName() string {
+func (s *DiscordSender) GetPlatformMessengerName() string {
 	return "Discord"
 }
 
@@ -90,12 +90,12 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 		return entitySender.Participant{}, err
 	}
 
-	cleanNickname := s.cleanDiscordLogin(p.MessenagerLogin)
+	cleanNickname := s.cleanDiscordLogin(p.MessengerLogin)
 	var messengerID string
 	var isFound bool
 	currentLocale := "en"
 
-	if p.MessenagerLogin == "" || p.MessenagerLogin == "N/D" {
+	if p.MessengerLogin == "" || p.MessengerLogin == "N/D" {
 		if s.params.debugMode {
 			log.Printf("findContact | %s has no login, using debug mock", p.GameNickname)
 			messengerID = "000000000000000000"
@@ -112,9 +112,9 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 				isFound = true
 			} else {
 				return entitySender.Participant{
-					MessenagerID:            messengerID,
-					MessenagerLogin:         cleanNickname,
-					MessenagerName:          s.GetPlatformMessenagerName(),
+					MessengerID:             messengerID,
+					MessengerLogin:          cleanNickname,
+					MessengerName:           s.GetPlatformMessengerName(),
 					TournamentPlatformName:  p.TournamentPlatformName,
 					TournamentPlatformID:    p.TournamentPlatformID,
 					TournamentPlatformLogin: p.TournamentPlatformLogin,
@@ -140,9 +140,9 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 	}
 
 	return entitySender.Participant{
-		MessenagerID:            messengerID,
-		MessenagerLogin:         cleanNickname,
-		MessenagerName:          s.GetPlatformMessenagerName(),
+		MessengerID:             messengerID,
+		MessengerLogin:          cleanNickname,
+		MessengerName:           s.GetPlatformMessengerName(),
 		GameName:                p.GameName,
 		TournamentPlatformName:  p.TournamentPlatformName,
 		TournamentPlatformID:    p.TournamentPlatformID,

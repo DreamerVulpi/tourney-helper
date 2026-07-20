@@ -118,7 +118,7 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 		contactP2, err := ns.checkParticipant(ctx, set.ContactPlayer2)
 
 		if ns.DebugMode {
-			log.Printf("Debug | Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessenagerLogin)
+			log.Printf("Debug | Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessengerLogin)
 			ns.sendDebugNotifications(ctx, slug, set, contactP1, contactP2)
 			continue
 		}

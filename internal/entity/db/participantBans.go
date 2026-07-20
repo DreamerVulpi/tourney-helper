@@ -30,7 +30,7 @@ type ParticipantBansRepo interface {
 		participantId int) (ParticipantBans, error)
 	GetList(
 		ctx context.Context,
-		nameGame string, offset, limit int, search string,
+		nameMessenger string, nameTournamentPlatform string, nameGame string, offset, limit int, search string,
 	) ([]entitySender.Participant, error)
 	IsBanned(
 		ctx context.Context,
@@ -73,10 +73,12 @@ type ParticipantBansGetRequest struct {
 }
 
 type ParticipantBansGetListRequest struct {
-	GameName string `json:"gameName"`
-	Limit    int    `json:"limit"`
-	Offset   int    `json:"offset"`
-	Search   string `json:"search"`
+	NameMessenger          string `json:"nameMessenger"`
+	NameTournamentPlatform string `json:"nameTournamentPlatform"`
+	GameName               string `json:"gameName"`
+	Limit                  int    `json:"limit"`
+	Offset                 int    `json:"offset"`
+	Search                 string `json:"search"`
 }
 
 type ParticipantGetListResponse struct {

@@ -10,9 +10,9 @@ import (
 
 func (_ *Database) ConvertData(data entityStartgg.ImportedParticipantContact) entitySender.Participant {
 	return entitySender.Participant{
-		MessenagerLogin:         data.MessengerLogin,
-		MessenagerName:          data.MessengerName,
-		MessenagerID:            data.MessengerID,
+		MessengerLogin:          data.MessengerLogin,
+		MessengerName:           data.MessengerName,
+		MessengerID:             data.MessengerID,
 		TournamentPlatformName:  data.TournamentPlatformName,
 		TournamentPlatformLogin: data.TournamentPlatformLogin,
 		TournamentPlatformID:    data.TournamentPlatformId,

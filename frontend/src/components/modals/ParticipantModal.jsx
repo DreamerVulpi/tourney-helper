@@ -129,11 +129,11 @@ const ParticipantModal = ({
           rating: participantData.rating || 0,
           messenger: {
             active: !!(
-              participantData.messenagerLogin || participantData.messengerLogin
+              participantData.messengerLogin || participantData.messengerLogin
             ),
-            platform: participantData.messenagerName || "Discord",
+            platform: participantData.messengerName || "Discord",
             login:
-              participantData.messenagerLogin ||
+              participantData.messengerLogin ||
               participantData.messengerLogin ||
               "",
           },

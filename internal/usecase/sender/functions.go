@@ -24,16 +24,16 @@ func (ns NotificationSystem) checkParticipant(ctx context.Context, apiData entit
 		}
 		return participant, nil
 	case errors.Is(err, sql.ErrNoRows):
-		log.Printf("Process | Player not found in DB, searching in %s...", apiData.MessenagerName)
+		log.Printf("Process | Player not found in DB, searching in %s...", apiData.MessengerName)
 
 		foundParticipant, err := ns.Messenger.FindContactOfParticipant(ctx, apiData)
 		if err != nil {
-			log.Printf("Process | Player not found in %s: %v", apiData.MessenagerName, err)
+			log.Printf("Process | Player not found in %s: %v", apiData.MessengerName, err)
 			return apiData, err
 		}
 
 		if _, errSave := ns.Db.AddParticipant(ctx, foundParticipant); errSave != nil {
-			log.Printf("Process | failed to save player (%v) to DB: %v", foundParticipant.MessenagerName, errSave)
+			log.Printf("Process | failed to save player (%v) to DB: %v", foundParticipant.MessengerName, errSave)
 		}
 
 		return foundParticipant, nil
@@ -47,7 +47,7 @@ func (ns NotificationSystem) saveSentInfo(ctx context.Context, slug string, set 
 	request := entityDB.SentSetAddRequest{
 		SetId:              set.SetID,
 		TournamentPlatform: ns.Data.GetPlatformTournamentName(),
-		MessengerPlatform:  ns.Messenger.GetPlatformMessenagerName(),
+		MessengerPlatform:  ns.Messenger.GetPlatformMessengerName(),
 		TournamentSlug:     slug,
 		State:              entityDB.PointerSetState(currentState),
 		SentAtP1:           timeP1,
@@ -72,9 +72,9 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 	var timeP1 *time.Time
 	var timeP2 *time.Time
 
-	dmChannelIDP1, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessenagerID, contactP1.DmChannelId, setForP1)
+	dmChannelIDP1, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, contactP1.DmChannelId, setForP1)
 	if err != nil {
-		log.Printf("sendNotification | can't send notification to %s: %v", ns.TestContact.MessenagerID, err)
+		log.Printf("sendNotification | can't send notification to %s: %v", ns.TestContact.MessengerID, err)
 	} else {
 		now1 := time.Now()
 		timeP1 = &now1
@@ -89,7 +89,7 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 
 		request := entityDB.ParticipantAccoutnEditDMChannelRequest{
 			ParticipantId: p.Id,
-			PlatformName:  contactP1.MessenagerName,
+			PlatformName:  contactP1.MessengerName,
 			DmChannelId:   &dmChannelIDP1,
 		}
 		log.Printf("REQUEST FOR CHANNEL P1: %v", request)
@@ -98,9 +98,9 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 		}
 	}
 
-	dmChannelIDP2, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessenagerID, contactP2.DmChannelId, setForP2)
+	dmChannelIDP2, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, contactP2.DmChannelId, setForP2)
 	if err != nil {
-		log.Printf("sendNotification | can't send notification to %s: %v", ns.TestContact.MessenagerID, err)
+		log.Printf("sendNotification | can't send notification to %s: %v", ns.TestContact.MessengerID, err)
 	} else {
 		now2 := time.Now()
 		timeP2 = &now2
@@ -114,7 +114,7 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 		p, _ := ns.Db.Participant.GetParticipantByNickname(ctx, requestP)
 		request := entityDB.ParticipantAccoutnEditDMChannelRequest{
 			ParticipantId: p.Id,
-			PlatformName:  contactP2.MessenagerName,
+			PlatformName:  contactP2.MessengerName,
 			DmChannelId:   &dmChannelIDP2,
 		}
 		log.Printf("REQUEST FOR CHANNEL P2: %v", request)
@@ -123,7 +123,7 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 		}
 	}
 
-	// if _, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessenagerID, nil, setForP1); err != nil {
+	// if _, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, nil, setForP1); err != nil {
 	// 	log.Printf("Debug | Failed to send P1-view: %v", err)
 	// } else {
 	// 	now1 := time.Now()
@@ -132,7 +132,7 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 
 	// time.Sleep(entitySender.NotificationDelay)
 
-	// if _, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessenagerID, nil, setForP2); err != nil {
+	// if _, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, nil, setForP2); err != nil {
 	// 	log.Printf("Debug | Failed to send P2-view: %v", err)
 	// } else {
 	// 	now2 := time.Now()
@@ -154,7 +154,7 @@ func (ns NotificationSystem) shouldSend(lastSent *time.Time) bool {
 }
 
 func (ns NotificationSystem) sendNotification(ctx context.Context, contact entitySender.Participant, set entitySender.SetData, lastSent *time.Time) (*time.Time, error) {
-	if contact.MessenagerID == "" || contact.MessenagerID == "N/D" {
+	if contact.MessengerID == "" || contact.MessengerID == "N/D" {
 		return lastSent, fmt.Errorf("sendNotification | Can't send notification to %s: MessengerID is empty", contact.GameNickname)
 	}
 
@@ -163,15 +163,15 @@ func (ns NotificationSystem) sendNotification(ctx context.Context, contact entit
 		return lastSent, fmt.Errorf("sendNotification | %w", err)
 	}
 
-	dmChannelID, err := ns.Messenger.SendMessage(ctx, contact.MessenagerID, contact.DmChannelId, set)
+	dmChannelID, err := ns.Messenger.SendMessage(ctx, contact.MessengerID, contact.DmChannelId, set)
 	if err != nil {
-		return lastSent, fmt.Errorf("sendNotification | Can't send notification to %s: %v", contact.MessenagerID, err)
+		return lastSent, fmt.Errorf("sendNotification | Can't send notification to %s: %v", contact.MessengerID, err)
 	}
 
 	if contact.DmChannelId == nil || *contact.DmChannelId != dmChannelID {
 		request := entityDB.ParticipantAccoutnEditDMChannelRequest{
 			ParticipantId: contact.Id,
-			PlatformName:  contact.MessenagerName,
+			PlatformName:  contact.MessengerName,
 			DmChannelId:   &dmChannelID,
 		}
 		log.Printf("REQUEST FOR CHANNEL: %v", request)

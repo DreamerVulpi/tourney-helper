@@ -131,7 +131,7 @@ func (p *ParticipantBans) TotalCount(ctx context.Context) (int, error) {
 }
 
 // FIXME: Add contact data to results
-func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, offset int, search string) ([]entitySender.Participant, error) {
+func (p *ParticipantBans) GetList(ctx context.Context, nameMessenger string, nameTournamentPlatform string, nameGame string, limit, offset int, search string) ([]entitySender.Participant, error) {
 	const sql1 = `
 		SELECT
 			p.id,
@@ -183,7 +183,7 @@ func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, o
 		ORDER BY p.id
 		LIMIT $4 OFFSET $5`
 
-	rows, err := p.Conn.QueryContext(ctx, sql1, nameGame, limit, offset, search)
+	rows, err := p.Conn.QueryContext(ctx, sql1, nameMessenger, nameTournamentPlatform, nameGame, limit, offset, search)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %w", err)
 	}
@@ -240,8 +240,8 @@ func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, o
 		}
 
 		row.Id = tempID
-		row.MessenagerID = tempMessID.String
-		row.MessenagerLogin = tempNicknameMessenger.String
+		row.MessengerID = tempMessID.String
+		row.MessengerLogin = tempNicknameMessenger.String
 		row.TournamentPlatformLogin = tempNicknameTournament.String
 		row.TournamentPlatformID = tempTourID.String
 		row.GameName = tempGameName.String
@@ -251,7 +251,7 @@ func (p *ParticipantBans) GetList(ctx context.Context, nameGame string, limit, o
 		row.Region = tempRegion.String
 		row.IsFound = tempMessID.Valid || tempNicknameTournament.Valid
 		row.UpdatedAt = tempUpdatedAt.Time
-		row.MessenagerName = tempMessengerName.String
+		row.MessengerName = tempMessengerName.String
 		row.TournamentPlatformName = tempTourneyPlatformName.String
 		row.IsBanned = tempStatus.String
 		row.TypeBan = tempTypeBan.String

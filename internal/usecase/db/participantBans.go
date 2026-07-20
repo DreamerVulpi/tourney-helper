@@ -62,7 +62,7 @@ func (p *ParticipantBans) GetParticipantBan(ctx context.Context, request entity.
 }
 
 func (p *ParticipantBans) GetPartipantsListBans(ctx context.Context, request entity.ParticipantBansGetListRequest) (entity.ParticipantGetListResponse, error) {
-	list, err := p.Repo.GetList(ctx, request.GameName, request.Limit, request.Offset, request.Search)
+	list, err := p.Repo.GetList(ctx, request.NameMessenger, request.NameTournamentPlatform, request.GameName, request.Limit, request.Offset, request.Search)
 	if err != nil {
 		return entity.ParticipantGetListResponse{}, err
 	}

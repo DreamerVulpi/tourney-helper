@@ -11,14 +11,14 @@ type LogMessage struct {
 }
 
 type ContactMsg struct {
-	Title             string
-	FailedResult      string
-	SuccessResult     string
-	TourneyPlatform   string
-	GameName          string
-	GameNickname      string
-	MessenagerContact string
-	MessenagerLogin   string
+	Title            string
+	FailedResult     string
+	SuccessResult    string
+	TourneyPlatform  string
+	GameName         string
+	GameNickname     string
+	MessengerContact string
+	MessengerLogin   string
 }
 
 type InviteMessage struct {
