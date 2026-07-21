@@ -21,15 +21,38 @@ func (p *ParticipantAccounts) WithTx(tx entity.SQLHandler) entity.ParticipantAcc
 func (p *ParticipantAccounts) Add(ctx context.Context, participantId int, platformName string, platformId string, dmChannelId *string, platformLogin string, isFound bool) (int, error) {
 	const sql = `
 		INSERT INTO participant_accounts (
-			participant_id, platform_name, platform_id, dm_channel_id, platform_login, is_found	
+			participant_id,
+			platform_name,
+			platform_id,
+			dm_channel_id,
+			platform_login,
+			is_found
 		)
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (platform_name, participant_id)
 		DO UPDATE SET
-			platform_id = EXCLUDED.platform_id,
-			dm_channel_id = COALESCE(EXCLUDED.dm_channel_id, participant_accounts.dm_channel_id),
-			platform_login = EXCLUDED.platform_login,
+			platform_id = COALESCE(
+				NULLIF(participant_accounts.platform_id, ''),
+				EXCLUDED.platform_id
+			),
+
+			dm_channel_id = CASE
+				WHEN EXCLUDED.dm_channel_id IS NULL
+					OR EXCLUDED.dm_channel_id = ''
+				THEN participant_accounts.dm_channel_id
+				ELSE EXCLUDED.dm_channel_id
+			END,
+
+			platform_login = CASE
+				WHEN EXCLUDED.platform_login IS NULL
+					OR EXCLUDED.platform_login = ''
+					OR EXCLUDED.platform_login = 'N/D'
+				THEN participant_accounts.platform_login
+				ELSE EXCLUDED.platform_login
+			END,
+
 			is_found = EXCLUDED.is_found,
+
 			updated_at = CURRENT_TIMESTAMP
 		RETURNING id`
 	var id int

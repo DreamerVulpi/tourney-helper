@@ -28,7 +28,12 @@ func (p *ParticipantBans) Add(ctx context.Context, participantId int, typeBan st
 		ON CONFLICT (participant_id) 
 		DO UPDATE SET
 			type_ban = EXCLUDED.type_ban,
-			reason = EXCLUDED.reason,
+			reason = CASE
+				WHEN EXCLUDED.reason IS NULL
+					OR EXCLUDED.reason = ''
+				THEN participant_bans.reason
+				ELSE EXCLUDED.reason
+			END,
 			banned_at = CURRENT_TIMESTAMP,
 			expires_at = EXCLUDED.expires_at
 		RETURNING id`
@@ -84,7 +89,6 @@ func (p *ParticipantBans) DeleteExpired(ctx context.Context) error {
 	return nil
 }
 
-// FIXME: Add contact data
 func (p *ParticipantBans) Get(ctx context.Context, id int) (entity.ParticipantBans, error) {
 	const sql = `
 		SELECT pb.id, pb.participant_id, pb.type_ban, pb.reason, pb.banned_at, pb.expires_at
@@ -130,7 +134,6 @@ func (p *ParticipantBans) TotalCount(ctx context.Context) (int, error) {
 	return id, nil
 }
 
-// FIXME: Add contact data to results
 func (p *ParticipantBans) GetList(ctx context.Context, nameMessenger string, nameTournamentPlatform string, nameGame string, limit, offset int, search string) ([]entitySender.Participant, error) {
 	const sql1 = `
 		SELECT

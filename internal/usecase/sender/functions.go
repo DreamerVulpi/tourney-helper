@@ -57,7 +57,7 @@ func (ns NotificationSystem) saveSentInfo(ctx context.Context, slug string, set 
 	return err
 }
 
-func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug string, set entitySender.SetData, contactP1, contactP2 entitySender.Participant) {
+func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, set entitySender.SetData, contactP1, contactP2 entitySender.Participant) {
 	setForP1 := set
 	setForP2 := set
 
@@ -69,15 +69,9 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 	setForP2.ContactPlayer2 = contactP1
 	setForP2.IsTest = true
 
-	var timeP1 *time.Time
-	var timeP2 *time.Time
-
 	dmChannelIDP1, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, contactP1.DmChannelId, setForP1)
 	if err != nil {
 		log.Printf("sendNotification | can't send notification to %s: %v", ns.TestContact.MessengerID, err)
-	} else {
-		now1 := time.Now()
-		timeP1 = &now1
 	}
 
 	if contactP1.DmChannelId == nil || *contactP1.DmChannelId != dmChannelIDP1 {
@@ -101,9 +95,6 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 	dmChannelIDP2, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, contactP2.DmChannelId, setForP2)
 	if err != nil {
 		log.Printf("sendNotification | can't send notification to %s: %v", ns.TestContact.MessengerID, err)
-	} else {
-		now2 := time.Now()
-		timeP2 = &now2
 	}
 
 	if contactP1.DmChannelId == nil || *contactP1.DmChannelId != dmChannelIDP2 {
@@ -121,26 +112,6 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, slug st
 		if err := ns.Db.Accounts.EditDmChannelParticipantAccount(ctx, request); err != nil {
 			log.Printf("sendNotification | can't update DM channel: %v", err)
 		}
-	}
-
-	// if _, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, nil, setForP1); err != nil {
-	// 	log.Printf("Debug | Failed to send P1-view: %v", err)
-	// } else {
-	// 	now1 := time.Now()
-	// 	timeP1 = &now1
-	// }
-
-	// time.Sleep(entitySender.NotificationDelay)
-
-	// if _, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, nil, setForP2); err != nil {
-	// 	log.Printf("Debug | Failed to send P2-view: %v", err)
-	// } else {
-	// 	now2 := time.Now()
-	// 	timeP2 = &now2
-	// }
-
-	if err := ns.saveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {
-		log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
 	}
 }
 

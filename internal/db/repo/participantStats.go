@@ -26,7 +26,13 @@ func (p *ParticipantStats) Add(ctx context.Context, participantId int, gameName 
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (participant_id, game_name) 
 		DO UPDATE SET
-			game_id = EXCLUDED.game_id,
+			game_id = CASE
+				WHEN EXCLUDED.game_id IS NULL
+					OR EXCLUDED.game_id = ''
+					OR EXCLUDED.game_id = 'N/D'
+				THEN participant_stats.game_id
+				ELSE EXCLUDED.game_id
+			END,
 			rating = EXCLUDED.rating,
 			updated_at = CURRENT_TIMESTAMP 
 		RETURNING id

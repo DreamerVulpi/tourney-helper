@@ -57,7 +57,7 @@ func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, ga
 			actionText = "added to ban-list"
 		}
 
-		a.Log(logger.Success, fmt.Sprintf("Successful %s %d of %d records", actionText, s, t))
+		a.Log(logger.Info, fmt.Sprintf("Was %s %d of %d records", actionText, s, t))
 		return &app.ImportListPlayersResponse{Success: s, Total: t}, nil
 
 	default:

@@ -370,7 +370,6 @@ func (db *Database) addParticipantWithTx(ctx context.Context, tx *sql.Tx, p enti
 		log.Printf("db | messenger login is empty | account messenger don't added")
 	}
 
-	log.Printf("tournamentPlatformLogin(%v) !=0 ?", p.TournamentPlatformLogin)
 	if len(p.TournamentPlatformLogin) != 0 {
 		pAddTournamentAccountRequest := entityDB.ParticipantAccountAddRequest{
 			ParticipantId: pAddResponse.Id,

@@ -4,12 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
 	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/dbManager"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 type NotificationSystem struct {
@@ -74,6 +77,7 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 		return err
 	}
 
+	logger.Log(entityLogger.Info, fmt.Sprintf("DebugMode: !%v", ns.DebugMode))
 	for _, set := range sets {
 		select {
 		case <-ctx.Done():
@@ -90,7 +94,7 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 		currentState := entityDB.SetState(set.State)
 		if sentInfo != nil {
 			previousState := sentInfo.State
-			if previousState != nil && *previousState != currentState {
+			if previousState != nil && *previousState != currentState && !ns.DebugMode {
 				if err := ns.saveSentInfo(ctx, slug, set, nil, nil); err != nil {
 					log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
 				}
@@ -119,7 +123,7 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 
 		if ns.DebugMode {
 			log.Printf("Debug | Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessengerLogin)
-			ns.sendDebugNotifications(ctx, slug, set, contactP1, contactP2)
+			ns.sendDebugNotifications(ctx, set, contactP1, contactP2)
 			continue
 		}
 

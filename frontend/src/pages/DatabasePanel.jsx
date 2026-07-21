@@ -124,6 +124,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     listRegions.map(region => [region.value, region.label])
   );
 
+  // UI config for filter buttons (All, Rating or Ban-list)
   const addButtonConfig = useMemo(() => {
     const configs = {
       all: {
@@ -145,6 +146,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     return configs[activeFilter] || configs.all;
   }, [activeFilter, locale]);
 
+  // Handler for import file of participants
   const handleImportFile = (file) => {
     if (!file) return;
     const systemFilePath = file.path || file.name;
@@ -161,6 +163,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     setIsImportModalOpen(true);
   };
 
+  // Handler for confirm file import of participants
   const handleConfirmFileImport = async (filePath) => {
     setIsImportModalOpen(false);
     setImportError(null);
@@ -215,6 +218,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     }
   };
 
+  // Trigger for confirm action with participants
   const triggerParticipantAction = (participant, action) => {
     if (participant) {
       const realId = participant.id ?? participant.Id ?? 0;
@@ -229,6 +233,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     setIsActionModalOpen(true);
   };
 
+  // Handler for confirm action with participants
   const handleConfirmAction = async (data) => {
     setActionLoading(true);
     const logActionBanParts = locale.Table.LogsActions.Ban.split("%v");
@@ -267,11 +272,13 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     }
   };
 
+  // Handler for open modal window for edit data of participant
   const handleOpenEditModal = (participant) => {
     setEditingParticipant(participant);
     setIsModalOpen(true);
   };
 
+  // Handler for actions with participants
   const handleSaveParticipant = async (data) => {
     setModalLoading(true);
     const logActionAddParts = locale.Table.LogsActions.Add.split("%v");
@@ -357,11 +364,14 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
       setModalLoading(false);
     }
   };
+
+  // Handler for open modal window for add participant
   const handleOpenAddModal = () => {
     setEditingParticipant(null);
     setIsModalOpen(true);
   };
 
+  // Handler for change of rating value
   const handleLocalRatingChange = (participantId, val, nickname) => {
     setPlayers((prev) =>
       prev.map((p) => (p.id === participantId ? { ...p, rating: val } : p)),
@@ -369,6 +379,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     debouncedRatingUpdate(participantId, val, nickname);
   };
 
+  // Handler for update rating
   const handleUpdateRating = async (participantId, newRating, nickname) => {
     const logActionUpdateRating = locale.Table.LogsActions.UpdateRating;
     const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
@@ -385,9 +396,11 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     }
   };
 
+  // Handler for rating values
   const handleUpdateRatingRef = useRef(handleUpdateRating);
   handleUpdateRatingRef.current = handleUpdateRating;
 
+  // Debounce for rating values
   const debouncedRatingUpdate = useMemo(
     () =>
       debounce((participantId, newValue, nickname) => {
@@ -396,6 +409,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     [],
   );
 
+  // Fuction of pagination
   const fetchData = async (isNextPage = false, search = undefined) => {
     setLoading(true);
 
@@ -472,24 +486,28 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     }
   };
 
+  // Debounce for fetch
   const debouncedFetch = useMemo(
     () => debounce((query) => fetchData(false, query), 500),
     [],
   );
 
+  // Handler for search line
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
     debouncedFetch(value);
   };
 
+  // Trigger for search line
   useEffect(() => {
     fetchDataRef.current = (isNext, search) => fetchData(isNext, search);
   }, [selectedGame, activeFilter, players.length, searchQuery]);
 
+  // Fetch data for pagination
   const fetchDataRef = useRef(fetchData);
   fetchDataRef.current = fetchData;
-
+  // Triiger for pagination
   useEffect(() => {
     const tableContainer = document.getElementById("table-scroll-container");
     if (!tableContainer) return;
@@ -509,10 +527,12 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     return () => tableContainer.removeEventListener("scroll", handleScroll);
   }, [loading, players.length, totalCount]);
 
+  // Switch to selected game
   useEffect(() => {
     fetchData(false);
   }, [selectedGame, activeFilter]);
 
+  // Filter list of players for table
   const filteredPlayers = useMemo(() => {
     let list = players ? [...players] : [];
 
@@ -531,6 +551,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     return list;
   }, [players, activeFilter]);
 
+  // Function for prepare text of contact participant
   const getParticipantCopyText = (participant) => {
     const isTournamentValid =
       participant.tournamentPlatformLogin &&
@@ -550,6 +571,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     return `${tournamentLine}\n${messengerLine}`;
   };
 
+  // Function for get time
   const getRelativeTime = (dateString) => {
     if (!dateString || dateString.startsWith("0001")) return "—";
     const date = new Date(dateString);

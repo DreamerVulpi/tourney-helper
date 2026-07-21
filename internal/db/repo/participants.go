@@ -30,8 +30,23 @@ func (p *Participants) Add(ctx context.Context, nickname string, region string, 
 		ON CONFLICT (nickname) 
 		DO UPDATE SET
 			nickname = EXCLUDED.nickname,
-			region = EXCLUDED.region,
-			locale = EXCLUDED.locale,
+
+			region = CASE
+				WHEN EXCLUDED.region IS NULL 
+					OR EXCLUDED.region = '' 
+					OR EXCLUDED.region = 'N/D'
+				THEN participants.region
+				ELSE EXCLUDED.region
+			END,
+
+			locale = CASE
+				WHEN EXCLUDED.locale IS NULL 
+					OR EXCLUDED.locale = '' 
+					OR EXCLUDED.locale = 'N/D'
+				THEN participants.locale
+				ELSE EXCLUDED.locale
+			END,
+
 			updated_at = CURRENT_TIMESTAMP
 		RETURNING id`
 	var id int
