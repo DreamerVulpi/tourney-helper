@@ -14,6 +14,7 @@ import { createThemeChanger } from "../utils/changeTheme";
 import { ExtraButton } from "../components/ui/ExtraButton";
 import { DropdownList } from "../components/ui/DropdownList";
 import { Field } from "../components/ui/Field.jsx";
+import  AboutModal from "../components/modals/AboutModal.jsx"
 
 const HeaderPlate = ({
   theme,
@@ -22,6 +23,9 @@ const HeaderPlate = ({
   setLang,
   locale,
   updateConfig,
+  themeClasses,
+  activeModal,
+  setActiveModal,
 }) => {
   // Font for logo programm
   const fontStyle = (
@@ -36,12 +40,12 @@ const HeaderPlate = ({
   // Function for change theme & save to configuration of programm
   const changeTheme = createThemeChanger(theme, setTheme, updateConfig);
   // Details of theme for this page
-  const themeClasses = getThemeClasses(theme);
-
+  const headerThemeClasses = getThemeClasses(theme);
+ 
   return (
     <header
       className={`h-[4rem] flex items-center justify-between px-[1.5rem] shrink-0 border-b z-50 transition-colors duration-300 ${
-        themeClasses.header
+        headerThemeClasses.header
       }`}
     >
       <div className="flex items-center gap-[1.5rem]">
@@ -54,7 +58,7 @@ const HeaderPlate = ({
           <div className="hidden lg:block">
             <span
               className={`font-super-bold italic text-2xl tracking-tighter uppercase ${
-                themeClasses.logoTitle
+                headerThemeClasses.logoTitle
               }`}
             >
               <span>TOURNEY</span>
@@ -71,7 +75,7 @@ const HeaderPlate = ({
         value={lang}
         width={"6.5rem"}
         icon = {LanguagesIcon}
-        themeClasses={themeClasses}
+        themeClasses={headerThemeClasses}
         items={[
             {
               label: "RU",
@@ -94,19 +98,19 @@ const HeaderPlate = ({
         <button
           onClick={changeTheme}
           className={`flex items-center gap-[0.25rem] p-[0.25rem] rounded-full border transition-all duration-300 ${
-            themeClasses.themeButton
+            headerThemeClasses.themeButton
           }`}
         >
           <div
             className={`p-[0.25rem] rounded-full transition-all ${
-              themeClasses.sunIcon
+              headerThemeClasses.sunIcon
             }`}
           >
             <Sun style={{ width: "0.875rem", height: "0.875rem" }} />
           </div>
           <div
             className={`p-[0.25rem] rounded-full transition-all ${
-              themeClasses.moonIcon
+              headerThemeClasses.moonIcon
             }`}
           >
             <Moon style={{ width: "0.875rem", height: "0.875rem" }} />
@@ -115,23 +119,38 @@ const HeaderPlate = ({
 
         {/* Extra buttons */}
         <div
-          className={`flex items-center gap-[1rem] pl-[1rem] border-l h-[1.5rem] text-[0.5625rem] font-black uppercase tracking-widest text-slate-500 ${
-            themeClasses.divider
+          className={`flex items-center gap-[1rem] pl-[1rem] border-l h-[1.5rem] text-slate-500 ${
+            headerThemeClasses.divider
           }`}
         >
-          <ExtraButton
+          <Field
+            variant="button"
+            width="100px"
             icon={HelpCircle}
-            label={locale.HelpLabel}
-            iconClass="group-hover:rotate-12"
+            labelButton={locale.HelpLabel}
+            themeClasses={themeClasses}
           />
-
-          <ExtraButton
+          <Field
+            variant="button"
             icon={Info}
-            label={locale.AboutLabel}
-            iconClass="group-hover:scale-110"
+            width="100px"
+            labelButton={locale.About.Label}
+            themeClasses={themeClasses}
+            onClick={()=> setActiveModal("about")}
           />
         </div>
       </div>
+    <AboutModal
+      isOpen={activeModal === "about"}
+      locale={locale.About}
+      themeClasses={themeClasses}
+      onClose={() => {
+          setActiveModal(null);
+          setTimeout(() => {
+            fetchData(false);
+          }, 100);
+      }}
+    />
     </header>
   );
 };

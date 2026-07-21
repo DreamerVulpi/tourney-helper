@@ -507,7 +507,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   // Fetch data for pagination
   const fetchDataRef = useRef(fetchData);
   fetchDataRef.current = fetchData;
-  // Triiger for pagination
+  // Trigger for pagination
   useEffect(() => {
     const tableContainer = document.getElementById("table-scroll-container");
     if (!tableContainer) return;

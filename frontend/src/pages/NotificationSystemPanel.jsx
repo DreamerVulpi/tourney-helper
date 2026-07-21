@@ -65,6 +65,7 @@ const NotificationSystemPlate = ({
   setActiveMessenger,
   isProcessing,
   setIsProcessing,
+  activeModal,
 }) => {
   // Get data from configs
   const debugMode = systemCfg?.debug?.mode || false;
@@ -220,7 +221,9 @@ const NotificationSystemPlate = ({
     <PanelTemplate
       themeClasses={themeClasses}
       needToBlock={isStartedSending}
-      exceptionElement={rightPanelFooter}
+      exceptionElement={
+        activeModal ? null :rightPanelFooter
+      }
     >
       <div className="grid grid-cols-12 gap-8 items-start flex-1">
         {/* Left part */}

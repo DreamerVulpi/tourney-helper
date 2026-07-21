@@ -168,24 +168,7 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 	return db.buildDataOfParticipant(responseParticipant, responseMessenger, responseTournamentAccount, responseStats, p), nil
 }
 
-// FIXME:
 func (db *Database) EditParticipant(ctx context.Context, p entitySender.Participant, ban *entityApp.BanRequest) error {
-	log.Printf("Id: %v\n", p.Id)
-	log.Printf("MessengerID: %v\n", p.MessengerID)
-	log.Printf("MessengerLogin: %v\n", p.MessengerLogin)
-	log.Printf("MessengerName: %v\n", p.MessengerName)
-	log.Printf("TournamentPlatformName: %v\n", p.TournamentPlatformName)
-	log.Printf("TournamentPlatformLogin: %v\n", p.TournamentPlatformLogin)
-	log.Printf("TournamentPlatformID: %v\n", p.TournamentPlatformID)
-	log.Printf("GameName: %v\n", p.GameName)
-	log.Printf("GameNickname: %v\n", p.GameNickname)
-	log.Printf("GameID: %v\n", p.GameID)
-	log.Printf("Region: %v\n", p.Region)
-	log.Printf("Locale: %v\n", p.Locale)
-	log.Printf("Rating: %v\n", p.Rating)
-	log.Printf("IsFound: %v\n", p.IsFound)
-	log.Printf("UpdatedAt: %v\n", p.UpdatedAt)
-
 	tx, err := db.Conn.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("db | failed to start transaction: %w", err)
@@ -203,9 +186,6 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 	}
 
 	if p.GameNickname != "" && p.Region != "" && p.Locale != "" {
-		log.Printf("Сравнение для ID %d: БД ник '%s' vs Новый ник '%s'", p.Id, currentParticipant.Nickname, p.GameNickname)
-		log.Printf("Сравнение региона: БД '%s' vs Новый '%s'", currentParticipant.Region, p.Region)
-		log.Printf("Сравнение локали: БД '%s' vs Новый '%s'", currentParticipant.Locale, p.Locale)
 		if currentParticipant.Nickname != p.GameNickname || currentParticipant.Region != p.Region || currentParticipant.Locale != p.Locale {
 			pEditRequest := entityDB.ParticipantEditRequest{
 				Id:       p.Id,

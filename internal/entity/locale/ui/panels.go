@@ -10,8 +10,8 @@ type Ui struct {
 }
 
 type HeaderPanel struct {
-	HelpLabel  string
-	AboutLabel string
+	HelpLabel string
+	About     AboutModal
 }
 
 type SidePanel struct {

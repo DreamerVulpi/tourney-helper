@@ -103,6 +103,8 @@ const App = () => {
   });
   // Detail description components for Light/Dark themes 
   const themeClasses = getThemeClasses(theme);
+  // State for modals "About" and "Help"
+  const [activeModal, setActiveModal] = useState(null);
 
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
@@ -127,6 +129,9 @@ const App = () => {
             setLang={setLang}
             updateConfig={updateConfig}
             locale={locale.HeaderPanel}
+            themeClasses={themeClasses}
+            activeModal={activeModal}
+            setActiveModal={setActiveModal}
           />
 
           <div className="flex flex-1 overflow-hidden">
@@ -160,6 +165,7 @@ const App = () => {
                     setActiveMessenger={setActiveMessenger}
                     isProcessing={isProcessing}
                     setIsProcessing={setIsProcessing}
+                    activeModal={activeModal}
                   />
                 )}
 

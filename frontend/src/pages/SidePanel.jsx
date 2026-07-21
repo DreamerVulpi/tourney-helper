@@ -56,8 +56,6 @@ const SidePanel = ({
           themeClasses={themeClasses}
         /> */}
       </div>
-
-      {locale.VersionLabel} 0.3.0
     </nav>
   );
 };

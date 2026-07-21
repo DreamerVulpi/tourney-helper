@@ -13,9 +13,9 @@ export function MessageBox({
                 size={36} 
             />
 
-            <p className={textClass}>
+            <div className={textClass}>
                 {children}
-            </p>
+            </div>
 
             {footer && footer}
         </div>

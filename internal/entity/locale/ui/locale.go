@@ -279,3 +279,19 @@ type ResetRatingModal struct {
 	Attension               string
 	ResetRaitingButtonLabel string
 }
+
+type AboutModal struct {
+	Label            string
+	Title            string
+	Description      string
+	Version          string
+	Developer        string
+	Frontend         string
+	Backend          string
+	License          string
+	CheckUpdates     string
+	Documentation    string
+	ReportBug        string
+	DonateOnProject  string
+	CloseButtonLabel string
+}
