@@ -659,7 +659,7 @@ const NotificationSystemPlate = ({
                         icon={Trophy}
                         themeClasses={themeClasses}
                         onChange={(val) =>
-                          changeRule("rounds", val, updateConfig)
+                          changeRule("rounds", Number(val), updateConfig)
                         }
                       />
                       <Field

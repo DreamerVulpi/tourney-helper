@@ -147,6 +147,8 @@ type LoadingImportFileModalWindows struct {
 	CloseButtonLabel         string
 	DoneButtonLabel          string
 	Strings                  string
+	Warning                  string
+	WarningStatusText        string
 }
 
 type AddModalWindow struct {

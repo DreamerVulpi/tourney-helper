@@ -155,6 +155,8 @@ var En = Ui{
 					CloseButtonLabel:         "Close",
 					DoneButtonLabel:          "Finish",
 					Strings:                  "strings",
+					Warning:                  "Warning",
+					WarningStatusText:        "The data has been partially loaded.",
 				},
 			},
 			ConfirmDurationBan:     "Please specify a valid ban duration or select 'Permanent'!",

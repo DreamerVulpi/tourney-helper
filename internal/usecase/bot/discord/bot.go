@@ -71,12 +71,10 @@ func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform s
 
 func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.ConfigMessenger, tournament config.ConfigTournament) error {
 	h.mtx.Lock()
-
 	if h.session != nil {
 		h.mtx.Unlock()
 		return fmt.Errorf("discord bot is already running")
 	}
-	h.ReadyChan = make(chan struct{})
 	h.mtx.Unlock()
 
 	session, err := discordgo.New(cfg.Discord.Token)

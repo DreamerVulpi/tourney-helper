@@ -94,7 +94,7 @@ var Ru = Ui{
 			Debug:                 "Отладка рассылки",
 			Start:                 "Начать рассылку",
 			Stop:                  "Остановить",
-			AttentionDebugModeMsg: "В этом режиме сообщения приходит в ЛС вашего аккаунта",
+			AttentionDebugModeMsg: "В этом режиме сообщения приходят в ЛС вашего аккаунта",
 		},
 		Logs: NspLogs{
 			NotificationDeliveryStopped: "Рассылка уведомлений остановлена",
@@ -153,6 +153,8 @@ var Ru = Ui{
 					CloseButtonLabel:         "Закрыть",
 					DoneButtonLabel:          "Завершить",
 					Strings:                  "строк",
+					Warning:                  "Предупреждение",
+					WarningStatusText:        "Данные загружены частично.",
 				},
 			},
 			ConfirmDurationBan:     "Укажите корректный срок бана или выберите вариант 'Навсегда'!",

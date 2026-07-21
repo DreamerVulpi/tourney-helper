@@ -44,6 +44,9 @@ import { CopyButton } from "../components/ui/CopyButton.jsx";
 import { Field } from "../components/ui/Field.jsx";
 
 const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
+  // Notes in 1 request to database
+  const limit = 5;
+
   const [selectedGame, setSelectedGame] = useState("Tekken8");
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,19 +70,16 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   const sizeColumnOfBannedAtDate = 30;
   const sizeColumnOfExpiresDate = 40;
 
+  // Statements for UI
   const [players, setPlayers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [importedFileData, setImportedFileData] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFileType, setImportFileType] = useState(null); // 'json' или 'csv'
-
-  const limit = 5;
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingParticipant, setEditingParticipant] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
-
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [actionModalType, setActionModalType] = useState("ban"); // 'ban' | 'unban' | 'delete'
   const [selectedParticipantForAction, setSelectedParticipantForAction] =
@@ -186,7 +186,13 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
       const totalCount = result.total ?? 0;
 
       setImportResult({ r1: successCount, r2: totalCount });
-      setImportStatus("success");
+      if (successCount === 0) {
+        setImportStatus("error");
+      } else if (successCount !== totalCount) {
+        setImportStatus("warning");
+      } else {
+        setImportStatus("success");
+      }
       const successImportDBMsgParts =
         locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportDBMsg.split(
           "%v",
@@ -302,7 +308,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
         setIsModalOpen(false);
         await fetchData(false, searchQuery);
       } else {
-        // Добавление нового игрока
         const response = await AddParticipant(
           data.nickname,
           data.gameId,
@@ -858,7 +863,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
             id="table-scroll-container"
             className="overflow-y-auto overflow-x-auto custom-scrollbar"
             style={{
-              maxHeight: hasHorizontalScroll ? "23rem" : "28rem",
+              maxHeight: hasHorizontalScroll ? "17rem" : "28rem",
             }}
           >
             <table className="w-full text-left text-[11px] table-fixed min-w-[1100px] border-collapse">

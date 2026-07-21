@@ -197,7 +197,6 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 		}
 		a.Log(logger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.TournamentClient.NamePlatform, a.TournamentClient))
 	}
-	time.Sleep(1 * time.Second)
 
 	if len(cfgTournament.UrlToTournament) == 0 {
 		err := fmt.Errorf("No tournament url/slug for get data tournament\n")
@@ -245,6 +244,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 	a.ns = sn.Ns
 	a.activeBot = &sn
 	a.nsCancel = cancel
+	sn.ReadyChan = make(chan struct{})
 	a.mu.Unlock()
 
 	go func() {
@@ -253,9 +253,8 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 		}
 	}()
 	go func() {
-		readySignal := sn.ReadyChan
 		select {
-		case <-readySignal:
+		case <-sn.ReadyChan:
 			a.Log(logger.Info, "The bot has been launched. Starting to send out notifications...")
 			sn.StartSendMessages()
 		case <-ctx.Done():

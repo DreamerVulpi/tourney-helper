@@ -7,7 +7,8 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
 
   const isDark = theme === "dark";
 
-  const isError = !!errorData;
+ const isError = status === "error" || !!errorData;
+  const isWarning = status === "warning";
   const isCompleted = status === "success";
 
   const SuccessImportMsgParts = locale.LoadingImportFileModalWindows.SuccessImportDBMsg.split("%v");
@@ -20,6 +21,10 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
     const totalCount = resultData?.r2 ?? resultData?.t ?? 0;
     statusText = `${SuccessImportMsgParts[0]} ${successCount} ${SuccessImportMsgParts[1]} ${totalCount}`;
   }
+
+  if (isWarning) {
+    statusText = `${locale.LoadingImportFileModalWindows.WarningStatusText}`;
+  }
   if (isError) {
     statusText = `${locale.LoadingImportFileModalWindows.ErrorImportFileMsg} ${errorData}`;
   }
@@ -27,8 +32,7 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
  
   let progress = 0;
   if (status === "loading") progress = 50;
-  if (isCompleted) progress = 100;
-  if (isError) progress = 100;
+  if (isCompleted || isWarning || isError) progress = 100;
 
   return (
     <ModalContainer
@@ -46,6 +50,8 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
           <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-blue-600/10">
             {isError ? (
               <AlertCircle size={32} className="text-red-500 animate-pulse" />
+            ) : isWarning ? (
+              <AlertCircle size={32} className="text-orange-500" />
             ) : isCompleted ? (
               <CheckCircle2 size={32} className="text-green-500" />
             ) : (
@@ -56,9 +62,23 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
           {/* Text of state */}
           <div className="space-y-1 w-full">
             <h3 className="text-[10px] font-black uppercase tracking-wider italic text-slate-500">
-              {isError ? locale.LoadingImportFileModalWindows.CriticalFailureStatus : locale.LoadingImportFileModalWindows.StatusInProcess}
+              {
+                isError
+                  ? locale.LoadingImportFileModalWindows.CriticalFailureStatus
+                  : isWarning
+                    ? locale.LoadingImportFileModalWindows.Warning
+                    : locale.LoadingImportFileModalWindows.StatusInProcess
+              }
             </h3>
-            <p className={`text-xs font-bold min-h-[20px] px-2 break-words ${isError ? "text-red-400" : ""}`}>
+            <p
+              className={`text-xs font-bold min-h-[20px] px-2 break-words ${
+                isError
+                  ? "text-red-400"
+                  : isWarning
+                    ? "text-orange-400"
+                    : ""
+              }`}
+            >
               {statusText}
             </p>
           </div>
@@ -75,24 +95,32 @@ const ImportProgressModal = ({ isOpen, onClose, theme = "dark", status, errorDat
             <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? "bg-white/5" : "bg-slate-100"}`}>
               <div 
                 className={`h-full transition-all duration-500 rounded-full ${
-                  isError ? "bg-red-500" : isCompleted ? "bg-green-500" : "bg-blue-600"
+                  isError 
+                    ? "bg-red-500" 
+                    : isWarning
+                      ? "bg-orange-500"
+                      : isCompleted 
+                        ? "bg-green-500" 
+                        : "bg-blue-600"
                 }`}
                 style={{ width: `${progress}%` }}
-              />
+              />  
             </div>
           </div>
 
           {/* Button to close window */}
-          {(isCompleted || isError) && (
+          {(isCompleted || isWarning || isError) && (
             <button
               onClick={onClose}
               className={`w-full h-[44px] mt-2 rounded-xl text-xs font-black uppercase tracking-wider text-white transition-all ${
                 isError 
-                  ? "bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20" 
-                  : "bg-green-600 hover:bg-green-500 shadow-lg shadow-green-600/20"
+                  ? "bg-red-600 hover:bg-red-500 shadow-lg shadow-red-600/20"
+                  : isWarning
+                    ? "bg-orange-600 hover:bg-orange-500 shadow-lg shadow-orange-600/20"
+                    : "bg-green-600 hover:bg-green-500 shadow-lg shadow-green-600/20"
               }`}
             >
-              {isError ? locale.LoadingImportFileModalWindows.CloseButtonLabel : locale.LoadingImportFileModalWindows.DoneButtonLabel}
+              {locale.LoadingImportFileModalWindows.CloseButtonLabel}
             </button>
           )}
 
