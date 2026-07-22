@@ -13,7 +13,7 @@ const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
       <div className="h-8 flex items-center justify-between px-8 border-b border-white/5 bg-black/10">
         <div className="flex items-center gap-2">
           <Database size={16} style={{ width: "0.875rem", height: "0.875rem", }} className="text-blue-500" />
-          <span className="text-[10px] translate-y-[0.05rem] font-black uppercase tracking-widest text-slate-500 italic">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
             {locale.Label}
           </span>
         </div>

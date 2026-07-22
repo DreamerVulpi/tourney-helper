@@ -127,6 +127,7 @@ const App = () => {
             setTheme={setTheme}
             lang={lang}
             setLang={setLang}
+            activeTab={activeTab}
             updateConfig={updateConfig}
             locale={locale.HeaderPanel}
             themeClasses={themeClasses}

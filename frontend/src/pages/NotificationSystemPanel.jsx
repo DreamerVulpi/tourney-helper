@@ -371,7 +371,7 @@ const NotificationSystemPlate = ({
 
           {(activeSettings === "discord" || activeSettings == "telegram") && (
             <section
-              className={`p-4 rounded-2xl border space-y-3 animate-in zoom-in-95 duration-300 ${themeClasses.tempSection}`}
+              className={`p-4 rounded-2xl border space-y-3 animate-in zoom-in-95 duration-300 max-h-[40vh] custom-scrollbar overflow-y-auto ${themeClasses.tempSection}`}
             >
               <div className="flex items-center justify-between border-b pb-2 border-current/5">
                 <h4 className="text-[9px] font-black uppercase text-blue-500 italic">

@@ -119,9 +119,9 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
       label: locale.AddButton.AddModalWindow.ListRegions.ND,
       value: "N/D",
     },
-  ]
+  ];
   const regionsMap = Object.fromEntries(
-    listRegions.map(region => [region.value, region.label])
+    listRegions.map((region) => [region.value, region.label]),
   );
 
   // UI config for filter buttons (All, Rating or Ban-list)
@@ -889,12 +889,17 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
             }}
           >
             <table className="w-full text-left text-[11px] table-fixed min-w-[1100px] border-collapse">
-              <tbody className="divide-y divide-white/5">
+              <tbody>
                 {filteredPlayers.length > 0 ? (
-                  filteredPlayers.map((p) => (
+                  filteredPlayers.map((p, index) => (
                     <tr
                       key={p.id}
-                      className="hover:bg-blue-600/5 transition-colors align-middle"
+                      className={`
+          hover:bg-blue-600/5
+          transition-colors
+          align-middle
+          ${index !== filteredPlayers.length - 1 ? "border-b border-white/5" : ""}
+        `}
                     >
                       <td
                         className="p-4"
@@ -911,7 +916,9 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                         style={{ width: `${sizeColumnOfGameID}px` }}
                       >
                         <span className="font-mono text-slate-500 font-bold block">
-                          {p.gameId === "N/D" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.gameId}
+                          {p.gameId === "N/D"
+                            ? locale.AddButton.AddModalWindow.ListRegions.ND
+                            : p.gameId}
                         </span>
                       </td>
 
@@ -1031,7 +1038,9 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                             className="p-4 font-bold italic opacity-70 uppercase whitespace-nowrap"
                             style={{ width: `${sizeColumnOfLanguage}px` }}
                           >
-                            {p.locale === "N/D" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.locale}
+                            {p.locale === "N/D"
+                              ? locale.AddButton.AddModalWindow.ListRegions.ND
+                              : p.locale}
                           </td>
                           <td
                             className="p-4"

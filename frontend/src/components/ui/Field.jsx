@@ -110,12 +110,12 @@ export function Field({
               {Icon && (
                 <Icon
                   size={iconSize}
-                  className="left-3 text-blue-600 pointer-events-none z-10"
+                  className="text-blue-600 pointer-events-none z-10"
                 />
               )}
 
-              <span>
-                {labelButton}
+              <span className="leading-none translate-y-[-1px]">
+                  {labelButton}
               </span>
             </button>
       ) : variant === "textarea" ? (

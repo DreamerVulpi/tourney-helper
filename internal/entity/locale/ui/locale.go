@@ -295,3 +295,31 @@ type AboutModal struct {
 	DonateOnProject  string
 	CloseButtonLabel string
 }
+
+type HelpQA struct {
+	Question string
+	Answer   string
+}
+
+type HelpPageNotificationSystem struct {
+	InitialSetup         HelpQA
+	HowIsWorks           HelpQA
+	WhatIsDebugMode      HelpQA
+	WhatCanDo            HelpQA
+	HowGetDataForStartgg HelpQA
+	HowGetDataForDiscord HelpQA
+	UsuallyUsing         HelpQA
+}
+
+type HelpPageDatabase struct {
+	WhatIsDatabase HelpQA
+	HowUse         HelpQA
+}
+
+type HelpModal struct {
+	Label                      string
+	Title                      string
+	CloseButtonLabel           string
+	HelpPageNotificationSystem HelpPageNotificationSystem
+	HelpPageDatabase           HelpPageDatabase
+}

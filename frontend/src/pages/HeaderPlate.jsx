@@ -15,6 +15,7 @@ import { ExtraButton } from "../components/ui/ExtraButton";
 import { DropdownList } from "../components/ui/DropdownList";
 import { Field } from "../components/ui/Field.jsx";
 import  AboutModal from "../components/modals/AboutModal.jsx"
+import  HelpModal from "../components/modals/help/HelpModal.jsx"
 
 const HeaderPlate = ({
   theme,
@@ -25,6 +26,7 @@ const HeaderPlate = ({
   updateConfig,
   themeClasses,
   activeModal,
+  activeTab,
   setActiveModal,
 }) => {
   // Font for logo programm
@@ -127,8 +129,9 @@ const HeaderPlate = ({
             variant="button"
             width="100px"
             icon={HelpCircle}
-            labelButton={locale.HelpLabel}
+            labelButton={locale.Help.Label}
             themeClasses={themeClasses}
+            onClick={()=> setActiveModal("help")}
           />
           <Field
             variant="button"
@@ -143,6 +146,18 @@ const HeaderPlate = ({
     <AboutModal
       isOpen={activeModal === "about"}
       locale={locale.About}
+      themeClasses={themeClasses}
+      onClose={() => {
+          setActiveModal(null);
+          setTimeout(() => {
+            fetchData(false);
+          }, 100);
+      }}
+    />
+    <HelpModal
+      activeTab={activeTab}
+      isOpen={activeModal === "help"}
+      locale={locale.Help}
       themeClasses={themeClasses}
       onClose={() => {
           setActiveModal(null);

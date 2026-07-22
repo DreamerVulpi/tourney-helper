@@ -47,7 +47,9 @@ export function Modal({
   return (
   <ModalContainer 
     isOpen={isOpen}
-    onClose={onClose}>
+    onClose={onClose}
+    width={width}
+    >
     {/* Window */}
       <div
         className={`

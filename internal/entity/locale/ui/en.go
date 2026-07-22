@@ -38,7 +38,68 @@ var En = Ui{
 		ClearButtonLabel:        "Clear",
 	},
 	HeaderPanel: HeaderPanel{
-		HelpLabel: "Help",
+		Help: HelpModal{
+			Label:            "Help",
+			Title:            "Help",
+			CloseButtonLabel: "Close",
+			HelpPageNotificationSystem: HelpPageNotificationSystem{
+				InitialSetup: HelpQA{
+					Question: "How do I set up the notification system for the first time?",
+					Answer: `1. Fill in the required "CLIENT ID" and "SECRET CLIENT" fields for the tournament platform. 
+					2. Fill in the required "BOT TOKEN," "GUILD ID," "LOG CHANNEL ID," "CLIENT ID," "CLIENT SECRET," and "ROLE ID - EN" fields in the messenger. 
+					3. Select the tournament data source and the messenger for notifications by clicking the platform button itself. 
+					4. After clicking the platform button, TourneyHelper will redirect you to the authorization page and invite the bot to your messaging server. The result will be displayed in the log window.`,
+				},
+				HowIsWorks: HelpQA{
+					Question: "How does the notification system work?",
+					Answer:   `Based on the selected tournament platform, the system retrieves data about matches and their participants; if this data is new, it is saved to a local database. Using this data, the system’s bot begins sending messages to all participants (whom the system expects to be on the tournament organizer’s server) via private message every 5 minutes if the match has not started.`,
+				},
+				UsuallyUsing: HelpQA{
+					Question: "How do I use this going forward?",
+					Answer: `1. Enter a link to the tournament bracket.
+                    2. Select a genre/game from the drop-down list.
+                    3. Enter a link to the tournament logo.
+					4. Optionally, select the necessary settings in "Tournament Rules" and "Live Stream Lobby."
+                    If you need to check system, enable debug mode."`,
+				},
+				WhatIsDebugMode: HelpQA{
+					Question: "How does debug mode work?",
+					Answer:   `Debug mode is a process similar to sending messages, but the sender itself is specified as the final recipient to verify the correctness of the messaging system, the received messages, and the bot's commands.`,
+				},
+				WhatCanDo: HelpQA{
+					Question: "What can I do while the system is running?",
+					Answer: `1. Once the system starts up, a bot is activated that supports the following commands: %v
+					/contacts [player_nickname] [game_name]%v - allows you to search for a player’s contact in the database directly through the messenger (for example, if the computer running "TourneyHelper" isn’t nearby or if a player wants to find a specific player’s contact on their own)%v
+					2. Use the other features of the "TourneyHelper" program.`,
+				},
+				HowGetDataForStartgg: HelpQA{
+					Question: "How do I get data for start.gg?",
+					Answer: `1. Log in to your start.gg account -> "Developer Settings" -> "OAuth Applications"
+                    2. Create an "OAuth Application". As you fill in the information, enter the value from the "TourneyHelper" program in the "Application Authorization Callback" field.
+                    3. Copy the "CLIENT ID" and "CLIENT SECRET" values into the program "TourneyHelper".`,
+				},
+				HowGetDataForDiscord: HelpQA{
+					Question: "How do I get data for Discord?",
+					Answer: `1. Log in to your Discord account -> Go to the %v Developers section%v.
+                    2. Create your own app (click the "New App" button).
+					3. In the app, select: Overview -> "OAuth." Enter the "CLIENT ID" and "CLIENT SECRET" into the "TourneyHelper" program.
+                    4. In the "Redirects" section, add the "REDIRECT API" from the "TourneyHelper" program.
+					5. In the app, select: Bot -> Get Bot Token and enter it into the "TOKEN BOT" field in the "TourneyHelper" program.
+					The remaining fields, "ROLE-ID X" and "LOG CHANNEL ID," can be obtained by right-clicking on the element within Discord itself and selecting "Copy ID" (You must first enable developer mode in Discord’s settings).`,
+				},
+			},
+			HelpPageDatabase: HelpPageDatabase{
+				WhatIsDatabase: HelpQA{
+					Question: "What is the player database?",
+					Answer:   `It is a local repository of player data required for the notification system to function properly.`,
+				},
+				HowUse: HelpQA{
+					Question: "How do I use it?",
+					Answer: `The program allows you to fully control the database — you can add (manually or via a file), edit, modify, and delete player data, as well as keep track of your game league or ban list.%v
+					If you're adding players via a file, you must log in to start.gg in advance in the "Sending notifications" tab.`,
+				},
+			},
+		},
 		About: AboutModal{
 			Label:            "About",
 			Title:            "About",
