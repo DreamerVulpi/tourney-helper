@@ -12,7 +12,7 @@ import (
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/db"
 	"github.com/dreamervulpi/tourneyBot/internal/db/repo"
-	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	application "github.com/dreamervulpi/tourneyBot/internal/usecase/app"
 	usecaseDB "github.com/dreamervulpi/tourneyBot/internal/usecase/db"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/dbManager"
@@ -35,14 +35,14 @@ func main() {
 	app := application.NewApp()
 	conn, err := db.NewPool()
 	if err != nil {
-		app.Log(loggerEntity.Error, err.Error())
+		logger.Log(entityLogger.Error, err.Error())
 		return
 	}
 
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Log(loggerEntity.Error, fmt.Sprintf("Critical error\n Why? %v\n Stack:\n%s", r, debug.Stack()))
-			logger.Log(loggerEntity.Error, "Programm closed with error. More details in folder logs")
+			logger.Log(entityLogger.Error, fmt.Sprintf("Critical error\n Why? %v\n Stack:\n%s", r, debug.Stack()))
+			logger.Log(entityLogger.Error, "Programm closed with error. More details in folder logs")
 		}
 	}()
 	db := dbManager.Database{

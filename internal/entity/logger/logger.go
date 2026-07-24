@@ -3,6 +3,7 @@ package logger
 const (
 	Info    = "INFO"
 	Warning = "WARNING"
+	Debug   = "DEBUG"
 	Error   = "ERROR"
 	Success = "SUCCESS"
 )

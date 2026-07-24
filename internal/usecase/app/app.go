@@ -22,7 +22,6 @@ type App struct {
 	Db               *dbManager.Database
 	Locale           *config.SettingsApplication
 	logUpdateTimer   *time.Timer
-	logUpdateCh      chan struct{}
 
 	mu        sync.Mutex
 	ns        *sender.NotificationSystem
@@ -36,9 +35,7 @@ func NewApp() *App {
 
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
-	a.logUpdateCh = make(chan struct{}, 1)
 
-	go a.logNotifier()
 	go a.StartBanCleaner(a.ctx)
 }
 

@@ -83,7 +83,7 @@ func (h *Handler) msgContactData(nickname, gameName string, listContacts db.Part
 	return embed, nil
 }
 
-func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Participant, set entitySender.SetData, local entityLocale.Lang) (*discordgo.MessageEmbed, error) {
+func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set entitySender.SetData, local entityLocale.Lang) (*discordgo.MessageEmbed, error) {
 	format := s.params.rulesMatches.StandardFormat
 	embedColor := ColorDefault
 
@@ -124,7 +124,7 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 			}
 		}
 	}
-	logger.Log(entityLogger.Info, fmt.Sprintf("prepareSetData | Set: %v | Recipient: %s vs Opponent: %s | Link: %s", set.SetID, recipient.MessengerLogin, opponent.MessengerLogin, set.FullInviteLink))
+	// logger.Log(entityLogger.Info, fmt.Sprintf("prepareSetData | Set: %v | Recipient: %s vs Opponent: %s | Link: %s", set.SetID, recipient.MessengerLogin, opponent.MessengerLogin, set.FullInviteLink))
 
 	if len(set.StreamSourse) == 0 {
 		fields := []*discordgo.MessageEmbedField{
@@ -219,7 +219,8 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*d
 		local = entityLocale.Ru
 	}
 
-	message, err := s.prepareMsgSetData(recipient, opponent, set, local)
+	// message, err := s.prepareMsgSetData(recipient, opponent, set, local)
+	message, err := s.prepareMsgSetData(opponent, set, local)
 	if err != nil {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Can't prepare Discord message: %v\n", err.Error()))
 		s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)

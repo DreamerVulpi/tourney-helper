@@ -40,10 +40,9 @@ import WidgetScoreboardPanel from "./pages/WidgetScoreboardPanel.jsx";
 import LoggerPlate from "./pages/LoggerPlate.jsx";
 
 import { useSystemConfig, useTourneyConfig } from "./hooks/App/useConfig.jsx";
-import { createLoadLogs } from "./hooks/App/useLogs.jsx";
+
 import { useScale } from "./hooks/App/useScale.jsx";
 import { useLocale } from "./hooks/App/useLocale.jsx";
-import { useLogsSubscribe } from "./hooks/App/useSubscribe.jsx";
 import { useAppInit } from "./hooks/App/useAppInit.jsx"
 import { useAutoSave } from "./hooks/App/useAutoSave.jsx";
 import { useConfigUpdater } from "./hooks/App/useConfigUpdater.jsx";
@@ -52,12 +51,6 @@ import { getThemeClasses } from "./utils/themeClasses.jsx";
 const App = () => {
   // Scale UI
   const scale = useScale();
-
-  // Load logs
-  const [ logs, setLogs ] = useState([]);
-  const loadLogs = createLoadLogs(setLogs);
-  // Follow for newest logs using reload reading
-  useLogsSubscribe(loadLogs);
 
   // Variables for configs 
   const [settings, setSettings] = useState(null);
@@ -72,7 +65,7 @@ const App = () => {
   const {lang, locale, setLang } = useLocale("EN")
 
   // Initialization application
-  useAppInit({locale, loadLogs, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme});
+  useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme});
 
   // Delay before save data from fields in configs
   const {debouncedSaveSystem, debouncedSaveTourney, debouncedSaveSettings} = useAutoSave();
@@ -190,8 +183,6 @@ const App = () => {
               </main>
 
               <LoggerPlate
-                logs={logs}
-                setLogs={setLogs}
                 theme={theme}
                 locale={locale.LogPanel}
               />

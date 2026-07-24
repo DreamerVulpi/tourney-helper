@@ -11,9 +11,10 @@ import (
 
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/bot/discord"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 )
 
@@ -77,7 +78,7 @@ func (a *App) InitSystemNotification(language string) (discord.Handler, error) {
 	}, 5*time.Minute)
 	dh.Ns = ns
 	if a.ConfigMessenger.DebugMode.Mode {
-		a.Log(logger.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
+		logger.Log(entityLogger.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
 	}
 
 	return dh, nil
@@ -168,7 +169,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 	if a.ns != nil {
 		a.mu.Unlock()
 		err := fmt.Errorf("Mailing system is already running")
-		a.Log(logger.Error, err.Error())
+		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
 	a.mu.Unlock()
@@ -177,55 +178,55 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 	case "discord":
 		if len(cfgBot.Discord.Token) == 0 {
 			err := fmt.Errorf("No token for discord authorization\n")
-			a.Log(logger.Error, err.Error())
+			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
 		if len(cfgBot.Discord.ClientID) == 0 {
 			err := fmt.Errorf("No clientID for bot authorization\n")
-			a.Log(logger.Error, err.Error())
+			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
 		if len(cfgBot.Discord.SecretClient) == 0 {
 			err := fmt.Errorf("No secretClient for bot authorization\n")
-			a.Log(logger.Error, err.Error())
+			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
 		err := a.AuthorizeDiscord(cfgBot.Discord.ClientID, cfgBot.Discord.SecretClient)
 		if err != nil {
-			a.Log(logger.Error, err.Error())
+			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		a.Log(logger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.TournamentClient.NamePlatform, a.TournamentClient))
+		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.TournamentClient.NamePlatform, a.TournamentClient))
 	}
 
 	if len(cfgTournament.UrlToTournament) == 0 {
 		err := fmt.Errorf("No tournament url/slug for get data tournament\n")
-		a.Log(logger.Error, err.Error())
+		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
 	switch tournamentPlatform {
 	case "startgg":
 		if len(cfgTournament.Startgg.ClientID) == 0 {
 			err := fmt.Errorf("No clientID for authorization\n")
-			a.Log(logger.Error, err.Error())
+			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
 		if len(cfgTournament.Startgg.SecretClient) == 0 {
 			err := fmt.Errorf("No secretClient for bot authorization\n")
-			a.Log(logger.Error, err.Error())
+			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
 		err := a.AuthorizeStartgg(cfgTournament.Startgg.ClientID, cfgTournament.Startgg.SecretClient)
 		if err != nil {
-			a.Log(logger.Error, err.Error())
+			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		a.Log(logger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.MessengerClient.NamePlatform, a.MessengerClient))
+		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.MessengerClient.NamePlatform, a.MessengerClient))
 	}
 
 	slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.UrlToTournament)
 	if err != nil {
-		a.Log(logger.Error, err.Error())
+		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
 	cfgTournament.UrlToTournament = slug
@@ -235,7 +236,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 
 	sn, err := a.InitSystemNotification(language)
 	if err != nil {
-		a.Log(logger.Error, err.Error())
+		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
 
@@ -249,13 +250,13 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 
 	go func() {
 		if err := a.activeBot.Start(ctx, a.TournamentClient, a.Db.Conn, *a.ConfigMessenger, *a.ConfigTournament); err != nil {
-			a.Log(logger.Error, err.Error())
+			logger.Log(entityLogger.Error, err.Error())
 		}
 	}()
 	go func() {
 		select {
 		case <-sn.ReadyChan:
-			a.Log(logger.Info, "The bot has been launched. Starting to send out notifications...")
+			logger.Log(entityLogger.Info, "The bot has been launched. Starting to send out notifications...")
 			sn.StartSendMessages()
 		case <-ctx.Done():
 			return
@@ -271,10 +272,10 @@ func (a *App) StopSendNotifications() error {
 
 	if a.ns == nil {
 		err := fmt.Errorf("Mailing system isn't running")
-		a.Log(logger.Error, err.Error())
+		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
-	a.Log(logger.Info, "Stopping the notifications...")
+	logger.Log(entityLogger.Info, "Stopping the notifications...")
 
 	if a.nsCancel != nil {
 		a.nsCancel()
@@ -282,7 +283,7 @@ func (a *App) StopSendNotifications() error {
 
 	if a.activeBot != nil {
 		if err := a.activeBot.Stop(); err != nil {
-			a.Log(logger.Error, fmt.Sprintf("Couldn't stop the bot from running: %v\n", err))
+			logger.Log(entityLogger.Error, fmt.Sprintf("Couldn't stop the bot from running: %v\n", err))
 		}
 	}
 
@@ -290,6 +291,6 @@ func (a *App) StopSendNotifications() error {
 	a.nsCancel = nil
 	a.activeBot = nil
 
-	a.Log(logger.Success, "The notification system was successfully stopped")
+	logger.Log(entityLogger.Success, "The notification system was successfully stopped")
 	return nil
 }

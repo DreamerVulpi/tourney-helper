@@ -106,7 +106,7 @@ var En = Ui{
 			Label:              "About",
 			Title:              "About",
 			Version:            "Version:",
-			Description:        "Desktop software for automating tournament management and participant communication.",
+			Description:        "Software for automating tournament management and participant communication.",
 			Developer:          "Developer:",
 			Frontend:           "Frontend:",
 			Backend:            "Backend:",

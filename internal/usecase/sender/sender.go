@@ -147,7 +147,9 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 		if p1NeedsSending && contactP1.IsFound {
 			timeP1, err = ns.sendNotification(ctx, contactP1, set, timeP1)
 			if err != nil {
-				log.Printf("Set %d P1 notification failed: %v", set.SetID, err)
+				logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed to %v. Error: %v", set.SetID, contactP1.GameNickname, err.Error()))
+			} else {
+				logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P1 notification successful to %v", set.SetID, contactP1.GameNickname))
 			}
 		}
 
@@ -160,12 +162,14 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 
 			timeP2, err = ns.sendNotification(ctx, contactP2, setForP2, timeP2)
 			if err != nil {
-				log.Printf("Set %d P2 notification failed: %v", set.SetID, err)
+				logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed to %v. Error: %v", set.SetID, contactP2.GameNickname, err.Error()))
+			} else {
+				logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P2 notification successful to %v", set.SetID, contactP2.GameNickname))
 			}
 		}
 
 		if err := ns.saveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {
-			log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
+			logger.Log(entityLogger.Error, fmt.Sprintf("Process | Can't add set (%v) to DB: %v", set.SetID, err))
 		}
 	}
 	return nil

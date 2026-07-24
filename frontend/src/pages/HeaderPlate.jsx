@@ -16,6 +16,7 @@ import { DropdownList } from "../components/ui/DropdownList";
 import { Field } from "../components/ui/Field.jsx";
 import  AboutModal from "../components/modals/AboutModal.jsx"
 import  HelpModal from "../components/modals/help/HelpModal.jsx"
+import Logo from "../../../branding/icons/256.png";
 
 const HeaderPlate = ({
   theme,
@@ -54,9 +55,13 @@ const HeaderPlate = ({
         {/* Logo */}
         {fontStyle}
         <div className="flex items-center gap-[0.4rem] mb-2 mt-2 select-none">
-          <div className="p-2 bg-blue-600/10 rounded-lg">
-            <Trophy size={20} className="text-blue-500" />
-          </div>
+        <div className="p-2 bg-blue-600/10 rounded-lg">
+          <img
+            src={Logo}
+            alt="Tourney Helper"
+            className="w-8 h-8 object-contain"
+          />
+        </div>
           <div className="hidden lg:block">
             <span
               className={`font-super-bold italic text-2xl tracking-tighter uppercase ${

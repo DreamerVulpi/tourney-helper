@@ -5,7 +5,8 @@ import (
 
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/entity/locale/ui"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 func (a *App) GetUiLocale(lang string) ui.Ui {
@@ -72,10 +73,10 @@ func (a *App) LoadSystemConfig() (config.ConfigMessenger, error) {
 			},
 		}
 		config.SaveConfig(path, nullCfg)
-		a.Log(logger.Warning, "The system configuration could not be loaded. It has been recreated")
+		logger.Log(entityLogger.Warning, "The system configuration could not be loaded. It has been recreated")
 		return nullCfg, nil
 	}
-	a.Log(logger.Success, "The system configuration has been successfully loaded")
+	logger.Log(entityLogger.Success, "The system configuration has been successfully loaded")
 	return cfg, nil
 }
 
@@ -124,10 +125,10 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 			},
 		}
 		config.SaveTournament(config.GetAbsPath("config/tournament2.toml"), nullCfg)
-		a.Log(logger.Warning, "The tournament configuration could not be loaded. It has been recreated")
+		logger.Log(entityLogger.Warning, "The tournament configuration could not be loaded. It has been recreated")
 		return nullCfg, nil
 	}
-	a.Log(logger.Success, "The tournament configuration has been successfully loaded")
+	logger.Log(entityLogger.Success, "The tournament configuration has been successfully loaded")
 	return cfg, nil
 }
 

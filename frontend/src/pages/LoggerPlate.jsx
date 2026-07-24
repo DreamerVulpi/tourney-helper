@@ -1,9 +1,22 @@
-import React from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { Database } from "lucide-react";
 import { getThemeClasses } from "../utils/theme/LoggerPlate/themes";
+import { createLoadLogs } from "../hooks/App/useLogs.jsx";
 
-const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
+const LoggerPlate = ({ theme, locale}) => {
   const themeClasses = getThemeClasses(theme);
+  const [logs, setLogs] = useState([]);
+    const loadLogs = useCallback(createLoadLogs(setLogs), []);
+
+    useEffect(() => {
+        loadLogs();
+
+        const interval = setInterval(loadLogs, 1000);
+
+        return () => clearInterval(interval);
+    }, [loadLogs]);
+
   return (
     <footer
       className={`h-40 border-t backdrop-blur-xl z-40 overflow-hidden flex flex-col ${
@@ -34,8 +47,10 @@ const LoggerPlate = ({ logs = [], setLogs, theme, locale}) => {
                   : l.type === "error" 
                     ? "text-red-500" 
                     : l.type === "warning"
-                    ? "text-orange-500"
-                    : "text-blue-400"
+                      ? "text-orange-500"
+                       : l.type === "debug"
+                        ? "text-amber-500"
+                        : "text-blue-400"
               }`}
             >
               <span className={themeClasses.logText}>[{l.time}]</span>

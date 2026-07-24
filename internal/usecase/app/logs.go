@@ -3,25 +3,17 @@ package application
 import (
 	"os"
 	"strings"
-	"time"
 
-	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	loggerUsecase "github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 func (a *App) Log(logType string, msg string) {
-	loggerUsecase.Log(logType, msg)
-
-	select {
-	case a.logUpdateCh <- struct{}{}:
-	default:
-	}
+	logger.Log(logType, msg)
 }
 
-func parseLogLine(line string) (logger.LogEntry, bool) {
-	entry := logger.LogEntry{
+func parseLogLine(line string) (entityLogger.LogEntry, bool) {
+	entry := entityLogger.LogEntry{
 		Msg: line,
 	}
 
@@ -29,35 +21,36 @@ func parseLogLine(line string) (logger.LogEntry, bool) {
 	end := strings.Index(line, "]")
 
 	if start == -1 || end == -1 || end <= start {
-		return logger.LogEntry{}, false
+		return entityLogger.LogEntry{}, false
 	}
 
 	entry.Type = line[start+1 : end]
 	entry.Msg = strings.TrimSpace(line[end+1:])
 
 	switch entry.Type {
-	case loggerEntity.Info,
-		loggerEntity.Success,
-		loggerEntity.Warning,
-		loggerEntity.Error:
+	case entityLogger.Info,
+		entityLogger.Success,
+		entityLogger.Warning,
+		entityLogger.Debug,
+		entityLogger.Error:
 		fields := strings.Fields(line[:start])
 		if len(fields) >= 2 {
 			entry.Time = fields[1]
 		}
 		return entry, true
 	default:
-		return loggerEntity.LogEntry{}, false
+		return entityLogger.LogEntry{}, false
 	}
 }
 
-func (a *App) GetLogs() ([]logger.LogEntry, error) {
-	path := loggerUsecase.DevLogPath()
+func (a *App) GetLogs() ([]entityLogger.LogEntry, error) {
+	path := logger.DevLogPath()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	var logs []logger.LogEntry
+	var logs []entityLogger.LogEntry
 
 	for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
 		if strings.TrimSpace(line) == "" {
@@ -71,11 +64,4 @@ func (a *App) GetLogs() ([]logger.LogEntry, error) {
 		logs = append(logs, entry)
 	}
 	return logs, nil
-}
-
-func (a *App) logNotifier() {
-	for range a.logUpdateCh {
-		time.Sleep(50 * time.Millisecond)
-		runtime.EventsEmit(a.ctx, "logs-updated")
-	}
 }

@@ -10,7 +10,6 @@ function log(log) {
 }
 
 
-
 export function createLoadLogs(setLogs) {
     return async function loadLogs() {
         try {

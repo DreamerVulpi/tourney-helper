@@ -229,7 +229,6 @@ const ParticipantModal = ({
     };
 
     if (isBanMode || isAlreadyBanned) {
-      console.log(banData)
       onSave({
         ...basePayload,
         isDirectBan: isBanMode,

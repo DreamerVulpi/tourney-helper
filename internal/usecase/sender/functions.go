@@ -10,8 +10,11 @@ import (
 	"errors"
 
 	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+
 	// "github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 func (ns NotificationSystem) checkParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
@@ -72,7 +75,9 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, set ent
 
 	dmChannelIDP1, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, contactP1.DmChannelId, setForP1)
 	if err != nil {
-		log.Printf("sendNotification | can't send notification to %s: %v", ns.TestContact.MessengerID, err)
+		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin, err.Error()))
+	} else {
+		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
 	}
 
 	if contactP1.DmChannelId == nil || *contactP1.DmChannelId != dmChannelIDP1 {
@@ -95,7 +100,9 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, set ent
 
 	dmChannelIDP2, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, contactP2.DmChannelId, setForP2)
 	if err != nil {
-		log.Printf("sendNotification | can't send notification to %s: %v", ns.TestContact.MessengerID, err)
+		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin, err.Error()))
+	} else {
+		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
 	}
 
 	if contactP1.DmChannelId == nil || *contactP1.DmChannelId != dmChannelIDP2 {

@@ -7,13 +7,12 @@ import {
 } from "../../../wailsjs/go/application/App.js";
 
 export function useAppInit({
-    locale, loadLogs, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme,
+    locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme,
 }) {
     const isConfigLoadedRef = useRef(false);
     useEffect(() => {
         if (!locale) return;
-    
-        loadLogs(locale);
+  
     
         if (isConfigLoadedRef.current) return;
     
