@@ -4,7 +4,7 @@
 <p align="center"> <img style="padding: 10px" align="center" alt="TourneyHelper label" src="./branding/exports/label.png" width="350"> </p>
 
 <p align="center">
-    <b> Desktop software for automating tournament management and participant communication. </b>
+    <b> Software for automating tournament management and participant communication. </b>
 </p>
 <p align="center">
     <a href="https://pkg.go.dev/github.com/dreamervulpi/tourney-helper"><img src="https://img.shields.io/badge/Go.dev-reference-007d9c?logo=go&logoColor=white" alt="Go.dev"></a>
