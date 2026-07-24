@@ -1,11 +1,14 @@
 package config
 
 import (
+	"bytes"
 	"os"
 
 	"path/filepath"
 
 	"strings"
+
+	"fmt"
 
 	"github.com/BurntSushi/toml"
 	"github.com/ilyakaznacheev/cleanenv"
@@ -99,7 +102,7 @@ func GetAbsPath(fileName string) string {
 
 	exPath := filepath.Dir(ex)
 
-	if strings.Contains(exPath, "Temp") || strings.Contains(exPath, "go-build") {
+	if strings.Contains(exPath, "go-build") {
 		return fileName
 	}
 
@@ -162,4 +165,99 @@ func SaveTournament(file string, cfg ConfigTournament) error {
 	}
 	defer f.Close()
 	return toml.NewEncoder(f).Encode(cfg)
+}
+
+func Init(configDir string) error {
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return fmt.Errorf("could not create config directory: %w", err)
+	}
+
+	files := map[string]any{
+		"config.toml": ConfigMessenger{
+			Discord: MessengerPlatform{
+				Token:          "",
+				ClientID:       "",
+				SecretClient:   "",
+				GuildID:        "",
+				DebugChannelID: "",
+				Roles: RolesID{
+					Ru: "",
+					En: "",
+				},
+			},
+			Telegram: MessengerPlatform{
+				Token:          "",
+				ClientID:       "",
+				SecretClient:   "",
+				GuildID:        "",
+				DebugChannelID: "",
+				Roles: RolesID{
+					Ru: "",
+					En: "",
+				},
+			},
+			DebugMode: DebugMode{
+				Mode: false,
+			},
+			Db: Database{
+				Dsn: "",
+			},
+		},
+		"tournament.toml": ConfigTournament{
+			Startgg: TournamentPlatform{
+				Name:         "",
+				ClientID:     "",
+				SecretClient: "",
+			},
+			Challonge: TournamentPlatform{
+				Name:         "",
+				ClientID:     "",
+				SecretClient: "",
+			},
+			UrlToTournament: "",
+			Rules: RulesMatches{
+				StandardFormat: 2,
+				FinalsFormat:   3,
+				Stage:          "Any",
+				Rounds:         3,
+				Duration:       60,
+				Crossplatform:  false,
+			},
+			Stream: StreamLobby{
+				Area:          "Any",
+				Language:      "EN",
+				Conn:          "Wired",
+				Crossplatform: false,
+				Passcode:      "0000",
+			},
+			Logo: Logo{
+				Img: "",
+			},
+			Csv: Csv{
+				NameFile: "",
+			},
+			Game: ConfigGame{
+				Name: "",
+			},
+		},
+		"settings.toml": SettingsApplication{
+			Language: "EN",
+			Theme:    "Dark",
+		},
+	}
+
+	for fileName, cfg := range files {
+		path := filepath.Join(configDir, fileName)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			var buf bytes.Buffer
+
+			if err := toml.NewEncoder(&buf).Encode(cfg); err != nil {
+				return fmt.Errorf("could not encode %s: %w", fileName, err)
+			}
+			if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
+				return fmt.Errorf("could not create %s: %w", fileName, err)
+			}
+		}
+	}
+	return nil
 }

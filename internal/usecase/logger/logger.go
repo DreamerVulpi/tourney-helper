@@ -2,12 +2,13 @@ package logger
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"io"
 
 	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 )
@@ -24,7 +25,7 @@ func DevLogPath() string {
 	return devFile.Name()
 }
 
-func Init(logDir string) error {
+func Init(logDir string, isDev bool) error {
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		return fmt.Errorf("could not create log directory: %w", err)
 	}
@@ -38,7 +39,12 @@ func Init(logDir string) error {
 		return fmt.Errorf("could not open log file: %w", err)
 	}
 
-	log.SetOutput(io.MultiWriter(os.Stdout, devFile))
+	if isDev {
+		log.SetOutput(io.MultiWriter(os.Stdout, devFile))
+	} else {
+		log.SetOutput(devFile)
+	}
+
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	Log(logger.Info, "The logger has been initialized")

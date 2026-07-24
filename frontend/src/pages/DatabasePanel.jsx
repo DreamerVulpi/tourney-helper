@@ -33,6 +33,7 @@ import {
   DelParticipant,
   ResetRating,
   LoadListPlayers,
+  OpenImportFile,
 } from "../../wailsjs/go/application/App.js";
 import ImportProgressModal from "../components/ImportProgressModal.jsx";
 import ImportFileModal from "../components/ImportFileModal.jsx";
@@ -46,7 +47,7 @@ import { Field } from "../components/ui/Field.jsx";
 const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   // Notes in 1 request to database
   const limit = 5;
-
+  
   const [selectedGame, setSelectedGame] = useState("Tekken8");
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -74,7 +75,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   const [players, setPlayers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [importedFileData, setImportedFileData] = useState(null);
+  const [importFilePath, setImportedFilePath] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFileType, setImportFileType] = useState(null); // 'json' или 'csv'
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,6 +90,10 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   const [importStatus, setImportStatus] = useState("idle"); // "idle" | "loading" | "success"
   const [importError, setImportError] = useState(null);
   const [importResult, setImportResult] = useState(null);
+
+  useEffect(() => {
+    console.log("File type:", importFileType);
+  }, [importFileType]);
 
   const listRegions = [
     {
@@ -147,21 +152,38 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   }, [activeFilter, locale]);
 
   // Handler for import file of participants
-  const handleImportFile = (file) => {
-    if (!file) return;
-    const systemFilePath = file.path || file.name;
+  // const handleImportFile = (file) => {
+  //   if (!file) return;
+  //   const systemFilePath = file.path || file.name;
 
-    const isJson = file.name.endsWith(".json");
-    const isCsv = file.name.endsWith(".csv");
+  //   const isJson = file.name.endsWith(".json");
+  //   const isCsv = file.name.endsWith(".csv");
 
-    if (!isJson && !isCsv) {
-      return;
-    }
+  //   if (!isJson && !isCsv) {
+  //     return;
+  //   }
 
-    setImportedFileData(systemFilePath);
+  //   setImportedFileData(systemFilePath);
+  //   setImportFileType(isJson ? "json" : "csv");
+  //   setIsImportModalOpen(true);
+  // };
+  const handleImportFile = async () => {
+    const systemFilePath = await OpenImportFile();
+
+    if (!systemFilePath) return;
+
+    const fileName = systemFilePath.split(/[\\/]/).pop();
+
+    const isJson = fileName.toLowerCase().endsWith(".json");
+    const isCsv = fileName.toLowerCase().endsWith(".csv");
+
+    if (!isJson && !isCsv) return;
+
+    setImportedFilePath(systemFilePath);
     setImportFileType(isJson ? "json" : "csv");
     setIsImportModalOpen(true);
   };
+
 
   // Handler for confirm file import of participants
   const handleConfirmFileImport = async (filePath) => {
@@ -174,6 +196,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
     try {
       const isBanChecked = activeFilter === "banned";
 
+      console.log(filePath)
       const result = await LoadListPlayers(
         filePath,
         nameTournamentPlatform,
@@ -205,7 +228,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
           "%v",
         );
 
-      setImportedFileData(null);
+      setImportedFilePath(null);
       setImportFileType(null);
 
       setTimeout(() => {
@@ -669,24 +692,21 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                     {addButtonConfig.text}
                   </span>
                 </button>
-
-                <input
-                  type="file"
-                  accept=".json, .csv, text/csv"
-                  id="json-file-input"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      handleImportFile(e.target.files[0]);
-                    }
-                    e.target.value = "";
-                  }}
-                />
-
+                  {/* TODO: Change to button */}
+                  {/* <input
+                    type="file"
+                    accept=".json, .csv, text/csv"
+                    id="json-file-input"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        handleImportFile(e.target.files[0]);
+                      }
+                      e.target.value = "";
+                    }}
+                  /> */}
                 <button
-                  onClick={() =>
-                    document.getElementById("json-file-input").click()
-                  }
+                  onClick={handleImportFile}
                   className={`flex-[1.2] flex flex-col items-center justify-center border transition-all rounded-r-xl py-3 px-1 ${
                     theme === "dark"
                       ? activeFilter === "banned"
@@ -1289,11 +1309,11 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
         isOpen={isImportModalOpen}
         onClose={() => {
           setIsImportModalOpen(false);
-          setImportedFileData(null);
+          setImportedFilePath(null);
           setImportFileType(null);
         }}
         onConfirm={handleConfirmFileImport}
-        filePath={importedFileData}
+        filePath={importFilePath}
         fileType={importFileType}
         theme={theme}
         activeFilter={activeFilter}

@@ -45,3 +45,26 @@ func (a *App) Shutdown(ctx context.Context) {
 func (a *App) OpenURL(url string) {
 	runtime.BrowserOpenURL(a.ctx, url)
 }
+
+func (a *App) OpenImportFile() (string, error) {
+	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select file",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "Import files",
+				Pattern:     "*.json; *.csv",
+			},
+		},
+	})
+}
+func (a *App) OpenImportImage() (string, error) {
+	return runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select file",
+		Filters: []runtime.FileFilter{
+			{
+				DisplayName: "Import files",
+				Pattern:     "*.png; *.jpeg",
+			},
+		},
+	})
+}

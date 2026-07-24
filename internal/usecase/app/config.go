@@ -39,7 +39,7 @@ func (a *App) SaveSettingsApp(cfg config.SettingsApplication) error {
 }
 
 func (a *App) LoadSystemConfig() (config.ConfigMessenger, error) {
-	path := config.GetAbsPath("config/config2.toml")
+	path := config.GetAbsPath("config/config.toml")
 	cfg, err := config.LoadConfig(path)
 	if err != nil {
 		nullCfg := config.ConfigMessenger{
@@ -81,11 +81,11 @@ func (a *App) LoadSystemConfig() (config.ConfigMessenger, error) {
 }
 
 func (a *App) SaveSystemConfig(cfg config.ConfigMessenger) error {
-	return config.SaveConfig(config.GetAbsPath("config/config2.toml"), cfg)
+	return config.SaveConfig(config.GetAbsPath("config/config.toml"), cfg)
 }
 
 func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
-	cfg, err := config.LoadTournament(config.GetAbsPath("config/tournament2.toml"))
+	cfg, err := config.LoadTournament(config.GetAbsPath("config/tournament.toml"))
 	if err != nil {
 		nullCfg := config.ConfigTournament{
 			Startgg: config.TournamentPlatform{
@@ -124,7 +124,7 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 				Name: "",
 			},
 		}
-		config.SaveTournament(config.GetAbsPath("config/tournament2.toml"), nullCfg)
+		config.SaveTournament(config.GetAbsPath("config/tournament.toml"), nullCfg)
 		logger.Log(entityLogger.Warning, "The tournament configuration could not be loaded. It has been recreated")
 		return nullCfg, nil
 	}
@@ -133,5 +133,5 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 }
 
 func (a *App) SaveTournamentConfig(cfg config.ConfigTournament) error {
-	return config.SaveTournament(config.GetAbsPath("config/tournament2.toml"), cfg)
+	return config.SaveTournament(config.GetAbsPath("config/tournament.toml"), cfg)
 }

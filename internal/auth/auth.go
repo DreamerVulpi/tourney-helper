@@ -70,7 +70,7 @@ func GetDiscordOauth2(clientID, clientSecret string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  "http://127.0.0.1:7310/callback",
+		RedirectURL:  "http://127.0.0.2:7310/callback",
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  discordAuthURL,
 			TokenURL: discordTokenURL,

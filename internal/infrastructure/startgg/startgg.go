@@ -108,7 +108,7 @@ func (c *Client) LoadDataFromJSON(path string, gameName string) ([]startgg.Impor
 
 	f, err := os.ReadFile(path)
 	if err != nil {
-		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadCSV: open file, %v", err)
+		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadJSON: open file, %v", err)
 	}
 
 	var rows []startgg.ParticipantImportContact

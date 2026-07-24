@@ -26,7 +26,7 @@ import (
 
 func main() {
 	logDir := "logs"
-	err := logger.Init(logDir)
+	err := logger.Init(logDir, true)
 	if err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)

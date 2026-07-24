@@ -3,11 +3,8 @@ package main
 import (
 	"embed"
 	"fmt"
-	"log"
 	"os"
 	"runtime/debug"
-
-	"errors"
 
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/db"
@@ -26,11 +23,15 @@ import (
 var assets embed.FS
 
 func main() {
-	if err := logger.Init("logs"); err != nil {
+	if err := logger.Init(config.GetAbsPath("logs"), true); err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)
 	}
 	defer logger.Close()
+
+	if err := config.Init(config.GetAbsPath("config")); err != nil {
+		logger.Log(entityLogger.Error, err.Error())
+	}
 
 	app := application.NewApp()
 	conn, err := db.NewPool()
@@ -55,13 +56,13 @@ func main() {
 	}
 	app.Db = &db
 
-	cfgMessenger, err := config.LoadConfig(config.GetAbsPath("config/config2.toml"))
+	cfgMessenger, err := config.LoadConfig(config.GetAbsPath("config/config.toml"))
 	if err != nil {
-		log.Println(errors.New("not loaded messenger config: ").Error() + err.Error())
+		logger.Log(entityLogger.Error, "not loaded messenger config: "+err.Error())
 	}
-	cfgTournament, err := config.LoadTournament(config.GetAbsPath("config/tournament2.toml"))
+	cfgTournament, err := config.LoadTournament(config.GetAbsPath("config/tournament.toml"))
 	if err != nil {
-		log.Println(errors.New("not loaded tournament config: ").Error() + err.Error())
+		logger.Log(entityLogger.Error, "not loaded tournament config: "+err.Error())
 	}
 
 	app.ConfigMessenger = &cfgMessenger
@@ -83,6 +84,6 @@ func main() {
 	})
 
 	if err != nil {
-		println("Error:", err.Error())
+		logger.Log(entityLogger.Error, err.Error())
 	}
 }

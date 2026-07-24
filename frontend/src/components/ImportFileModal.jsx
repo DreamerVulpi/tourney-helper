@@ -59,6 +59,7 @@ const ImportFileModal = ({
   const jsonTemplate = isBanImport ? banListTemplate : defaultTemplate;
 
   const fileName = filePath.split(/[/\\]/).pop();
+  console.log("Modal: ", fileType)
   const isFromCsv = fileType === "csv";
 
   const typeStr = isFromCsv ? "CSV" : "JSON";
@@ -174,19 +175,24 @@ const ImportFileModal = ({
         )}
       </MessageBox>
 
-      <div>
-        <div className="flex justify-between items-center mb-2 gap-2">
-          <Field
-            label={isBanImport
-            ? locale.SchemaFieldsBanJsonLabel
-            : locale.SchemaFieldsJSONLabel}
-            variant="textarea"
-            value={jsonTemplate}
-            themeClasses={themeClasses}
-          />
-          <CopyButton text={jsonTemplate} iconSize={"1.5rem"}/>
+      
+      {!isFromCsv && (
+        <div>
+          <div className="flex justify-between items-center mb-2 gap-2">
+            <Field
+              label={isBanImport
+              ? locale.SchemaFieldsBanJsonLabel
+              : locale.SchemaFieldsJSONLabel}
+              variant="textarea"
+              value={jsonTemplate}
+              themeClasses={themeClasses}
+            />
+            <CopyButton text={jsonTemplate} iconSize={"1.5rem"}/>
+          </div>
         </div>
-      </div>
+      )}
+    
+        
     </div>
   );
 

@@ -392,7 +392,7 @@ const NotificationSystemPlate = ({
                   <Field
                     label={locale.Platform.RedirectURL}
                     variant="copy"
-                    value={"http://127.0.0.1:7310/callback"}
+                    value={"http://127.0.0.2:7310/callback"}
                     icon={HardDriveDownload}
                     themeClasses={themeClasses}
                   />
@@ -482,6 +482,26 @@ const NotificationSystemPlate = ({
                       />
                     </div>
                     <div className="space-y-1">
+                      <Field
+                      label={"ROLE ID - EN"}
+                      icon={Languages}
+                      themeClasses={themeClasses}
+                      value={roles.en || ""}
+                        onChange={(value) =>
+                          updateConfig("system", {
+                            ...systemCfg,
+                            [activeSettings]: {
+                              ...systemCfg[activeSettings],
+                              roles: {
+                                ...systemCfg[activeSettings]?.roles,
+                                en: value,
+                              },
+                            },
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1">
                        <Field
                         label={"SECRET CLIENT"}
                         icon={Key}
@@ -523,26 +543,6 @@ const NotificationSystemPlate = ({
                         }
                     />
                     </div>
-                    <div className="space-y-1">
-                      <Field
-                      label={"ROLE ID - EN"}
-                      icon={Languages}
-                      themeClasses={themeClasses}
-                      value={roles.en || ""}
-                        onChange={(value) =>
-                          updateConfig("system", {
-                            ...systemCfg,
-                            [activeSettings]: {
-                              ...systemCfg[activeSettings],
-                              roles: {
-                                ...systemCfg[activeSettings]?.roles,
-                                en: value,
-                              },
-                            },
-                          })
-                        }
-                      />
-                    </div>
                   </div>
                 </>
               )}
@@ -560,10 +560,10 @@ const NotificationSystemPlate = ({
                   witdh="320"
                   icon={Globe}
                   value={urlToTournament}
-                  onChange={(e) =>
+                  onChange={(value) =>
                     updateConfig("tournament", {
                       ...tourneyCfg,
-                      urlToTournament: e.target.value,
+                      urlToTournament: value,
                     })
                   }
                   themeClasses={themeClasses}
@@ -663,9 +663,11 @@ const NotificationSystemPlate = ({
                         value={rules.rounds}
                         icon={Trophy}
                         themeClasses={themeClasses}
-                        onChange={(val) =>
-                          changeRule("rounds", Number(val), updateConfig)
-                        }
+                        isNumber={true}
+                        onChange={(val) => {
+                          const rounds = Math.min(5, Math.max(1, Number(val) || 1));
+                          changeRule("rounds", rounds, updateConfig);
+                        }}
                       />
                       <Field
                         label={locale.RulesOfTournament.Time}
