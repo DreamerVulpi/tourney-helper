@@ -320,7 +320,7 @@ const NotificationSystemPlate = ({
               <Field
                   label={locale.Platform.RedirectURL}
                   variant="copy"
-                  value={"http://127.0.0.1:7310/callback"}
+                  value={"http://127.0.0.1:7310/startgg/callback"}
                   icon={HardDriveDownload}
                   themeClasses={themeClasses}
               />
@@ -392,7 +392,7 @@ const NotificationSystemPlate = ({
                   <Field
                     label={locale.Platform.RedirectURL}
                     variant="copy"
-                    value={"http://127.0.0.2:7310/callback"}
+                    value={"http://127.0.0.1:7310/discord/callback"}
                     icon={HardDriveDownload}
                     themeClasses={themeClasses}
                   />
