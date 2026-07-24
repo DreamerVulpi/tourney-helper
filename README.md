@@ -50,7 +50,7 @@
 * Support for a ban list with automatic removal of bans upon expiration;
 
 ## 🚀 Getting Started
-1. Download the archive of the latest version from the “Releases” tab.
+1. Download the archive of the latest version from the "Releases" tab.
 2. Extract it to a convenient folder.
 3. Run ```TourneyHelper.exe```
 <p>
