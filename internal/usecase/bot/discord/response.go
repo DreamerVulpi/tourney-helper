@@ -4,7 +4,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// Response for instant command: /check
+// Response for instant command
 func (h *Handler) responseEmbedMsgImmediate(i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
 	return h.session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

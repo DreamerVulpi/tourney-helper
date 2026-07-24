@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 
 export function DropdownList({
+  editable = false,
   selectedValue,
   items,
   onChange,
@@ -12,9 +13,38 @@ export function DropdownList({
   style = {},
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const [inputValue, setInputValue] = useState(selectedValue);
+  const displayValue =
+  items.find((item) => String(item.value) === String(selectedValue))?.label ?? selectedValue;
+  useEffect(() => {
+    setInputValue(displayValue);
+  }, [displayValue]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (!dropdownRef.current?.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handler);
+
+    return () => {
+      document.removeEventListener("mousedown", handler);
+    };
+  }, []);
+
+  const filteredItems = editable
+    ? items.filter(
+        (item) =>
+          item.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+          item.value.toLowerCase().includes(inputValue.toLowerCase()),
+      )
+    : items;
 
   return (
-    <div className="relative w-full">
+    <div ref={dropdownRef} className="relative w-full">
       <button
         type="button"
         style={style}
@@ -32,16 +62,42 @@ export function DropdownList({
         `}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {Icon && (
-            <Icon
-              size={iconSize}
-              className="text-blue-600 shrink-0"
-            />
-          )}
+          {Icon && <Icon size={iconSize} className="text-blue-600 shrink-0" />}
 
-          <span className="truncate text-xs font-bold">
-            {selectedValue}
-          </span>
+          {editable ? (
+            <input
+              value={inputValue}
+              onChange={(e) => {
+                const value = e.target.value.replace(/^\s+/, "");
+                setInputValue(value);
+                onChange(value);
+                setIsOpen(true);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onFocus={() => setIsOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const value = inputValue.trim();
+                  setInputValue(value);
+                  onChange(value);
+                  setIsOpen(false);
+                }
+
+                if (e.key === "Escape") {
+                  setIsOpen(false);
+                }
+              }}
+              className={`
+                w-full
+                bg-transparent
+                outline-none
+                text-xs
+                font-bold
+              `}
+            />
+          ) : (
+            <span className="truncate text-xs font-bold">{selectedValue}</span>
+          )}
         </div>
 
         <ChevronDown
@@ -64,15 +120,16 @@ export function DropdownList({
             rounded-xl
             border
             shadow-xl
-            z-50
+            z-[100]
             ${themeClasses.field}
           `}
         >
-          {items.map((item) => (
+          {filteredItems.map((item) => (
             <button
               key={item.value}
               type="button"
               onClick={() => {
+                setInputValue(item.label);
                 onChange(item.value);
                 setIsOpen(false);
               }}

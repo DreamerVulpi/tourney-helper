@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 func (h *Handler) createTourneyRole(session *discordgo.Session) error {
@@ -25,7 +27,7 @@ func (h *Handler) createTourneyRole(session *discordgo.Session) error {
 		if r.Name == "Tourney Role" {
 			checker = true
 			h.tourneyRole = r
-			log.Println("createTourneyRole | Finded role in server! Saved to program")
+			logger.Log(entityLogger.Info, "Discord: Finded role in server! Saved to program")
 		}
 	}
 
@@ -49,7 +51,7 @@ func (h *Handler) createTourneyRole(session *discordgo.Session) error {
 
 		h.tourneyRole = rslt
 
-		log.Println("Tourney role successfuly created in server!")
+		logger.Log(entityLogger.Success, "Discord: Tourney role successfuly created in server!")
 	}
 
 	return nil
@@ -72,7 +74,7 @@ func (h *Handler) deleteTourneyRole(session *discordgo.Session) error {
 			if err != nil {
 				return err
 			}
-			log.Println("Tourney role successfuly deleted from server!")
+			logger.Log(entityLogger.Success, "Tourney role successfuly deleted from server!")
 			break
 		}
 	}

@@ -52,17 +52,16 @@ func (ns NotificationSystem) Run(ctx context.Context) error {
 	defer ticker.Stop()
 
 	for {
-		log.Println("Run | Starting process...")
+		logger.Log(entityLogger.Info, "Notification System | Starting process...")
 		started := time.Now()
-		log.Printf("Run | Cycle started at %s", started.Format("15:04:05"))
+		logger.Log(entityLogger.Info, fmt.Sprintf("Notification System | Cycle started at %s", started.Format("15:04:05")))
 		if err := ns.Process(ctx, slug); err != nil {
 			if errors.Is(err, context.Canceled) {
 				return err
 			}
-			log.Printf("process error: %v", err)
+			logger.Log(entityLogger.Error, fmt.Sprintf("Notification System | Error: %v", err))
 		}
-		log.Println("RUN | Process finished")
-		log.Printf("Run | Cycle finished in %v", time.Since(started))
+		logger.Log(entityLogger.Success, fmt.Sprintf("Notification System | Cycle finished in %v", time.Since(started)))
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
@@ -77,7 +76,6 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 		return err
 	}
 
-	logger.Log(entityLogger.Info, fmt.Sprintf("DebugMode: !%v", ns.DebugMode))
 	for _, set := range sets {
 		select {
 		case <-ctx.Done():
@@ -118,8 +116,16 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 			continue
 		}
 
-		contactP1, err := ns.checkParticipant(ctx, set.ContactPlayer1)
-		contactP2, err := ns.checkParticipant(ctx, set.ContactPlayer2)
+		contactP1, errP1 := ns.checkParticipant(ctx, set.ContactPlayer1)
+		contactP2, errP2 := ns.checkParticipant(ctx, set.ContactPlayer2)
+
+		if errP1 != nil {
+			logger.Log(entityLogger.Error, fmt.Sprintf("Player 1 error: %v", errP1))
+		}
+
+		if errP2 != nil {
+			logger.Log(entityLogger.Error, fmt.Sprintf("Player 2 error: %v", errP2))
+		}
 
 		if ns.DebugMode {
 			log.Printf("Debug | Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessengerLogin)
@@ -141,7 +147,7 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 		if p1NeedsSending && contactP1.IsFound {
 			timeP1, err = ns.sendNotification(ctx, contactP1, set, timeP1)
 			if err != nil {
-				log.Println(err)
+				log.Printf("Set %d P1 notification failed: %v", set.SetID, err)
 			}
 		}
 
@@ -154,7 +160,7 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 
 			timeP2, err = ns.sendNotification(ctx, contactP2, setForP2, timeP2)
 			if err != nil {
-				log.Println(err)
+				log.Printf("Set %d P2 notification failed: %v", set.SetID, err)
 			}
 		}
 

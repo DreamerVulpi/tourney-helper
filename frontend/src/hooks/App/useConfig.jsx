@@ -31,7 +31,7 @@ const initialTourneyConfig = {
       rounds: 3,
       duration: 60,
       crossplatform: true,
-      waiting: 10,
+      stage: "Any",
     },
     stream: {
       area: "EU",

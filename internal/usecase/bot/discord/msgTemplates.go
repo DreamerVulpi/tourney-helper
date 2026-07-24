@@ -8,7 +8,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourneyBot/internal/entity/db"
 	entityLocale "github.com/dreamervulpi/tourneyBot/internal/entity/locale/bot"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 const (
@@ -35,7 +37,6 @@ type responseLocale struct {
 	conn           string
 }
 
-// TODO: Change to msgEmbed or similar
 func (h *Handler) msgContactData(nickname, gameName string, listContacts db.ParticipantGetParticipantsListWithTotalCountResponse, local responseLocale) ([]*discordgo.MessageEmbed, error) {
 	embed := []*discordgo.MessageEmbed{}
 
@@ -102,7 +103,7 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 	}
 
 	gameID := opponent.GameID
-	if len(gameID) == 0 {
+	if len(gameID) == 0 || gameID == "N/D" {
 		gameID = local.ErrorMessage.NoData
 	}
 
@@ -116,14 +117,14 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 		if len(rawID) > 0 && rawID != "000000000000000000" && rawID != "N/D" {
 			discordDisplay = fmt.Sprintf("<@%v>", rawID)
 		} else {
-			if len(login) > 0 {
+			if len(login) > 3 {
 				discordDisplay = login
 			} else {
 				discordDisplay = local.ErrorMessage.NoData
 			}
 		}
 	}
-	log.Printf("prepareSetData | Set: %v | Recipient: %s vs Opponent: %s | Link: %s", set.SetID, recipient.MessengerLogin, opponent.MessengerLogin, set.FullInviteLink)
+	logger.Log(entityLogger.Info, fmt.Sprintf("prepareSetData | Set: %v | Recipient: %s vs Opponent: %s | Link: %s", set.SetID, recipient.MessengerLogin, opponent.MessengerLogin, set.FullInviteLink))
 
 	if len(set.StreamSourse) == 0 {
 		fields := []*discordgo.MessageEmbedField{
@@ -131,12 +132,9 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 			{Name: local.InviteMessage.Nickname, Value: fmt.Sprintf("```%v```", gameNickname), Inline: true},
 			{Name: local.InviteMessage.GameID, Value: fmt.Sprintf("```%v```", gameID), Inline: true},
 			{Name: local.InviteMessage.Discord, Value: discordDisplay, Inline: true},
-
 			{Name: local.InviteMessage.CheckIn, Value: set.FullInviteLink},
-
 			{Name: local.InviteMessage.SettingsHeader},
 			{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, format) + fmt.Sprintf(local.InviteMessage.FormatDescription, format), Inline: true},
-			// TODO: Add locale to stage (Any, Любая)
 			{Name: local.InviteMessage.Stage, Value: fieldStage(local, s.params.rulesMatches.Stage), Inline: true},
 			{Name: local.InviteMessage.Rounds, Value: fmt.Sprintf("%v", s.params.rulesMatches.Rounds), Inline: true},
 			{Name: local.InviteMessage.Duration, Value: fmt.Sprintf(local.InviteMessage.DurationCount, s.params.rulesMatches.Duration), Inline: true},
@@ -169,22 +167,53 @@ func (s *DiscordSender) prepareMsgSetData(recipient, opponent entitySender.Parti
 	return message, nil
 }
 
+func (s *DiscordSender) btnSupport(donName, donURL, donEmoji, subName, subURL, subEmoji string) []discordgo.MessageComponent {
+	return []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label: "GitHub",
+					Style: discordgo.LinkButton,
+					URL:   "https://github.com/DreamerVulpi/tourney-helper",
+					Emoji: &discordgo.ComponentEmoji{Name: "📦"},
+				},
+				discordgo.Button{
+					Label: donName,
+					Style: discordgo.LinkButton,
+					URL:   donURL,
+					Emoji: &discordgo.ComponentEmoji{Name: donEmoji},
+				},
+				discordgo.Button{
+					Label: subName,
+					Style: discordgo.LinkButton,
+					URL:   subURL,
+					Emoji: &discordgo.ComponentEmoji{Name: subEmoji},
+				},
+			},
+		},
+	}
+}
+
 func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*discordgo.MessageEmbed, entityLocale.Lang, entitySender.Participant) {
 	var recipient entitySender.Participant
 	var opponent entitySender.Participant
 	var sidePrefix string
 
-	if targetID == set.ContactPlayer1.MessengerID {
+	switch targetID {
+	case set.ContactPlayer1.MessengerID:
 		recipient = set.ContactPlayer1
 		opponent = set.ContactPlayer2
 		sidePrefix = "[P1] "
-	} else {
+	case set.ContactPlayer2.MessengerID:
 		recipient = set.ContactPlayer2
 		opponent = set.ContactPlayer1
 		sidePrefix = "[P2] "
+	default:
+		recipient = set.ContactPlayer1
+		opponent = set.ContactPlayer2
+		sidePrefix = "[DEBUG] "
 	}
 
-	// TODO: Change reconize locale in future
 	local := entityLocale.En
 	if len(recipient.Locale) > 0 {
 		local = entityLocale.Ru
@@ -192,7 +221,7 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*d
 
 	message, err := s.prepareMsgSetData(recipient, opponent, set, local)
 	if err != nil {
-		log.Printf("msgInvite | error sended DM: %v\n", err.Error())
+		logger.Log(entityLogger.Error, fmt.Sprintf("Can't prepare Discord message: %v\n", err.Error()))
 		s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
 		return &discordgo.MessageEmbed{}, entityLocale.En, entitySender.Participant{}
 	}
@@ -215,77 +244,30 @@ func (_ *Handler) typeLocale(language string) entityLocale.Lang {
 	return local
 }
 
-func (h *Handler) msgViewData(language string) *discordgo.MessageEmbed {
-	local := h.typeLocale(language)
-
-	slug := h.params.tournament.UrlToTournament
-	if len(slug) == 0 {
-		slug = local.ErrorMessage.NoData
-	}
-
-	fields := []*discordgo.MessageEmbedField{
-		{Name: "**Slug**", Value: fmt.Sprintln(local.ViewDataMessage.Description), Inline: true},
-		{Value: fmt.Sprintf("```%v```", slug)},
-
-		{Name: local.ViewDataMessage.MessageRulesHeader},
-		{Name: local.InviteMessage.StandardFormat,
-			Value:  fmt.Sprintf(local.InviteMessage.FT, h.params.rulesMatches.StandardFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, h.params.rulesMatches.StandardFormat),
-			Inline: true},
-		{Name: local.InviteMessage.FinalsFormat,
-			Value:  fmt.Sprintf(local.InviteMessage.FT, h.params.rulesMatches.FinalsFormat) + fmt.Sprintf(local.InviteMessage.FormatDescription, h.params.rulesMatches.FinalsFormat),
-			Inline: true},
-		{Name: local.InviteMessage.Stage,
-			Value:  fieldStage(local, h.params.rulesMatches.Stage),
-			Inline: true},
-		{Name: local.InviteMessage.Rounds,
-			Value:  fmt.Sprintf("%v", h.params.rulesMatches.Rounds),
-			Inline: true},
-		{Name: local.InviteMessage.Duration,
-			Value:  fmt.Sprintf(local.InviteMessage.DurationCount, h.params.rulesMatches.Duration),
-			Inline: true},
-		{Name: local.InviteMessage.Crossplatform,
-			Value:  fieldCrossplay(local, h.params.rulesMatches.Crossplatform),
-			Inline: true},
-
-		{Name: local.ViewDataMessage.MessageStreamHeader},
-		{Name: local.StreamLobbyMessage.Area,
-			Value:  fieldArea(local, h.params.streamLobby.Area),
-			Inline: true},
-		{Name: local.StreamLobbyMessage.Language,
-			Value:  fieldLanguage(local, h.params.streamLobby.Language),
-			Inline: true},
-		{Name: local.StreamLobbyMessage.TypeConnection,
-			Value:  fieldConnection(local, h.params.streamLobby.Conn),
-			Inline: true},
-		{Name: local.StreamLobbyMessage.Crossplatform,
-			Value:  fieldCrossplay(local, h.params.rulesMatches.Crossplatform),
-			Inline: true},
-		{Name: local.StreamLobbyMessage.Passcode,
-			Value:  fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, h.params.streamLobby.Passcode),
-			Inline: true},
-	}
-	message := msgEmbed(local.ViewDataMessage.Title, fields, ColorSystem, &h.params)
-	return message
-}
-
-// TODO: Actualise method
 func msgEmbed(title string, fields []*discordgo.MessageEmbedField, color int, cfg *params) *discordgo.MessageEmbed {
+	var urlToLogo string
+	if len(cfg.tournament.Logo.Img) != 0 {
+		urlToLogo = cfg.tournament.Logo.Img
+	} else {
+		urlToLogo = cfg.logo
+	}
+
 	embed := &discordgo.MessageEmbed{
 		Title: title,
 		Color: color,
 		Author: &discordgo.MessageEmbedAuthor{
 			IconURL: cfg.logo,
-			URL:     "https://github.com/DreamerVulpi/tourneybot",
+			URL:     "https://github.com/DreamerVulpi/tourney-helper",
 			Name:    "TourneyHelper",
 		},
 		Thumbnail: &discordgo.MessageEmbedThumbnail{
-			URL: cfg.tournament.Logo.Img,
+			URL: urlToLogo,
 		},
 		Fields:    fields,
 		Timestamp: time.Now().Format(time.RFC3339),
 		Footer: &discordgo.MessageEmbedFooter{
 			Text:    "by DreamerVulpi | https://www.twitch.tv/dreamervulpi",
-			IconURL: "https://i.imgur.com/eVmmYEV.png",
+			IconURL: cfg.logo,
 		},
 	}
 
@@ -322,7 +304,17 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 	}
 
 	logEmbed := msgEmbed(fmt.Sprintf(local.LogMessage.Title, set.TournamentName), logFields, color, &s.params)
-	if _, err := s.session.ChannelMessageSendEmbed(s.params.debugChannelID, logEmbed); err != nil {
+	if _, err := s.session.ChannelMessageSendComplex(s.params.debugChannelID, &discordgo.MessageSend{
+		Embed: logEmbed,
+		Components: s.btnSupport(
+			local.DonateField.Name,
+			local.DonateField.URL,
+			local.DonateField.Emoji,
+			local.SubscribeField.Name,
+			local.SubscribeField.URL,
+			local.SubscribeField.Emoji,
+		),
+	}); err != nil {
 		log.Printf("logToDiscord | error sending to debug channel: %v", err)
 	}
 }

@@ -9,6 +9,8 @@ function log(log) {
     };
 }
 
+
+
 export function createLoadLogs(setLogs) {
     return async function loadLogs() {
         try {
@@ -19,20 +21,3 @@ export function createLoadLogs(setLogs) {
         }
     };
 }
-
-
-// export function useLogs() {
-//     const [logs, setLogs] = useState([]);
-//     const loadLogs = async () => {
-//         try {
-//             const logs = await GetLogs();
-//             setLogs(logs.map(log).reverse());
-//         } catch (err) {
-//             console.error("Failed to load logs:", err);
-//         }
-//     };
-//     return {
-//         logs,
-//         loadLogs,
-//     }
-// }

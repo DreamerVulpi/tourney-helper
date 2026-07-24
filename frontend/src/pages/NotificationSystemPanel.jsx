@@ -27,6 +27,7 @@ import {
   Server,
   ScrollText,
   HardDriveDownload,
+  Map,
 } from "lucide-react";
 import {
   AuthorizeDiscord,
@@ -75,6 +76,7 @@ const NotificationSystemPlate = ({
     finalsFormat: 3,
     rounds: 3,
     duration: 60,
+    stage: "Random",
   };
   const streamLobby = tourneyCfg?.stream || {
     area: "Any",
@@ -168,13 +170,13 @@ const NotificationSystemPlate = ({
     <div className="flex flex-col items-end gap-3">
       {!isStartedSending && debugMode && (
         <div
-          className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-amber-500 animate-in fade-in slide-in-from-bottom-2 duration-300 ${
+          className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-amber-500 slide-in-from-bottom-2 ${
             theme === "dark"
               ? "bg-amber-500/10 border-amber-500/20"
               : "bg-white border-amber-200 shadow-lg"
           }`}
         >
-          <AlertCircle size={16} className="shrink-0" />
+          <AlertCircle size={14} className="shrink-0" />
           <span className="text-[9px] font-bold uppercase italic tracking-tight leading-tight">
             {locale.Mailing.AttentionDebugModeMsg}{" "}
             {activeMessenger ? activeMessenger : ""}
@@ -691,6 +693,34 @@ const NotificationSystemPlate = ({
                         ]}
                         onChange={(val) =>
                           changeRule("duration", val, updateConfig)
+                        }
+                      />
+                      <Field
+                        label={locale.RulesOfTournament.Stage}
+                        variant="combobox"
+                        value={rules.stage}
+                        themeClasses={themeClasses}
+                        icon={Map}
+                        items={[
+                          {
+                            label: locale.RulesOfTournament.ListStages.Any,
+                            value: "Any",
+                          },
+                          {
+                            label: locale.RulesOfTournament.ListStages.Random,
+                            value: "Random",
+                          },
+                          {
+                            label: locale.RulesOfTournament.ListStages.Selected,
+                            value: "Selected",
+                          },
+                          {
+                            label: locale.RulesOfTournament.ListStages.Repeat,
+                            value: "Repeat",
+                          },
+                        ]}
+                        onChange={(val) =>
+                          changeRule("stage", val, updateConfig)
                         }
                       />
                     </div>

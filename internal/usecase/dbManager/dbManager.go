@@ -3,6 +3,7 @@ package dbManager
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -151,7 +152,15 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 
 	participantId, ok := resolveParticipantId(responseMessenger, responseTournamentAccount)
 	if !ok {
-		return entitySender.Participant{}, fmt.Errorf("db | failed to get participant: %v | %v | %v", participantId, errMessenger, errTournament)
+		if errors.Is(errMessenger, sql.ErrNoRows) &&
+			errors.Is(errTournament, sql.ErrNoRows) {
+			return entitySender.Participant{}, sql.ErrNoRows
+		}
+
+		return entitySender.Participant{}, fmt.Errorf(
+			"db | failed to resolve participant id: %w",
+			errors.Join(errMessenger, errTournament),
+		)
 	}
 
 	responseStats, errStats := db.findStatsParticipant(ctx, participantId, p.GameName)

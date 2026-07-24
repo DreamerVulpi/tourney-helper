@@ -85,6 +85,7 @@ const App = () => {
     debouncedSaveTourney,
     debouncedSaveSettings,
   });
+  
   // System variables
 
   // Status of the messaging system

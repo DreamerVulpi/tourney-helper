@@ -38,7 +38,6 @@ func (c ChallongeMatchAdapter) GetTournamentSlug() (string, error) {
 
 func (c ChallongeMatchAdapter) GetSetsData(ctx context.Context, slug string) ([]entitySender.SetData, error) {
 	// TODO: Complete method
-	// https://challonge.com/ru/tournamentdciii
 
 	tournament, err := c.Client.GetTournament(ctx, c.UrlToTournament)
 	if err != nil {

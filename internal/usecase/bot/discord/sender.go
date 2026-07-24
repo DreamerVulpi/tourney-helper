@@ -65,8 +65,17 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 	}
 
 	message, local, recipient := s.msgInvite(targetID, set)
-
-	_, err = s.session.ChannelMessageSendEmbed(channelID, message)
+	_, err = s.session.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
+		Embed: message,
+		Components: s.btnSupport(
+			local.DonateField.Name,
+			local.DonateField.URL,
+			local.DonateField.Emoji,
+			local.SubscribeField.Name,
+			local.SubscribeField.URL,
+			local.SubscribeField.Emoji,
+		),
+	})
 	if err != nil {
 		log.Printf("SendNotification | error sended DM: %v\n", err.Error())
 		s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
@@ -131,7 +140,6 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 			messengerID = targetMember.User.ID
 			isFound = true
 			for _, roleId := range targetMember.Roles {
-				// TODO: Change reconize locale in future (More languages)
 				if roleId == s.params.rolesIdList.Ru {
 					currentLocale = "ru"
 				}

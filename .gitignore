@@ -2,7 +2,6 @@
 *.exe
 *.csv
 .vscode
-*.png
 *.txt
 *.jsonl
 contacts.json
@@ -11,7 +10,6 @@ token_discord.json
 token_startgg.json
 token_challonge.json
 .env
-docker-compose.yaml
 Makefile
 *.log
 ui/wails.json

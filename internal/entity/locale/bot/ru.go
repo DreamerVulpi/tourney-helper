@@ -1,5 +1,7 @@
 package bot
 
+import "github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
+
 var Ru = Lang{
 	LogMessage: LogMessage{
 		Title:                  "Лог турнира **%v**",
@@ -35,7 +37,7 @@ var Ru = Lang{
 		FormatDescription:        "** (До %v побед)**",
 		FT:                       "ФТ%v",
 		Stage:                    "**Карта**",
-		AnyStage:                 "Выбирается случайным образом **ВСЕГДА** если оппонент не продолжил сет нажав кнопку \"Рематч\"",
+		RandomStage:              "Выбирается случайным образом **ВСЕГДА** если оппонент не продолжил сет нажав кнопку \"Рематч\"",
 		Rounds:                   "**Раундов в 1 матче**",
 		Duration:                 "**Время в 1 раунде**",
 		DurationCount:            "%v секунд",
@@ -44,25 +46,37 @@ var Ru = Lang{
 		CrossplatformStatusFalse: "Выключена",
 	},
 	StreamLobbyMessage: StreamLobbyMessage{
-		Title:                    "Турнир **%v**",
-		Description:              "Приглашение на матч проводящийся на прямой трансляции. Необходимо зайти в ниже указанное лобби и ожидать команды организатора на стриме дальнейшних действий.\n\n*Это сообщение сгенерировано автоматически. Отвечать на него не нужно. В случае вопросов или помощи обращайтесь к помощникам организатора.*",
-		MessageHeader:            "**Ссылка на check-in**",
-		Warning:                  "*У вас есть %v минут, чтобы сделать check-in, прежде чем вы будете автоматически дисквалифицированы (имеется в виду с самого первого сообщения полученного за один этап турнира).*",
-		ParamsHeader:             "**Параметры для поиска лобби**",
-		Area:                     "**Регион**",
-		AnyArea:                  "Любой",
-		CloseArea:                "Ближе ко мне",
-		Language:                 "**Язык**",
-		AnyLanguage:              "Любой",
-		SameLanguage:             "Такой же как у меня",
-		TypeConnection:           "**Тип соединения**",
-		AnyConnection:            "Любой",
+		Title:          "Турнир **%v**",
+		Description:    "Приглашение на матч проводящийся на прямой трансляции. Необходимо зайти в ниже указанное лобби и ожидать команды организатора на стриме дальнейшних действий.\n\n*Это сообщение сгенерировано автоматически. Отвечать на него не нужно. В случае вопросов или помощи обращайтесь к помощникам организатора.*",
+		MessageHeader:  "**Ссылка на check-in**",
+		Warning:        "*У вас есть %v минут, чтобы сделать check-in, прежде чем вы будете автоматически дисквалифицированы (имеется в виду с самого первого сообщения полученного за один этап турнира).*",
+		ParamsHeader:   "**Параметры для поиска лобби**",
+		Area:           "**Регион**",
+		CloseArea:      "Ближе ко мне",
+		Language:       "**Язык**",
+		AnyLanguage:    "Любой",
+		SameLanguage:   "Такой же как у меня",
+		TypeConnection: "**Тип соединения**",
+		Connection: Connection{
+			Any: "Любое",
+			LAN: "Только прямое соединение",
+		},
 		Crossplatform:            "**Кроссплатформенная игра**",
 		CrossplatformStatusTrue:  "Включена",
 		CrossplatformStatusFalse: "Выключена",
 		Passcode:                 "**Пароль**",
 		PasscodeTemplate:         "```%v```",
 		StreamLink:               "**Ссылка на трансляцию**",
+		ListRegions: ListRegions{
+			Any:          "Любой",
+			Europe:       "Европа",
+			Asia:         "Азия",
+			NorthAmerica: "Северная Америка",
+			SouthAmerica: "Южная Америка",
+			Africa:       "Африка",
+			Other:        "Другое",
+			ND:           "Нет данных",
+		},
 	},
 	ViewDataMessage: ViewDataMessage{
 		Title:               "Проверка данных",
@@ -82,4 +96,15 @@ var Ru = Lang{
 		Stopping:  "Останавливаю...",
 		Stopped:   "Остановлено.",
 	},
+	DonateField: Field{
+		Name:  "Поддержать проект",
+		Emoji: "❤️",
+		URL:   "https://new.donatepay.ru/@dreamervulpi",
+	},
+	SubscribeField: Field{
+		Name:  "Подписка",
+		Emoji: "📫",
+		URL:   "https://boosty.to/dreamervulpi",
+	},
+	Stages: stages.Ru,
 }

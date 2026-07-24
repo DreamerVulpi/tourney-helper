@@ -1,5 +1,9 @@
 package bot
 
+import (
+	"github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
+)
+
 var En = Lang{
 	LogMessage: LogMessage{
 		Title:                  "Log of tournament **%v**",
@@ -35,7 +39,7 @@ var En = Lang{
 		FormatDescription:        "** (First to %v win)**",
 		FT:                       "FT%v",
 		Stage:                    "**Stage**",
-		AnyStage:                 "Randomly selected **ALWAYS** if the opponent did not continue the set by pressing the \"Rematch\" button",
+		RandomStage:              "Randomly selected **ALWAYS** if the opponent did not continue the set by pressing the \"Rematch\" button",
 		Rounds:                   "**Rounds in 1 match**",
 		Duration:                 "**Time in 1 round**",
 		DurationCount:            "%v seconds",
@@ -44,25 +48,37 @@ var En = Lang{
 		CrossplatformStatusFalse: "Disable",
 	},
 	StreamLobbyMessage: StreamLobbyMessage{
-		Title:                    "Tournament **%v**",
-		Description:              "An invitation to a live broadcast match. You need to go to the lobby below and wait for the organizer's team on the stream for further actions.\n\n*This message was automatically generated. There is no need to reply. If you have any questions or need assistance, please contact one of the organizers' assistants.*",
-		MessageHeader:            "**Link to check-in**",
-		Warning:                  "You have %v minutes to register before you will be automatically disqualified (meaning from the very first message received in one stage of the tournament).",
-		ParamsHeader:             "**Params for searching lobby**",
-		Area:                     "**Area**",
-		AnyArea:                  "Any",
-		CloseArea:                "Close to Me",
-		Language:                 "**Language**",
-		AnyLanguage:              "Any",
-		SameLanguage:             "Same as Me",
-		TypeConnection:           "**Type connection**",
-		AnyConnection:            "Any",
+		Title:          "Tournament **%v**",
+		Description:    "An invitation to a live broadcast match. You need to go to the lobby below and wait for the organizer's team on the stream for further actions.\n\n*This message was automatically generated. There is no need to reply. If you have any questions or need assistance, please contact one of the organizers' assistants.*",
+		MessageHeader:  "**Link to check-in**",
+		Warning:        "You have %v minutes to register before you will be automatically disqualified (meaning from the very first message received in one stage of the tournament).",
+		ParamsHeader:   "**Params for searching lobby**",
+		Area:           "**Area**",
+		CloseArea:      "Close to Me",
+		Language:       "**Language**",
+		AnyLanguage:    "Any",
+		SameLanguage:   "Same as Me",
+		TypeConnection: "**Type connection**",
+		Connection: Connection{
+			Any: "Any",
+			LAN: "LAN",
+		},
 		Crossplatform:            "**Crossplatform game**",
 		CrossplatformStatusTrue:  "Enable",
 		CrossplatformStatusFalse: "Disable",
 		Passcode:                 "**Passcode**",
 		PasscodeTemplate:         "```%v```",
 		StreamLink:               "**Link to stream**",
+		ListRegions: ListRegions{
+			Any:          "Any",
+			Europe:       "Europe",
+			Asia:         "Asia",
+			NorthAmerica: "North America",
+			SouthAmerica: "South America",
+			Africa:       "Africa",
+			Other:        "Other",
+			ND:           "No data",
+		},
 	},
 	ViewDataMessage: ViewDataMessage{
 		Title:               "Check data",
@@ -82,4 +98,15 @@ var En = Lang{
 		Stopping:  "Stopping...",
 		Stopped:   "Stopped.",
 	},
+	DonateField: Field{
+		Name:  "Ko-Fi",
+		Emoji: "☕",
+		URL:   "https://ko-fi.com/dreamervulpi",
+	},
+	SubscribeField: Field{
+		Name:  "Subscribe",
+		Emoji: "📫",
+		URL:   "https://boosty.to/dreamervulpi",
+	},
+	Stages: stages.En,
 }

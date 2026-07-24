@@ -1,27 +1,18 @@
 package discord
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourneyBot/config"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 func (h *Handler) commands() []*discordgo.ApplicationCommand {
 	dmPermission := false
 
 	return []*discordgo.ApplicationCommand{
-		{
-			Name:        "check",
-			Description: "Check startgg, discord and bot variables",
-			NameLocalizations: &map[discordgo.Locale]string{
-				discordgo.Russian: "проверка",
-			},
-			DescriptionLocalizations: &map[discordgo.Locale]string{
-				discordgo.Russian: "Проверить переменные startgg, discord, и бота",
-			},
-			DMPermission: &dmPermission,
-		},
 		{
 			Name:        "contact",
 			Description: "Retrieve a player's contact information from the TourneyHelper database",
@@ -73,29 +64,6 @@ func (h *Handler) commands() []*discordgo.ApplicationCommand {
 						},
 					},
 				},
-				// TODO: UPDATE WITH CHALLONGE
-				// {
-				// 	Type:        discordgo.ApplicationCommandOptionString,
-				// 	Name:        "platform",
-				// 	Description: "Select the tournament platform",
-				// 	Required:    true,
-				// 	NameLocalizations: map[discordgo.Locale]string{
-				// 		discordgo.Russian: "платформа",
-				// 	},
-				// 	DescriptionLocalizations: map[discordgo.Locale]string{
-				// 		discordgo.Russian: "Выберите турнирную платформу",
-				// 	},
-				// 	Choices: []*discordgo.ApplicationCommandOptionChoice{
-				// 		{
-				// 			Name:  "Start.gg",
-				// 			Value: "Startgg",
-				// 		},
-				// 		{
-				// 			Name:  "Challonge",
-				// 			Value: "Challonge",
-				// 		},
-				// 	},
-				// },
 			},
 		},
 	}
@@ -103,7 +71,6 @@ func (h *Handler) commands() []*discordgo.ApplicationCommand {
 
 func (h *Handler) InitCommands(appID string, session *discordgo.Session, tournament *config.ConfigTournament, cfg *config.ConfigMessenger) ([]*discordgo.ApplicationCommand, error) {
 	commandHandlers := make(map[string]func(i *discordgo.InteractionCreate))
-	commandHandlers["check"] = h.viewData
 	commandHandlers["contact"] = h.viewContact
 
 	if err := h.createTourneyRole(session); err != nil {
@@ -119,15 +86,15 @@ func (h *Handler) InitCommands(appID string, session *discordgo.Session, tournam
 		}
 	})
 
-	log.Println("adding commands...")
+	logger.Log(entityLogger.Info, "Discord: adding commands...")
 	commands := h.commands()
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 	for i, command := range commands {
 		cmd, err := session.ApplicationCommandCreate(appID, cfg.Discord.GuildID, command)
-		log.Printf("%v\n", command.Name)
 		if err != nil {
-			log.Printf("can't create '%v' command: %v\n", command.Name, err)
+			logger.Log(entityLogger.Error, fmt.Sprintf("can't create '%v' command: %v\n", command.Name, err))
 		}
+		logger.Log(entityLogger.Info, fmt.Sprintf("Discord: Success added command - %v\n", command.Name))
 		registeredCommands[i] = cmd
 	}
 

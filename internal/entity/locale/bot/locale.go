@@ -1,5 +1,7 @@
 package bot
 
+import "github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
+
 type LogMessage struct {
 	Title                  string
 	StatusSentNotification string
@@ -36,7 +38,7 @@ type InviteMessage struct {
 	FormatDescription        string
 	FT                       string
 	Stage                    string
-	AnyStage                 string
+	RandomStage              string
 	Rounds                   string
 	Duration                 string
 	DurationCount            string
@@ -52,19 +54,35 @@ type StreamLobbyMessage struct {
 	Warning                  string
 	ParamsHeader             string
 	Area                     string
-	AnyArea                  string
 	CloseArea                string
 	Language                 string
 	AnyLanguage              string
 	SameLanguage             string
 	TypeConnection           string
-	AnyConnection            string
+	Connection               Connection
 	Crossplatform            string
 	CrossplatformStatusTrue  string
 	CrossplatformStatusFalse string
 	Passcode                 string
 	PasscodeTemplate         string
 	StreamLink               string
+	ListRegions              ListRegions
+}
+
+type Connection struct {
+	Any string
+	LAN string
+}
+
+type ListRegions struct {
+	Any          string
+	Europe       string
+	Asia         string
+	NorthAmerica string
+	SouthAmerica string
+	Africa       string
+	Other        string
+	ND           string
 }
 
 type ViewDataMessage struct {
@@ -88,6 +106,12 @@ type ResponseMessage struct {
 	Stopped   string
 }
 
+type Field struct {
+	Name  string
+	Emoji string
+	URL   string
+}
+
 type Lang struct {
 	InviteMessage      InviteMessage
 	StreamLobbyMessage StreamLobbyMessage
@@ -96,4 +120,7 @@ type Lang struct {
 	ResponseMessage    ResponseMessage
 	LogMessage         LogMessage
 	ContactMessage     ContactMsg
+	DonateField        Field
+	SubscribeField     Field
+	Stages             stages.Stages
 }

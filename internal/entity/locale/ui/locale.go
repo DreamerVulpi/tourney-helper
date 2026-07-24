@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
+
 type NspLogs struct {
 	NotificationDeliveryStopped string
 	LaunchNewsletterInDebugMode string
@@ -248,12 +250,8 @@ type RulesOfTournament struct {
 	Rounds         string
 	Time           string
 	Seconds        string
-	Waiting        Waiting
-}
-
-type Waiting struct {
-	Label   string
-	Minutes string
+	Stage          string
+	ListStages     stages.Stages
 }
 
 type ListRegions struct {
@@ -281,19 +279,22 @@ type ResetRatingModal struct {
 }
 
 type AboutModal struct {
-	Label            string
-	Title            string
-	Description      string
-	Version          string
-	Developer        string
-	Frontend         string
-	Backend          string
-	License          string
-	CheckUpdates     string
-	Documentation    string
-	ReportBug        string
-	DonateOnProject  string
-	CloseButtonLabel string
+	Label              string
+	Title              string
+	Description        string
+	Version            string
+	Developer          string
+	Frontend           string
+	Backend            string
+	License            string
+	CheckUpdates       string
+	Documentation      string
+	ReportBug          string
+	DonateOnProject    string
+	DonateLink         string
+	SubscribeOnProject string
+	SubscribeLink      string
+	CloseButtonLabel   string
 }
 
 type HelpQA struct {

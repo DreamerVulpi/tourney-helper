@@ -8,7 +8,6 @@ import (
 	"context"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/labstack/gommon/log"
 )
 
 func escapeMarkdown(text string) string {
@@ -20,7 +19,6 @@ func escapeMarkdown(text string) string {
 	).Replace(text)
 }
 
-// TODO: ADD SUPPORT TOURNEY MULTIPLATFORMING
 func (h *Handler) getContact(i *discordgo.InteractionCreate, local responseLocale) ([]*discordgo.MessageEmbed, error) {
 	embed := []*discordgo.MessageEmbed{}
 	ctx := context.Background()
@@ -48,8 +46,6 @@ func (h *Handler) getContact(i *discordgo.InteractionCreate, local responseLocal
 	limit := 1
 	offset := 0
 
-	log.Printf("[DEBUG DB REQ] Messenger: Discord, Platform: '%s', Game: '%s', Limit: %d, Offset: %d, Search: '%s'\n",
-		h.Ns.Data.GetPlatformTournamentName(), gameName, limit, offset, nickname)
 	// result, err := s.Ns.Db.GetParticipants(ctx, "Discord", platformName, gameName, limit, offset, nickname)
 	result, err := h.Ns.Db.GetParticipants(ctx, "Discord", h.Ns.Data.GetPlatformTournamentName(), gameName, limit, offset, nickname)
 	if err != nil {

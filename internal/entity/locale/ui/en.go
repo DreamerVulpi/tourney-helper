@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
+
 var listRegionsEn = ListRegions{
 	Any:          "Any",
 	Europe:       "Europe",
@@ -101,19 +103,22 @@ var En = Ui{
 			},
 		},
 		About: AboutModal{
-			Label:            "About",
-			Title:            "About",
-			Version:          "Version:",
-			Description:      "Software that includes tools for process automation and tournament organization.",
-			Developer:        "Developer:",
-			Frontend:         "Frontend:",
-			Backend:          "Backend:",
-			License:          "License:",
-			CloseButtonLabel: "Close",
-			CheckUpdates:     "Check for updates",
-			Documentation:    "Documentation",
-			ReportBug:        "Report a bug",
-			DonateOnProject:  "Donate money",
+			Label:              "About",
+			Title:              "About",
+			Version:            "Version:",
+			Description:        "Desktop software for automating tournament management and participant communication.",
+			Developer:          "Developer:",
+			Frontend:           "Frontend:",
+			Backend:            "Backend:",
+			License:            "License:",
+			CloseButtonLabel:   "Close",
+			CheckUpdates:       "Check for updates",
+			Documentation:      "Documentation",
+			ReportBug:          "Report a bug",
+			DonateOnProject:    "Ko-Fi",
+			DonateLink:         "https://ko-fi.com/dreamervulpi",
+			SubscribeOnProject: "Boosty",
+			SubscribeLink:      "https://boosty.to/dreamervulpi",
 		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
@@ -144,7 +149,8 @@ var En = Ui{
 			Rounds:         "Rounds",
 			Time:           "Time (sec.)",
 			Seconds:        "sec",
-			Waiting:        Waiting{Label: "Waiting time", Minutes: "min"},
+			Stage:          "Stage",
+			ListStages:     stages.En,
 		},
 		LobbyLiveBroadcast: LobbyLiveBroadcast{
 			Label:              "Live Broadcast Lobby",

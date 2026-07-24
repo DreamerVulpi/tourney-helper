@@ -1,5 +1,7 @@
 package ui
 
+import "github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
+
 var listRegions = ListRegions{
 	Any:          "Любой",
 	Europe:       "Европа",
@@ -99,19 +101,22 @@ var Ru = Ui{
 			},
 		},
 		About: AboutModal{
-			Label:            "Инфо",
-			Title:            "О программе",
-			Version:          "Версия:",
-			Description:      "Программное обеспечение, включающее в себя инструменты для решения автоматизации процессов и помощи в организации турниров.",
-			Developer:        "Разработчик:",
-			Frontend:         "Фронтэнд:",
-			Backend:          "Бэкэнд:",
-			License:          "Лицензия:",
-			CloseButtonLabel: "Закрыть",
-			CheckUpdates:     "Проверить обновления",
-			Documentation:    "Документация",
-			ReportBug:        "Сообщить о баге",
-			DonateOnProject:  "Пожертвовать деньги",
+			Label:              "Инфо",
+			Title:              "О программе",
+			Version:            "Версия:",
+			Description:        "Настольное программное обеспечение для автоматизации управления турнирами и общения с участниками.",
+			Developer:          "Разработчик:",
+			Frontend:           "Фронтэнд:",
+			Backend:            "Бэкэнд:",
+			License:            "Лицензия:",
+			CloseButtonLabel:   "Закрыть",
+			CheckUpdates:       "Проверить обновления",
+			Documentation:      "Документация",
+			ReportBug:          "Сообщить о баге",
+			DonateOnProject:    "DonatePay",
+			DonateLink:         "https://new.donatepay.ru/@dreamervulpi",
+			SubscribeOnProject: "Бусти",
+			SubscribeLink:      "https://boosty.to/dreamervulpi",
 		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
@@ -142,7 +147,8 @@ var Ru = Ui{
 			Rounds:         "Раундов",
 			Time:           "Время (сек.)",
 			Seconds:        "сек",
-			Waiting:        Waiting{Label: "Время ожидания", Minutes: "мин"},
+			Stage:          "Карта",
+			ListStages:     stages.Ru,
 		},
 		LobbyLiveBroadcast: LobbyLiveBroadcast{
 			Label:              "Лобби прямой трансляции",
@@ -273,7 +279,7 @@ var Ru = Ui{
 				Rating:                      "Рейтинг",
 				ContactOfMessengerLabel:     "Контакт мессенджера",
 				AddContactOfMessenger:       "Добавить контакт мессенджера",
-				DataOfTourneyPlatformLabel:  "Контакт турнирной платформа",
+				DataOfTourneyPlatformLabel:  "Контакт турнирной платформы",
 				AddDataOfTourneyPlatform:    "Добавить контакт турнирной платформы",
 				CreateNoteButtonLabel:       "Создать запись",
 				EditNoteButtonLabel:         "Сохранить изменения",

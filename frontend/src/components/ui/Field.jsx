@@ -39,7 +39,7 @@ export function Field({
     variant === "password" ? (showSecret ? "text" : "password") : type;
 
   return (
-    <div className="space-y-1.5" style={{ width }}>
+    <div className="space-y-1.5"  style={{ width }}>
       {label && (
         <label
           className={`text-[9px] font-black uppercase italic px-1 ${themeClasses.label}`}
@@ -143,6 +143,18 @@ export function Field({
         >
           {value}
         </div>
+      ) : variant === "combobox" ? (
+        <DropdownList
+            editable
+            selectedValue={value}
+            items={items}
+            onChange={onChange}
+            icon={Icon}
+            iconSize={iconSize}
+            themeClasses={themeClasses}
+            className="px-4 text-xs font-bold"
+            style={{ height }}
+        />
       ) : (
         <div className="relative flex items-center">
           {Icon && (

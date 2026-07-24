@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Field } from "../ui/Field.jsx";
 import { Modal } from "../modals/Modal.jsx";
-import { Book, Bug, Coins, Info, Recycle, RecycleIcon, Settings, Upload } from "lucide-react";
+import { Book, Bug, Coins, GitBranch, HandCoins, Info, Recycle, RecycleIcon, Rss, Settings, Upload } from "lucide-react";
 import { MessageBox } from "./MessageBox.jsx";
 import { OpenURL } from "../../../wailsjs/go/application/App.js"
 
@@ -90,30 +90,18 @@ const AboutModal = ({
             <div className="flex text-base justify-between gap-4">
               <span className="opacity-50">{locale.License}</span>
               <span
-                className={`font-bold uppercase text-orange-500`}
+                className={`font-bold uppercase text-orange-500 hover:text-orange-400 underline`}
+                onClick={()=>OpenURL("https://github.com/DreamerVulpi/tourney-helper/blob/master/LICENSE")}
               >
-                Open source
+                MIT
               </span>
             </div>
           </>
         }
         themeClasses={themeClasses}
       />
+      
       <div className="grid grid-cols-2 gap-3">
-        {/* TODO: Check updates from Github */}
-        {/* <Field
-          icon={Upload}
-          variant="button"
-          labelButton={locale.CheckUpdates}
-          themeClasses={themeClasses}
-        /> */}
-        {/* TODO: In future */}
-        {/* <Field
-          variant="button"
-          icon={Book}
-          labelButton={locale.Documentation}
-          themeClasses={themeClasses}
-        /> */}
         <Field
           variant="button"
           icon={Bug}
@@ -123,10 +111,24 @@ const AboutModal = ({
         />
         <Field
           variant="button"
-          icon={Coins}
+          icon={GitBranch}
+          labelButton={"GitHub"}
+          themeClasses={themeClasses}
+          onClick={()=> OpenURL("https://github.com/DreamerVulpi/tourney-helper")}
+        />
+        <Field
+          variant="button"
+          icon={HandCoins}
           labelButton={locale.DonateOnProject}
           themeClasses={themeClasses}
-          onClick={()=> OpenURL("https://new.donatepay.ru/en/@dreamervulpi")}
+          onClick={()=> OpenURL(locale.DonateLink)}
+        />
+        <Field
+          variant="button"
+          icon={Rss}
+          labelButton={locale.SubscribeOnProject}
+          themeClasses={themeClasses}
+          onClick={()=> OpenURL(locale.SubscribeLink)}
         />
       </div>
     </div>

@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/challonge"
 	"io"
-	"log"
 	"net/http"
 	"strings"
+
+	"github.com/dreamervulpi/tourneyBot/internal/entity/challonge"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 type Client struct {
@@ -68,7 +70,7 @@ func (c *Client) RunQuery(ctx context.Context, path string, pathParams ...any) (
 		return nil, errors.Join(errors.New("read Data - "), err)
 	}
 
-	log.Printf("Raw JSON from Challonge: %s", string(data))
+	logger.Log(entityLogger.Info, fmt.Sprintf("Raw JSON from Challonge: %s", string(data)))
 
 	validation, err := validateData(data)
 	if err != nil {

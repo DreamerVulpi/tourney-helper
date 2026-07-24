@@ -13,11 +13,20 @@ func fieldCrossplay(local locale.Lang, state bool) string {
 }
 
 func fieldStage(local locale.Lang, currentStage string) string {
-	stage := local.InviteMessage.AnyStage
-	if currentStage != "any" {
-		stage = currentStage
+	switch currentStage {
+	case "Any":
+		return local.Stages.Any
+	case "Random":
+		return local.Stages.Random
+	case "Repeat":
+		return local.Stages.Repeat
+	case "Selected":
+		return local.Stages.Selected
+	case "":
+		return local.ErrorMessage.NoData
+	default:
+		return currentStage
 	}
-	return stage
 }
 func fieldLanguage(local locale.Lang, currentLanguage string) string {
 	lang := local.StreamLobbyMessage.AnyLanguage
@@ -27,16 +36,35 @@ func fieldLanguage(local locale.Lang, currentLanguage string) string {
 	return lang
 }
 func fieldArea(local locale.Lang, currentArea string) string {
-	area := local.StreamLobbyMessage.AnyArea
-	if currentArea != "any" {
-		area = local.StreamLobbyMessage.CloseArea
+	switch currentArea {
+	case "Any":
+		return local.StreamLobbyMessage.ListRegions.Any
+	case "Europe":
+		return local.StreamLobbyMessage.ListRegions.Europe
+	case "Asia":
+		return local.StreamLobbyMessage.ListRegions.Asia
+	case "NorthAmerica":
+		return local.StreamLobbyMessage.ListRegions.NorthAmerica
+	case "SouthAmerica":
+		return local.StreamLobbyMessage.ListRegions.Europe
+	case "Africa":
+		return local.StreamLobbyMessage.ListRegions.Africa
+	case "Other":
+		return local.StreamLobbyMessage.ListRegions.Other
+	case "":
+		return local.StreamLobbyMessage.ListRegions.ND
+	case "N/D":
+		return local.StreamLobbyMessage.ListRegions.ND
+	default:
+		return currentArea
 	}
-	return area
+
 }
 func fieldConnection(local locale.Lang, typeConn string) string {
-	conn := local.StreamLobbyMessage.AnyConnection
-	if typeConn != "any" {
-		conn = typeConn
+	switch typeConn {
+	case "LAN":
+		return local.StreamLobbyMessage.Connection.LAN
+	default:
+		return local.StreamLobbyMessage.Connection.Any
 	}
-	return conn
 }

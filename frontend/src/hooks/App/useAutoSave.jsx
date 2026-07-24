@@ -25,8 +25,7 @@ export function useAutoSave() {
             finalsFormat: parseInt(cfg.rules?.finalsFormat) || 3,
             rounds: parseInt(cfg.rules?.rounds) || 3,
             duration: parseInt(cfg.rules?.duration) || 60,
-            waiting: parseInt(cfg.rules?.waiting) || 10,
-            stage: cfg.rules?.stages || "Any",
+            stage: cfg.rules?.stage ?? "Random",
           },
         };
         SaveTournamentConfig(dataToSend);

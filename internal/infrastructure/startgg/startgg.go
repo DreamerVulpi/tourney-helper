@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 
@@ -185,7 +184,7 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 
 	f, err := os.Open(path)
 	if err != nil {
-		log.Printf("loadCSV: can't open file %v - %v", path, err)
+		logger.Log(entityLogger.Error, fmt.Sprintf("loadCSV: can't open file %v - %v", path, err))
 		return []startgg.ImportedParticipantContact{}, fmt.Errorf("loadCSV: open file, %v", err)
 	}
 	defer f.Close() //nolint:errcheck
@@ -225,9 +224,8 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 	participants := make([]startgg.ImportedParticipantContact, 0, len(records)-1)
 	for i := 1; i < len(records); i++ {
 		attendee := records[i]
-		log.Println(attendee)
 		if len(attendee) <= idxGamerTagColumn {
-			log.Printf("loadCSV: very short data (no column GamerTag)")
+			logger.Log(entityLogger.Error, "loadCSV: very short data (no column GamerTag)")
 			continue
 		}
 
@@ -235,7 +233,7 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 		if val := attendee[idxGamerTagColumn]; val != "" {
 			gameNickname = val
 		} else {
-			log.Printf("String #%d is skipped: empty GamerTag", i)
+			logger.Log(entityLogger.Error, fmt.Sprintf("String #%d is skipped: empty GamerTag", i))
 			continue
 		}
 
@@ -256,7 +254,7 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 				discriminator = val
 				UserStartgg, err = c.GetUserBySlug(discriminator)
 				if err != nil {
-					log.Printf("loadCSV: can't get user data for slug %v - %v", discriminator, err)
+					logger.Log(entityLogger.Error, fmt.Sprintf("loadCSV: can't get user data for slug %v - %v", discriminator, err))
 				}
 			} else {
 				discriminator = "N/D"
@@ -308,8 +306,8 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 		} else {
 			tournamentPlatformId = "N/D"
 		}
-		log.Printf("CSV Headers parsed. Discord: %d, GamerTag: %d, Connect: %d, Discriminator: %d",
-			idxDiscordColumn, idxGamerTagColumn, idxConnectColumn, idxDiscriminatorColumn)
+		logger.Log(entityLogger.Info, fmt.Sprintf("CSV Headers parsed. Discord: %d, GamerTag: %d, Connect: %d, Discriminator: %d",
+			idxDiscordColumn, idxGamerTagColumn, idxConnectColumn, idxDiscriminatorColumn))
 		if attendee[idxGamerTagColumn] != "" {
 			participants = append(participants, startgg.ImportedParticipantContact{
 				Nickname:                gameNickname,

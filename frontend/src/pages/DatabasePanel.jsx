@@ -885,7 +885,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
             id="table-scroll-container"
             className="overflow-y-auto overflow-x-auto custom-scrollbar"
             style={{
-              maxHeight: hasHorizontalScroll ? "17rem" : "28rem",
+              maxHeight: hasHorizontalScroll ? "22rem" : "28rem",
             }}
           >
             <table className="w-full text-left text-[11px] table-fixed min-w-[1100px] border-collapse">
@@ -895,11 +895,11 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                     <tr
                       key={p.id}
                       className={`
-          hover:bg-blue-600/5
-          transition-colors
-          align-middle
-          ${index !== filteredPlayers.length - 1 ? "border-b border-white/5" : ""}
-        `}
+                        hover:bg-blue-600/5
+                        transition-colors
+                        align-middle
+                        ${index !== filteredPlayers.length - 1 ? "border-b border-white/5" : ""}
+                      `}
                     >
                       <td
                         className="p-4"
@@ -1031,7 +1031,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                                 theme === "dark" ? "bg-white/5" : "bg-slate-100"
                               }`}
                             >
-                              {regionsMap[p.region]}
+                              {regionsMap[p.region] === "undefined" || regionsMap[p.region] === "" ?  locale.AddButton.AddModalWindow.ListRegions.ND : regionsMap[p.region]}
                             </span>
                           </td>
                           <td

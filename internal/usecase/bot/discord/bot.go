@@ -12,7 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourneyBot/config"
 	"github.com/dreamervulpi/tourneyBot/internal/auth"
-	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	usecaseSender "github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
 )
@@ -64,8 +64,7 @@ func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform s
 		Passcode:      tournament.Stream.Passcode,
 	}
 	h.params.rolesIdList = cfg.Discord.Roles
-	// TODO: Change to another url
-	h.params.logo = "https://i.imgur.com/n9SG5IL.png"
+	h.params.logo = "https://raw.githubusercontent.com/DreamerVulpi/tourney-helper/main/branding/icons/256.png"
 	h.params.debugChannelID = cfg.Discord.DebugChannelID
 }
 
@@ -107,18 +106,17 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 	h.cfgCache = cfg
 	h.mtx.Unlock()
 
-	log.Println("discord bot is online!")
 	close(h.ReadyChan)
 	return nil
 }
 
 func (h *Handler) Stop() error {
-	logger.Log(loggerEntity.Info, fmt.Sprintf("Starting bot stop procedure. dh pointer: %p\n", h))
+	logger.Log(entityLogger.Info, fmt.Sprintf("Starting bot stop procedure. dh pointer: %p\n", h))
 	if h == nil {
 		return fmt.Errorf("handler is nil")
 	}
 	h.mtx.Lock()
-	log.Printf("dh.session: %p, dh.Auth: %p, dh.Ns: %p\n", h.session, h.Auth, h.Ns)
+	logger.Log(entityLogger.Info, fmt.Sprintf("dh.session: %p, dh.Auth: %p, dh.Ns: %p\n", h.session, h.Auth, h.Ns))
 
 	if h.cancel != nil {
 		h.cancel()
@@ -135,13 +133,13 @@ func (h *Handler) Stop() error {
 	ns := h.Ns
 	h.mtx.Unlock()
 
-	logger.Log(loggerEntity.Info, "Removing Discord commands and clearing up roles...")
+	logger.Log(entityLogger.Info, "Removing Discord commands and clearing up roles...")
 
 	if err := h.deleteTourneyRole(session); err != nil {
 		log.Printf("error deleting tourney role: %v\n", err)
 	}
 
-	// Проверяем наличие Auth и Config перед удалением команд
+	// Check Auth & Config before delete commands
 	if auth != nil {
 		log.Printf("auth.Config pointer: %p\n", auth.Config)
 		if auth.Config != nil {
@@ -167,7 +165,7 @@ func (h *Handler) Stop() error {
 		log.Println("dh.Auth is nil, skipping command deleteion")
 	}
 
-	logger.Log(loggerEntity.Info, "Closing Discord session...")
+	logger.Log(entityLogger.Info, "Closing Discord session...")
 	err := session.Close()
 
 	if ns != nil {
@@ -177,13 +175,13 @@ func (h *Handler) Stop() error {
 		log.Println("dh.Ns is nil, skipping messenger unlinking")
 	}
 
-	// Очищаем ресурсы сессии
+	// Clear resourses
 	h.mtx.Lock()
 	h.session = nil
 	h.registeredCmds = nil
 	h.cancel = nil
 	h.mtx.Unlock()
 
-	logger.Log(loggerEntity.Success, "Discord bot and notification system gracefully stopped!")
+	logger.Log(entityLogger.Success, "Discord bot and notification system gracefully stopped!")
 	return err
 }

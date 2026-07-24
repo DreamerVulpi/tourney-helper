@@ -11,6 +11,7 @@ import (
 
 	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	// "github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 func (ns NotificationSystem) checkParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
