@@ -5,7 +5,7 @@ import (
 
 	"fmt"
 
-	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/db"
 )
 
 type Participant struct {

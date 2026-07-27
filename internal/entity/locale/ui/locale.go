@@ -1,6 +1,6 @@
 package ui
 
-import "github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
+import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
 type NspLogs struct {
 	NotificationDeliveryStopped string

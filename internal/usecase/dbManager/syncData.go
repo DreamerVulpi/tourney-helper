@@ -3,8 +3,8 @@ package dbManager
 import (
 	"context"
 
-	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 )
 
 func shouldReplace(api, db string) bool {

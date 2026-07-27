@@ -1,7 +1,7 @@
 package discord
 
 import (
-	locale "github.com/dreamervulpi/tourneyBot/internal/entity/locale/bot"
+	locale "github.com/dreamervulpi/tourney-helper/internal/entity/locale/bot"
 )
 
 func fieldCrossplay(local locale.Lang, state bool) string {

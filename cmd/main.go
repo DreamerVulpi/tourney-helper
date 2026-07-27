@@ -10,17 +10,17 @@ import (
 
 	"context"
 
-	"github.com/dreamervulpi/tourneyBot/config"
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
-	"github.com/dreamervulpi/tourneyBot/internal/db"
-	"github.com/dreamervulpi/tourneyBot/internal/db/repo"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/bot/discord"
-	usecaseDB "github.com/dreamervulpi/tourneyBot/internal/usecase/db"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/dbManager"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
+	"github.com/dreamervulpi/tourney-helper/config"
+	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	"github.com/dreamervulpi/tourney-helper/internal/db"
+	"github.com/dreamervulpi/tourney-helper/internal/db/repo"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/bot/discord"
+	usecaseDB "github.com/dreamervulpi/tourney-helper/internal/usecase/db"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 	"github.com/joho/godotenv"
 )
 

@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	entityLocale "github.com/dreamervulpi/tourneyBot/internal/entity/locale/bot"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/db"
+	entityLocale "github.com/dreamervulpi/tourney-helper/internal/entity/locale/bot"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 const (

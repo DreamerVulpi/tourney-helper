@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/dreamervulpi/tourneyBot/internal/entity/challonge"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/challonge"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 type Client struct {

@@ -10,7 +10,7 @@ import (
 
 	"io"
 
-	"github.com/dreamervulpi/tourneyBot/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 )
 
 var (

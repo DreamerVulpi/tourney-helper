@@ -10,11 +10,11 @@ import (
 	"database/sql"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/dreamervulpi/tourneyBot/config"
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
-	usecaseSender "github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
+	"github.com/dreamervulpi/tourney-helper/config"
+	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	usecaseSender "github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 )
 
 type params struct {

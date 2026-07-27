@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	entityStartgg "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 )
 
 func (_ *Database) ConvertData(data entityStartgg.ImportedParticipantContact) entitySender.Participant {

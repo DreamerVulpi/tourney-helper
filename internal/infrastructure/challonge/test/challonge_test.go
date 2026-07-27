@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"testing"
 
-	entity "github.com/dreamervulpi/tourneyBot/internal/entity/challonge"
-	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/challonge"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/challonge"
+	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/challonge"
 	"github.com/stretchr/testify/assert"
 )
 

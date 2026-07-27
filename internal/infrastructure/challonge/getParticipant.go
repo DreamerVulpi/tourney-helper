@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dreamervulpi/tourneyBot/internal/entity/challonge"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/challonge"
 )
 
 func (c *Client) GetParticipant(ctx context.Context, tourneySlug string, participantId string) (challonge.ParticipantOutput, error) {

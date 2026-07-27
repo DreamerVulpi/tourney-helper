@@ -1,7 +1,7 @@
 package startgg
 
 import (
-	"github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 )
 
 func (c *Client) GetSets(phaseGroupID int64, page int, perPage int, states []int) ([]startgg.Nodes, error) {

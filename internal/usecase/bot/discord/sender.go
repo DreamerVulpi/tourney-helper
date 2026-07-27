@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 type DiscordSender struct {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 )
 
 type ParticipantBansRepo interface {

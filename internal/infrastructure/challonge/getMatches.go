@@ -3,7 +3,7 @@ package challonge
 import (
 	"context"
 	"fmt"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/challonge"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/challonge"
 )
 
 func (c *Client) GetMatches(ctx context.Context, tourneySlug string, states []challonge.State) ([]challonge.MatchOutput, error) {

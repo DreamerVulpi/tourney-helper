@@ -1,7 +1,7 @@
 package bot
 
 import (
-	"github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 )
 
 var En = Lang{

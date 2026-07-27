@@ -9,13 +9,13 @@ import (
 
 	"strings"
 
-	"github.com/dreamervulpi/tourneyBot/internal/entity/app"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
-	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/app"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/db"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	entityStartgg "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, gameName string, isBan bool) (*app.ImportListPlayersResponse, error) {

@@ -8,13 +8,13 @@ import (
 	"log"
 	"time"
 
-	entityApp "github.com/dreamervulpi/tourneyBot/internal/entity/app"
-	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/db"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	entityApp "github.com/dreamervulpi/tourney-helper/internal/entity/app"
+	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	entityStartgg "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/db"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 type Database struct {

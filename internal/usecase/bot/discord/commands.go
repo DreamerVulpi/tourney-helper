@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/dreamervulpi/tourneyBot/config"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/config"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 func (h *Handler) commands() []*discordgo.ApplicationCommand {

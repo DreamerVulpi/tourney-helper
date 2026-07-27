@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"log"
 
-	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 )
 
 // Request check messenger account from database

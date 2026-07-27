@@ -7,10 +7,10 @@ import (
 
 	"fmt"
 
-	entityChallonge "github.com/dreamervulpi/tourneyBot/internal/entity/challonge"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/challonge"
+	entityChallonge "github.com/dreamervulpi/tourney-helper/internal/entity/challonge"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/challonge"
 )
 
 type ChallongeMatchAdapter struct {

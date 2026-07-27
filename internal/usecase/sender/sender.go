@@ -8,11 +8,11 @@ import (
 	"log"
 	"time"
 
-	entityDB "github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/dbManager"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 type NotificationSystem struct {

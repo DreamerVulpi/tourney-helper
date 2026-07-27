@@ -14,8 +14,8 @@ import (
 
 	"bytes"
 
-	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	loggerEntity "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 )

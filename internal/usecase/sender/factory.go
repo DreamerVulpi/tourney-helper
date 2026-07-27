@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 )
 
 func GetTournamentAdapter(authClient *auth.AuthClient, messengerName string, url string, debug bool, game string, contacts map[string]sender.Participant) (sender.NotificationData, error) {

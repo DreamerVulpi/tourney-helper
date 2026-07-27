@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/challonge"
-	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/challonge"
+	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
 )
 
 func GetSessionDiscord() (*discordgo.Session, error) {

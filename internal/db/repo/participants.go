@@ -6,8 +6,8 @@ import (
 
 	"database/sql"
 
-	entity "github.com/dreamervulpi/tourneyBot/internal/entity/db"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/db"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 )
 
 type Participants struct {

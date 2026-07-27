@@ -7,8 +7,8 @@ import (
 
 	"os"
 
-	entity "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
-	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
 	"github.com/stretchr/testify/assert"
 )
 

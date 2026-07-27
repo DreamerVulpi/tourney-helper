@@ -13,11 +13,11 @@ import (
 	"os"
 	"strings"
 
-	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	entityStartgg "github.com/dreamervulpi/tourneyBot/internal/entity/startgg"
-	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	loggerEntity "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	entityStartgg "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 var startggTemplateSlug = regexp.MustCompile(`tournament/[^/]+/event/[^/]+`)

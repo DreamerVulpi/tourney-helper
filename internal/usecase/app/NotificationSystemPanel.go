@@ -9,13 +9,13 @@ import (
 
 	"net/url"
 
-	"github.com/dreamervulpi/tourneyBot/config"
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/bot/discord"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
+	"github.com/dreamervulpi/tourney-helper/config"
+	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/bot/discord"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 )
 
 func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {

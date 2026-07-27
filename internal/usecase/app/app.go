@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dreamervulpi/tourneyBot/config"
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/bot"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/dbManager"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/sender"
+	"github.com/dreamervulpi/tourney-helper/config"
+	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/bot"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

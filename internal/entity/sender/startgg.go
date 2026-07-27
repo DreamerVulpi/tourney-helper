@@ -1,7 +1,7 @@
 package sender
 
 import (
-	"github.com/dreamervulpi/tourneyBot/internal/infrastructure/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
 )
 
 type StartggFinalConfig struct {

@@ -3,10 +3,10 @@ package application
 import (
 	"strings"
 
-	"github.com/dreamervulpi/tourneyBot/config"
-	"github.com/dreamervulpi/tourneyBot/internal/entity/locale/ui"
-	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
-	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/config"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/locale/ui"
+	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 func (a *App) GetUiLocale(lang string) ui.Ui {

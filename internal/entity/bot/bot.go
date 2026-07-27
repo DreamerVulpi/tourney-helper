@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/dreamervulpi/tourneyBot/config"
-	"github.com/dreamervulpi/tourneyBot/internal/auth"
+	"github.com/dreamervulpi/tourney-helper/config"
+	"github.com/dreamervulpi/tourney-helper/internal/auth"
 )
 
 type BotHandler interface {
