@@ -1,4 +1,4 @@
-<h4 align="center">🌐<a href="/readme.md">English</a> | <a href="/readme-ru.md">Русский</a>
+<h4 align="center">🌐<a href="/README.md">English</a> | <a href="/README-RU.md">Русский</a>
 
 <p align="center"> <img style="padding: 10px" align="center" alt="TourneyHelper logo" src="./branding/exports/logo.png" width="200"> </p>
 <p align="center"> <img style="padding: 10px" align="center" alt="TourneyHelper label" src="./branding/exports/label.png" width="350"> </p>
@@ -65,7 +65,7 @@
 5. Add unit tests to simplify project maintenance;
 6. Increase the speed of email delivery compared to the current version, since the load on the API is currently minimal;
 7. Add status indicators for all components;
-8. Add the ability to download contact data for Tekken 8 using the API from [ewgh.gg](https://ewgf.gg/)
+8. Add the ability to download contact data for Tekken 8 using the API from [ewgf.gg](https://ewgf.gg/)
 9. Add the ability to minimize the tab bar to increase the program’s workspace;
 10. Add the ability to export the league player list in descending order as a text file;
 11. Add a player stats widget for display in OBS with corresponding functionality;
