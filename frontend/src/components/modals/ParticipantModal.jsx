@@ -94,6 +94,11 @@ const ParticipantModal = ({
     isPermanent: false,
   });
 
+  const [validationAlert, setValidationAlert] = useState({
+    isOpen: false,
+    message: "",
+  });
+
   const banReasons = [
     {
       value: "software/cheats",
@@ -114,6 +119,17 @@ const ParticipantModal = ({
     {
       value: "smurfing",
       label: locale.AddBanFields.ListViolationCategories.Smurfing,
+    },
+  ];
+
+  const requiredFields = [
+    {
+      value: formData.nickname,
+      message: locale.AddModalWindow.RequireMsgNickname,
+    },
+    {
+      value: formData.gameId,
+      message: locale.AddModalWindow.RequireMsgGameID,
     },
   ];
 
@@ -189,23 +205,29 @@ const ParticipantModal = ({
     const trimmedNickname = formData.nickname.trim();
     const trimmedGameId = formData.gameId.trim();
 
-    if (!trimmedNickname) {
-      Log("error", locale.AddModalWindow.ErrEmptyNickname);
-      return;
-    }
+    const invalidField = requiredFields.find((field) => !field.value.trim());
 
-    if (!trimmedGameId) {
-      Log("error", locale.AddModalWindow.ErrEmptyGameID);
+    if (invalidField) {
+      setValidationAlert({
+        isOpen: true,
+        message: invalidField.message,
+      });
       return;
     }
 
     if (formData.messenger.active && !formData.messenger.login.trim()) {
-      Log("error", locale.AddModalWindow.ErrActivateMessengerNoLogin);
+      setValidationAlert({
+        isOpen: true,
+        message: locale.AddModalWindow.ErrActivateMessengerNoLogin,
+      });
       return;
     }
 
     if (formData.tournament.active && !formData.tournament.login.trim()) {
-      Log("error", locale.AddModalWindow.ErrActivateTourneyNoLogin);
+      setValidationAlert({
+        isOpen: true,
+        message: locale.AddModalWindow.ErrActivateTourneyNoLogin,
+      });
       return;
     }
 
@@ -291,373 +313,401 @@ const ParticipantModal = ({
     }`;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      loading={loading}
-      title={
-        isBanMode
-          ? locale.AddBanTitle
-          : isEditingBannedPlayer
-            ? locale.EditBanTitle
+    <>
+      <Modal
+        isOpen={isOpen}
+        onClose={onClose}
+        loading={loading}
+        title={
+          isBanMode
+            ? locale.AddBanTitle
+            : isEditingBannedPlayer
+              ? locale.EditBanTitle
+              : isEditMode
+                ? locale.EditTitle
+                : locale.Label
+        }
+        icon={
+          isBanMode || isEditingBannedPlayer
+            ? Ban
             : isEditMode
-              ? locale.EditTitle
-              : locale.Label
-      }
-      icon={
-        isBanMode || isEditingBannedPlayer ? Ban : isEditMode ? Edit3 : UserPlus
-      }
-      iconColor={
-        isBanMode || isEditingBannedPlayer
-          ? "red"
-          : isEditMode
-            ? "amber"
-            : "blue"
-      }
-      variant={isBanMode || isEditingBannedPlayer ? "banned" : "default"}
-      themeClasses={themeClasses}
-      scrollBarClass={
-        isBanMode || isEditingBannedPlayer
-          ? "custom-scrollbar-red"
-          : isEditMode
-            ? "custom-scrollbar-orange"
-            : ""
-      }
-      footer={footer}
-    >
-      <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="col-span-2 sm:col-span-1">
-            <Field
-              label={locale.AddModalWindow.Nickname}
-              icon={User}
-              placeholder="Player1"
-              value={formData.nickname}
-              onChange={(value) =>
-                setFormData({ ...formData, nickname: value })
-              }
-              themeClasses={themeClasses}
-            />
+              ? Edit3
+              : UserPlus
+        }
+        iconColor={
+          isBanMode || isEditingBannedPlayer
+            ? "red"
+            : isEditMode
+              ? "amber"
+              : "blue"
+        }
+        variant={isBanMode || isEditingBannedPlayer ? "banned" : "default"}
+        themeClasses={themeClasses}
+        scrollBarClass={
+          isBanMode || isEditingBannedPlayer
+            ? "custom-scrollbar-red"
+            : isEditMode
+              ? "custom-scrollbar-orange"
+              : ""
+        }
+        footer={footer}
+      >
+        <div className="p-6 max-h-[70vh] overflow-y-auto space-y-6">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2 sm:col-span-1">
+              <Field
+                label={locale.AddModalWindow.Nickname}
+                icon={User}
+                placeholder="Player1"
+                value={formData.nickname}
+                onChange={(value) =>
+                  setFormData({ ...formData, nickname: value })
+                }
+                themeClasses={themeClasses}
+              />
+            </div>
+
+            <div className="col-span-2 sm:col-span-1">
+              <Field
+                label={locale.AddModalWindow.GameID}
+                icon={UserKey}
+                placeholder="XXXX-XXXX-XXXX"
+                value={formData.gameId}
+                onChange={(value) =>
+                  setFormData({ ...formData, gameId: value })
+                }
+                themeClasses={themeClasses}
+              />
+            </div>
+
+            <div className="col-span-2 sm:col-span-1">
+              <Field
+                label={locale.AddModalWindow.Region}
+                icon={Locate}
+                variant="select"
+                value={formData.region}
+                onChange={(value) =>
+                  setFormData({ ...formData, region: value })
+                }
+                items={[
+                  {
+                    label: locale.AddModalWindow.ListRegions.Europe,
+                    value: "Europe",
+                  },
+                  {
+                    label: locale.AddModalWindow.ListRegions.Asia,
+                    value: "Asia",
+                  },
+                  {
+                    label: locale.AddModalWindow.ListRegions.Africa,
+                    value: "Africa",
+                  },
+                  {
+                    label: locale.AddModalWindow.ListRegions.NorthAmerica,
+                    value: "NorthAmerica",
+                  },
+                  {
+                    label: locale.AddModalWindow.ListRegions.SouthAmerica,
+                    value: "SouthAmerica",
+                  },
+                  {
+                    label: locale.AddModalWindow.ListRegions.Other,
+                    value: "Other",
+                  },
+                ]}
+                themeClasses={themeClasses}
+              />
+            </div>
+
+            <div className="col-span-2 sm:col-span-1">
+              <Field
+                label={locale.AddModalWindow.Language}
+                icon={Languages}
+                variant="select"
+                value={formData.locale}
+                onChange={(value) =>
+                  setFormData({ ...formData, locale: value })
+                }
+                items={[
+                  {
+                    label: "EN",
+                    value: "EN",
+                  },
+                  {
+                    label: "RU",
+                    value: "RU",
+                  },
+                ]}
+                themeClasses={themeClasses}
+              />
+            </div>
+            <div className="col-span-2">
+              <Field
+                label={locale.AddModalWindow.Rating}
+                icon={UserStar}
+                isNumber={true}
+                placeholder="100"
+                value={formData.rating}
+                onChange={(value) =>
+                  setFormData({ ...formData, rating: parseInt(value) || 0 })
+                }
+                themeClasses={themeClasses}
+              />
+            </div>
           </div>
 
-          <div className="col-span-2 sm:col-span-1">
-            <Field
-              label={locale.AddModalWindow.GameID}
-              icon={UserKey}
-              placeholder="XXXX-XXXX-XXXX"
-              value={formData.gameId}
-              onChange={(value) => setFormData({ ...formData, gameId: value })}
-              themeClasses={themeClasses}
-            />
+          <div className="space-y-4">
+            {formData.messenger.active ? (
+              <div
+                className={`p-4 rounded-xl border relative ${themeClasses.divider}`}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <label className={labelClasses}>
+                    {locale.AddModalWindow.ContactOfMessengerLabel}
+                  </label>
+                  <button
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        messenger: {
+                          ...formData.messenger,
+                          active: false,
+                          login: "",
+                        },
+                      })
+                    }
+                    className="text-slate-500 hover:text-red-500 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field
+                    variant="select"
+                    icon={MessageCircle}
+                    value={formData.messenger.platform}
+                    onChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        messenger: { ...formData.messenger, platform: value },
+                      })
+                    }
+                    items={[
+                      {
+                        label: "Discord",
+                        value: "Discord",
+                      },
+                    ]}
+                    themeClasses={themeClasses}
+                  />
+                  <Field
+                    placeholder="Login"
+                    value={formData.messenger.login}
+                    icon={User}
+                    onChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        messenger: { ...formData.messenger, login: value },
+                      })
+                    }
+                    themeClasses={themeClasses}
+                  />
+                </div>
+              </div>
+            ) : (
+              <Field
+                labelButton={locale.AddModalWindow.AddContactOfMessenger}
+                icon={Plus}
+                variant="button"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    messenger: {
+                      ...formData.messenger,
+                      active: true,
+                      login: "",
+                    },
+                  })
+                }
+                themeClasses={themeClasses}
+              />
+            )}
+
+            {formData.tournament.active ? (
+              <div
+                className={`p-4 rounded-xl border relative ${themeClasses.divider}`}
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <label className={labelClasses}>
+                    {locale.AddModalWindow.DataOfTourneyPlatformLabel}
+                  </label>
+                  <button
+                    onClick={() =>
+                      setFormData({
+                        ...formData,
+                        tournament: {
+                          ...formData.tournament,
+                          active: false,
+                          login: "",
+                        },
+                      })
+                    }
+                    className="text-slate-500 hover:text-red-500 transition-colors"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field
+                    variant="select"
+                    icon={Trophy}
+                    value={formData.tournament.platform}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        tournament: { ...formData.tournament, platform: value },
+                      })
+                    }
+                    themeClasses={themeClasses}
+                    items={[
+                      {
+                        label: "Start.gg",
+                        value: "Startgg",
+                      },
+                    ]}
+                  />
+                  <Field
+                    placeholder="Login"
+                    icon={User}
+                    value={formData.tournament.login}
+                    onChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        tournament: { ...formData.tournament, login: value },
+                      })
+                    }
+                    themeClasses={themeClasses}
+                  />
+                </div>
+              </div>
+            ) : (
+              <Field
+                labelButton={locale.AddModalWindow.AddDataOfTourneyPlatform}
+                icon={Plus}
+                variant="button"
+                onClick={() =>
+                  setFormData({
+                    ...formData,
+                    tournament: { ...formData.tournament, active: true },
+                  })
+                }
+                themeClasses={themeClasses}
+              />
+            )}
           </div>
 
-          <div className="col-span-2 sm:col-span-1">
-            <Field
-              label={locale.AddModalWindow.Region}
-              icon={Locate}
-              variant="select"
-              value={formData.region}
-              onChange={(value) => setFormData({ ...formData, region: value })}
-              items={[
-                {
-                  label: locale.AddModalWindow.ListRegions.Europe,
-                  value: "Europe",
-                },
-                {
-                  label: locale.AddModalWindow.ListRegions.Asia,
-                  value: "Asia",
-                },
-                {
-                  label: locale.AddModalWindow.ListRegions.Africa,
-                  value: "Africa",
-                },
-                {
-                  label: locale.AddModalWindow.ListRegions.NorthAmerica,
-                  value: "NorthAmerica",
-                },
-                {
-                  label: locale.AddModalWindow.ListRegions.SouthAmerica,
-                  value: "SouthAmerica",
-                },
-                {
-                  label: locale.AddModalWindow.ListRegions.Other,
-                  value: "Other",
-                },
-              ]}
-              themeClasses={themeClasses}
-            />
-          </div>
-
-          <div className="col-span-2 sm:col-span-1">
-            <Field
-              label={locale.AddModalWindow.Language}
-              icon={Languages}
-              variant="select"
-              value={formData.locale}
-              onChange={(value) => setFormData({ ...formData, locale: value })}
-              items={[
-                {
-                  label: "EN",
-                  value: "EN",
-                },
-                {
-                  label: "RU",
-                  value: "RU",
-                },
-              ]}
-              themeClasses={themeClasses}
-            />
-          </div>
-          <div className="col-span-2">
-            <Field
-              label={locale.AddModalWindow.Rating}
-              icon={UserStar}
-              isNumber={true}
-              placeholder="100"
-              value={formData.rating}
-              onChange={(value) =>
-                setFormData({ ...formData, rating: parseInt(value) || 0 })
-              }
-              themeClasses={themeClasses}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          {formData.messenger.active ? (
+          {showBanFields && (
             <div
               className={`p-4 rounded-xl border relative ${themeClasses.divider}`}
             >
-              <div className="flex justify-between items-center mb-2">
-                <label className={labelClasses}>
-                  {locale.AddModalWindow.ContactOfMessengerLabel}
-                </label>
-                <button
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      messenger: {
-                        ...formData.messenger,
-                        active: false,
-                        login: "",
-                      },
-                    })
-                  }
-                  className="text-slate-500 hover:text-red-500 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
               <div className="grid grid-cols-2 gap-2">
-                <Field
-                  variant="select"
-                  icon={MessageCircle}
-                  value={formData.messenger.platform}
-                  onChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      messenger: { ...formData.messenger, platform: value },
-                    })
-                  }
-                  items={[
-                    {
-                      label: "Discord",
-                      value: "Discord",
-                    },
-                  ]}
-                  themeClasses={themeClasses}
-                />
-                <Field
-                  placeholder="Login"
-                  value={formData.messenger.login}
-                  icon={User}
-                  onChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      messenger: { ...formData.messenger, login: value },
-                    })
-                  }
-                  themeClasses={themeClasses}
-                />
-              </div>
-            </div>
-          ) : (
-            <Field
-              labelButton={locale.AddModalWindow.AddContactOfMessenger}
-              icon={Plus}
-              variant="button"
-              onClick={() =>
-                setFormData({
-                  ...formData,
-                  messenger: { ...formData.messenger, active: true, login: "" },
-                })
-              }
-              themeClasses={themeClasses}
-            />
-          )}
+                <div className="col-span-2 sm:col-span-1">
+                  <Field
+                    variant="select"
+                    label={locale.AddBanFields.ViolationCategoryLabel}
+                    value={banData.typeBan}
+                    onChange={(value) =>
+                      setBanData({ ...banData, typeBan: value })
+                    }
+                    themeClasses={themeClasses}
+                    items={banReasons}
+                  />
+                </div>
+                <div className="col-span-2 sm:col-span-1 flex items-center h-[46px] sm:mt-6">
+                  <ToggleSwitch
+                    label={locale.AddBanFields.PermanentBanLabel}
+                    icon={Ban}
+                    checked={banData.isPermanent}
+                    color="red"
+                    themeClasses={themeClasses}
+                    onChange={(value) =>
+                      setBanData({ ...banData, isPermanent: value })
+                    }
+                  />
+                </div>
 
-          {formData.tournament.active ? (
-            <div
-              className={`p-4 rounded-xl border relative ${themeClasses.divider}`}
-            >
-              <div className="flex justify-between items-center mb-2">
-                <label className={labelClasses}>
-                  {locale.AddModalWindow.DataOfTourneyPlatformLabel}
-                </label>
-                <button
-                  onClick={() =>
-                    setFormData({
-                      ...formData,
-                      tournament: {
-                        ...formData.tournament,
-                        active: false,
-                        login: "",
-                      },
-                    })
-                  }
-                  className="text-slate-500 hover:text-red-500 transition-colors"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Field
-                  variant="select"
-                  icon={Trophy}
-                  value={formData.tournament.platform}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      tournament: { ...formData.tournament, platform: value },
-                    })
-                  }
-                  themeClasses={themeClasses}
-                  items={[
-                    {
-                      label: "Start.gg",
-                      value: "Startgg",
-                    },
-                  ]}
-                />
-                <Field
-                  placeholder="Login"
-                  icon={User}
-                  value={formData.tournament.login}
-                  onChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      tournament: { ...formData.tournament, login: value },
-                    })
-                  }
-                  themeClasses={themeClasses}
-                />
+                {!banData.isPermanent && (
+                  <>
+                    <div className="col-span-2 sm:col-span-1">
+                      <Field
+                        label={locale.AddBanFields.ValidityPeriodLabel}
+                        value={banData.duration}
+                        isNumber={true}
+                        onChange={(value) =>
+                          setBanData({
+                            ...banData,
+                            duration: parseInt(value) || 1,
+                          })
+                        }
+                        themeClasses={themeClasses}
+                      />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <Field
+                        label={locale.AddBanFields.UnitOfMeasurementLabel}
+                        value={banData.unit}
+                        variant="select"
+                        onChange={(value) =>
+                          setBanData({ ...banData, unit: value })
+                        }
+                        themeClasses={themeClasses}
+                        items={[
+                          {
+                            label:
+                              locale.AddBanFields.ListUnitsOfMeasurement.Days,
+                            value: "days",
+                          },
+                          {
+                            label:
+                              locale.AddBanFields.ListUnitsOfMeasurement.Months,
+                            value: "months",
+                          },
+                        ]}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="col-span-2">
+                  <Field
+                    label={locale.AddBanFields.DescriptionViolationLabel}
+                    variant="textarea"
+                    placeholder={locale.AddBanFields.DescriptionTip}
+                    value={banData.reason}
+                    onChange={(value) =>
+                      setBanData({ ...banData, reason: value })
+                    }
+                    themeClasses={themeClasses}
+                  />
+                </div>
               </div>
             </div>
-          ) : (
-            <Field
-              labelButton={locale.AddModalWindow.AddDataOfTourneyPlatform}
-              icon={Plus}
-              variant="button"
-              onClick={() =>
-                setFormData({
-                  ...formData,
-                  tournament: { ...formData.tournament, active: true },
-                })
-              }
-              themeClasses={themeClasses}
-            />
           )}
         </div>
-
-        {showBanFields && (
-          <div
-            className={`p-4 rounded-xl border relative ${themeClasses.divider}`}
-          >
-            <div className="grid grid-cols-2 gap-2">
-              <div className="col-span-2 sm:col-span-1">
-                <Field
-                  variant="select"
-                  label={locale.AddBanFields.ViolationCategoryLabel}
-                  value={banData.typeBan}
-                  onChange={(value) =>
-                    setBanData({ ...banData, typeBan: value })
-                  }
-                  themeClasses={themeClasses}
-                  items={banReasons}
-                />
-              </div>
-              <div className="col-span-2 sm:col-span-1 flex items-center h-[46px] sm:mt-6">
-                <ToggleSwitch
-                  label={locale.AddBanFields.PermanentBanLabel}
-                  icon={Ban}
-                  checked={banData.isPermanent}
-                  color="red"
-                  themeClasses={themeClasses}
-                  onChange={(value) =>
-                    setBanData({ ...banData, isPermanent: value })
-                  }
-                />
-              </div>
-
-              {!banData.isPermanent && (
-                <>
-                  <div className="col-span-2 sm:col-span-1">
-                    <Field
-                      label={locale.AddBanFields.ValidityPeriodLabel}
-                      value={banData.duration}
-                      isNumber={true}
-                      onChange={(value) =>
-                        setBanData({
-                          ...banData,
-                          duration: parseInt(value) || 1,
-                        })
-                      }
-                      themeClasses={themeClasses}
-                    />
-                  </div>
-                  <div className="col-span-2 sm:col-span-1">
-                    <Field
-                      label={locale.AddBanFields.UnitOfMeasurementLabel}
-                      value={banData.unit}
-                      variant="select"
-                      onChange={(value) =>
-                        setBanData({ ...banData, unit: value })
-                      }
-                      themeClasses={themeClasses}
-                      items={[
-                        {
-                          label:
-                            locale.AddBanFields.ListUnitsOfMeasurement.Days,
-                          value: "days",
-                        },
-                        {
-                          label:
-                            locale.AddBanFields.ListUnitsOfMeasurement.Months,
-                          value: "months",
-                        },
-                      ]}
-                    />
-                  </div>
-                </>
-              )}
-
-              <div className="col-span-2">
-                <Field
-                  label={locale.AddBanFields.DescriptionViolationLabel}
-                  variant="textarea"
-                  placeholder={locale.AddBanFields.DescriptionTip}
-                  value={banData.reason}
-                  onChange={(value) =>
-                    setBanData({ ...banData, reason: value })
-                  }
-                  themeClasses={themeClasses}
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </Modal>
+      </Modal>
+      <ValidationModal
+        isOpen={validationAlert.isOpen}
+        onClose={() =>
+          setValidationAlert({
+            isOpen: false,
+            message: "",
+          })
+        }
+        message={validationAlert.message}
+        themeClasses={themeClasses}
+        locale={locale}
+      />
+    </>
   );
 };
 

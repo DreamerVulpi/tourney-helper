@@ -25,14 +25,15 @@ export const useMessengerAuth = ({
         token,
         clientID,
         secretClient,
+        guildID,
       } = systemCfg[nextMessenger] ?? {};
 
-      if (!token || !clientID || !secretClient) {
+      if (!token || !clientID || !secretClient || !guildID) {
         setActiveMessenger("");
 
         setValidationAlert({
           isOpen: true,
-          message: locale.Platform.RequireMsg,
+          message: locale.Platform.RequireMsgMessengerPlatform,
         });
 
         return;

@@ -30,7 +30,7 @@ export const useTournamentPlatform = ({
 
         setValidationAlert({
           isOpen: true,
-          message: locale.Platform.RequireMsg,
+          message: locale.Platform.RequireMsgTournamentPlatform,
         });
 
         return;

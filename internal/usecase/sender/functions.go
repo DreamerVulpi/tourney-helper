@@ -13,18 +13,49 @@ import (
 	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
 
-	// "github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
+
+func (ns *NotificationSystem) getDebugDMChannel(ctx context.Context) (string, error) {
+	if ns.TestContact.DmChannelId != nil && *ns.TestContact.DmChannelId != "" {
+		return *ns.TestContact.DmChannelId, nil
+	}
+
+	channel, err := ns.Messenger.CreateDMChannel(ctx, ns.TestContact.MessengerID)
+	if err != nil {
+		return "", err
+	}
+
+	ns.TestContact.DmChannelId = channel
+	return *channel, nil
+}
+
+func validationParticipant(p entitySender.Participant) error {
+	if p.MessengerID == "" || p.MessengerID == "N/D" {
+		return fmt.Errorf("participant has empty messenger ID")
+	}
+
+	if p.MessengerLogin == "" || p.MessengerLogin == "N/D" {
+		return fmt.Errorf("participant has empty messenger login")
+	}
+
+	return nil
+}
 
 func (ns NotificationSystem) checkParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
 	dbData, err := ns.Db.GetParticipant(ctx, apiData)
 
 	switch {
 	case err == nil:
+		if dbData.MessengerID != "" || dbData.MessengerID == "N/D" {
+			updated, err := ns.Messenger.FindContactOfParticipant(ctx, dbData)
+			if err == nil {
+				dbData = updated
+			}
+		}
 		participant, err := ns.Db.SyncParticipant(ctx, apiData, dbData)
 		if err != nil {
-			return entitySender.Participant{}, err
+			return dbData, err
 		}
 		return participant, nil
 	case errors.Is(err, sql.ErrNoRows):
@@ -33,7 +64,10 @@ func (ns NotificationSystem) checkParticipant(ctx context.Context, apiData entit
 		foundParticipant, err := ns.Messenger.FindContactOfParticipant(ctx, apiData)
 		if err != nil {
 			log.Printf("Process | Player not found in %s: %v", apiData.MessengerName, err)
-			return apiData, err
+			if _, errSave := ns.Db.AddParticipant(ctx, foundParticipant); errSave != nil {
+				log.Printf("Process | failed to save player (%v) to DB: %v", foundParticipant.MessengerName, errSave)
+			}
+			return foundParticipant, err
 		}
 
 		if _, errSave := ns.Db.AddParticipant(ctx, foundParticipant); errSave != nil {
@@ -73,53 +107,23 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, set ent
 	setForP2.ContactPlayer2 = contactP1
 	setForP2.IsTest = true
 
-	dmChannelIDP1, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, contactP1.DmChannelId, setForP1)
+	debugChannelID, err := ns.getDebugDMChannel(ctx)
 	if err != nil {
-		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin, err.Error()))
+		logger.Log(entityLogger.Error, fmt.Sprintf("Can't get debug DM channel for test contact: %v", ns.TestContact.MessengerLogin))
+	}
+
+	_, errP1 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP1)
+	if errP1 != nil {
+		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin, errP1.Error()))
 	} else {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
 	}
 
-	if contactP1.DmChannelId == nil || *contactP1.DmChannelId != dmChannelIDP1 {
-		requestP := entityDB.ParticipantGetRequestByNickname{
-			Nickname: contactP1.GameNickname,
-		}
-
-		p, _ := ns.Db.Participant.GetParticipantByNickname(ctx, requestP)
-
-		request := entityDB.ParticipantAccoutnEditDMChannelRequest{
-			ParticipantId: p.Id,
-			PlatformName:  contactP1.MessengerName,
-			DmChannelId:   &dmChannelIDP1,
-		}
-		log.Printf("REQUEST FOR CHANNEL P1: %v", request)
-		if err := ns.Db.Accounts.EditDmChannelParticipantAccount(ctx, request); err != nil {
-			log.Printf("sendNotification | can't update DM channel: %v", err)
-		}
-	}
-
-	dmChannelIDP2, err := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, contactP2.DmChannelId, setForP2)
-	if err != nil {
-		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin, err.Error()))
+	_, errP2 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP2)
+	if errP2 != nil {
+		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin, errP2.Error()))
 	} else {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
-	}
-
-	if contactP1.DmChannelId == nil || *contactP1.DmChannelId != dmChannelIDP2 {
-		requestP := entityDB.ParticipantGetRequestByNickname{
-			Nickname: contactP2.GameNickname,
-		}
-
-		p, _ := ns.Db.Participant.GetParticipantByNickname(ctx, requestP)
-		request := entityDB.ParticipantAccoutnEditDMChannelRequest{
-			ParticipantId: p.Id,
-			PlatformName:  contactP2.MessengerName,
-			DmChannelId:   &dmChannelIDP2,
-		}
-		log.Printf("REQUEST FOR CHANNEL P2: %v", request)
-		if err := ns.Db.Accounts.EditDmChannelParticipantAccount(ctx, request); err != nil {
-			log.Printf("sendNotification | can't update DM channel: %v", err)
-		}
 	}
 }
 

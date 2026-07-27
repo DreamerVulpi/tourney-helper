@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourneyBot/internal/entity/sender"
+	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
 )
 
 type DiscordSender struct {
@@ -42,6 +44,14 @@ func (h *Handler) StartSendMessages() {
 	}
 }
 
+func (s *DiscordSender) CreateDMChannel(ctx context.Context, messengerId string) (*string, error) {
+	channel, err := s.session.UserChannelCreate(messengerId)
+	if err != nil {
+		return nil, fmt.Errorf("SendNotification | error creating channel for %s: %w", messengerId, err)
+	}
+	return &channel.ID, nil
+}
+
 func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChannelID *string, set entitySender.SetData) (channelId string, err error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
@@ -57,11 +67,11 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 		channelID = *dmChannelID
 	} else {
 		log.Printf("SendNotification | create channel for %s", targetID)
-		channel, err := s.session.UserChannelCreate(targetID)
+		channel, err := s.CreateDMChannel(ctx, targetID)
 		if err != nil {
 			return "", fmt.Errorf("SendNotification | error creating channel for %s: %w", targetID, err)
 		}
-		channelID = channel.ID
+		channelID = *channel
 	}
 
 	message, local, recipient := s.msgInvite(targetID, set)
@@ -77,12 +87,16 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 		),
 	})
 	if err != nil {
-		log.Printf("SendNotification | error sended DM: %v\n", err.Error())
-		s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
+		logger.Log(entityLogger.Error, fmt.Sprintf("NotificationSystem | Can't sent message (targetID: %v): %v\n", targetID, err.Error()))
+		if s.params.debugChannelID != "" {
+			s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
+		}
 		return "", err
 	}
 
-	s.logMsgToDiscord(true, "", set, local, recipient.GameNickname)
+	if s.params.debugChannelID != "" {
+		s.logMsgToDiscord(true, "", set, local, recipient.GameNickname)
+	}
 	return channelID, nil
 }
 
@@ -94,61 +108,24 @@ func (s *DiscordSender) cleanDiscordLogin(login string) string {
 	return res
 }
 
+func (s *DiscordSender) getLocale(roles []string) string {
+	for _, roleID := range roles {
+		switch roleID {
+		case s.params.rolesIdList.Ru:
+			return "ru"
+		}
+	}
+	return "en"
+}
+
 func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySender.Participant) (entitySender.Participant, error) {
 	if err := ctx.Err(); err != nil {
 		return entitySender.Participant{}, err
 	}
 
 	cleanNickname := s.cleanDiscordLogin(p.MessengerLogin)
-	var messengerID string
-	var isFound bool
-	currentLocale := "en"
-
-	if p.MessengerLogin == "" || p.MessengerLogin == "N/D" {
-		if s.params.debugMode {
-			log.Printf("findContact | %s has no login, using debug mock", p.GameNickname)
-			messengerID = "000000000000000000"
-			isFound = true
-			cleanNickname = "N/D"
-		} else {
-			return entitySender.Participant{}, fmt.Errorf("findContact | member %s not founded in guild (server)\n", cleanNickname)
-		}
-	} else {
-		members, err := s.session.GuildMembersSearch(s.params.guildID, cleanNickname, 1)
-		if err != nil || len(members) != 1 {
-			if s.params.debugMode {
-				messengerID = "000000000000000000"
-				isFound = true
-			} else {
-				return entitySender.Participant{
-					MessengerID:             messengerID,
-					MessengerLogin:          cleanNickname,
-					MessengerName:           s.GetPlatformMessengerName(),
-					TournamentPlatformName:  p.TournamentPlatformName,
-					TournamentPlatformID:    p.TournamentPlatformID,
-					TournamentPlatformLogin: p.TournamentPlatformLogin,
-					GameNickname:            p.GameNickname,
-					GameName:                p.GameName,
-					GameID:                  p.GameID,
-					DmChannelId:             p.DmChannelId,
-					Locale:                  currentLocale,
-					IsFound:                 false,
-				}, fmt.Errorf("findContact | member %s not founded in guild (server)\n", cleanNickname)
-			}
-		} else {
-			targetMember := members[0]
-			messengerID = targetMember.User.ID
-			isFound = true
-			for _, roleId := range targetMember.Roles {
-				if roleId == s.params.rolesIdList.Ru {
-					currentLocale = "ru"
-				}
-			}
-		}
-	}
-
-	return entitySender.Participant{
-		MessengerID:             messengerID,
+	currentData := entitySender.Participant{
+		MessengerID:             "",
 		MessengerLogin:          cleanNickname,
 		MessengerName:           s.GetPlatformMessengerName(),
 		GameName:                p.GameName,
@@ -157,7 +134,34 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 		TournamentPlatformLogin: p.TournamentPlatformLogin,
 		GameNickname:            p.GameNickname,
 		GameID:                  p.GameID,
-		Locale:                  currentLocale,
-		IsFound:                 isFound,
+		Locale:                  "en",
+		IsFound:                 false,
+	}
+
+	if p.MessengerLogin == "" || p.MessengerLogin == "N/D" {
+		return currentData, fmt.Errorf("findContact | member %s not founded in guild (server)\n", p.GameNickname)
+	}
+
+	members, err := s.session.GuildMembersSearch(s.params.guildID, cleanNickname, 1)
+	if err != nil {
+		return currentData, fmt.Errorf("findContact | member %s not found in guild (server): %w\n", cleanNickname, err)
+	}
+	if len(members) != 1 {
+		return currentData, fmt.Errorf("findContact | member %s not found in guild (server)\n", cleanNickname)
+	}
+
+	targetMember := members[0]
+	return entitySender.Participant{
+		MessengerID:             targetMember.User.ID,
+		MessengerLogin:          cleanNickname,
+		MessengerName:           s.GetPlatformMessengerName(),
+		GameName:                p.GameName,
+		TournamentPlatformName:  p.TournamentPlatformName,
+		TournamentPlatformID:    p.TournamentPlatformID,
+		TournamentPlatformLogin: p.TournamentPlatformLogin,
+		GameNickname:            p.GameNickname,
+		GameID:                  p.GameID,
+		Locale:                  s.getLocale(targetMember.Roles),
+		IsFound:                 true,
 	}, nil
 }

@@ -216,7 +216,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 				}
 				setsData = append(setsData, set)
 			}
-			logger.Log(loggerEntity.Success, fmt.Sprintf("GetSetsData | Startgg | Checked phaseGroup (%v)", phaseGroupInfo))
+			logger.Log(loggerEntity.Success, fmt.Sprintf("Startgg | Bracket #%v - Sets %v", phaseGroupInfo.Id, phaseGroupInfo.Sets.PageInfo.Total))
 		}
 	}
 	return setsData, nil

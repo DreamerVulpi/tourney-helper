@@ -33,19 +33,17 @@ const ImportFileModal = ({
   const isBanImport = activeFilter === "banned";
 
   const defaultTemplate = `{
-  "MessengerLogin": "",
-  "MessengerName": "",
-  "TournamentPlatformName": "",
-  "GameName": "",
-  "GameNickname": "",
-  "GameID": "",
-  "Locale": ""
-}`;
+    "MessengerLogin": "",
+    "MessengerName": "",
+    "TournamentPlatformName": "",
+    "GameNickname": "",
+    "GameID": "",
+    "Locale": ""
+  }`;
 
   const banListTemplate = `{
   "MessengerLogin": "",
   "MessengerName": "",
-  "GameName": "",
   "GameNickname": "",
   "GameID": "",
   "Locale": "",
@@ -174,7 +172,7 @@ const ImportFileModal = ({
           locale.DescriptionJSON
         )}
       </MessageBox>
-
+        
       
       {!isFromCsv && (
         <div>
@@ -186,6 +184,7 @@ const ImportFileModal = ({
               variant="textarea"
               value={jsonTemplate}
               themeClasses={themeClasses}
+              height="h-[12rem]"
             />
             <CopyButton text={jsonTemplate} iconSize={"1.5rem"}/>
           </div>

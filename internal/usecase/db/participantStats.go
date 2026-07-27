@@ -39,7 +39,7 @@ func (p ParticipantStats) EditParticipantStats(ctx context.Context, request enti
 }
 
 func (p ParticipantStats) EditParticipantStatsRating(ctx context.Context, request entity.ParticipantStatEditRatingRequest) (entity.ParticipantEditResponse, error) {
-	err := p.Repo.EditRating(ctx, request.Id, request.Rating)
+	err := p.Repo.EditRating(ctx, request.Id, request.GameName, request.Rating)
 	if err != nil {
 		return entity.ParticipantEditResponse{}, err
 	}

@@ -22,6 +22,7 @@ type App struct {
 	Db               *dbManager.Database
 	Locale           *config.SettingsApplication
 	logUpdateTimer   *time.Timer
+	OAuthServer      *auth.OAuthCallbackServer
 
 	mu        sync.Mutex
 	ns        *sender.NotificationSystem

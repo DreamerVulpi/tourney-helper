@@ -19,7 +19,6 @@ import (
 
 type params struct {
 	guildID        string
-	logo           string
 	tournament     config.ConfigTournament
 	rulesMatches   config.RulesMatches
 	streamLobby    config.StreamLobby
@@ -64,7 +63,6 @@ func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform s
 		Passcode:      tournament.Stream.Passcode,
 	}
 	h.params.rolesIdList = cfg.Discord.Roles
-	h.params.logo = "https://raw.githubusercontent.com/DreamerVulpi/tourney-helper/main/branding/icons/256.png"
 	h.params.debugChannelID = cfg.Discord.DebugChannelID
 }
 
@@ -90,6 +88,9 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 	ds := &DiscordSender{
 		session: session,
 		params:  h.params,
+	}
+	if ds.params.debugChannelID == "" {
+		logger.Log(entityLogger.Info, "Notification System | Working without log channel...")
 	}
 	h.Ns.Messenger = ds
 

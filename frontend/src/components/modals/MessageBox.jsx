@@ -30,7 +30,7 @@ export function MessageBox({
     return (
         <div className={`inline-flex flex-col items-center text-center p-5 rounded-xl border ${borderClass}`}>
             <Icon
-                className={`${iconColor} mb-3 animate-pulse`}
+                className={`${iconColor} mb-3`}
                 size={36}
             />
 

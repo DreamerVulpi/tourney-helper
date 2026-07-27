@@ -15,9 +15,8 @@ var listRegions = ListRegions{
 
 var Ru = Ui{
 	ValidationAlertModal: ValidationAlertModal{
-		ErrorFillParams:   "Ошибка заполнения параметров",
-		NeedCorrectConfig: "Для продолжения работы и запуска предварительной проверки авторизации необходимо исправить конфигурацию приложения:",
-		OkButtonLabel:     "Понятно",
+		ErrorFillParams: "Ошибка заполнения параметров",
+		OkButtonLabel:   "Понятно",
 	},
 	SidePanel: SidePanel{
 		NotificationSystemLabel: "Рассылка уведомлений",
@@ -46,7 +45,7 @@ var Ru = Ui{
 				InitialSetup: HelpQA{
 					Question: "Как произвести первоначальную настройку системы уведомлений?",
 					Answer: `1. Заполнить обязательные поля "CLIENT ID" и "SECRET CLIENT" у турнирной платформы.
-					2. Заполнить обязательные поля "BOT TOKEN", "GUILD ID", "LOG CHANNEL ID", "CLIENT ID", "CLIENT SECRET", "ROLE ID - EN" у мессенджера. 
+					2. Заполнить обязательные поля "BOT TOKEN", "GUILD ID", "CLIENT ID", "CLIENT SECRET" у мессенджера. (остальные поля по желанию)
 					3. Выбрать источник данных турнира и мессенджер для рассылки нажав на саму кнопку платформы.
 					4. После нажатия на кнопку платформы программа "TourneyHelper" перенаправит на авторизацию и приглашению бота на ваш сервер мессенджера. Результат чтения будет написан в окне логов.`,
 				},
@@ -75,15 +74,15 @@ var Ru = Ui{
 				HowGetDataForStartgg: HelpQA{
 					Question: "Как получить данные для start.gg?",
 					Answer: `1. Войти в свой аккаунт start.gg -> "Developer Settings" -> "Oauth Applications"
-					2. Создать "Ouath Auth Applications". По мере заполнения данных в поле "Application Authorization Callback" указывается значение из программы "TourneyHelper".
-					3. Значения "CLIENT ID" и "CLIENT SECRET" перенести в программу "TourneyHelper".`,
+					2. Создать "Ouath Auth Applications". По мере заполнения данных в поле "Application Authorization Callback" указывается значение из ячейки "Ссылка на перенаправление" из программы "TourneyHelper".
+					3. Полученные значения "CLIENT ID" и "CLIENT SECRET" перенести в программу "TourneyHelper".`,
 				},
 				HowGetDataForDiscord: HelpQA{
 					Question: "Как получить данные для Discord?",
 					Answer: `1. Войти в свой аккаунт Discord -> Перейти в раздел %v разработчиков%v.
 					2. Создать свое приложение (Кнопка "Новое приложение").
 					3. В приложении выбрать: Обзор -> "Oauth". Данные для "CLIENT ID", "CLIENT SECRET" передать в программу "TourneyHelper".
-					4. В разделе "Перенаправления" добавить "REDIRECT API" из программы "TourneyHelper".
+					4. В разделе "Перенаправления" добавить значение "REDIRECT API" из программы "TourneyHelper".
 					5. В приложении выбрать: Бот -> Получить токен бота и передать в поле "TOKEN BOT" программы "TourneyHelper".
 					Остальные поля "ROLE-ID X" и "LOG CHANNEL ID" получаются нажатием ПКМ по элементу в самом Discord и выбрать "Скопировать ID" (Предварительно необходимо включить режим разработчика в настройках Discord).`,
 				},
@@ -126,16 +125,17 @@ var Ru = Ui{
 				Authorized:   "Авторизован",
 				Unauthorized: "Неавторизован",
 			},
-			LaunchMsg:        "Запуск авторизации в",
-			SuccessMsg:       "Успешная авторизация на",
-			ErrMsg:           "Ошибка авторизации. Проверьте правильность введенных данных",
-			DownloadSettings: "Параметры получения",
-			RedirectURL:      "Ссылка на перенаправление (Redirect URL)",
-			ParamsBot:        "Параметры %v бота",
-			TokenBot:         "Токен бота",
-			Messenger:        "Мессенджер",
-			Tourney:          "Турнирная платформа",
-			RequireMsg:       "Для авторизации требуется заполнить: Client ID, Client Secret и, возможно Bot Token",
+			LaunchMsg:                    "Запуск авторизации в",
+			SuccessMsg:                   "Успешная авторизация на",
+			ErrMsg:                       "Ошибка авторизации. Проверьте правильность введенных данных",
+			DownloadSettings:             "Параметры получения",
+			RedirectURL:                  "Ссылка на перенаправление (Redirect URL)",
+			ParamsBot:                    "Параметры %v бота",
+			TokenBot:                     "Токен бота",
+			Messenger:                    "Мессенджер",
+			Tourney:                      "Турнирная платформа",
+			RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
+			RequireMsgTournamentPlatform: "Для авторизации требуется заполнить: Client ID и Client Secret",
 		},
 		UrlToTournamentLabel: "Ссылка на турнирную сетку",
 		GenreOrGameLabel:     "Жанр/Игра",
@@ -186,11 +186,13 @@ var Ru = Ui{
 	},
 	DatabasePanel: DatabasePanel{
 		AddButton: AddButton{
-			Label:        "Добавить игрока",
-			One:          "Одного",
-			EditTitle:    "Изменение данных игрока",
-			AddBanTitle:  "Внести нарушителя в бан-лист",
-			EditBanTitle: "Редактирование данных нарушителя",
+			ErrorFillParams: "Ошибка заполнения параметров",
+			OkButtonLabel:   "Понятно",
+			Label:           "Добавить игрока",
+			One:             "Одного",
+			EditTitle:       "Изменение данных игрока",
+			AddBanTitle:     "Внести нарушителя в бан-лист",
+			EditBanTitle:    "Редактирование данных нарушителя",
 			AddContactOfMessenger: AddContactOfMessenger{
 				Label:       "Добавить контакт мессенджера",
 				Description: "Контакт мессенджера",
@@ -291,6 +293,8 @@ var Ru = Ui{
 				ErrEmptyGameID:              "Игровой ID не может быть пустым!",
 				ErrActivateMessengerNoLogin: "Вы активировали поле мессенджера, но не указали логин!",
 				ErrActivateTourneyNoLogin:   "Вы активировали поле турнирной платформы, но не указали логин!",
+				RequireMsgNickname:          "Для сохранения необходимо указать никнейм участника",
+				RequireMsgGameID:            "Для сохранения необходимо указать игровой идентификатор участника",
 			},
 		},
 		SearchLineLabel: "Поиск по никнейму, ID или региону",

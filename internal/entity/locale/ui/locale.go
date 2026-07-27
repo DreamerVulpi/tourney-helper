@@ -82,6 +82,8 @@ type Filters struct {
 }
 
 type AddButton struct {
+	ErrorFillParams          string
+	OkButtonLabel            string
 	Label                    string
 	One                      string
 	EditTitle                string
@@ -133,9 +135,8 @@ type ImportFileModalWindow struct {
 }
 
 type ValidationAlertModal struct {
-	ErrorFillParams   string
-	NeedCorrectConfig string
-	OkButtonLabel     string
+	ErrorFillParams string
+	OkButtonLabel   string
 }
 
 type LoadingImportFileModalWindows struct {
@@ -174,6 +175,8 @@ type AddModalWindow struct {
 	ErrEmptyGameID              string
 	ErrActivateMessengerNoLogin string
 	ErrActivateTourneyNoLogin   string
+	RequireMsgNickname          string
+	RequireMsgGameID            string
 }
 
 type AddBanFields struct {
@@ -218,17 +221,18 @@ type ConfigurationLogo struct {
 }
 
 type Platform struct {
-	AuthorizeStatePlatform AuthorizeStatePlatform
-	RequireMsg             string
-	LaunchMsg              string
-	SuccessMsg             string
-	ErrMsg                 string
-	TokenBot               string
-	Messenger              string
-	Tourney                string
-	DownloadSettings       string
-	RedirectURL            string
-	ParamsBot              string
+	AuthorizeStatePlatform       AuthorizeStatePlatform
+	RequireMsgMessengerPlatform  string
+	RequireMsgTournamentPlatform string
+	LaunchMsg                    string
+	SuccessMsg                   string
+	ErrMsg                       string
+	TokenBot                     string
+	Messenger                    string
+	Tourney                      string
+	DownloadSettings             string
+	RedirectURL                  string
+	ParamsBot                    string
 }
 
 type AuthorizeStatePlatform struct {

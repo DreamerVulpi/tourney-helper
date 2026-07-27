@@ -64,12 +64,12 @@ func (p *ParticipantStats) Edit(ctx context.Context, participantId int, gameName
 	return nil
 }
 
-func (p *ParticipantStats) EditRating(ctx context.Context, participantId, rating int) error {
+func (p *ParticipantStats) EditRating(ctx context.Context, participantId int, gameName string, rating int) error {
 	const sql = `
 		UPDATE participant_stats
-		SET rating = $2, updated_at = CURRENT_TIMESTAMP
-		WHERE participant_id = $1`
-	tag, err := p.Conn.ExecContext(ctx, sql, participantId, rating)
+		SET rating = $3, updated_at = CURRENT_TIMESTAMP
+		WHERE participant_id = $1 AND LOWER(game_name) = LOWER($2)`
+	tag, err := p.Conn.ExecContext(ctx, sql, participantId, gameName, rating)
 	if err != nil {
 		return fmt.Errorf("don't edited rating from database, %w", err)
 	}

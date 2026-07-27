@@ -29,12 +29,6 @@ import {
   HardDriveDownload,
   Map,
 } from "lucide-react";
-import {
-  AuthorizeDiscord,
-  AuthorizeStartgg,
-  StartSendNotifications,
-  StopSendNotifications,
-} from "../../wailsjs/go/application/App.js";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { PlatformBtn } from "../components/ui/PlatformButton.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -70,21 +64,35 @@ const NotificationSystemPlate = ({
 }) => {
   // Get data from configs
   const debugMode = systemCfg?.debug?.mode || false;
-  const urlToTournament = tourneyCfg?.urlToTournament || "-";
+  const urlToTournament = tourneyCfg?.urlToTournament;
+  const gameName = tourneyCfg?.game.name
+  const stage = tourneyCfg?.rules.stage || "Random";
   const rules = tourneyCfg?.rules || {
     standardFormat: 2,
     finalsFormat: 3,
     rounds: 3,
     duration: 60,
-    stage: "Random",
+    stage: stage,
   };
+  const passcode = tourneyCfg?.stream.passcode || "0000";
   const streamLobby = tourneyCfg?.stream || {
     area: "Any",
     language: "Any",
     connection: "Any",
     crossplatform: true,
-    passcode: "0000",
+    passcode: passcode,
   };
+  const urlLogoTournament = tourneyCfg?.logo?.img || ""
+  const previewLogo = urlLogoTournament || "https://raw.githubusercontent.com/DreamerVulpi/tourney-helper/main/branding/icons/256.png"
+
+  // Field was edited
+  const invalidateAuth = () => {
+    setAuthStatus((prev) => ({
+      ...prev,
+      [activeSettings]: false,
+    }));
+  };
+
   // Get locale for label params bot
   const localeLabelParamsBot = locale.Platform.ParamsBot.split("%v");
   // State for settings button
@@ -96,7 +104,8 @@ const NotificationSystemPlate = ({
     activePlatform &&
     authStatus?.[activePlatform] &&
     activeMessenger &&
-    authStatus?.[activeMessenger];
+    authStatus?.[activeMessenger] &&
+    urlToTournament && gameName;
   // State for selected tab: Tournament Rules || Live Broadcast Lobby
   const [activeTab, setActiveTab] = useState("rules"); // "rules" or "lobby"
   // State for revial validation alert
@@ -134,6 +143,7 @@ const NotificationSystemPlate = ({
       value: 5,
     },
   ]
+
 
   // Handler for start proccess - Sending notifications
   const handleStartedSendingToggle = useStartSendingToggle(
@@ -327,14 +337,11 @@ const NotificationSystemPlate = ({
               
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <Field
-                  label={"CLIENT ID"}
+                  label={"CLIENT ID*"}
                   icon={TextAlignStart}
                   value={tourneyCfg[activeSettings]?.clientID || ""}
                   onChange={(value) => {
-                      setAuthStatus((prev) => ({
-                        ...prev,
-                        [activeSettings]: false,
-                      }));
+                      invalidateAuth();
                       updateConfig("tournament", {
                         ...tourneyCfg,
                         [activeSettings]: {
@@ -347,17 +354,14 @@ const NotificationSystemPlate = ({
                 />
 
                 <Field
-                  label={"SECRET CLIENT"}
+                  label={"SECRET CLIENT*"}
                   variant="password"
                   icon={Key}
                   isSecret
                   value={tourneyCfg[activeSettings]?.secretClient || ""}
                   themeClasses={themeClasses}
                   onChange={(value) => {
-                      setAuthStatus((prev) => ({
-                        ...prev,
-                        [activeSettings]: false,
-                      }));
+                      invalidateAuth();
                       updateConfig("tournament", {
                         ...tourneyCfg,
                         [activeSettings]: {
@@ -401,16 +405,13 @@ const NotificationSystemPlate = ({
 
               <div className="space-y-1">
                 <Field
-                  label={locale.Platform.TokenBot}
+                  label={locale.Platform.TokenBot+"*"}
                   icon={Key}
                   variant="password"
                   value={systemCfg[activeSettings]?.token}
                   themeClasses={themeClasses}
                   onChange={(value) => {
-                      setAuthStatus((prev) => ({
-                        ...prev,
-                        [activeSettings]: false,
-                      }));
+                      invalidateAuth();
                       updateConfig("system", {
                         ...systemCfg,
                         [activeSettings]: {
@@ -428,10 +429,11 @@ const NotificationSystemPlate = ({
                   <div className="grid grid-cols-2 gap-2 pt-1">
                     <div className="space-y-1">
                       <Field
-                        label={"GUILD ID"}
+                        label={"GUILD ID*"}
                         icon={Server}
                         value={systemCfg?.[activeSettings]?.guildID}
                         onChange={(value) => {
+                          invalidateAuth();
                           updateConfig("system", {
                             ...systemCfg,
                             [activeSettings]: {
@@ -462,14 +464,11 @@ const NotificationSystemPlate = ({
                     </div>
                     <div className="space-y-1">
                       <Field
-                        label={"CLIENT ID"}
+                        label={"CLIENT ID*"}
                         value={systemCfg?.[activeSettings]?.clientID}
                         icon={TextAlignStart}
                         onChange={(value) => {
-                          setAuthStatus((prev) => ({
-                            ...prev,
-                            [activeSettings]: false,
-                          }));
+                          invalidateAuth();
                           updateConfig("system", {
                             ...systemCfg,
                             [activeSettings]: {
@@ -503,16 +502,13 @@ const NotificationSystemPlate = ({
                     </div>
                     <div className="space-y-1">
                        <Field
-                        label={"SECRET CLIENT"}
+                        label={"SECRET CLIENT*"}
                         icon={Key}
                         variant={"password"}
                         themeClasses={themeClasses}
                         value={systemCfg?.[activeSettings]?.secretClient}
                         onChange={(value) => {
-                          setAuthStatus((prev) => ({
-                            ...prev,
-                            [activeSettings]: false,
-                          }));
+                          invalidateAuth();
                           updateConfig("system", {
                             ...systemCfg,
                             [activeSettings]: {
@@ -556,7 +552,7 @@ const NotificationSystemPlate = ({
             <section className="flex gap-4 h-[48px] items-end">
               <div className="flex-1 space-y-1">
                 <Field
-                  label={locale.UrlToTournamentLabel}
+                  label={locale.UrlToTournamentLabel+"*"}
                   witdh="320"
                   icon={Globe}
                   value={urlToTournament}
@@ -572,9 +568,9 @@ const NotificationSystemPlate = ({
               <div className="w-[180px] space-y-1">
                 <Field
                   variant="select"
-                  label={locale.GenreOrGameLabel}
+                  label={locale.GenreOrGameLabel+"*"}
                   icon={Search}
-                  value={tourneyCfg.game.name}
+                  value={gameName}
                   onChange={(value) =>
                     updateConfig("tournament", {
                       game: {
@@ -700,7 +696,7 @@ const NotificationSystemPlate = ({
                       <Field
                         label={locale.RulesOfTournament.Stage}
                         variant="combobox"
-                        value={rules.stage}
+                        value={stage}
                         themeClasses={themeClasses}
                         icon={Map}
                         items={[
@@ -833,7 +829,7 @@ const NotificationSystemPlate = ({
                           icon={Key}
                           label={locale.LobbyLiveBroadcast.AccessCodeLabel}
                           themeClasses={themeClasses}
-                          value={streamLobby.passcode}
+                          value={passcode}
                           onChange={(value) =>
                             updateConfig("tournament", {
                               stream: {
@@ -868,9 +864,9 @@ const NotificationSystemPlate = ({
                 <div
                   className={`w-24 h-24 rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden shrink-0 transition-all ${themeClasses.divider}`}
                 >
-                  {tourneyCfg?.logo?.img ? (
+                  {previewLogo ? (
                     <img
-                      src={tourneyCfg?.logo?.img}
+                      src={previewLogo}
                       className="w-full h-full object-cover"
                       alt="Logo"
                     />
@@ -883,7 +879,7 @@ const NotificationSystemPlate = ({
                     <Field
                       label={locale.ConfigurationLogo.UrlImageLabel}
                       icon={Globe}
-                      value={tourneyCfg?.logo?.img}
+                      value={urlLogoTournament}
                         onChange={(value) =>
                           updateConfig("tournament", {
                             ...tourneyCfg,

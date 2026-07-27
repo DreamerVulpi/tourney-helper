@@ -12,7 +12,6 @@ export function Field({
   variant = "input", // input | password | select | copy
   type = "text",
   isNumber,
-  isTextArea,
 
   value,
   onChange,
@@ -123,7 +122,7 @@ export function Field({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full h-24 p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${themeClasses.field}`}
+          className={`w-full ${height} p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${themeClasses.field}`}
         />
       ) : variant === "mono" ? (
         <div

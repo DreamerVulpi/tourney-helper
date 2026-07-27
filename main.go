@@ -7,6 +7,7 @@ import (
 	"runtime/debug"
 
 	"github.com/dreamervulpi/tourneyBot/config"
+	"github.com/dreamervulpi/tourneyBot/internal/auth"
 	"github.com/dreamervulpi/tourneyBot/internal/db"
 	"github.com/dreamervulpi/tourneyBot/internal/db/repo"
 	entityLogger "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
@@ -23,22 +24,12 @@ import (
 var assets embed.FS
 
 func main() {
-	if err := logger.Init(config.GetAbsPath("logs"), true); err != nil {
+	// Build: Realise -> false | Dev -> true
+	if err := logger.Init(config.GetAbsPath("logs"), false); err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)
 	}
 	defer logger.Close()
-
-	if err := config.Init(config.GetAbsPath("config")); err != nil {
-		logger.Log(entityLogger.Error, err.Error())
-	}
-
-	app := application.NewApp()
-	conn, err := db.NewPool()
-	if err != nil {
-		logger.Log(entityLogger.Error, err.Error())
-		return
-	}
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -46,6 +37,21 @@ func main() {
 			logger.Log(entityLogger.Error, "Programm closed with error. More details in folder logs")
 		}
 	}()
+
+	if err := config.Init(config.GetAbsPath("config")); err != nil {
+		logger.Log(entityLogger.Error, err.Error())
+	}
+
+	app := application.NewApp()
+	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)
+	app.OAuthServer.Start()
+
+	conn, err := db.NewPool()
+	if err != nil {
+		logger.Log(entityLogger.Error, err.Error())
+		return
+	}
+
 	db := dbManager.Database{
 		Conn:        conn,
 		Participant: usecaseDB.Participant{Repo: &repo.Participants{Conn: conn}},

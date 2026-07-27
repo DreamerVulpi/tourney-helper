@@ -190,8 +190,8 @@ func (a *App) GetBanned(nameMessenger string, nameTournamentPlatform string, gam
 	return result, nil
 }
 
-func (a *App) EditParticipantStatsRating(id, rating int) (db.ParticipantEditResponse, error) {
-	result, err := a.Db.Stats.EditParticipantStatsRating(a.ctx, db.ParticipantStatEditRatingRequest{Id: id, Rating: rating})
+func (a *App) EditParticipantStatsRating(id int, gameName string, rating int) (db.ParticipantEditResponse, error) {
+	result, err := a.Db.Stats.EditParticipantStatsRating(a.ctx, db.ParticipantStatEditRatingRequest{Id: id, GameName: gameName, Rating: rating})
 	if err != nil {
 		logger.Log(entityLogger.Error, err.Error())
 		return db.ParticipantEditResponse{}, err

@@ -214,16 +214,21 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*d
 		sidePrefix = "[DEBUG] "
 	}
 
-	local := entityLocale.En
-	if len(recipient.Locale) > 0 {
+	var local entityLocale.Lang
+	switch recipient.Locale {
+	case string(entityLocale.LocaleRu):
 		local = entityLocale.Ru
+	default:
+		local = entityLocale.En
 	}
 
-	// message, err := s.prepareMsgSetData(recipient, opponent, set, local)
 	message, err := s.prepareMsgSetData(opponent, set, local)
 	if err != nil {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Can't prepare Discord message: %v\n", err.Error()))
-		s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
+
+		if s.params.debugChannelID != "" {
+			s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
+		}
 		return &discordgo.MessageEmbed{}, entityLocale.En, entitySender.Participant{}
 	}
 
@@ -246,18 +251,20 @@ func (_ *Handler) typeLocale(language string) entityLocale.Lang {
 }
 
 func msgEmbed(title string, fields []*discordgo.MessageEmbedField, color int, cfg *params) *discordgo.MessageEmbed {
+	defaultLogo := "https://raw.githubusercontent.com/DreamerVulpi/tourney-helper/main/branding/icons/256.png"
+
 	var urlToLogo string
 	if len(cfg.tournament.Logo.Img) != 0 {
 		urlToLogo = cfg.tournament.Logo.Img
 	} else {
-		urlToLogo = cfg.logo
+		urlToLogo = defaultLogo
 	}
 
 	embed := &discordgo.MessageEmbed{
 		Title: title,
 		Color: color,
 		Author: &discordgo.MessageEmbedAuthor{
-			IconURL: cfg.logo,
+			IconURL: defaultLogo,
 			URL:     "https://github.com/DreamerVulpi/tourney-helper",
 			Name:    "TourneyHelper",
 		},
@@ -268,7 +275,7 @@ func msgEmbed(title string, fields []*discordgo.MessageEmbedField, color int, cf
 		Timestamp: time.Now().Format(time.RFC3339),
 		Footer: &discordgo.MessageEmbedFooter{
 			Text:    "by DreamerVulpi | https://www.twitch.tv/dreamervulpi",
-			IconURL: cfg.logo,
+			IconURL: defaultLogo,
 		},
 	}
 
@@ -276,11 +283,6 @@ func msgEmbed(title string, fields []*discordgo.MessageEmbedField, color int, cf
 }
 
 func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entitySender.SetData, local entityLocale.Lang, gameNickname string) {
-	if s.params.debugChannelID == "" {
-		log.Println("logSentMsgToDiscord | skip: debugChannelID is empty")
-		return
-	}
-
 	var logFields []*discordgo.MessageEmbedField
 	var color int
 
@@ -295,7 +297,7 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 
 	logFields = []*discordgo.MessageEmbedField{
 		{Name: fmt.Sprintf(local.LogMessage.SuccesfullSendedMsg, state), Value: "\u200B"},
-		{Name: fmt.Sprintf("Set #%v | ", set.SetID), Value: fmt.Sprintf("%v vs %v", set.ContactPlayer1.GameNickname, set.ContactPlayer2.GameNickname)},
+		{Name: fmt.Sprintf("Set #%v ", set.SetID), Value: fmt.Sprintf("%v vs %v", set.ContactPlayer1.GameNickname, set.ContactPlayer2.GameNickname)},
 	}
 
 	if !success {

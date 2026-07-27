@@ -32,7 +32,7 @@ func (db *Database) syncParticipant(ctx context.Context, api, database entitySen
 		request.Region = api.Region
 		needUpdate = true
 	}
-	if shouldFill(api.Locale, database.Locale) {
+	if shouldReplace(api.Locale, database.Locale) {
 		request.Locale = api.Locale
 		needUpdate = true
 	}

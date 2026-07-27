@@ -5,14 +5,14 @@ import (
 )
 
 // Response for instant command
-func (h *Handler) responseEmbedMsgImmediate(i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
-	return h.session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Embeds: embed,
-		},
-	})
-}
+// func (h *Handler) responseEmbedMsgImmediate(i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {
+// 	return h.session.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+// 		Type: discordgo.InteractionResponseChannelMessageWithSource,
+// 		Data: &discordgo.InteractionResponseData{
+// 			Embeds: embed,
+// 		},
+// 	})
+// }
 
 // Response for heavy command using gorutines
 func (h *Handler) responseEmbedMsgFollowup(i *discordgo.InteractionCreate, embed []*discordgo.MessageEmbed) error {

@@ -46,12 +46,6 @@ export function ValidationModal({
       }
     >
       <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar custom-scrollbar-red space-y-4">
-        <p
-          className={`text-xs leading-relaxed ${themeClasses.textMuted}`}
-        >
-          {locale.NeedCorrectConfig}
-        </p>
-
         <div
           className={`
             flex

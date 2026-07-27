@@ -20,8 +20,10 @@ import (
 
 func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
 	client := &auth.AuthClient{
-		Config:    auth.GetDiscordOauth2(clientID, clientSecret),
-		TokenFile: "token_discord.json",
+		Config:         auth.GetDiscordOauth2(clientID, clientSecret),
+		TokenFile:      "token_discord.json",
+		CallbackPath:   "/discord/callback",
+		CallbackServer: a.OAuthServer,
 	}
 
 	if err := client.Init(a.ctx); err != nil {
@@ -40,8 +42,10 @@ func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
 
 func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 	client := &auth.AuthClient{
-		Config:    auth.GetStartggOauth2(clientID, clientSecret),
-		TokenFile: "token_startgg.json",
+		Config:         auth.GetStartggOauth2(clientID, clientSecret),
+		TokenFile:      "token_startgg.json",
+		CallbackPath:   "/startgg/callback",
+		CallbackServer: a.OAuthServer,
 	}
 
 	if err := client.Init(a.ctx); err != nil {
@@ -58,8 +62,8 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 	return nil
 }
 
-func (a *App) InitSystemNotification(language string) (discord.Handler, error) {
-	adapter, err := sender.GetTournamentAdapter(a.TournamentClient, "Discord", a.ConfigTournament.UrlToTournament, a.ConfigMessenger.DebugMode.Mode, a.ConfigTournament.Game.Name, nil)
+func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament) (discord.Handler, error) {
+	adapter, err := sender.GetTournamentAdapter(a.TournamentClient, "Discord", cfgTournament.UrlToTournament, cfgBot.DebugMode.Mode, cfgTournament.Game.Name, nil)
 	if err != nil {
 		return discord.Handler{}, err
 	}
@@ -70,7 +74,7 @@ func (a *App) InitSystemNotification(language string) (discord.Handler, error) {
 		return discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
 	}
 
-	ns := sender.NewNotificationSystem(nil, adapter, a.Db, a.ConfigMessenger.DebugMode.Mode, entitySender.Participant{
+	ns := sender.NewNotificationSystem(nil, adapter, a.Db, cfgBot.DebugMode.Mode, entitySender.Participant{
 		MessengerID:    meDiscordPlatform.ID,
 		MessengerLogin: meDiscordPlatform.Username,
 		Locale:         strings.ToLower(language),
@@ -234,7 +238,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 		a.ConfigTournament.UrlToTournament = slug
 	}
 
-	sn, err := a.InitSystemNotification(language)
+	sn, err := a.InitSystemNotification(language, cfgBot, cfgTournament)
 	if err != nil {
 		logger.Log(entityLogger.Error, err.Error())
 		return err
@@ -249,7 +253,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 	a.mu.Unlock()
 
 	go func() {
-		if err := a.activeBot.Start(ctx, a.TournamentClient, a.Db.Conn, *a.ConfigMessenger, *a.ConfigTournament); err != nil {
+		if err := a.activeBot.Start(ctx, a.TournamentClient, a.Db.Conn, cfgBot, cfgTournament); err != nil {
 			logger.Log(entityLogger.Error, err.Error())
 		}
 	}()

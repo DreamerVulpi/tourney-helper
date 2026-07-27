@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"time"
 
 	"log"
 	"net/http"
@@ -17,11 +16,12 @@ import (
 
 	loggerEntity "github.com/dreamervulpi/tourneyBot/internal/entity/logger"
 	"github.com/dreamervulpi/tourneyBot/internal/usecase/logger"
+	"github.com/google/uuid"
 	"golang.org/x/oauth2"
 )
 
 const (
-	addr              = "127.0.0.1:7310"
+	Addr              = "127.0.0.1:7310"
 	startggAuthURL    = "https://start.gg/oauth/authorize"
 	startggTokenURL   = "https://api.start.gg/oauth/access_token"
 	discordAuthURL    = "https://discord.com/api/oauth2/authorize"
@@ -39,10 +39,12 @@ type Identity struct {
 }
 
 type AuthClient struct {
-	NamePlatform string
-	Config       *oauth2.Config
-	HTTPClient   *http.Client
-	TokenFile    string
+	NamePlatform   string
+	Config         *oauth2.Config
+	HTTPClient     *http.Client
+	TokenFile      string
+	CallbackPath   string
+	CallbackServer *OAuthCallbackServer
 }
 
 func GetStartggOauth2(clientID, clientSecret string) *oauth2.Config {
@@ -113,66 +115,52 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 	if ac.Config == nil {
 		return fmt.Errorf("Config is nil. Check your Get...Oauth2 functions")
 	}
+	if ac.CallbackServer == nil {
+		return fmt.Errorf("OAuth callback server is nil")
+	}
 
 	token, err := GetTokenFromFile(ac.TokenFile)
 	if err != nil || !token.Valid() {
-		logger.Log(loggerEntity.Warning, fmt.Sprintf("Token invalid or missing is %s, starting web flow...", ac.TokenFile))
+		logger.Log(loggerEntity.Warning,
+			fmt.Sprintf("Token invalid or missing is %s, starting web flow...\n", ac.TokenFile))
 
-		codeChan := make(chan string)
+		state := uuid.New().String()
+		codeChan := make(chan string, 1)
+		ac.CallbackServer.Register(ac.CallbackPath, state, codeChan)
+		authURL := ac.Config.AuthCodeURL(state)
 
-		mux := http.NewServeMux()
-		server := &http.Server{Addr: addr, Handler: mux}
+		logger.Log(loggerEntity.Info,
+			fmt.Sprintf("Link to auth: %v", authURL))
 
-		mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-			code := r.URL.Query().Get("code")
-			_, err := fmt.Fprint(w, "Authurization is success! Back to programm.")
-			if err != nil {
-				logger.Log(loggerEntity.Error, fmt.Sprintf("Authurization isn't correct: %v\n", err))
-				return
-			}
-			codeChan <- code
-		})
-
-		// launch server for listening
-		go func() {
-			if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-				logger.Log(loggerEntity.Error, fmt.Sprintf("HTTP Server error: %v", err))
-				return
-			}
-		}()
-
-		authURL := ac.Config.AuthCodeURL("state")
-		logger.Log(loggerEntity.Info, fmt.Sprintf("Link to auth: %v", authURL))
-
-		// open browser for os windows
-		if err := exec.Command("rundll32", "url.dll,FileProtocolHandler", authURL).Start(); err != nil {
+		if err := exec.Command(
+			"rundll32",
+			"url.dll,FileProtocolHandler",
+			authURL,
+		).Start(); err != nil {
 			return err
 		}
+
 		var code string
+
 		select {
 		case code = <-codeChan:
-		case <-ctx.Done():
-			if err := server.Shutdown(context.Background()); err != nil {
-				return ctx.Err()
-			}
-		}
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := server.Shutdown(shutdownCtx); err != nil {
-			return err
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 
 		token, err = ac.Config.Exchange(ctx, code)
 		if err != nil {
 			return err
 		}
+
 		if err := saveTokenToFile(ac.TokenFile, token); err != nil {
 			return err
 		}
 	}
 
 	ac.HTTPClient = ac.Config.Client(ctx, token)
+
 	return nil
 }
 

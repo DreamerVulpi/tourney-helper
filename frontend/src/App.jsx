@@ -89,6 +89,8 @@ const App = () => {
   const [activePlatform, setActivePlatform] = useState("");
   // Selected messenger
   const [activeMessenger, setActiveMessenger] = useState("");
+  // Selected game in DatabasePanel.jsx
+  const [selectedGame, setSelectedGame] = useState("Tekken8");
   // State authorization for tournament platforms and messengers
   const [authStatus, setAuthStatus] = useState({
     startgg: false,
@@ -170,6 +172,8 @@ const App = () => {
                     locale={locale.DatabasePanel}
                     lang={lang}
                     themeClasses={themeClasses}
+                    selectedGame={selectedGame}
+                    setSelectedGame={setSelectedGame}
                   />
                 )}
                 {/* In future updates */}

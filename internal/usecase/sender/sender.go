@@ -45,7 +45,7 @@ func (ns NotificationSystem) Run(ctx context.Context) error {
 	slug, err := ns.Data.GetTournamentSlug()
 	if err != nil {
 		slug = "N/D"
-		log.Printf("process | Warning - %v\n", err)
+		logger.Log(entityLogger.Error, fmt.Sprintf("Error after attempt to get tourney slug: %v", err))
 	}
 
 	ticker := time.NewTicker(ns.ReminderInterval)
@@ -74,6 +74,10 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 	sets, err := ns.Data.GetSetsData(ctx, slug)
 	if err != nil {
 		return err
+	}
+
+	if len(sets) == 0 {
+		logger.Log(entityLogger.Info, "There are currently no battles with the \"Not Started\" status...")
 	}
 
 	for _, set := range sets {
@@ -120,15 +124,15 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 		contactP2, errP2 := ns.checkParticipant(ctx, set.ContactPlayer2)
 
 		if errP1 != nil {
-			logger.Log(entityLogger.Error, fmt.Sprintf("Player 1 error: %v", errP1))
+			logger.Log(entityLogger.Error, fmt.Sprintf("Got error after check participant data of P1: %v", errP1))
 		}
 
 		if errP2 != nil {
-			logger.Log(entityLogger.Error, fmt.Sprintf("Player 2 error: %v", errP2))
+			logger.Log(entityLogger.Error, fmt.Sprintf("Got error after check participant data of P2: %v", errP2))
 		}
 
 		if ns.DebugMode {
-			log.Printf("Debug | Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessengerLogin)
+			logger.Log(entityLogger.Debug, fmt.Sprintf("Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessengerLogin))
 			ns.sendDebugNotifications(ctx, set, contactP1, contactP2)
 			continue
 		}
@@ -144,7 +148,7 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 			timeP2 = sentInfo.SentAtP2
 		}
 
-		if p1NeedsSending && contactP1.IsFound {
+		if p1NeedsSending && errP1 == nil && validationParticipant(contactP1) == nil {
 			timeP1, err = ns.sendNotification(ctx, contactP1, set, timeP1)
 			if err != nil {
 				logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed to %v. Error: %v", set.SetID, contactP1.GameNickname, err.Error()))
@@ -155,7 +159,7 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 
 		time.Sleep(entitySender.NotificationDelay)
 
-		if p2NeedsSending && contactP2.IsFound {
+		if p2NeedsSending && errP2 == nil && validationParticipant(contactP2) == nil {
 			setForP2 := set
 			setForP2.ContactPlayer1 = contactP2
 			setForP2.ContactPlayer2 = contactP1

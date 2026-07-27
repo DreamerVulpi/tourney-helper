@@ -44,11 +44,9 @@ import { debounce } from "../utils/debounce.jsx";
 import { CopyButton } from "../components/ui/CopyButton.jsx";
 import { Field } from "../components/ui/Field.jsx";
 
-const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
+const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSelectedGame }) => {
   // Notes in 1 request to database
   const limit = 5;
-  
-  const [selectedGame, setSelectedGame] = useState("Tekken8");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddHovered, setIsAddHovered] = useState(false);
@@ -403,11 +401,11 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
   };
 
   // Handler for update rating
-  const handleUpdateRating = async (participantId, newRating, nickname) => {
+  const handleUpdateRating = async (participantId, gameName, newRating, nickname) => {
     const logActionUpdateRating = locale.Table.LogsActions.UpdateRating;
     const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
     try {
-      await EditParticipantStatsRating(participantId, newRating);
+      await EditParticipantStatsRating(participantId, gameName, newRating);
 
       setPlayers((prev) =>
         prev.map((p) =>
@@ -511,9 +509,12 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
 
   // Debounce for fetch
   const debouncedFetch = useMemo(
-    () => debounce((query) => fetchData(false, query), 500),
-    [],
-  );
+  () =>
+    debounce((query) => {
+      fetchDataRef.current(false, query);
+    }, 500),
+  [],
+);
 
   // Handler for search line
   const handleSearchChange = (e) => {
@@ -1088,6 +1089,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                                 onClick={() =>
                                   handleUpdateRating(
                                     p.id,
+                                    selectedGame,
                                     Math.max(0, (p.rating || 0) + 10),
                                     p.gameNickname,
                                   )
@@ -1102,6 +1104,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                                 onClick={() =>
                                   handleUpdateRating(
                                     p.id,
+                                    selectedGame,
                                     Math.max(0, (p.rating || 0) - 10),
                                     p.gameNickname,
                                   )
@@ -1122,13 +1125,13 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses }) => {
                                   {nameTournamentPlatform}
                                 </span>
                                 <span className="opacity-60 text-[10px] truncate">
-                                  {`${locale.AddButton.AddContactOfMessenger.Login}: ${p.tournamentPlatformLogin === "N/D" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.tournamentPlatformLogin}`}
+                                  {`${locale.AddButton.AddContactOfMessenger.Login}: ${p.tournamentPlatformLogin === "N/D" || p.tournamentPlatformLogin === "" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.tournamentPlatformLogin}`}
                                 </span>
                                 <span className="text-purple-500 font-black mt-1">
                                   {nameMessengerPlatform}
                                 </span>
                                 <span className="opacity-60 text-[10px] truncate">
-                                  {`${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: ${p.messengerLogin === "N/D" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.messengerLogin}`}
+                                  {`${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: ${p.messengerLogin === "N/D" || p.messengerLogin === "" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.messengerLogin}`}
                                 </span>
                               </div>
                               <CopyButton text={getParticipantCopyText(p)} />

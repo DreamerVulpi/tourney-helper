@@ -50,6 +50,7 @@ type NotificationSender interface {
 	FindContactOfParticipant(ctx context.Context, participant Participant) (Participant, error)
 	SendMessage(ctx context.Context, targetID string, dmChannelID *string, data SetData) (string, error)
 	GetPlatformMessengerName() string
+	CreateDMChannel(ctx context.Context, platformID string) (*string, error)
 }
 
 type NotificationData interface {

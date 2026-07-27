@@ -2,6 +2,13 @@ package bot
 
 import "github.com/dreamervulpi/tourneyBot/internal/entity/locale/stages"
 
+type Locale string
+
+const (
+	LocaleEn Locale = "en"
+	LocaleRu Locale = "ru"
+)
+
 type LogMessage struct {
 	Title                  string
 	StatusSentNotification string

@@ -39,7 +39,7 @@ const initialTourneyConfig = {
       connection: "Wired",
       passcode: "0000",
     },
-    game: { name: "tekken" },
+    game: { name: "Tekken8" },
     logo: { img: "" },
     csv: { nameFile: "" },
 }

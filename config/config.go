@@ -24,8 +24,8 @@ type MessengerPlatform struct {
 }
 
 type RolesID struct {
-	Ru string `toml:"ru" json:"ru"`
 	En string `toml:"en" json:"en"`
+	Ru string `toml:"ru" json:"ru"`
 }
 
 type DebugMode struct {

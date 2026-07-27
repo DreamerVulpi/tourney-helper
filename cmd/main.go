@@ -74,19 +74,30 @@ func main() {
 	// if err != nil {
 	// 	logger.Log(entityLogger.Error, err)
 	// }
+	ctx := context.Background()
+	oauthServer := auth.NewOAuthCallbackServer(
+		auth.Addr,
+	)
+	oauthServer.Start()
 
 	// Для Discord
 	dsAuth := &auth.AuthClient{
-		NamePlatform: "discord",
-		Config:       auth.GetDiscordOauth2(os.Getenv("DISCORD_CLIENT_ID"), os.Getenv("DISCORD_CLIENT_SECRET")),
-		TokenFile:    "token_discord.json",
+		NamePlatform:   "discord",
+		Config:         auth.GetDiscordOauth2(os.Getenv("DISCORD_CLIENT_ID"), os.Getenv("DISCORD_CLIENT_SECRET")),
+		TokenFile:      "token_discord.json",
+		CallbackPath:   "/discord/callback",
+		CallbackServer: oauthServer,
 	}
+	dsAuth.Init(ctx)
 
 	ggAuth := &auth.AuthClient{
-		NamePlatform: "startgg",
-		Config:       auth.GetStartggOauth2(os.Getenv("STARTGG_CLIENT_ID"), os.Getenv("STARTGG_CLIENT_SECRET")),
-		TokenFile:    "token_startgg.json",
+		NamePlatform:   "startgg",
+		Config:         auth.GetStartggOauth2(os.Getenv("STARTGG_CLIENT_ID"), os.Getenv("STARTGG_CLIENT_SECRET")),
+		TokenFile:      "token_startgg.json",
+		CallbackPath:   "/startgg/callback",
+		CallbackServer: oauthServer,
 	}
+	ggAuth.Init(ctx)
 
 	logger.Log(entityLogger.Info, fmt.Sprintln("Get data of profile..."))
 

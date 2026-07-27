@@ -15,9 +15,8 @@ var listRegionsEn = ListRegions{
 
 var En = Ui{
 	ValidationAlertModal: ValidationAlertModal{
-		ErrorFillParams:   "Error filling in parameters",
-		NeedCorrectConfig: "To continue and run the authorization pre-check, you must correct the application configuration:",
-		OkButtonLabel:     "OK",
+		ErrorFillParams: "Error filling in parameters",
+		OkButtonLabel:   "OK",
 	},
 	LogPanel: LogPanel{
 		Label:                            "Logs",
@@ -48,7 +47,7 @@ var En = Ui{
 				InitialSetup: HelpQA{
 					Question: "How do I set up the notification system for the first time?",
 					Answer: `1. Fill in the required "CLIENT ID" and "SECRET CLIENT" fields for the tournament platform. 
-					2. Fill in the required "BOT TOKEN," "GUILD ID," "LOG CHANNEL ID," "CLIENT ID," "CLIENT SECRET," and "ROLE ID - EN" fields in the messenger. 
+					2. Fill in the required fields “BOT TOKEN,” “GUILD ID,” “CLIENT ID,” and “CLIENT SECRET” for the messenger. (The remaining fields are optional.)
 					3. Select the tournament data source and the messenger for notifications by clicking the platform button itself. 
 					4. After clicking the platform button, TourneyHelper will redirect you to the authorization page and invite the bot to your messaging server. The result will be displayed in the log window.`,
 				},
@@ -77,15 +76,15 @@ var En = Ui{
 				HowGetDataForStartgg: HelpQA{
 					Question: "How do I get data for start.gg?",
 					Answer: `1. Log in to your start.gg account -> "Developer Settings" -> "OAuth Applications"
-                    2. Create an "OAuth Application". As you fill in the information, enter the value from the "TourneyHelper" program in the "Application Authorization Callback" field.
-                    3. Copy the "CLIENT ID" and "CLIENT SECRET" values into the program "TourneyHelper".`,
+                    2. Create "OAuth Authorization Applications." As you enter the data, enter the value from the "Redirect URL" field in the "TourneyHelper" program into the "Application Authorization Callback"field.
+                    3. Enter the "CLIENT ID" and "CLIENT SECRET" values you obtained into the "TourneyHelper" program.`,
 				},
 				HowGetDataForDiscord: HelpQA{
 					Question: "How do I get data for Discord?",
 					Answer: `1. Log in to your Discord account -> Go to the %v Developers section%v.
                     2. Create your own app (click the "New App" button).
 					3. In the app, select: Overview -> "OAuth." Enter the "CLIENT ID" and "CLIENT SECRET" into the "TourneyHelper" program.
-                    4. In the "Redirects" section, add the "REDIRECT API" from the "TourneyHelper" program.
+                    4. In the "Redirects" section, add the "REDIRECT API" value from the "TourneyHelper" program.
 					5. In the app, select: Bot -> Get Bot Token and enter it into the "TOKEN BOT" field in the "TourneyHelper" program.
 					The remaining fields, "ROLE-ID X" and "LOG CHANNEL ID," can be obtained by right-clicking on the element within Discord itself and selecting "Copy ID" (You must first enable developer mode in Discord’s settings).`,
 				},
@@ -128,16 +127,17 @@ var En = Ui{
 				Authorized:   "Authorized",
 				Unauthorized: "Unauthorized",
 			},
-			DownloadSettings: "Download settings",
-			RedirectURL:      "Redirect URL",
-			ParamsBot:        "Params %v bot",
-			TokenBot:         "Bot Token",
-			Messenger:        "Messenger",
-			Tourney:          "Tournament Platform",
-			RequireMsg:       "To authorize, you must provide: Client ID, Client Secret, and possibly a Bot Token",
-			LaunchMsg:        "Authorisation initiated on",
-			SuccessMsg:       "Authorisation successful on",
-			ErrMsg:           "Authorisation error. Please check that the details you entered are correct",
+			DownloadSettings:             "Download settings",
+			RedirectURL:                  "Redirect URL",
+			ParamsBot:                    "Params %v bot",
+			TokenBot:                     "Bot Token",
+			Messenger:                    "Messenger",
+			Tourney:                      "Tournament Platform",
+			RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",
+			RequireMsgTournamentPlatform: "To authorize, you must enter: Client ID and Client Secret",
+			LaunchMsg:                    "Authorisation initiated on",
+			SuccessMsg:                   "Authorisation successful on",
+			ErrMsg:                       "Authorisation error. Please check that the details you entered are correct",
 		},
 		UrlToTournamentLabel: "Tournament Bracket URL",
 		GenreOrGameLabel:     "Genre/Game",
@@ -188,11 +188,13 @@ var En = Ui{
 	},
 	DatabasePanel: DatabasePanel{
 		AddButton: AddButton{
-			Label:        "Add Player",
-			One:          "Single",
-			EditTitle:    "Edit player information",
-			AddBanTitle:  "Add the offender to the ban list",
-			EditBanTitle: "Editing offender data",
+			ErrorFillParams: "Error filling in parameters",
+			OkButtonLabel:   "OK",
+			Label:           "Add Player",
+			One:             "Single",
+			EditTitle:       "Edit player information",
+			AddBanTitle:     "Add the offender to the ban list",
+			EditBanTitle:    "Editing offender data",
 			AddContactOfMessenger: AddContactOfMessenger{
 				Label:       "Add Messenger Contact",
 				Description: "Messenger Contact",
@@ -292,6 +294,8 @@ var En = Ui{
 				ErrEmptyGameID:              "The game ID cannot be empty!",
 				ErrActivateMessengerNoLogin: "You have enabled the messenger field but did not enter a username!",
 				ErrActivateTourneyNoLogin:   "You have enabled the tournament platform field but did not enter a username!",
+				RequireMsgNickname:          "You must specify the participant's nickname to save",
+				RequireMsgGameID:            "You must specify the participant's game ID to save",
 			},
 		},
 		SearchLineLabel: "Search by nickname, ID, or region",
