@@ -1,4 +1,4 @@
-<h4 align="center">🌐<a href="/readme.md">English</a> | <a href="/readme-ru.md">Русский</a>
+<h4 align="center">🌐<a href="/README.md">English</a> | <a href="/README-RU.md">Русский</a>
 
 <p align="center"> <img style="padding: 10px" align="center" alt="TourneyHelper logo" src="./branding/exports/logo.png" width="200"> </p>
 <p align="center"> <img style="padding: 10px" align="center" alt="TourneyHelper label" src="./branding/exports/label.png" width="350"> </p>
