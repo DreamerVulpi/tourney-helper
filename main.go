@@ -25,7 +25,7 @@ var assets embed.FS
 
 func main() {
 	// Build: Realise -> false | Dev -> true
-	if err := logger.Init(config.GetAbsPath("logs"), false); err != nil {
+	if err := logger.Init(config.GetAbsPath("logs"), true); err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)
 	}

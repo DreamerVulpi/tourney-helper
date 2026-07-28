@@ -15,6 +15,8 @@ import (
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/bot/discord"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/rateLimiter"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 )
 
@@ -68,18 +70,20 @@ func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessen
 		return discord.Handler{}, err
 	}
 
-	dh := discord.Handler{Auth: a.MessengerClient}
+	collector := metrics.NewCollector()
+	dh := discord.Handler{Auth: a.MessengerClient, Metrics: collector}
 	meDiscordPlatform, err := dh.Auth.GetDiscordMe(a.ctx)
 	if err != nil {
 		return discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
 	}
 
+	limiter := rateLimiter.NewDiscordLimiter(collector)
 	ns := sender.NewNotificationSystem(nil, adapter, a.Db, cfgBot.DebugMode.Mode, entitySender.Participant{
 		MessengerID:    meDiscordPlatform.ID,
 		MessengerLogin: meDiscordPlatform.Username,
 		Locale:         strings.ToLower(language),
 		GameName:       a.ConfigTournament.Game.Name,
-	}, 5*time.Minute)
+	}, limiter, 5*time.Minute)
 	dh.Ns = ns
 	if a.ConfigMessenger.DebugMode.Mode {
 		logger.Log(entityLogger.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))

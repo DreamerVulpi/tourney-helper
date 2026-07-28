@@ -307,7 +307,8 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 	}
 
 	logEmbed := msgEmbed(fmt.Sprintf(local.LogMessage.Title, set.TournamentName), logFields, color, &s.params)
-	if _, err := s.session.ChannelMessageSendComplex(s.params.debugChannelID, &discordgo.MessageSend{
+	start := time.Now()
+	_, err := s.session.ChannelMessageSendComplex(s.params.debugChannelID, &discordgo.MessageSend{
 		Embed: logEmbed,
 		Components: s.btnSupport(
 			local.DonateField.Name,
@@ -317,7 +318,10 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 			local.SubscribeField.URL,
 			local.SubscribeField.Emoji,
 		),
-	}); err != nil {
+	})
+	if err != nil {
+		s.Metrics.RecordMessageSend(err, time.Since(start))
 		log.Printf("logToDiscord | error sending to debug channel: %v", err)
 	}
+	s.Metrics.RecordMessageSend(err, time.Since(start))
 }

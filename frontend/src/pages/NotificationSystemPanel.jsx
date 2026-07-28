@@ -37,6 +37,7 @@ import { useStartSendingToggle } from "../hooks/NotificationSystemPanel/useStart
 import { Field } from "../components/ui/Field.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import { ValidationModal } from "../components/ValidationModal.jsx";
+import  NotificationMonitorModal from "../components/modals/NotificationMonitorModal.jsx"
 import { useMessengerAuth } from "../hooks/useMessengerAuth.jsx";
 import { useTournamentPlatform } from "../hooks/useTournamentPlatform.jsx";
 
@@ -113,6 +114,8 @@ const NotificationSystemPlate = ({
     isOpen: false,
     message: "",
   });
+  // State for report modal window
+  const [report, setReport] = useState({isOpen: false});
 
   // Settings icon button for platforms
   const toggleSettings = (id) => {
@@ -151,6 +154,7 @@ const NotificationSystemPlate = ({
     setIsStartedSending,
     isProcessing,
     setIsProcessing,
+    setReport,
     { activeMessenger, activePlatform, systemCfg, tourneyCfg, lang },
   );
   // Button style for handler which start proccess
@@ -234,7 +238,15 @@ const NotificationSystemPlate = ({
       themeClasses={themeClasses}
       needToBlock={isStartedSending}
       exceptionElement={
-        activeModal ? null :rightPanelFooter
+        activeModal ? null : <> 
+        {/* <NotificationMonitorModal
+          isOpen={report.isOpen}
+          onClose={() => setValidationAlert({ isOpen: false })}
+          locale={locale}
+          themeClasses={themeClasses}
+        /> */}
+        {rightPanelFooter}
+        </>
       }
     >
       <div className="grid grid-cols-12 gap-8 items-start flex-1">

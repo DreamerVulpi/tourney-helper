@@ -5,16 +5,19 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 )
 
 type DiscordSender struct {
 	session *discordgo.Session
 	params  params
+	Metrics *metrics.Collector
 }
 
 func (s *DiscordSender) GetPlatformMessengerName() string {
@@ -45,10 +48,13 @@ func (h *Handler) StartSendMessages() {
 }
 
 func (s *DiscordSender) CreateDMChannel(ctx context.Context, messengerId string) (*string, error) {
+	start := time.Now()
 	channel, err := s.session.UserChannelCreate(messengerId)
 	if err != nil {
+		s.Metrics.RecordAPIRequest(err, time.Since(start))
 		return nil, fmt.Errorf("SendNotification | error creating channel for %s: %w", messengerId, err)
 	}
+	s.Metrics.RecordAPIRequest(err, time.Since(start))
 	return &channel.ID, nil
 }
 
@@ -75,6 +81,7 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 	}
 
 	message, local, recipient := s.msgInvite(targetID, set)
+	start := time.Now()
 	_, err = s.session.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
 		Embed: message,
 		Components: s.btnSupport(
@@ -87,12 +94,14 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 		),
 	})
 	if err != nil {
+		s.Metrics.RecordMessageSend(err, time.Since(start))
 		logger.Log(entityLogger.Error, fmt.Sprintf("NotificationSystem | Can't sent message (targetID: %v): %v\n", targetID, err.Error()))
 		if s.params.debugChannelID != "" {
 			s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
 		}
 		return "", err
 	}
+	s.Metrics.RecordMessageSend(err, time.Since(start))
 
 	if s.params.debugChannelID != "" {
 		s.logMsgToDiscord(true, "", set, local, recipient.GameNickname)
@@ -142,14 +151,17 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 		return currentData, fmt.Errorf("findContact | member %s not founded in guild (server)\n", p.GameNickname)
 	}
 
+	start := time.Now()
 	members, err := s.session.GuildMembersSearch(s.params.guildID, cleanNickname, 1)
 	if err != nil {
+		s.Metrics.RecordAPIRequest(err, time.Since(start))
 		return currentData, fmt.Errorf("findContact | member %s not found in guild (server): %w\n", cleanNickname, err)
 	}
 	if len(members) != 1 {
+		s.Metrics.RecordAPIRequest(err, time.Since(start))
 		return currentData, fmt.Errorf("findContact | member %s not found in guild (server)\n", cleanNickname)
 	}
-
+	s.Metrics.RecordAPIRequest(err, time.Since(start))
 	targetMember := members[0]
 	return entitySender.Participant{
 		MessengerID:             targetMember.User.ID,

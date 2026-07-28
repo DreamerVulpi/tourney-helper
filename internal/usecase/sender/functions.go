@@ -11,6 +11,7 @@ import (
 
 	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entityRateLimiter "github.com/dreamervulpi/tourney-helper/internal/entity/rateLimiter"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
@@ -42,7 +43,7 @@ func validationParticipant(p entitySender.Participant) error {
 	return nil
 }
 
-func (ns NotificationSystem) checkParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
+func (ns *NotificationSystem) checkParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
 	dbData, err := ns.Db.GetParticipant(ctx, apiData)
 
 	switch {
@@ -80,7 +81,7 @@ func (ns NotificationSystem) checkParticipant(ctx context.Context, apiData entit
 	}
 }
 
-func (ns NotificationSystem) saveSentInfo(ctx context.Context, slug string, set entitySender.SetData, timeP1 *time.Time, timeP2 *time.Time) error {
+func (ns *NotificationSystem) saveSentInfo(ctx context.Context, slug string, set entitySender.SetData, timeP1 *time.Time, timeP2 *time.Time) error {
 	var currentState entityDB.SetState = entityDB.ConvertToSetState(set.State)
 	request := entityDB.SentSetAddRequest{
 		SetId:              set.SetID,
@@ -95,7 +96,7 @@ func (ns NotificationSystem) saveSentInfo(ctx context.Context, slug string, set 
 	return err
 }
 
-func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, set entitySender.SetData, contactP1, contactP2 entitySender.Participant) {
+func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set entitySender.SetData, contactP1, contactP2 entitySender.Participant) {
 	setForP1 := set
 	setForP2 := set
 
@@ -112,6 +113,15 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, set ent
 		logger.Log(entityLogger.Error, fmt.Sprintf("Can't get debug DM channel for test contact: %v", ns.TestContact.MessengerLogin))
 	}
 
+	errWaitP1 := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
+		Type:     entityRateLimiter.OperationMessage,
+		Priority: entityRateLimiter.PriorityHigh,
+		Cost:     2,
+	})
+	if errWaitP1 != nil {
+		logger.Log(entityLogger.Error, errWaitP1.Error())
+	}
+
 	_, errP1 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP1)
 	if errP1 != nil {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin, errP1.Error()))
@@ -119,15 +129,39 @@ func (ns NotificationSystem) sendDebugNotifications(ctx context.Context, set ent
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
 	}
 
+	errWaitP2 := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
+		Type:     entityRateLimiter.OperationMessage,
+		Priority: entityRateLimiter.PriorityHigh,
+		Cost:     2,
+	})
+	if errWaitP2 != nil {
+		logger.Log(entityLogger.Error, errWaitP2.Error())
+	}
+	time.Sleep(entitySender.NotificationDelay)
+
 	_, errP2 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP2)
 	if errP2 != nil {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin, errP2.Error()))
 	} else {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
 	}
+
+	// REFACTOR: UI?
+	snapshot := ns.Limiter.Snapshot()
+
+	logger.Log(
+		entityLogger.Debug,
+		fmt.Sprintf(
+			"Messages: total=%d current_minute=%d success=%d attempts=%d",
+			snapshot.Totals.MessagesSuccess,
+			snapshot.Current.MessageAttemptsLastMinute,
+			snapshot.Totals.MessagesSuccess,
+			snapshot.Totals.MessagesAttempts,
+		),
+	)
 }
 
-func (ns NotificationSystem) shouldSend(lastSent *time.Time) bool {
+func (ns *NotificationSystem) shouldSend(lastSent *time.Time) bool {
 	// No notifications
 	if lastSent == nil {
 		return true
@@ -136,7 +170,7 @@ func (ns NotificationSystem) shouldSend(lastSent *time.Time) bool {
 	return time.Since(*lastSent) >= ns.ReminderInterval
 }
 
-func (ns NotificationSystem) sendNotification(ctx context.Context, contact entitySender.Participant, set entitySender.SetData, lastSent *time.Time) (*time.Time, error) {
+func (ns *NotificationSystem) sendNotification(ctx context.Context, contact entitySender.Participant, set entitySender.SetData, lastSent *time.Time) (*time.Time, error) {
 	if contact.MessengerID == "" || contact.MessengerID == "N/D" {
 		return lastSent, fmt.Errorf("sendNotification | Can't send notification to %s: MessengerID is empty", contact.GameNickname)
 	}

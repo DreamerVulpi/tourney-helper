@@ -10,11 +10,9 @@ import (
 
 	entityApp "github.com/dreamervulpi/tourney-helper/internal/entity/app"
 	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
-	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	entityStartgg "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/db"
-	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 type Database struct {
@@ -283,7 +281,6 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 	}
 	defer tx.Rollback()
 
-	logger.Log(entityLogger.Info, fmt.Sprintf("AddParticipant: participant=%v, gameName=%v, gameID=%v", p.GameNickname, p.GameName, p.GameID))
 	response, err := db.addParticipantWithTx(ctx, tx, p, false)
 	if err != nil {
 		return entityDB.ParticipantAddResponse{}, err

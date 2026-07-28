@@ -97,7 +97,7 @@ var En = Ui{
 				HowUse: HelpQA{
 					Question: "How do I use it?",
 					Answer: `The program allows you to fully control the database — you can add (manually or via a file), edit, modify, and delete player data, as well as keep track of your game league or ban list.%v
-					If you're adding players via a file, you must log in to start.gg in advance in the "Sending notifications" tab.`,
+					If you're adding players, you must log in to start.gg in advance in the "Sending notifications" tab.`,
 				},
 			},
 		},

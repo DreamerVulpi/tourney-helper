@@ -9,6 +9,7 @@ export function useStartSendingToggle(
 
   isProcessing,
   setIsProcessing,
+  setReport,
   { activeMessenger, activePlatform, systemCfg, tourneyCfg, lang },
 ) {
   const toggleSending = async () => {
@@ -18,6 +19,7 @@ export function useStartSendingToggle(
 
     if (isStartedSending) {
       try {
+        setReport({isOpen: false})
         await StopSendNotifications();
         setIsStartedSending(false);
       } catch (err) {
@@ -35,6 +37,7 @@ export function useStartSendingToggle(
           tourneyCfg,
           lang,
         );
+        setReport({isOpen: true})
         setIsStartedSending(true);
       } catch (err) {
         console.error(err);

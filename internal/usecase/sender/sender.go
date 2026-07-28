@@ -10,17 +10,23 @@ import (
 
 	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entityRateLimiter "github.com/dreamervulpi/tourney-helper/internal/entity/rateLimiter"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/rateLimiter"
 )
 
 type NotificationSystem struct {
-	Messenger        entitySender.NotificationSender
-	Data             entitySender.NotificationData
-	Db               *dbManager.Database
-	DebugMode        bool
-	TestContact      entitySender.Participant
+	Messenger entitySender.NotificationSender
+	Data      entitySender.NotificationData
+	Db        *dbManager.Database
+
+	DebugMode   bool
+	TestContact entitySender.Participant
+
+	Limiter *rateLimiter.RateLimiter
+
 	ReminderInterval time.Duration
 }
 
@@ -30,6 +36,7 @@ func NewNotificationSystem(
 	db *dbManager.Database,
 	mode bool,
 	contact entitySender.Participant,
+	limiter *rateLimiter.RateLimiter,
 	t time.Duration) *NotificationSystem {
 	return &NotificationSystem{
 		Messenger:        s,
@@ -38,10 +45,11 @@ func NewNotificationSystem(
 		DebugMode:        mode,
 		TestContact:      contact,
 		ReminderInterval: t,
+		Limiter:          limiter,
 	}
 }
 
-func (ns NotificationSystem) Run(ctx context.Context) error {
+func (ns *NotificationSystem) Run(ctx context.Context) error {
 	slug, err := ns.Data.GetTournamentSlug()
 	if err != nil {
 		slug = "N/D"
@@ -70,7 +78,7 @@ func (ns NotificationSystem) Run(ctx context.Context) error {
 	}
 }
 
-func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
+func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 	sets, err := ns.Data.GetSetsData(ctx, slug)
 	if err != nil {
 		return err
@@ -149,6 +157,15 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 		}
 
 		if p1NeedsSending && errP1 == nil && validationParticipant(contactP1) == nil {
+			errWait := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
+				Type:     entityRateLimiter.OperationMessage,
+				Priority: entityRateLimiter.PriorityHigh,
+				Cost:     2,
+			})
+			if errWait != nil {
+				logger.Log(entityLogger.Error, errWait.Error())
+			}
+
 			timeP1, err = ns.sendNotification(ctx, contactP1, set, timeP1)
 			if err != nil {
 				logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed to %v. Error: %v", set.SetID, contactP1.GameNickname, err.Error()))
@@ -163,6 +180,14 @@ func (ns NotificationSystem) Process(ctx context.Context, slug string) error {
 			setForP2 := set
 			setForP2.ContactPlayer1 = contactP2
 			setForP2.ContactPlayer2 = contactP1
+			errWait := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
+				Type:     entityRateLimiter.OperationMessage,
+				Priority: entityRateLimiter.PriorityHigh,
+				Cost:     2,
+			})
+			if errWait != nil {
+				logger.Log(entityLogger.Error, errWait.Error())
+			}
 
 			timeP2, err = ns.sendNotification(ctx, contactP2, setForP2, timeP2)
 			if err != nil {

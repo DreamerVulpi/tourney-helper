@@ -14,6 +14,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 	usecaseSender "github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 )
 
@@ -40,6 +41,8 @@ type Handler struct {
 	registeredCmds []*discordgo.ApplicationCommand
 	cfgCache       config.ConfigMessenger
 	ReadyChan      chan struct{}
+
+	Metrics *metrics.Collector
 }
 
 func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform string, tournament config.ConfigTournament) {
@@ -88,6 +91,7 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 	ds := &DiscordSender{
 		session: session,
 		params:  h.params,
+		Metrics: h.Metrics,
 	}
 	if ds.params.debugChannelID == "" {
 		logger.Log(entityLogger.Info, "Notification System | Working without log channel...")
