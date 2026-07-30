@@ -22,6 +22,13 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 )
 
+func (a *App) IsNotificationSystemReady() bool {
+	if a.ns == nil {
+		return false
+	}
+	return a.ns.IsReady()
+}
+
 func (a *App) GetNotificationMetrics() entityMetrics.Snapshot {
 	if a.ns == nil {
 		return entityMetrics.Snapshot{}

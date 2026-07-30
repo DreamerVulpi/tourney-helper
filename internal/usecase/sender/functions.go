@@ -40,7 +40,13 @@ func (ns *NotificationSystem) GetMessengerMessageLimit() int64 {
 	if ns.LimiterMessenger == nil {
 		return 0
 	}
+
+	if ns.Messenger == nil {
+		return 0
+	}
+
 	limits := ns.LimiterMessenger.Limits()
+
 	if ns.Messenger.IsLogChannelEnabled() {
 		return limits.MessagesPerMinute / 2
 	}
@@ -49,6 +55,10 @@ func (ns *NotificationSystem) GetMessengerMessageLimit() int64 {
 
 func (ns *NotificationSystem) GetTournamentPlatformLimits() entityPlatformRules.Limits {
 	return ns.LimiterTournamentPlatform.Limits()
+}
+
+func (ns *NotificationSystem) IsReady() bool {
+	return ns.Messenger != nil
 }
 
 func (ns *NotificationSystem) getDebugDMChannel(ctx context.Context) (string, error) {

@@ -293,6 +293,7 @@ const NotificationSystemPlate = ({
           </div>
           <NotificationMonitorModal
             isOpen={report.isOpen}
+            isStartedSending={isStartedSending}
             onClose={() => setValidationAlert({ isOpen: false })}
             locale={locale.MonitoringSystem}
             themeClasses={themeClasses}

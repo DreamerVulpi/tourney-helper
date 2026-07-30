@@ -97,7 +97,6 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 		logger.Log(entityLogger.Info, "Notification System | Working without log channel...")
 	}
 	h.Ns.Messenger = ds
-
 	registeredCommands, err := h.InitCommands(h.Auth.Config.ClientID, session, &tournament, &cfg)
 	if err != nil {
 		session.Close()

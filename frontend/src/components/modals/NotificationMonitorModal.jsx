@@ -9,10 +9,12 @@ import { formatDuration } from "../../utils/NotificationSystemPanel.jsx/formatDu
 import { GetNotificationLimits } from "../../../wailsjs/go/application/App.js";
 import { GetTournamentPlatformLimits } from "../../../wailsjs/go/application/App.js";
 import { GetMessengerMessageLimit } from "../../../wailsjs/go/application/App.js";
+import { IsNotificationSystemReady } from "../../../wailsjs/go/application/App.js";
 
 const NotificationMonitorModal = ({
   isOpen,
   onClose,
+  isStartedSending,
   locale,
   themeClasses,
   layer,
@@ -40,22 +42,58 @@ const NotificationMonitorModal = ({
   const currentGetter = snapshotGetter?.Current;
   const stateggGetter = snapshotGetter?.State;
 
-  const [limitsMessenger, setM] = useState(null);
-  const [limitsMessages, setMM] = useState(null);
-  const [limitsTournamentPlatform, setTP] = useState(null);
+  const [notificationReady, setNotificationReady] = useState(false);
 
-  useEffect(()=>{
-    async function loadLimits(){
-      const resultM = await GetNotificationLimits();
-      setM(resultM)
-      const resultTP = await GetTournamentPlatformLimits();
-      setTP(resultTP)
-      const resultMM = await GetMessengerMessageLimit();
-      setMM(resultMM)
-    }
-    loadLimits();
-  }, []);
-  
+  const [limitsMessenger, setM] = useState(0);
+  const [limitsMessages, setML] = useState(0);
+  const [limitsTournamentPlatform, setTP] = useState(0);
+
+  useEffect(() => {
+      if (!isStartedSending) {
+          return;
+      }
+
+      const timer = setInterval(async () => {
+          const ready = await IsNotificationSystemReady();
+
+          if (ready) {
+              setNotificationReady(true);
+          }
+      }, 200);
+
+      return () => clearInterval(timer);
+  }, [isStartedSending]);
+
+  useEffect(() => {
+      if (!notificationReady) {
+          return;
+      }
+
+      async function loadLimits() {
+          const resultM = await GetNotificationLimits();
+          setM(resultM);
+
+          const resultTP = await GetTournamentPlatformLimits();
+          setTP(resultTP);
+
+          const resultML = await GetMessengerMessageLimit();
+          setML(resultML);
+      }
+
+      loadLimits();
+  }, [notificationReady]);
+
+  const getSuccessRateColor = (value) => {
+      if (value >= 85) {
+          return "text-green-500";
+      }
+
+      if (value >= 65) {
+          return "text-yellow-500";
+      }
+
+      return "text-red-500";
+  };
 
   const content = (
     <div className={`p-6 max-h-[70vh] overflow-y-auto space-y-6`}>
@@ -88,9 +126,8 @@ const NotificationMonitorModal = ({
                         <span className="font-bold">{totalsSender?.MessagesAttempts}</span>
                       </div>
                       <div className="flex text-base justify-between gap-4">
-                        {/* TODO: Add change color (If >85% - green, > 65% - yellow, < 65% - red) */}
-                        <span className="opacity-50">{locale.SuccessRate}</span>
-                        <span className="font-bold text-yellow-500">{totalsSender?.MessageSuccessRate.toFixed(1)}%</span>
+                        <span className={`opacity-50`}>{locale.SuccessRate}</span>
+                        <span className={`font-bold ${getSuccessRateColor(totalsSender?.MessageSuccessRate.toFixed(1))}`}>{totalsSender?.MessageSuccessRate.toFixed(1)}%</span>
                       </div>
                       <div className="flex text-base justify-between gap-4">
                         <span className="opacity-50">{locale.AverageTime}</span>
@@ -129,9 +166,8 @@ const NotificationMonitorModal = ({
                         <span className="font-bold">{totalsSender?.RequestsAttempts}</span>
                       </div>
                       <div className="flex text-base justify-between gap-4">
-                        {/* TODO: Add change color (If >85% - green, > 65% - yellow, < 65% - red) */}
                         <span className="opacity-50">{locale.SuccessRate}</span>
-                        <span className="font-bold text-yellow-500">{totalsSender?.RequestSuccessRate.toFixed(1)}%</span>
+                        <span className={`font-bold ${getSuccessRateColor(totalsSender?.RequestSuccessRate.toFixed(1))}`}>{totalsSender?.RequestSuccessRate.toFixed(1)}%</span>
                       </div>
                       <div className="flex text-base justify-between gap-4">
                         <span className="opacity-50">{locale.AverageTime}</span>
@@ -170,9 +206,8 @@ const NotificationMonitorModal = ({
                         <span className="font-bold">{totalsGetter?.RequestsAttempts}</span>
                       </div>
                       <div className="flex text-base justify-between gap-4">
-                        {/* TODO: Add change color (If >85% - green, > 65% - yellow, < 65% - red) */}
                         <span className="opacity-50">{locale.SuccessRate}</span>
-                        <span className="font-bold text-yellow-500">{totalsGetter?.RequestSuccessRate.toFixed(1)}%</span>
+                        <span className={`font-bold ${getSuccessRateColor(totalsGetter?.RequestSuccessRate.toFixed(1))}`}>{totalsGetter?.RequestSuccessRate.toFixed(1)}%</span>
                       </div>
                       <div className="flex text-base justify-between gap-4">
                         <span className="opacity-50">{locale.AverageTime}</span>
