@@ -47,7 +47,7 @@ var En = Ui{
 				InitialSetup: HelpQA{
 					Question: "How do I set up the notification system for the first time?",
 					Answer: `1. Fill in the required "CLIENT ID" and "SECRET CLIENT" fields for the tournament platform. 
-					2. Fill in the required fields “BOT TOKEN,” “GUILD ID,” “CLIENT ID,” and “CLIENT SECRET” for the messenger. (The remaining fields are optional.)
+					2. Fill in the required fields "BOT TOKEN," "GUILD ID," "CLIENT ID," and "CLIENT SECRET" for the messenger. (The remaining fields are optional.)
 					3. Select the tournament data source and the messenger for notifications by clicking the platform button itself. 
 					4. After clicking the platform button, TourneyHelper will redirect you to the authorization page and invite the bot to your messaging server. The result will be displayed in the log window.`,
 				},
@@ -121,6 +121,20 @@ var En = Ui{
 		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
+		MonitoringSystem: MonitoringSystem{
+			Title:                 "Monitoring",
+			TimeRemains:           "Time remaining until the end of the mailing cycle",
+			WaitingCycle:          "Waiting for the newsletter cycle to begin",
+			Min:                   "Min.",
+			Sec:                   "Sec.",
+			LimitRequestPerMinute: "Limit per minute:",
+			LimitRequestPerSecond: "Limit per second:",
+			TotalSuccessSent:      "Successfully sent:",
+			TotalAttemptsSent:     "Total attempts:",
+			SuccessRate:           "Success rate:",
+			AverageTime:           "Average time:",
+			Ms:                    "ms",
+		},
 		DebugModeSwitchLabel: "Debug Mode",
 		Platform: Platform{
 			AuthorizeStatePlatform: AuthorizeStatePlatform{

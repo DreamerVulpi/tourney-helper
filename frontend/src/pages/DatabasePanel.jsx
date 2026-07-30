@@ -693,19 +693,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                     {addButtonConfig.text}
                   </span>
                 </button>
-                  {/* TODO: Change to button */}
-                  {/* <input
-                    type="file"
-                    accept=".json, .csv, text/csv"
-                    id="json-file-input"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        handleImportFile(e.target.files[0]);
-                      }
-                      e.target.value = "";
-                    }}
-                  /> */}
                 <button
                   onClick={handleImportFile}
                   className={`flex-[1.2] flex flex-col items-center justify-center border transition-all rounded-r-xl py-3 px-1 ${

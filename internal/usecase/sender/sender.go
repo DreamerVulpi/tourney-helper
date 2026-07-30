@@ -14,6 +14,7 @@ import (
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/rateLimiter"
 )
 
@@ -25,9 +26,15 @@ type NotificationSystem struct {
 	DebugMode   bool
 	TestContact entitySender.Participant
 
-	Limiter *rateLimiter.RateLimiter
+	LimiterMessenger *rateLimiter.RateLimiter
+	MetricsMessenger *metrics.Collector
 
-	ReminderInterval time.Duration
+	LimiterTournamentPlatform *rateLimiter.RateLimiter
+	MetricsTournamentPlatform *metrics.Collector
+
+	ReminderInterval         time.Duration
+	MessagesSentCurrentCycle int64
+	TotalMessages            int64
 }
 
 func NewNotificationSystem(
@@ -36,16 +43,22 @@ func NewNotificationSystem(
 	db *dbManager.Database,
 	mode bool,
 	contact entitySender.Participant,
-	limiter *rateLimiter.RateLimiter,
+	limiterMessenger *rateLimiter.RateLimiter,
+	limiterTournamentPlatform *rateLimiter.RateLimiter,
+	metricsMessenger *metrics.Collector,
+	metricsTournamentPlatform *metrics.Collector,
 	t time.Duration) *NotificationSystem {
 	return &NotificationSystem{
-		Messenger:        s,
-		Data:             d,
-		Db:               db,
-		DebugMode:        mode,
-		TestContact:      contact,
-		ReminderInterval: t,
-		Limiter:          limiter,
+		Messenger:                 s,
+		Data:                      d,
+		Db:                        db,
+		DebugMode:                 mode,
+		TestContact:               contact,
+		ReminderInterval:          t,
+		LimiterMessenger:          limiterMessenger,
+		LimiterTournamentPlatform: limiterTournamentPlatform,
+		MetricsMessenger:          metricsMessenger,
+		MetricsTournamentPlatform: metricsTournamentPlatform,
 	}
 }
 
@@ -84,6 +97,19 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 		return err
 	}
 
+	total, err := ns.countMessages(ctx, sets)
+	if err != nil {
+		logger.Log(entityLogger.Error, "Can't count sets...")
+	}
+	ns.TotalMessages = total
+	ns.MessagesSentCurrentCycle = 0
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	if len(sets) == 0 {
 		logger.Log(entityLogger.Info, "There are currently no battles with the \"Not Started\" status...")
 	}
@@ -91,7 +117,6 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 	for _, set := range sets {
 		select {
 		case <-ctx.Done():
-			log.Println("Process | Loop interrupted by context cancellation")
 			return ctx.Err()
 		default:
 		}
@@ -157,7 +182,7 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 		}
 
 		if p1NeedsSending && errP1 == nil && validationParticipant(contactP1) == nil {
-			errWait := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
+			errWait := ns.LimiterMessenger.Wait(ctx, entityRateLimiter.Operation{
 				Type:     entityRateLimiter.OperationMessage,
 				Priority: entityRateLimiter.PriorityHigh,
 				Cost:     2,
@@ -180,7 +205,7 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 			setForP2 := set
 			setForP2.ContactPlayer1 = contactP2
 			setForP2.ContactPlayer2 = contactP1
-			errWait := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
+			errWait := ns.LimiterMessenger.Wait(ctx, entityRateLimiter.Operation{
 				Type:     entityRateLimiter.OperationMessage,
 				Priority: entityRateLimiter.PriorityHigh,
 				Cost:     2,

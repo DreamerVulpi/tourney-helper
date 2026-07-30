@@ -26,6 +26,7 @@ type SidePanel struct {
 }
 
 type NotificationSystemPanel struct {
+	MonitoringSystem     MonitoringSystem
 	DebugModeSwitchLabel string
 	Platform             Platform
 	UrlToTournamentLabel string

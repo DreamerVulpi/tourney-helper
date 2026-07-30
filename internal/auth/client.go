@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/challonge"
 	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 )
 
 func GetSessionDiscord() (*discordgo.Session, error) {
@@ -29,13 +30,15 @@ func GetSessionDiscord() (*discordgo.Session, error) {
 	}
 	return session, nil
 }
-func GetClientStartgg(stAuth *AuthClient) (*startgg.Client, error) {
+func GetClientStartgg(stAuth *AuthClient, collector *metrics.Collector) (*startgg.Client, error) {
 	ctx := context.Background()
 	if err := stAuth.Init(ctx); err != nil {
 		return nil, err
 	}
 
-	return startgg.NewClient(stAuth.HTTPClient), nil
+	client := startgg.NewClient(stAuth.HTTPClient)
+	client.Metrics = collector
+	return client, nil
 }
 func GetClientChallonge(chAuth *AuthClient) (*challonge.Client, error) {
 	ctx := context.Background()

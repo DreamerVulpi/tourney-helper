@@ -62,11 +62,13 @@ const NotificationSystemPlate = ({
   isProcessing,
   setIsProcessing,
   activeModal,
+  report,
+  setReport,
 }) => {
   // Get data from configs
   const debugMode = systemCfg?.debug?.mode || false;
   const urlToTournament = tourneyCfg?.urlToTournament;
-  const gameName = tourneyCfg?.game.name
+  const gameName = tourneyCfg?.game.name || "tekken";
   const stage = tourneyCfg?.rules.stage || "Random";
   const rules = tourneyCfg?.rules || {
     standardFormat: 2,
@@ -114,8 +116,7 @@ const NotificationSystemPlate = ({
     isOpen: false,
     message: "",
   });
-  // State for report modal window
-  const [report, setReport] = useState({isOpen: false});
+  
 
   // Settings icon button for platforms
   const toggleSettings = (id) => {
@@ -203,11 +204,30 @@ const NotificationSystemPlate = ({
         type="button"
         disabled={!isReadyToStart || isProcessing}
         onClick={handleStartedSendingToggle}
-        className={`flex items-center gap-4 px-10 py-5 rounded-2xl font-black text-lg uppercase tracking-wider italic transition-all shadow-xl group text-white ${getButtonStyle} ${
-          !isReadyToStart || isProcessing
-            ? "opacity-40 cursor-not-allowed grayscale"
-            : "hover:scale-[1.02] active:scale-95"
-        }`}
+        className={`
+          relative
+          flex
+          items-center
+          overflow-hidden
+          h-14
+          ${isStartedSending && !isProcessing
+            ? "w-14 justify-center px-0 gap-0 hover:w-52" 
+            : "px-10 gap-4"
+          }
+          rounded-2xl
+          font-black text-lg uppercase tracking-wider italic
+          transition-all duration-300
+          overflow-hidden
+          shadow-xl
+          group
+          text-white
+          ${getButtonStyle}
+          ${
+            !isReadyToStart || isProcessing
+              ? "opacity-40 cursor-not-allowed grayscale"
+              : "hover:scale-[1.02] active:scale-95"
+          }
+        `}
       >
         {isProcessing ? (
           <>
@@ -217,7 +237,35 @@ const NotificationSystemPlate = ({
           </>
         ) : isStartedSending ? (
           <>
-            <Square fill="white" size={20} /> {locale.Mailing.Stop}
+            <div
+              className="
+                flex
+                items-center
+                justify-center
+                w-5
+                shrink-0
+              "
+            >
+              <Square fill="white" size={20} className="shrink-0" />
+            </div>
+
+            <span
+              className="
+                flex
+                items-center
+                max-w-0
+                overflow-hidden
+                whitespace-nowrap
+                opacity-0
+                transition-all
+                duration-300
+                group-hover:max-w-[200px]
+                group-hover:opacity-100
+                group-hover:ml-3
+              "
+            >
+              {locale.Mailing.Stop}
+            </span>
           </>
         ) : (
           <>
@@ -238,14 +286,18 @@ const NotificationSystemPlate = ({
       themeClasses={themeClasses}
       needToBlock={isStartedSending}
       exceptionElement={
-        activeModal ? null : <> 
-        {/* <NotificationMonitorModal
-          isOpen={report.isOpen}
-          onClose={() => setValidationAlert({ isOpen: false })}
-          locale={locale}
-          themeClasses={themeClasses}
-        /> */}
-        {rightPanelFooter}
+        activeModal ? null : 
+        <>
+          <div className="absolute bottom-8 right-8 z-100">
+            {rightPanelFooter}
+          </div>
+          <NotificationMonitorModal
+            isOpen={report.isOpen}
+            onClose={() => setValidationAlert({ isOpen: false })}
+            locale={locale.MonitoringSystem}
+            themeClasses={themeClasses}
+            layer={40}
+          />
         </>
       }
     >

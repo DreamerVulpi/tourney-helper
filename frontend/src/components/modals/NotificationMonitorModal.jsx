@@ -1,104 +1,189 @@
 import React, { useState, useEffect } from "react";
 import { Field } from "../ui/Field.jsx";
 import { Modal } from "./Modal.jsx";
-import { Book, Bug, Coins, GitBranch, HandCoins, Info, Recycle, RecycleIcon, Rss, Settings, Upload } from "lucide-react";
+import { Book, Bug, Coins, GitBranch, HandCoins, Info, Monitor, Recycle, RecycleIcon, Rss, Settings, Upload, Mails, Download, Timer, Clock3 } from "lucide-react";
 import { MessageBox } from "./MessageBox.jsx";
+import { useNotificationMetrics } from "../../hooks/NotificationSystemPanel/useNotificationMetrics.jsx";
+import { useGetDataMetrics } from "../../hooks/NotificationSystemPanel/useGetDataMetrics.jsx";
+import { formatDuration } from "../../utils/NotificationSystemPanel.jsx/formatDuration.jsx";
+import { GetNotificationLimits } from "../../../wailsjs/go/application/App.js";
+import { GetTournamentPlatformLimits } from "../../../wailsjs/go/application/App.js";
+import { GetMessengerMessageLimit } from "../../../wailsjs/go/application/App.js";
 
 const NotificationMonitorModal = ({
   isOpen,
   onClose,
   locale,
   themeClasses,
+  layer,
 }) => {
 
   if (!isOpen) return null;
 
-  const footer = (
-    <button
-      className={`
-        w-full
-        flex
-        items-center
-        justify-center
-        gap-3
-        h-[56px]
-        rounded-xl
-        font-black
-        uppercase
-        italic
-        tracking-wider
-        transition-all
-        text-white
+  const blueDesign = {
+      iconColor: "text-blue-500",
+      borderClass: "border-blue-500/20 bg-blue-500/10",
+  }
+  const amberDesign = {
+      iconColor: "text-amber-500",
+      borderClass: "border-amber-500/20 bg-amber-500/10",
+  }
+  const textClass = "text-base uppercase font-bold italic"
 
-        bg-blue-600 hover:bg-blue-500
-        }
-        `}
-      onClick={onClose}
-    >
-      {locale.CloseButtonLabel}
-    </button>
-  );
+  const snapshotSender = useNotificationMetrics(isOpen);
+  const totalsSender = snapshotSender?.Totals;
+  const currentSender = snapshotSender?.Current;
+  const stateSender = snapshotSender?.State;
+
+  const snapshotGetter = useGetDataMetrics(isOpen);
+  const totalsGetter = snapshotGetter?.Totals;
+  const currentGetter = snapshotGetter?.Current;
+  const stateggGetter = snapshotGetter?.State;
+
+  const [limitsMessenger, setM] = useState(null);
+  const [limitsMessages, setMM] = useState(null);
+  const [limitsTournamentPlatform, setTP] = useState(null);
+
+  useEffect(()=>{
+    async function loadLimits(){
+      const resultM = await GetNotificationLimits();
+      setM(resultM)
+      const resultTP = await GetTournamentPlatformLimits();
+      setTP(resultTP)
+      const resultMM = await GetMessengerMessageLimit();
+      setMM(resultMM)
+    }
+    loadLimits();
+  }, []);
+  
 
   const content = (
     <div className={`p-6 max-h-[70vh] overflow-y-auto space-y-6`}>
-      <MessageBox
-        icon={Settings}
-        iconColor={"text-blue-500"}
-        borderClass={
-          "bg-blue-500/5 border-blue-500/20"
-        }
-      > <>
-          <div className="text-blue-500 text-base font-bold text-center mb-2"> TourneyHelper </div> 
-          <div className="mb-4 text-sm"> {locale.Description} </div>
-          <div className="text-blue-500 text-sm font-bold text-center"> © 2026 DreamerVulpi </div> 
-        </>
-      </MessageBox>
-      <Field
-        variant="mono"
-        value={
-          <>
-            <div className="flex text-base justify-between gap-4">
-              <span className="opacity-50">{locale.Version}</span>
-              <span className="font-bold truncate text-right">0.3.0</span>
+      <div className="flex gap-4">
+            <div className="w-[50%] flex flex-col gap-4">
+                <MessageBox
+                    layout="left"
+                    icon={Mails}
+                    iconColor={blueDesign.iconColor}
+                    borderClass={blueDesign.borderClass}
+                    iconSize={36}
+                    textClass={textClass}
+                    >
+                    {locale.MessagesLabel}{" Discord"}
+                </MessageBox>
+                <Field
+                  variant="mono"
+                  value={
+                    <>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.LimitRequestPerMinute}</span>
+                        <span className="font-bold truncate text-right">{currentSender?.MessageAttemptsLastMinute}/{limitsMessages}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.TotalSuccessSent}</span>
+                        <span className="font-bold truncate text-right text-green-500">{totalsSender?.MessagesSuccess}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.TotalAttemptsSent}</span>
+                        <span className="font-bold">{totalsSender?.MessagesAttempts}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        {/* TODO: Add change color (If >85% - green, > 65% - yellow, < 65% - red) */}
+                        <span className="opacity-50">{locale.SuccessRate}</span>
+                        <span className="font-bold text-yellow-500">{totalsSender?.MessageSuccessRate.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.AverageTime}</span>
+                        <span className="font-bold">{totalsSender?.MessageDuration.AverageMs} {locale.Ms}</span>
+                      </div>
+                    </>
+                  }
+                  themeClasses={themeClasses}
+                />
             </div>
-            <div className="flex text-base justify-between gap-4">
-              <span className="opacity-50">{locale.Developer}</span>
-              <span
-                onClick={()=> OpenURL("https://github.com/DreamerVulpi")}
-                className="font-bold text-blue-500 hover:text-blue-400 underline"
-              >
-                DreamerVulpi
-              </span>
+            <div className="w-[50%] flex flex-col gap-4">
+                <MessageBox
+                    layout="left"
+                    icon={Download}
+                    iconColor={amberDesign.iconColor}
+                    borderClass={amberDesign.borderClass}
+                    iconSize={36}
+                    textClass={textClass}
+                    >
+                    {"Discord API"}
+                </MessageBox>
+                <Field
+                  variant="mono"
+                  value={
+                    <>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.LimitRequestPerSecond}</span>
+                        <span className="font-bold truncate text-right">{currentSender?.RequestAttemptsLastSecond}/{limitsMessenger?.RequestPerSecond}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.TotalSuccessSent}</span>
+                        <span className="font-bold truncate text-right text-green-500">{totalsSender?.RequestSuccess}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.TotalAttemptsSent}</span>
+                        <span className="font-bold">{totalsSender?.RequestsAttempts}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        {/* TODO: Add change color (If >85% - green, > 65% - yellow, < 65% - red) */}
+                        <span className="opacity-50">{locale.SuccessRate}</span>
+                        <span className="font-bold text-yellow-500">{totalsSender?.RequestSuccessRate.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.AverageTime}</span>
+                        <span className="font-bold">{totalsSender?.RequestDuration.AverageMs} {locale.Ms}</span>
+                      </div>
+                    </>
+                  }
+                  themeClasses={themeClasses}
+                />
             </div>
-            <div className="flex text-base justify-between gap-4">
-              <span className="opacity-50">{locale.Frontend}</span>
-              <span
-                className={`font-bold uppercase text-green-500`}
-              >
-                Wails (React, Vie.js)
-              </span>
+            <div className="w-[50%] flex flex-col gap-4">
+              <MessageBox
+                    layout="left"
+                    icon={Download}
+                    iconColor={amberDesign.iconColor}
+                    borderClass={amberDesign.borderClass}
+                    iconSize={36}
+                    textClass={textClass}
+                    >
+                    {"start.gg API"}
+                </MessageBox>
+                <Field
+                  variant="mono"
+                  value={
+                    <>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.LimitRequestPerMinute}</span>
+                        <span className="font-bold truncate text-right">{currentGetter?.RequestAttemptsLastMinute}/{limitsTournamentPlatform?.RequestPerMinute}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.TotalSuccessSent}</span>
+                        <span className="font-bold truncate text-right text-green-500">{totalsGetter?.RequestSuccess}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.TotalAttemptsSent}</span>
+                        <span className="font-bold">{totalsGetter?.RequestsAttempts}</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        {/* TODO: Add change color (If >85% - green, > 65% - yellow, < 65% - red) */}
+                        <span className="opacity-50">{locale.SuccessRate}</span>
+                        <span className="font-bold text-yellow-500">{totalsGetter?.RequestSuccessRate.toFixed(1)}%</span>
+                      </div>
+                      <div className="flex text-base justify-between gap-4">
+                        <span className="opacity-50">{locale.AverageTime}</span>
+                        <span className="font-bold">{totalsGetter?.RequestDuration.AverageMs} {locale.Ms}</span>
+                      </div>
+                    </>
+                  }
+                  themeClasses={themeClasses}
+                />
             </div>
-            <div className="flex text-base justify-between gap-4">
-              <span className="opacity-50">{locale.Backend}</span>
-              <span
-                className={`font-bold uppercase text-green-500`}
-              >
-                Golang, SQLite
-              </span>
-            </div>
-            <div className="flex text-base justify-between gap-4">
-              <span className="opacity-50">{locale.License}</span>
-              <span
-                className={`font-bold uppercase text-orange-500 hover:text-orange-400 underline`}
-                onClick={()=>OpenURL("https://github.com/DreamerVulpi/tourney-helper/blob/master/LICENSE")}
-              >
-                MIT
-              </span>
-            </div>
-          </>
-        }
-        themeClasses={themeClasses}
-      />
+      </div>
     </div>
   )
 
@@ -110,13 +195,29 @@ const NotificationMonitorModal = ({
         locale.Title
       }
       icon={
-        Info
+        Monitor
       }
       iconColor={
         "blue"
       }
       children={content}
       themeClasses={themeClasses}
+      layer={layer}
+      position="content"
+
+      showCloseButton={false}
+      width={"max-w-4xl"}
+      headerRight={
+          <div className="flex items-center gap-2 text-xs font-semibold">
+              <Clock3 size={16} className="text-blue-500" />
+              <h2 className="text-sm font-black uppercase italic tracking-tight">
+                {snapshotSender?.EstimateRemainingMs === 0
+                  ? locale.WaitingCycle
+                  : `${locale.TimeRemains} ~${formatDuration(snapshotSender?.EstimateRemainingMs ?? 0, locale)}`
+                }
+              </h2>
+          </div>
+      }
     />
   );
 };

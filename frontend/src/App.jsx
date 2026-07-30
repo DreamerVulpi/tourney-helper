@@ -101,6 +101,8 @@ const App = () => {
   const themeClasses = getThemeClasses(theme);
   // State for modals "About" and "Help"
   const [activeModal, setActiveModal] = useState(null);
+  // State for modal "Monitoring"
+  const [report, setReport] = useState({isOpen: false});
 
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
@@ -163,6 +165,8 @@ const App = () => {
                     isProcessing={isProcessing}
                     setIsProcessing={setIsProcessing}
                     activeModal={activeModal}
+                    report={report}
+                    setReport={setReport}
                   />
                 )}
 

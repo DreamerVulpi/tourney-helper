@@ -11,13 +11,48 @@ import (
 
 	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
-	entityRateLimiter "github.com/dreamervulpi/tourney-helper/internal/entity/rateLimiter"
+	entityMetrics "github.com/dreamervulpi/tourney-helper/internal/entity/metrics"
+	entityPlatformRules "github.com/dreamervulpi/tourney-helper/internal/entity/platformRules"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
+func (ns *NotificationSystem) GetMessengerMetrics() entityMetrics.Snapshot {
+	snapshot := ns.MetricsMessenger.Snapshot()
+	remaining := ns.TotalMessages - ns.MessagesSentCurrentCycle
+	if remaining < 0 {
+		remaining = 0
+	}
+	snapshot.EstimateRemainingMs = ns.MetricsMessenger.EstimateRemaining(remaining).Milliseconds()
+	return snapshot
+}
+
+func (ns *NotificationSystem) GetTournamentPlatformMetrics() entityMetrics.Snapshot {
+	return ns.MetricsTournamentPlatform.Snapshot()
+}
+
+func (ns *NotificationSystem) GetMessengerLimits() entityPlatformRules.Limits {
+	return ns.LimiterMessenger.Limits()
+}
+
+func (ns *NotificationSystem) GetMessengerMessageLimit() int64 {
+	if ns.LimiterMessenger == nil {
+		return 0
+	}
+	limits := ns.LimiterMessenger.Limits()
+	if ns.Messenger.IsLogChannelEnabled() {
+		return limits.MessagesPerMinute / 2
+	}
+	return limits.MessagesPerMinute
+}
+
+func (ns *NotificationSystem) GetTournamentPlatformLimits() entityPlatformRules.Limits {
+	return ns.LimiterTournamentPlatform.Limits()
+}
+
 func (ns *NotificationSystem) getDebugDMChannel(ctx context.Context) (string, error) {
+	start := time.Now()
 	if ns.TestContact.DmChannelId != nil && *ns.TestContact.DmChannelId != "" {
 		return *ns.TestContact.DmChannelId, nil
 	}
@@ -28,6 +63,7 @@ func (ns *NotificationSystem) getDebugDMChannel(ctx context.Context) (string, er
 	}
 
 	ns.TestContact.DmChannelId = channel
+	ns.MetricsMessenger.RecordAPIRequest(err, time.Since(start))
 	return *channel, nil
 }
 
@@ -113,30 +149,33 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 		logger.Log(entityLogger.Error, fmt.Sprintf("Can't get debug DM channel for test contact: %v", ns.TestContact.MessengerLogin))
 	}
 
-	errWaitP1 := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
-		Type:     entityRateLimiter.OperationMessage,
-		Priority: entityRateLimiter.PriorityHigh,
-		Cost:     2,
-	})
-	if errWaitP1 != nil {
-		logger.Log(entityLogger.Error, errWaitP1.Error())
-	}
-
+	// errWaitP1 := ns.LimiterMessenger.Wait(ctx, entityRateLimiter.Operation{
+	// 	Type:     entityRateLimiter.OperationMessage,
+	// 	Priority: entityRateLimiter.PriorityHigh,
+	// 	Cost:     2,
+	// })
+	// if errWaitP1 != nil {
+	// 	logger.Log(entityLogger.Error, errWaitP1.Error())
+	// }
+	start := time.Now()
 	_, errP1 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP1)
 	if errP1 != nil {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin, errP1.Error()))
 	} else {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
 	}
+	ns.MetricsMessenger.RecordMessageSend(err, time.Since(start))
+	ns.MessagesSentCurrentCycle++
+	// errWaitP2 := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
+	// 	Type:     entityRateLimiter.OperationMessage,
+	// 	Priority: entityRateLimiter.PriorityHigh,
+	// 	Cost:     2,
+	// })
+	// if errWaitP2 != nil {
+	// 	logger.Log(entityLogger.Error, errWaitP2.Error())
+	// }
 
-	errWaitP2 := ns.Limiter.Wait(ctx, entityRateLimiter.Operation{
-		Type:     entityRateLimiter.OperationMessage,
-		Priority: entityRateLimiter.PriorityHigh,
-		Cost:     2,
-	})
-	if errWaitP2 != nil {
-		logger.Log(entityLogger.Error, errWaitP2.Error())
-	}
+	start2 := time.Now()
 	time.Sleep(entitySender.NotificationDelay)
 
 	_, errP2 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP2)
@@ -145,20 +184,8 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 	} else {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
 	}
-
-	// REFACTOR: UI?
-	snapshot := ns.Limiter.Snapshot()
-
-	logger.Log(
-		entityLogger.Debug,
-		fmt.Sprintf(
-			"Messages: total=%d current_minute=%d success=%d attempts=%d",
-			snapshot.Totals.MessagesSuccess,
-			snapshot.Current.MessageAttemptsLastMinute,
-			snapshot.Totals.MessagesSuccess,
-			snapshot.Totals.MessagesAttempts,
-		),
-	)
+	ns.MetricsMessenger.RecordMessageSend(err, time.Since(start2))
+	ns.MessagesSentCurrentCycle++
 }
 
 func (ns *NotificationSystem) shouldSend(lastSent *time.Time) bool {
@@ -199,4 +226,38 @@ func (ns *NotificationSystem) sendNotification(ctx context.Context, contact enti
 
 	now := time.Now()
 	return &now, nil
+}
+
+func (ns *NotificationSystem) countMessages(ctx context.Context, sets []entitySender.SetData) (int64, error) {
+	totalMessages := int64(0)
+	for _, set := range sets {
+		select {
+		case <-ctx.Done():
+			log.Println("Process | Loop interrupted by context cancellation")
+			return 0, ctx.Err()
+		default:
+		}
+		sentInfo, err := ns.Db.SentSets.GetSentSet(ctx, set.SetID)
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return 0, err
+		}
+
+		var sentAtP1, sentAtP2 *time.Time
+
+		if sentInfo != nil {
+			sentAtP1 = sentInfo.SentAtP1
+			sentAtP2 = sentInfo.SentAtP2
+		}
+
+		p1NeedsSending := ns.shouldSend(sentAtP1)
+		p2NeedsSending := ns.shouldSend(sentAtP2)
+
+		if p1NeedsSending {
+			totalMessages++
+		}
+		if p2NeedsSending {
+			totalMessages++
+		}
+	}
+	return totalMessages, nil
 }

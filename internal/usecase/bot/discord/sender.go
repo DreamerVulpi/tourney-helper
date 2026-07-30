@@ -24,6 +24,10 @@ func (s *DiscordSender) GetPlatformMessengerName() string {
 	return "Discord"
 }
 
+func (s *DiscordSender) IsLogChannelEnabled() bool {
+	return s.params.debugChannelID != ""
+}
+
 func (h *Handler) StartSendMessages() {
 	h.mtx.Lock()
 
@@ -81,7 +85,6 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 	}
 
 	message, local, recipient := s.msgInvite(targetID, set)
-	start := time.Now()
 	_, err = s.session.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
 		Embed: message,
 		Components: s.btnSupport(
@@ -94,14 +97,12 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 		),
 	})
 	if err != nil {
-		s.Metrics.RecordMessageSend(err, time.Since(start))
 		logger.Log(entityLogger.Error, fmt.Sprintf("NotificationSystem | Can't sent message (targetID: %v): %v\n", targetID, err.Error()))
 		if s.params.debugChannelID != "" {
 			s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
 		}
 		return "", err
 	}
-	s.Metrics.RecordMessageSend(err, time.Since(start))
 
 	if s.params.debugChannelID != "" {
 		s.logMsgToDiscord(true, "", set, local, recipient.GameNickname)

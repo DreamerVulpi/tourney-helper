@@ -24,6 +24,10 @@ func NewCollector() *Collector {
 }
 
 func (c *Collector) Snapshot() metrics.Snapshot {
+	c.resetRequestMinuteIfNeed()
+	c.resetSecondIfNeed()
+	c.resetMessageMinuteIfNeeded()
+
 	c.state.Mu.RLock()
 	defer c.state.Mu.RUnlock()
 
@@ -63,6 +67,16 @@ func (c *Collector) Snapshot() metrics.Snapshot {
 				MinMs:     time.Duration(c.totals.MessageDuration.Min.Load()).Milliseconds(),
 				MaxMs:     time.Duration(c.totals.MessageDuration.Max.Load()).Milliseconds(),
 			},
+
+			RequestSuccessRate: successRate(
+				c.totals.RequestSuccess.Load(),
+				c.totals.RequestsAttempts.Load(),
+			),
+
+			MessageSuccessRate: successRate(
+				c.totals.MessagesSuccess.Load(),
+				c.totals.MessagesAttempts.Load(),
+			),
 		},
 
 		Current: metrics.CurrentView{

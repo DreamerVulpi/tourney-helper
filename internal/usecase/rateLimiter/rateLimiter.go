@@ -21,3 +21,7 @@ type RateLimiter struct {
 func (r *RateLimiter) Snapshot() metrics.Snapshot {
 	return r.reader.Snapshot()
 }
+
+func (r *RateLimiter) Limits() platformRules.Limits {
+	return r.rules.Limits()
+}

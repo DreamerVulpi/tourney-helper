@@ -31,11 +31,11 @@ func (r *RateLimiter) Allow(operation entity.Operation) error {
 
 	switch operation.Type {
 	case entity.OperationRequest:
-		if snapshot.Current.RequestAttemptsLastSecond+operation.Cost > limits.RequestPerSecond {
+		if limits.RequestPerSecond > 0 && snapshot.Current.RequestAttemptsLastSecond+operation.Cost > limits.RequestPerSecond {
 			return entity.ErrRequestLimit
 		}
 	case entity.OperationMessage:
-		if snapshot.Current.MessageAttemptsLastMinute+operation.Cost > limits.MessagesPerMinute {
+		if limits.MessagesPerMinute > 0 && snapshot.Current.MessageAttemptsLastMinute+operation.Cost > limits.MessagesPerMinute {
 			return entity.ErrMessageLimit
 		}
 	default:

@@ -71,7 +71,17 @@ func (c *Collector) recordRequestAttempt() {
 	c.state.Mu.Unlock()
 }
 
-func (c *Collector) resetMinuteIfNeeded() {
+func (c *Collector) resetRequestMinuteIfNeed() {
+	c.current.Mu.Lock()
+	defer c.current.Mu.Unlock()
+
+	if time.Since(c.current.RequestMinuteWindowStarted) >= time.Minute {
+		c.current.RequestAttemptsLastMinute.Store(0)
+		c.current.RequestMinuteWindowStarted = time.Now()
+	}
+}
+
+func (c *Collector) resetMessageMinuteIfNeeded() {
 	c.current.Mu.Lock()
 	defer c.current.Mu.Unlock()
 
@@ -94,18 +104,8 @@ func (c *Collector) resetSecondIfNeed() {
 	}
 }
 
-func (c *Collector) resetRequestMinuteIfNeed() {
-	c.current.Mu.Lock()
-	defer c.current.Mu.Unlock()
-
-	if time.Since(c.current.RequestMinuteWindowStarted) >= time.Minute {
-		c.current.RequestAttemptsLastMinute.Store(0)
-		c.current.RequestMinuteWindowStarted = time.Now()
-	}
-}
-
 func (c *Collector) recordMessageAttempt() {
-	c.resetMinuteIfNeeded()
+	c.resetMessageMinuteIfNeeded()
 
 	c.totals.MessagesAttempts.Add(1)
 	c.current.MessageAttemptsLastMinute.Add(1)

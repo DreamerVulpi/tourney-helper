@@ -5,8 +5,8 @@ export function formatDuration(durationMs, locale) {
   const seconds = totalSeconds % 60
 
   if (minutes > 0) {
-    return `${minutes} ${locale.minute} ${seconds} ${locale.second}`
+    return `${minutes} ${locale.Min} ${seconds} ${locale.Sec}`
   }
 
-  return `${seconds} ${locale.second}`
+  return `${seconds} ${locale.Sec}`
 }

@@ -21,12 +21,7 @@ const PanelTemplate = ({
           >
             {children}
           </div>
-
-          {exceptionElement && (
-            <div className="absolute bottom-8 right-8 z-50">
-              {exceptionElement}
-            </div>
-          )}
+          {exceptionElement}
         </div>
       </div>
     </div>

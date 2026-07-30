@@ -8,7 +8,7 @@ type StartggRules struct{}
 
 func (StartggRules) Limits() entity.Limits {
 	return entity.Limits{
-		RequestPerSecond: 80,
+		RequestPerMinute: 80,
 		ObjectsInRequest: 1000,
 	}
 }

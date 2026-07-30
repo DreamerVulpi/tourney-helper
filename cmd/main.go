@@ -114,7 +114,7 @@ func main() {
 		}
 		tournament, err := config.LoadTournament(config.GetAbsPath("tournament.toml"))
 		if err != nil {
-			logger.Log(entityLogger.Info, fmt.Sprintf("not loaded: %w", err))
+			logger.Log(entityLogger.Info, fmt.Sprintf("not loaded: %v", err))
 		} else {
 			db := dbManager.Database{
 				Conn:        conn,
@@ -127,18 +127,20 @@ func main() {
 
 			contacts, err := sender.LoadCSV(config.GetAbsPath(tournament.Csv.NameFile))
 			if err != nil {
-				logger.Log(entityLogger.Info, fmt.Sprintf("CSV isn't loaded: %w", err))
+				logger.Log(entityLogger.Info, fmt.Sprintf("CSV isn't loaded: %v", err))
 			}
 
+			collectorStartgg := metrics.NewCollector()
+
 			logger.Log(entityLogger.Info, fmt.Sprintf("Check config: %v", tournament.UrlToTournament))
-			adapter, err := sender.GetTournamentAdapter(ggAuth, "Discord", tournament.UrlToTournament, cfg.DebugMode.Mode, tournament.Game.Name, contacts)
+			adapter, err := sender.GetTournamentAdapter(collectorStartgg, ggAuth, "Discord", tournament.UrlToTournament, cfg.DebugMode.Mode, tournament.Game.Name, contacts)
 			if err != nil {
 				logger.Log(entityLogger.Error, err.Error())
 				return
 			}
 
-			collector := metrics.NewCollector()
-			dh := discord.Handler{Auth: dsAuth, Metrics: collector}
+			collectorDiscord := metrics.NewCollector()
+			dh := discord.Handler{Auth: dsAuth, Metrics: collectorDiscord}
 			ctx := context.Background()
 			meDiscordPlatform, err := dh.Auth.GetDiscordMe(ctx)
 			if err != nil {
@@ -146,13 +148,14 @@ func main() {
 				return
 			}
 
-			limiter := rateLimiter.NewDiscordLimiter(collector)
+			limiterStartgg := rateLimiter.NewStartggLimiter(collectorStartgg)
+			limiterDiscord := rateLimiter.NewDiscordLimiter(collectorDiscord)
 			ns := sender.NewNotificationSystem(nil, adapter, &db, cfg.DebugMode.Mode, entitySender.Participant{
 				MessengerID:    meDiscordPlatform.ID,
 				MessengerLogin: meDiscordPlatform.Username,
 				Locale:         "ru",
 				GameName:       tournament.Game.Name,
-			}, limiter, 5*time.Minute)
+			}, limiterDiscord, limiterStartgg, collectorDiscord, collectorStartgg, 5*time.Minute)
 
 			dh.Ns = ns
 

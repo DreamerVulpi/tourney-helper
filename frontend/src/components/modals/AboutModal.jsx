@@ -60,7 +60,7 @@ const AboutModal = ({
           <>
             <div className="flex text-base justify-between gap-4">
               <span className="opacity-50">{locale.Version}</span>
-              <span className="font-bold truncate text-right">0.3.0</span>
+              <span className="font-bold truncate text-right">0.4.0</span>
             </div>
             <div className="flex text-base justify-between gap-4">
               <span className="opacity-50">{locale.Developer}</span>

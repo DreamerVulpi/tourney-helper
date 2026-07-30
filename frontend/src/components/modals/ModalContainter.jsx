@@ -4,11 +4,18 @@ export function ModalContainer({
     closeOnOverlay = true,
     width = "max-w-lg",
     children,
+    layer = "100",
+    position = "screen",
 }) {
     if (!isOpen) return null;
 
+    const positionClass = {
+        screen: "fixed inset-0",
+        content: "absolute inset-x-0 bottom-0 top-0",
+    }[position];
+
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className={`${positionClass} z-[${layer}] flex items-center justify-center p-4`}>
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={closeOnOverlay ? onClose : undefined}

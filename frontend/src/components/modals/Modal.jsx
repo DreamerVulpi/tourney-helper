@@ -15,9 +15,12 @@ export function Modal({
 
   themeClasses,
   scrollBarClass="",
-  closeOnOverlay = true,
 
+  layer = "100",
   width = "max-w-lg",
+  showCloseButton = true,
+  headerRight = null,
+  position = "screen",
 }) {
   if (!isOpen) return null;
 
@@ -49,6 +52,8 @@ export function Modal({
     isOpen={isOpen}
     onClose={onClose}
     width={width}
+    layer={layer}
+    position={position}
     >
     {/* Window */}
       <div
@@ -86,21 +91,26 @@ export function Modal({
               {title}
             </h2>
           </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="
-              p-2
-              rounded-lg
-              transition-all
-              hover:bg-red-500/10
-              text-slate-500
-              hover:text-red-500
-            "
-          >
-            <X size={20} />
-          </button>
+          <div className="flex item-center gap-4">
+            {headerRight}
+            {showCloseButton && (
+              <button
+                type="button"
+                onClick={onClose}
+                className="
+                  p-2
+                  rounded-lg
+                  transition-all
+                  hover:bg-red-500/10
+                  text-slate-500
+                  hover:text-red-500
+                "
+              >
+                <X size={20} />
+              </button>
+            )}
+          </div>
+            
         </div>
 
         {/* Content */}

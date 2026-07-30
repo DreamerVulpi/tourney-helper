@@ -2,6 +2,21 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type MonitoringSystem struct {
+	Title                 string
+	TimeRemains           string
+	WaitingCycle          string
+	Min                   string
+	Sec                   string
+	LimitRequestPerMinute string
+	LimitRequestPerSecond string
+	TotalSuccessSent      string
+	TotalAttemptsSent     string
+	SuccessRate           string
+	AverageTime           string
+	Ms                    string
+}
+
 type NspLogs struct {
 	NotificationDeliveryStopped string
 	LaunchNewsletterInDebugMode string

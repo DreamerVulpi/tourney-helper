@@ -49,10 +49,10 @@ type State struct {
 }
 
 type Snapshot struct {
-	Totals            TotalsView
-	Current           CurrentView
-	State             StateView
-	EstimateRemaining int64
+	Totals              TotalsView
+	Current             CurrentView
+	State               StateView
+	EstimateRemainingMs int64
 }
 
 type TotalsView struct {
@@ -66,6 +66,9 @@ type TotalsView struct {
 
 	RequestDuration DurationView
 	MessageDuration DurationView
+
+	MessageSuccessRate float64
+	RequestSuccessRate float64
 }
 
 type CurrentView struct {

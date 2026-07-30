@@ -124,7 +124,6 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 			}
 		}
 	}
-	// logger.Log(entityLogger.Info, fmt.Sprintf("prepareSetData | Set: %v | Recipient: %s vs Opponent: %s | Link: %s", set.SetID, recipient.MessengerLogin, opponent.MessengerLogin, set.FullInviteLink))
 
 	if len(set.StreamSourse) == 0 {
 		fields := []*discordgo.MessageEmbedField{
@@ -307,7 +306,6 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 	}
 
 	logEmbed := msgEmbed(fmt.Sprintf(local.LogMessage.Title, set.TournamentName), logFields, color, &s.params)
-	start := time.Now()
 	_, err := s.session.ChannelMessageSendComplex(s.params.debugChannelID, &discordgo.MessageSend{
 		Embed: logEmbed,
 		Components: s.btnSupport(
@@ -320,8 +318,6 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 		),
 	})
 	if err != nil {
-		s.Metrics.RecordMessageSend(err, time.Since(start))
 		log.Printf("logToDiscord | error sending to debug channel: %v", err)
 	}
-	s.Metrics.RecordMessageSend(err, time.Since(start))
 }

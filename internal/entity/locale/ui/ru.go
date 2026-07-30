@@ -119,6 +119,20 @@ var Ru = Ui{
 		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
+		MonitoringSystem: MonitoringSystem{
+			Title:                 "Мониторинг",
+			TimeRemains:           "Осталось до конца цикла рассылки",
+			WaitingCycle:          "Ожидание старта цикла рассылки",
+			Min:                   "Мин.",
+			Sec:                   "Сек.",
+			LimitRequestPerMinute: "Лимит за 1 мин.:",
+			LimitRequestPerSecond: "Лимит за 1 сек.:",
+			TotalSuccessSent:      "Успешно отправлено:",
+			TotalAttemptsSent:     "Всего попыток:",
+			SuccessRate:           "Процент успешности:",
+			AverageTime:           "Среднее время:",
+			Ms:                    "мс",
+		},
 		DebugModeSwitchLabel: "Режим отладки",
 		Platform: Platform{
 			AuthorizeStatePlatform: AuthorizeStatePlatform{
