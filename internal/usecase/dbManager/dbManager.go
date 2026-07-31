@@ -173,7 +173,6 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 		return entitySender.Participant{}, fmt.Errorf("db | failed to get participant: %v | %v | %v | %v | %v", participantId, errMessenger, errTournament, errStats, errParticipant)
 	}
 
-	log.Println("db | Successfully get information from database")
 	return db.buildDataOfParticipant(responseParticipant, responseMessenger, responseTournamentAccount, responseStats, p), nil
 }
 

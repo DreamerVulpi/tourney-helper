@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync/atomic"
 	"time"
 
 	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
-	entityRateLimiter "github.com/dreamervulpi/tourney-helper/internal/entity/rateLimiter"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
@@ -33,8 +33,8 @@ type NotificationSystem struct {
 	MetricsTournamentPlatform *metrics.Collector
 
 	ReminderInterval         time.Duration
-	MessagesSentCurrentCycle int64
-	TotalMessages            int64
+	MessagesSentCurrentCycle atomic.Int64
+	TotalMessages            atomic.Int64
 }
 
 func NewNotificationSystem(
@@ -91,6 +91,104 @@ func (ns *NotificationSystem) Run(ctx context.Context) error {
 	}
 }
 
+// func (ns *NotificationSystem)
+
+func (ns *NotificationSystem) processSet(ctx context.Context, slug string, set entitySender.SetData) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
+	sentInfo, err := ns.Db.SentSets.GetSentSet(ctx, set.SetID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	currentState := entityDB.SetState(set.State)
+	if sentInfo != nil {
+		previousState := sentInfo.State
+		if previousState != nil && *previousState != currentState && !ns.DebugMode {
+			if err := ns.saveSentInfo(ctx, slug, set, nil, nil); err != nil {
+				log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
+			}
+		}
+		if currentState == entityDB.StateCompleted || currentState == entityDB.StateInProgress {
+			return nil
+		}
+	}
+
+	var sentAtP1, sentAtP2 *time.Time
+
+	if sentInfo != nil {
+		sentAtP1 = sentInfo.SentAtP1
+		sentAtP2 = sentInfo.SentAtP2
+	}
+
+	p1NeedsSending := ns.shouldSend(sentAtP1)
+	p2NeedsSending := ns.shouldSend(sentAtP2)
+
+	if !p1NeedsSending && !p2NeedsSending && !ns.DebugMode {
+		return nil
+	}
+
+	contactP1, errP1 := ns.checkParticipant(ctx, set.ContactPlayer1)
+	contactP2, errP2 := ns.checkParticipant(ctx, set.ContactPlayer2)
+
+	if errP1 != nil {
+		logger.Log(entityLogger.Error, fmt.Sprintf("Got error after check participant data of P1: %v", errP1))
+	}
+
+	if errP2 != nil {
+		logger.Log(entityLogger.Error, fmt.Sprintf("Got error after check participant data of P2: %v", errP2))
+	}
+
+	if ns.DebugMode {
+		logger.Log(entityLogger.Debug, fmt.Sprintf("Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessengerLogin))
+		ns.sendDebugNotifications(ctx, set, contactP1, contactP2)
+		return nil
+	}
+
+	set.ContactPlayer1 = contactP1
+	set.ContactPlayer2 = contactP2
+
+	var timeP1 *time.Time
+	var timeP2 *time.Time
+
+	if sentInfo != nil {
+		timeP1 = sentInfo.SentAtP1
+		timeP2 = sentInfo.SentAtP2
+	}
+
+	if p1NeedsSending && errP1 == nil && validationParticipant(contactP1) == nil {
+		timeP1, err = ns.sendNotification(ctx, contactP1, set, timeP1)
+		if err != nil {
+			logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed to %v. Error: %v", set.SetID, contactP1.GameNickname, err.Error()))
+		} else {
+			logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P1 notification successful to %v", set.SetID, contactP1.GameNickname))
+		}
+	}
+
+	if p2NeedsSending && errP2 == nil && validationParticipant(contactP2) == nil {
+		setForP2 := set
+		setForP2.ContactPlayer1 = contactP2
+		setForP2.ContactPlayer2 = contactP1
+
+		timeP2, err = ns.sendNotification(ctx, contactP2, setForP2, timeP2)
+		if err != nil {
+			logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed to %v. Error: %v", set.SetID, contactP2.GameNickname, err.Error()))
+		} else {
+			logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P2 notification successful to %v", set.SetID, contactP2.GameNickname))
+		}
+	}
+
+	if err := ns.saveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {
+		logger.Log(entityLogger.Error, fmt.Sprintf("Process | Can't add set (%v) to DB: %v", set.SetID, err))
+	}
+
+	return nil
+}
+
 func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 	sets, err := ns.Data.GetSetsData(ctx, slug)
 	if err != nil {
@@ -101,8 +199,8 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 	if err != nil {
 		logger.Log(entityLogger.Error, "Can't count sets...")
 	}
-	ns.TotalMessages = total
-	ns.MessagesSentCurrentCycle = 0
+	ns.TotalMessages.Store(total)
+	ns.MessagesSentCurrentCycle.Store(0)
 
 	select {
 	case <-ctx.Done():
@@ -115,116 +213,10 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 	}
 
 	for _, set := range sets {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		sentInfo, err := ns.Db.SentSets.GetSentSet(ctx, set.SetID)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
-			return err
-		}
-
-		currentState := entityDB.SetState(set.State)
-		if sentInfo != nil {
-			previousState := sentInfo.State
-			if previousState != nil && *previousState != currentState && !ns.DebugMode {
-				if err := ns.saveSentInfo(ctx, slug, set, nil, nil); err != nil {
-					log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
-				}
-			}
-			if currentState == entityDB.StateCompleted || currentState == entityDB.StateInProgress {
-				continue
-			}
-		}
-
-		var sentAtP1, sentAtP2 *time.Time
-
-		if sentInfo != nil {
-			sentAtP1 = sentInfo.SentAtP1
-			sentAtP2 = sentInfo.SentAtP2
-		}
-
-		p1NeedsSending := ns.shouldSend(sentAtP1)
-		p2NeedsSending := ns.shouldSend(sentAtP2)
-
-		if !p1NeedsSending && !p2NeedsSending && !ns.DebugMode {
-			continue
-		}
-
-		contactP1, errP1 := ns.checkParticipant(ctx, set.ContactPlayer1)
-		contactP2, errP2 := ns.checkParticipant(ctx, set.ContactPlayer2)
-
-		if errP1 != nil {
-			logger.Log(entityLogger.Error, fmt.Sprintf("Got error after check participant data of P1: %v", errP1))
-		}
-
-		if errP2 != nil {
-			logger.Log(entityLogger.Error, fmt.Sprintf("Got error after check participant data of P2: %v", errP2))
-		}
-
-		if ns.DebugMode {
-			logger.Log(entityLogger.Debug, fmt.Sprintf("Redirecting notification for set %v to test user %v", set.SetID, ns.TestContact.MessengerLogin))
-			ns.sendDebugNotifications(ctx, set, contactP1, contactP2)
-			continue
-		}
-
-		set.ContactPlayer1 = contactP1
-		set.ContactPlayer2 = contactP2
-
-		var timeP1 *time.Time
-		var timeP2 *time.Time
-
-		if sentInfo != nil {
-			timeP1 = sentInfo.SentAtP1
-			timeP2 = sentInfo.SentAtP2
-		}
-
-		if p1NeedsSending && errP1 == nil && validationParticipant(contactP1) == nil {
-			errWait := ns.LimiterMessenger.Wait(ctx, entityRateLimiter.Operation{
-				Type:     entityRateLimiter.OperationMessage,
-				Priority: entityRateLimiter.PriorityHigh,
-				Cost:     2,
-			})
-			if errWait != nil {
-				logger.Log(entityLogger.Error, errWait.Error())
-			}
-
-			timeP1, err = ns.sendNotification(ctx, contactP1, set, timeP1)
-			if err != nil {
-				logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed to %v. Error: %v", set.SetID, contactP1.GameNickname, err.Error()))
-			} else {
-				logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P1 notification successful to %v", set.SetID, contactP1.GameNickname))
-			}
-		}
-
-		time.Sleep(entitySender.NotificationDelay)
-
-		if p2NeedsSending && errP2 == nil && validationParticipant(contactP2) == nil {
-			setForP2 := set
-			setForP2.ContactPlayer1 = contactP2
-			setForP2.ContactPlayer2 = contactP1
-			errWait := ns.LimiterMessenger.Wait(ctx, entityRateLimiter.Operation{
-				Type:     entityRateLimiter.OperationMessage,
-				Priority: entityRateLimiter.PriorityHigh,
-				Cost:     2,
-			})
-			if errWait != nil {
-				logger.Log(entityLogger.Error, errWait.Error())
-			}
-
-			timeP2, err = ns.sendNotification(ctx, contactP2, setForP2, timeP2)
-			if err != nil {
-				logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed to %v. Error: %v", set.SetID, contactP2.GameNickname, err.Error()))
-			} else {
-				logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P2 notification successful to %v", set.SetID, contactP2.GameNickname))
-			}
-		}
-
-		if err := ns.saveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {
-			logger.Log(entityLogger.Error, fmt.Sprintf("Process | Can't add set (%v) to DB: %v", set.SetID, err))
+		if err := ns.processSet(ctx, slug, set); err != nil {
+			logger.Log(entityLogger.Error, err.Error())
 		}
 	}
+
 	return nil
 }

@@ -115,12 +115,10 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 }
 
 func (h *Handler) Stop() error {
-	logger.Log(entityLogger.Info, fmt.Sprintf("Starting bot stop procedure. dh pointer: %p\n", h))
 	if h == nil {
 		return fmt.Errorf("handler is nil")
 	}
 	h.mtx.Lock()
-	logger.Log(entityLogger.Info, fmt.Sprintf("dh.session: %p, dh.Auth: %p, dh.Ns: %p\n", h.session, h.Auth, h.Ns))
 
 	if h.cancel != nil {
 		h.cancel()
@@ -145,7 +143,6 @@ func (h *Handler) Stop() error {
 
 	// Check Auth & Config before delete commands
 	if auth != nil {
-		log.Printf("auth.Config pointer: %p\n", auth.Config)
 		if auth.Config != nil {
 			log.Printf("Processing %d registered commands for deletion\n", len(registeredCmds))
 

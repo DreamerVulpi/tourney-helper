@@ -15,9 +15,10 @@ import (
 )
 
 type DiscordSender struct {
-	session *discordgo.Session
-	params  params
-	Metrics *metrics.Collector
+	session       *discordgo.Session
+	params        params
+	Metrics       *metrics.Collector
+	searchLimiter chan struct{}
 }
 
 func (s *DiscordSender) GetPlatformMessengerName() string {
@@ -158,6 +159,7 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 		s.Metrics.RecordAPIRequest(err, time.Since(start))
 		return currentData, fmt.Errorf("findContact | member %s not found in guild (server): %w\n", cleanNickname, err)
 	}
+
 	if len(members) != 1 {
 		s.Metrics.RecordAPIRequest(err, time.Since(start))
 		return currentData, fmt.Errorf("findContact | member %s not found in guild (server)\n", cleanNickname)
