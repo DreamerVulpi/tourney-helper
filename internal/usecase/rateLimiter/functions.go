@@ -42,25 +42,25 @@ func (r *RateLimiter) Allow(operation entity.Operation) error {
 
 	case entity.OperationRequest:
 		// Per second
-		currentSecond := snapshot.Current.RequestAttemptsLastSecond + r.reservedRequestsSecond
+		currentSecond := snapshot.Current.RequestAttemptsLastSecond + r.ReservedRequestsSecond
 		if limits.RequestPerSecond > 0 && currentSecond+operation.Cost > limits.RequestPerSecond {
 			return entity.ErrRequestLimit
 		}
 
 		// Per minute
-		currentMinute := snapshot.Current.RequestAttemptsLastMinute + r.reservedRequestsMinute
+		currentMinute := snapshot.Current.RequestAttemptsLastMinute + r.ReservedRequestsMinute
 		if limits.RequestPerMinute > 0 && currentMinute+operation.Cost > limits.RequestPerMinute {
 			return entity.ErrRequestLimit
 		}
 
-		r.reservedRequestsSecond += operation.Cost
-		r.reservedRequestsMinute += operation.Cost
+		r.ReservedRequestsSecond += operation.Cost
+		r.ReservedRequestsMinute += operation.Cost
 	case entity.OperationMessage:
-		currentMinute := snapshot.Current.MessageAttemptsLastMinute + r.reservedMessagesMinute
+		currentMinute := snapshot.Current.MessageAttemptsLastMinute + r.ReservedMessagesMinute
 		if limits.MessagesPerMinute > 0 && currentMinute+operation.Cost > limits.MessagesPerMinute {
 			return entity.ErrMessageLimit
 		}
-		r.reservedMessagesMinute += operation.Cost
+		r.ReservedMessagesMinute += operation.Cost
 	default:
 		return entity.ErrUnknownOperation
 	}
@@ -93,19 +93,19 @@ func (r *RateLimiter) Release(operation entity.Operation) {
 
 	switch operation.Type {
 	case entity.OperationRequest:
-		r.reservedRequestsSecond -= operation.Cost
-		if r.reservedRequestsSecond < 0 {
-			r.reservedRequestsSecond = 0
+		r.ReservedRequestsSecond -= operation.Cost
+		if r.ReservedRequestsSecond < 0 {
+			r.ReservedRequestsSecond = 0
 		}
 
-		r.reservedMessagesMinute -= operation.Cost
-		if r.reservedRequestsMinute < 0 {
-			r.reservedRequestsMinute = 0
+		r.ReservedRequestsMinute -= operation.Cost
+		if r.ReservedRequestsMinute < 0 {
+			r.ReservedRequestsMinute = 0
 		}
 	case entity.OperationMessage:
-		r.reservedMessagesMinute -= operation.Cost
-		if r.reservedMessagesMinute < 0 {
-			r.reservedMessagesMinute = 0
+		r.ReservedMessagesMinute -= operation.Cost
+		if r.ReservedMessagesMinute < 0 {
+			r.ReservedMessagesMinute = 0
 		}
 	}
 }

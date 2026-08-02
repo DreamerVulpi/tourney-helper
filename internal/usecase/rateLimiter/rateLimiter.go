@@ -21,14 +21,14 @@ type RateLimiter struct {
 	reader MetricsReader
 	mu     sync.Mutex
 
-	reservedRequestsSecond int64
-	requestSecondWindow    time.Time
+	ReservedRequestsSecond int64
+	RequestSecondWindow    time.Time
 
-	reservedRequestsMinute int64
-	requestMinuteWindow    time.Time
+	ReservedRequestsMinute int64
+	RequestMinuteWindow    time.Time
 
-	reservedMessagesMinute int64
-	messageMinuteWindow    time.Time
+	ReservedMessagesMinute int64
+	MessageMinuteWindow    time.Time
 }
 
 func (r *RateLimiter) Snapshot() metrics.Snapshot {
@@ -42,18 +42,18 @@ func (r *RateLimiter) Limits() platformRules.Limits {
 func (r *RateLimiter) resetReservations() {
 	now := time.Now()
 
-	if now.Sub(r.requestSecondWindow) >= time.Second {
-		r.reservedRequestsSecond = 0
-		r.requestSecondWindow = now
+	if now.Sub(r.RequestSecondWindow) >= time.Second {
+		r.ReservedRequestsSecond = 0
+		r.RequestSecondWindow = now
 	}
 
-	if now.Sub(r.requestMinuteWindow) >= time.Minute {
-		r.reservedRequestsMinute = 0
-		r.requestMinuteWindow = now
+	if now.Sub(r.RequestMinuteWindow) >= time.Minute {
+		r.ReservedRequestsMinute = 0
+		r.RequestMinuteWindow = now
 	}
 
-	if now.Sub(r.messageMinuteWindow) >= time.Minute {
-		r.reservedMessagesMinute = 0
-		r.messageMinuteWindow = now
+	if now.Sub(r.MessageMinuteWindow) >= time.Minute {
+		r.ReservedMessagesMinute = 0
+		r.MessageMinuteWindow = now
 	}
 }
