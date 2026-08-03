@@ -1,8 +1,14 @@
 package sender
 
 import (
-	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 )
+
+type StartggClient interface {
+	GetTournament(slug string) (entity.Tournament, error)
+	GetListGroups(slug string, states []int) ([]entity.PhaseGroupInfo, error)
+	GetSets(groupID int64, page, perPage int, states []int) ([]entity.Nodes, error)
+}
 
 type StartggFinalConfig struct {
 	FinalBracketId int64
@@ -13,13 +19,15 @@ type StartggFinalConfig struct {
 }
 
 type StartggSetAdapter struct {
-	Client        *startgg.Client
+	Client StartggClient
+
 	UrlToEvent    string
+	MessengerName string
+	DebugMode     bool
 	Slug          string
 	Game          string
-	MessengerName string
-	Finals        StartggFinalConfig
-	DebugMode     bool
 	TestUser      Participant
 	Contacts      map[string]Participant
+
+	Finals StartggFinalConfig
 }

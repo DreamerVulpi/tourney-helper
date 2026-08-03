@@ -13,7 +13,7 @@ import (
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 )
 
-func validationParticipant(p entitySender.Participant) error {
+func ValidationParticipant(p entitySender.Participant) error {
 	if p.MessengerID == "" || p.MessengerID == "N/D" {
 		return fmt.Errorf("participant has empty messenger ID")
 	}
@@ -25,7 +25,7 @@ func validationParticipant(p entitySender.Participant) error {
 	return nil
 }
 
-func (ns *NotificationSystem) checkParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
+func (ns *NotificationSystem) CheckParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
 	dbData, err := ns.Db.GetParticipant(ctx, apiData)
 
 	switch {
@@ -61,7 +61,7 @@ func (ns *NotificationSystem) checkParticipant(ctx context.Context, apiData enti
 	}
 }
 
-func (ns *NotificationSystem) saveSentInfo(ctx context.Context, slug string, set entitySender.SetData, timeP1 *time.Time, timeP2 *time.Time) error {
+func (ns *NotificationSystem) SaveSentInfo(ctx context.Context, slug string, set entitySender.SetData, timeP1 *time.Time, timeP2 *time.Time) error {
 	var currentState entityDB.SetState = entityDB.ConvertToSetState(set.State)
 	request := entityDB.SentSetAddRequest{
 		SetId:              set.SetID,
@@ -76,7 +76,7 @@ func (ns *NotificationSystem) saveSentInfo(ctx context.Context, slug string, set
 	return err
 }
 
-func (ns *NotificationSystem) shouldSend(lastSent *time.Time) bool {
+func (ns *NotificationSystem) ShouldSend(lastSent *time.Time) bool {
 	// No notifications
 	if lastSent == nil {
 		return true
@@ -85,7 +85,7 @@ func (ns *NotificationSystem) shouldSend(lastSent *time.Time) bool {
 	return time.Since(*lastSent) >= ns.ReminderInterval
 }
 
-func (ns *NotificationSystem) countMessages(ctx context.Context, sets []entitySender.SetData) (int64, error) {
+func (ns *NotificationSystem) CountMessages(ctx context.Context, sets []entitySender.SetData) (int64, error) {
 	totalMessages := int64(0)
 	for _, set := range sets {
 		select {
@@ -106,8 +106,8 @@ func (ns *NotificationSystem) countMessages(ctx context.Context, sets []entitySe
 			sentAtP2 = sentInfo.SentAtP2
 		}
 
-		p1NeedsSending := ns.shouldSend(sentAtP1)
-		p2NeedsSending := ns.shouldSend(sentAtP2)
+		p1NeedsSending := ns.ShouldSend(sentAtP1)
+		p2NeedsSending := ns.ShouldSend(sentAtP2)
 
 		if p1NeedsSending {
 			totalMessages++

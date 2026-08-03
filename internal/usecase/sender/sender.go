@@ -109,7 +109,7 @@ func (ns *NotificationSystem) processSet(ctx context.Context, slug string, set e
 	if sentInfo != nil {
 		previousState := sentInfo.State
 		if previousState != nil && *previousState != currentState && !ns.DebugMode {
-			if err := ns.saveSentInfo(ctx, slug, set, nil, nil); err != nil {
+			if err := ns.SaveSentInfo(ctx, slug, set, nil, nil); err != nil {
 				log.Printf("Process | Can't add set (%v) to DB: %v", set.SetID, err)
 			}
 		}
@@ -125,15 +125,15 @@ func (ns *NotificationSystem) processSet(ctx context.Context, slug string, set e
 		sentAtP2 = sentInfo.SentAtP2
 	}
 
-	p1NeedsSending := ns.shouldSend(sentAtP1)
-	p2NeedsSending := ns.shouldSend(sentAtP2)
+	p1NeedsSending := ns.ShouldSend(sentAtP1)
+	p2NeedsSending := ns.ShouldSend(sentAtP2)
 
 	if !p1NeedsSending && !p2NeedsSending && !ns.DebugMode {
 		return nil
 	}
 
-	contactP1, errP1 := ns.checkParticipant(ctx, set.ContactPlayer1)
-	contactP2, errP2 := ns.checkParticipant(ctx, set.ContactPlayer2)
+	contactP1, errP1 := ns.CheckParticipant(ctx, set.ContactPlayer1)
+	contactP2, errP2 := ns.CheckParticipant(ctx, set.ContactPlayer2)
 
 	if errP1 != nil {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Got error after check participant data of P1: %v", errP1))
@@ -160,7 +160,7 @@ func (ns *NotificationSystem) processSet(ctx context.Context, slug string, set e
 		timeP2 = sentInfo.SentAtP2
 	}
 
-	if p1NeedsSending && errP1 == nil && validationParticipant(contactP1) == nil {
+	if p1NeedsSending && errP1 == nil && ValidationParticipant(contactP1) == nil {
 		timeP1, err = ns.sendNotification(ctx, contactP1, set, timeP1)
 		if err != nil {
 			logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed to %v. Error: %v", set.SetID, contactP1.GameNickname, err.Error()))
@@ -169,7 +169,7 @@ func (ns *NotificationSystem) processSet(ctx context.Context, slug string, set e
 		}
 	}
 
-	if p2NeedsSending && errP2 == nil && validationParticipant(contactP2) == nil {
+	if p2NeedsSending && errP2 == nil && ValidationParticipant(contactP2) == nil {
 		setForP2 := set
 		setForP2.ContactPlayer1 = contactP2
 		setForP2.ContactPlayer2 = contactP1
@@ -182,7 +182,7 @@ func (ns *NotificationSystem) processSet(ctx context.Context, slug string, set e
 		}
 	}
 
-	if err := ns.saveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {
+	if err := ns.SaveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Process | Can't add set (%v) to DB: %v", set.SetID, err))
 	}
 
@@ -195,7 +195,7 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 		return err
 	}
 
-	total, err := ns.countMessages(ctx, sets)
+	total, err := ns.CountMessages(ctx, sets)
 	if err != nil {
 		logger.Log(entityLogger.Error, "Can't count sets...")
 	}

@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-const NotificationDelay = 1000 * time.Millisecond
-
 type Participant struct {
 	Id                      int        `json:"id"`
 	MessengerID             string     `json:"messengerId"`
