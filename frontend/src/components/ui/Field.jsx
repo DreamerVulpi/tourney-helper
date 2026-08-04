@@ -12,6 +12,7 @@ export function Field({
   variant = "input", // input | password | select | copy
   type = "text",
   isNumber,
+  readOnly = false,
 
   value,
   onChange,
@@ -121,6 +122,7 @@ export function Field({
         <textarea
           placeholder={placeholder}
           value={value}
+          readOnly={readOnly}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full ${height} p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${themeClasses.field}`}
         />

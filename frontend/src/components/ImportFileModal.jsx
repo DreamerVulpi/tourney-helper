@@ -14,6 +14,7 @@ import { Field } from "./ui/Field.jsx";
 import { MessageBox } from "./modals/MessageBox.jsx";
 import { CopyButton } from "./ui/CopyButton.jsx";
 import { useClipboard } from "../hooks/useClipboard.jsx";
+import { OpenURL } from "../../wailsjs/go/application/App.js"
 
 const ImportFileModal = ({
   isOpen,
@@ -158,14 +159,12 @@ const ImportFileModal = ({
         {isFromCsv ? (
           <>
             {partsMsgCSV[0]}{" "}
-            <a
-              href="https://start.gg"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline font-bold"
+            <span
+              onClick={()=> OpenURL("https://start.gg")}
+              className="font-bold text-blue-500 hover:text-blue-400 underline"
             >
               start.gg
-            </a>{" "}
+            </span>
             {partsMsgCSV[1]}
           </>
         ) : (

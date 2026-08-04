@@ -15,12 +15,17 @@ import (
 	entityMetrics "github.com/dreamervulpi/tourney-helper/internal/entity/metrics"
 	entityPlatformRules "github.com/dreamervulpi/tourney-helper/internal/entity/platformRules"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/update"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/bot/discord"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/rateLimiter"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 )
+
+func (a *App) CheckUpdate() (*update.UpdateInfo, error) {
+	return a.UpdateService.Check(a.ctx)
+}
 
 func (a *App) IsNotificationSystemReady() bool {
 	if a.ns == nil {

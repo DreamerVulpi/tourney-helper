@@ -15,32 +15,6 @@ const HelpModal = ({
 
   if (!isOpen) return null;
 
-  const footer = (
-    <button
-      className={`
-        w-full
-        flex
-        items-center
-        justify-center
-        gap-3
-        h-[56px]
-        rounded-xl
-        font-black
-        uppercase
-        italic
-        tracking-wider
-        transition-all
-        text-white
-
-        bg-blue-600 hover:bg-blue-500
-        }
-        `}
-      onClick={onClose}
-    >
-      {locale.CloseButtonLabel}
-    </button>
-  );
-
   const content = (
     <div className={`p-6 max-h-[70vh] overflow-y-auto space-y-6`}>
         {
@@ -65,7 +39,6 @@ const HelpModal = ({
       }
       children={content}
       themeClasses={themeClasses}
-      footer={footer}
       width={"max-w-7xl"}
     />
   );

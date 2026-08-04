@@ -117,6 +117,16 @@ var Ru = Ui{
 			SubscribeOnProject: "Бусти",
 			SubscribeLink:      "https://boosty.to/dreamervulpi",
 		},
+		Update: UpdateModal{
+			Title:                           "Обновление программы",
+			NoUpdateTitle:                   "Новых обновлений не найдено",
+			NoUpdateDescription:             "В случае, если пропустили версию по ошибке, то скачайте архив последней версии из %v GitHub %v и замените исполняемый файл формата \"exe\" самостоятельно",
+			NoData:                          "Нет данных",
+			UpdateDescriptionLabel:          "Описание обновления",
+			DontShowAlertOnStartApplication: "Не показывать уведомление при старте приложения",
+			GetUpdateButtonLabel:            "Получить обновление",
+			SkipUpdateButtonLabel:           "Пропустить обновление",
+		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
 		MonitoringSystem: MonitoringSystem{

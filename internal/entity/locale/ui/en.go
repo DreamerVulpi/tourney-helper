@@ -119,6 +119,16 @@ var En = Ui{
 			SubscribeOnProject: "Boosty",
 			SubscribeLink:      "https://boosty.to/dreamervulpi",
 		},
+		Update: UpdateModal{
+			Title:                           "Software Update",
+			NoUpdateTitle:                   "No new updates found",
+			NoUpdateDescription:             "If you accidentally skipped a version, download the archive with last version from %v GitHub %v and replace the .exe file yourself.",
+			NoData:                          "No data available",
+			UpdateDescriptionLabel:          "Update description",
+			DontShowAlertOnStartApplication: "Don't display the notification when the app starts",
+			GetUpdateButtonLabel:            "Get an update",
+			SkipUpdateButtonLabel:           "Skip the update",
+		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
 		MonitoringSystem: MonitoringSystem{

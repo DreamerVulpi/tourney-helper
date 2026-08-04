@@ -90,8 +90,10 @@ type ConfigTournament struct {
 }
 
 type SettingsApplication struct {
-	Language string `toml:"language"`
-	Theme    string `toml:"theme"`
+	Language              string `toml:"language"`
+	Theme                 string `toml:"theme"`
+	CheckUpdatesOnStartUp bool   `toml:"checkUpdatesOnStartUp"`
+	IgnoredVersion        string `toml:"ignoredVersion"`
 }
 
 func GetAbsPath(fileName string) string {
@@ -241,8 +243,10 @@ func Init(configDir string) error {
 			},
 		},
 		"settings.toml": SettingsApplication{
-			Language: "EN",
-			Theme:    "Dark",
+			Language:              "EN",
+			Theme:                 "Dark",
+			CheckUpdatesOnStartUp: true,
+			IgnoredVersion:        "",
 		},
 	}
 

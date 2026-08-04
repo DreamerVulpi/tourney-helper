@@ -14,8 +14,9 @@ import { createThemeChanger } from "../utils/changeTheme";
 import { ExtraButton } from "../components/ui/ExtraButton";
 import { DropdownList } from "../components/ui/DropdownList";
 import { Field } from "../components/ui/Field.jsx";
-import  AboutModal from "../components/modals/AboutModal.jsx"
-import  HelpModal from "../components/modals/help/HelpModal.jsx"
+import AboutModal from "../components/modals/AboutModal.jsx"
+import HelpModal from "../components/modals/help/HelpModal.jsx"
+import UpdateModal from "../components/modals/UpdateModal.jsx"
 import Logo from "../../../branding/icons/256.png";
 
 const HeaderPlate = ({
@@ -24,11 +25,15 @@ const HeaderPlate = ({
   lang,
   setLang,
   locale,
+  updateInfo,
+  check,
   updateConfig,
   themeClasses,
   activeModal,
   activeTab,
   setActiveModal,
+  settings,
+  setSettings,
 }) => {
   // Font for logo programm
   const fontStyle = (
@@ -158,6 +163,10 @@ const HeaderPlate = ({
             fetchData(false);
           }, 100);
       }}
+      settings={settings}
+      updateInfo={updateInfo}
+      setActiveModal={setActiveModal}
+      check={check}
     />
     <HelpModal
       activeTab={activeTab}
@@ -170,6 +179,23 @@ const HeaderPlate = ({
             fetchData(false);
           }, 100);
       }}
+    />
+    <UpdateModal 
+      isOpen={activeModal === "update"}
+      locale={locale.Update}
+      themeClasses={themeClasses}
+      onClose={() => {
+          setActiveModal(null);
+          setTimeout(() => {
+            fetchData(false);
+          }, 100);
+      }}
+      lang={lang}
+      updateInfo={updateInfo}
+      check={check}
+      updateConfig={updateConfig}
+      settings={settings}
+      setSettings={setSettings}
     />
     </header>
   );

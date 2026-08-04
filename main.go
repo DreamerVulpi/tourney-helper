@@ -15,6 +15,8 @@ import (
 	usecaseDB "github.com/dreamervulpi/tourney-helper/internal/usecase/db"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
+	"github.com/dreamervulpi/tourney-helper/internal/version"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -42,7 +44,17 @@ func main() {
 		logger.Log(entityLogger.Error, err.Error())
 	}
 
+	github := update.NewGithub(
+		"DreamerVulpi",
+		"tourney-helper",
+	)
+	updateService := update.NewService(
+		github,
+		version.Current,
+	)
+
 	app := application.NewApp()
+	app.UpdateService = updateService
 	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)
 	app.OAuthServer.Start()
 

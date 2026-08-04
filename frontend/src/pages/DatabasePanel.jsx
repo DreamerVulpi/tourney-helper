@@ -149,22 +149,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     return configs[activeFilter] || configs.all;
   }, [activeFilter, locale]);
 
-  // Handler for import file of participants
-  // const handleImportFile = (file) => {
-  //   if (!file) return;
-  //   const systemFilePath = file.path || file.name;
-
-  //   const isJson = file.name.endsWith(".json");
-  //   const isCsv = file.name.endsWith(".csv");
-
-  //   if (!isJson && !isCsv) {
-  //     return;
-  //   }
-
-  //   setImportedFileData(systemFilePath);
-  //   setImportFileType(isJson ? "json" : "csv");
-  //   setIsImportModalOpen(true);
-  // };
   const handleImportFile = async () => {
     const systemFilePath = await OpenImportFile();
 

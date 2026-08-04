@@ -82,12 +82,16 @@ export function useAppInit({
             const settings = await LoadSettingsApp();
             if (settings) {
               const lang = settings.Language || settings.language || "EN";
-              const theme = settings.Theme || settings.theme || "dark";
-    
+              const theme = settings.Theme || settings.theme || "Dark";
+              const checkUpdatesOnStartUp = settings.CheckUpdatesOnStartUp ?? settings.checkUpdatesOnStartUp ?? true;
+              const ignoredVersion = settings.IgnoredVersion || settings.ignoredVersion || "";
+              
               setSettings((prev) => ({
                 ...prev,
                 Language: lang,
                 Theme: theme,
+                CheckUpdatesOnStartUp: checkUpdatesOnStartUp,
+                IgnoredVersion: ignoredVersion,
               }));
     
               setLang(lang);

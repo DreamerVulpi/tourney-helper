@@ -10,6 +10,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/entity/bot"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -23,6 +24,7 @@ type App struct {
 	Locale           *config.SettingsApplication
 	logUpdateTimer   *time.Timer
 	OAuthServer      *auth.OAuthCallbackServer
+	UpdateService    *update.Service
 
 	mu        sync.Mutex
 	ns        *sender.NotificationSystem
@@ -37,6 +39,7 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
+	go a.CheckUpdate()
 	go a.StartBanCleaner(a.ctx)
 }
 

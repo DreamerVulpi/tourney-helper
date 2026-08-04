@@ -1,44 +1,29 @@
 import React, { useState, useEffect } from "react";
 import { Field } from "../ui/Field.jsx";
 import { Modal } from "../modals/Modal.jsx";
-import { Book, Bug, Coins, GitBranch, HandCoins, Info, Recycle, RecycleIcon, Rss, Settings, Upload } from "lucide-react";
+import { Book, Bug, Coins, GitBranch, HandCoins, Info, Recycle, RecycleIcon, RotateCcw, Rss, Settings, Upload } from "lucide-react";
 import { MessageBox } from "./MessageBox.jsx";
-import { OpenURL } from "../../../wailsjs/go/application/App.js"
+import { GetVersion, OpenURL } from "../../../wailsjs/go/application/App.js"
+import { useCheckUpdate } from "../../hooks/App/useCheckUpdate.jsx"
 
 const AboutModal = ({
   isOpen,
   onClose,
   locale,
+  check,
+  settings,
+  updateInfo,
   themeClasses,
+  setActiveModal,
 }) => {
 
   if (!isOpen) return null;
-
-  const footer = (
-    <button
-      className={`
-        w-full
-        flex
-        items-center
-        justify-center
-        gap-3
-        h-[56px]
-        rounded-xl
-        font-black
-        uppercase
-        italic
-        tracking-wider
-        transition-all
-        text-white
-
-        bg-blue-600 hover:bg-blue-500
-        }
-        `}
-      onClick={onClose}
-    >
-      {locale.CloseButtonLabel}
-    </button>
-  );
+  const [version, setVersion] = useState("");
+  useEffect(()=> {
+    GetVersion()
+      .then(setVersion)
+      .catch(console.error);
+  },[]);
 
   const content = (
     <div className={`p-6 max-h-[70vh] overflow-y-auto space-y-6`}>
@@ -60,7 +45,7 @@ const AboutModal = ({
           <>
             <div className="flex text-base justify-between gap-4">
               <span className="opacity-50">{locale.Version}</span>
-              <span className="font-bold truncate text-right">0.4.0</span>
+              <span className="font-bold truncate text-right">{version}</span>
             </div>
             <div className="flex text-base justify-between gap-4">
               <span className="opacity-50">{locale.Developer}</span>
@@ -101,6 +86,16 @@ const AboutModal = ({
         themeClasses={themeClasses}
       />
       
+      <Field
+          variant="button"
+          icon={RotateCcw}
+          labelButton={locale.CheckUpdates}
+          themeClasses={themeClasses}
+          onClick={()=> {
+            check();
+            setActiveModal("update");
+          }}
+      />
       <div className="grid grid-cols-2 gap-3">
         <Field
           variant="button"
@@ -149,7 +144,6 @@ const AboutModal = ({
       }
       children={content}
       themeClasses={themeClasses}
-      footer={footer}
     />
   );
 };

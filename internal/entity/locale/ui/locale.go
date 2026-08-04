@@ -2,6 +2,17 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type UpdateModal struct {
+	Title                           string
+	NoData                          string
+	NoUpdateTitle                   string
+	NoUpdateDescription             string
+	UpdateDescriptionLabel          string
+	DontShowAlertOnStartApplication string
+	GetUpdateButtonLabel            string
+	SkipUpdateButtonLabel           string
+}
+
 type MonitoringSystem struct {
 	Title                 string
 	TimeRemains           string

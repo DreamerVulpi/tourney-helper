@@ -7,6 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/wailsapp/wails/v2 v2.12.0
+	golang.org/x/mod v0.33.0
 	modernc.org/sqlite v1.48.2
 )
 

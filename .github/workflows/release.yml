@@ -54,7 +54,9 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.1
 
       - name: Build application
-        run: wails build --clean
+        run: >
+          wails build --clean
+          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.Current=${{ github.ref_name }}"
 
       - name: Archive build
         shell: pwsh

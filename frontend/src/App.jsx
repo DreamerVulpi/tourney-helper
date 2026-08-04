@@ -47,6 +47,7 @@ import { useAppInit } from "./hooks/App/useAppInit.jsx"
 import { useAutoSave } from "./hooks/App/useAutoSave.jsx";
 import { useConfigUpdater } from "./hooks/App/useConfigUpdater.jsx";
 import { getThemeClasses } from "./utils/themeClasses.jsx";
+import { useCheckUpdate } from "./hooks/App/useCheckUpdate.jsx";
 
 const App = () => {
   // Scale UI
@@ -66,7 +67,6 @@ const App = () => {
 
   // Initialization application
   useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme});
-
   // Delay before save data from fields in configs
   const {debouncedSaveSystem, debouncedSaveTourney, debouncedSaveSettings} = useAutoSave();
   const { updateConfig } = useConfigUpdater({
@@ -107,6 +107,30 @@ const App = () => {
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
 
+  // Statement for update modal window
+  const { checking, updateInfo, error, check } = useCheckUpdate();
+
+  useEffect(() => {
+      if (!settings) return;
+
+      check().catch(console.error);
+  }, [check, settings?.IgnoredVersion]);
+
+
+  useEffect(() => {
+      if (!settings) return;
+      if (!updateInfo?.Available) return;
+
+      if (settings.IgnoredVersion === updateInfo.Latest.Version) return;
+      if (!settings.CheckUpdatesOnStartUp) return;
+
+      const timer = setTimeout(() => {
+          setActiveModal("update");
+      }, 1000);
+
+      return () => clearTimeout(timer);
+  }, [updateInfo, settings?.IgnoredVersion, settings?.CheckUpdatesOnStartUp]);
+
   return (
     <div
       className={`flex flex-col h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}
@@ -127,10 +151,14 @@ const App = () => {
             setLang={setLang}
             activeTab={activeTab}
             updateConfig={updateConfig}
+            updateInfo={updateInfo}
+            check={check}
             locale={locale.HeaderPanel}
             themeClasses={themeClasses}
             activeModal={activeModal}
             setActiveModal={setActiveModal}
+            settings={settings}
+            setSettings={setSettings}
           />
 
           <div className="flex flex-1 overflow-hidden">
