@@ -1,4 +1,4 @@
-package update
+package main
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 
 func run() error {
 	if len(os.Args) != 5 {
-		return fmt.Errorf("usage: updater.exe <pid> <source> <target>")
+		return fmt.Errorf("usage: updater.exe <pid> <source> <target> <exeName>")
 	}
 
 	pid, err := strconv.Atoi(os.Args[1])

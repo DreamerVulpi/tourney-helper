@@ -88,6 +88,28 @@ func (a *App) InstallUpdate() error {
 		os.Getpid(),
 		filepath.Dir(exePath),
 		filepath.Base(exePath),
-		func() { runtime.Quit(a.ctx) },
+		func() {
+			runtime.EventsEmit(
+				a.ctx,
+				"update-status",
+				"restarting",
+			)
+			runtime.Quit(a.ctx)
+		},
+		func(downloaded int64, total int64) {
+			runtime.EventsEmit(
+				a.ctx,
+				"update-download-progress",
+				downloaded,
+				total,
+			)
+		},
+		func(status string) {
+			runtime.EventsEmit(
+				a.ctx,
+				"update-status",
+				status,
+			)
+		},
 	)
 }

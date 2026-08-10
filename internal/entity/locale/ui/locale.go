@@ -2,6 +2,16 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type ProgressModal struct {
+	Title    string
+	Download string
+	Extract  string
+	Install  string
+	Restart  string
+	Success  string
+	Error    string
+}
+
 type UpdateModal struct {
 	Title                           string
 	NoData                          string

@@ -381,4 +381,13 @@ var En = Ui{
 		TotalCountBannedNotesInDBLabel: "Total players in ban list",
 		TotalCountRatingParticipants:   "Total players in rating league",
 	},
+	ProgressModal: ProgressModal{
+		Title:    "Downloading data",
+		Extract:  "Extract...",
+		Install:  "Installing...",
+		Restart:  "Restaring...",
+		Download: "Downloading",
+		Success:  "Success!",
+		Error:    "Error:",
+	},
 }

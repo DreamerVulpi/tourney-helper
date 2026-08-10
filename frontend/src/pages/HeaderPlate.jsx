@@ -18,6 +18,7 @@ import AboutModal from "../components/modals/AboutModal.jsx"
 import HelpModal from "../components/modals/help/HelpModal.jsx"
 import UpdateModal from "../components/modals/UpdateModal.jsx"
 import Logo from "../../../branding/icons/256.png";
+import ProgressModal from "../components/modals/ProgressModal.jsx";
 
 const HeaderPlate = ({
   theme,
@@ -34,6 +35,15 @@ const HeaderPlate = ({
   setActiveModal,
   settings,
   setSettings,
+  handleInstallUpdate,
+  updateProgressOpen,
+  updateStatus,
+  updateMessage,
+  updateProgress,
+  setUpdateProgressOpen,
+  setUpdateStatus,
+  setUpdateMessage,
+  setUpdateProgress,
 }) => {
   // Font for logo programm
   const fontStyle = (
@@ -42,6 +52,7 @@ const HeaderPlate = ({
       .font-super-bold { font-family: 'Inter', sans-serif; font-weight: 900; }
     `}</style>
   );
+
 
   // Variable for selector languages
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -159,9 +170,6 @@ const HeaderPlate = ({
       themeClasses={themeClasses}
       onClose={() => {
           setActiveModal(null);
-          setTimeout(() => {
-            fetchData(false);
-          }, 100);
       }}
       settings={settings}
       updateInfo={updateInfo}
@@ -175,9 +183,6 @@ const HeaderPlate = ({
       themeClasses={themeClasses}
       onClose={() => {
           setActiveModal(null);
-          setTimeout(() => {
-            fetchData(false);
-          }, 100);
       }}
     />
     <UpdateModal 
@@ -186,9 +191,6 @@ const HeaderPlate = ({
       themeClasses={themeClasses}
       onClose={() => {
           setActiveModal(null);
-          setTimeout(() => {
-            fetchData(false);
-          }, 100);
       }}
       lang={lang}
       updateInfo={updateInfo}
@@ -196,6 +198,21 @@ const HeaderPlate = ({
       updateConfig={updateConfig}
       settings={settings}
       setSettings={setSettings}
+      onInstallUpdate={handleInstallUpdate}
+    />
+    <ProgressModal
+        isOpen={updateProgressOpen}
+        status={updateStatus}
+        progress={updateProgress}
+        message={updateMessage}
+        title={locale.Update.Title}
+        themeClasses={themeClasses}
+        onClose={() => {
+          setUpdateProgressOpen(false);
+          setUpdateStatus("idle");
+          setUpdateMessage("");
+          setUpdateProgress(0);
+        }}
     />
     </header>
   );

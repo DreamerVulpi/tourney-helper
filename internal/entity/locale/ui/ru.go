@@ -380,4 +380,13 @@ var Ru = Ui{
 		TotalCountBannedNotesInDBLabel: "Всего игроков в бан-листе",
 		TotalCountRatingParticipants:   "Всего игроков в рейтинговой лиге",
 	},
+	ProgressModal: ProgressModal{
+		Title:    "Загрузка данных",
+		Download: "Загрузка",
+		Success:  "Успешно!",
+		Error:    "Ошибка:",
+		Extract:  "Извлечение...",
+		Install:  "Установка...",
+		Restart:  "Перезапуск...",
+	},
 }

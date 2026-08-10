@@ -36,7 +36,20 @@ func NewManager(
 	}
 }
 
-func (m *Manager) Install(ctx context.Context, pid int, currentDir string, exeName string, quit func()) error {
+func (m *Manager) Install(
+	ctx context.Context,
+	pid int,
+	currentDir string,
+	exeName string,
+	quit func(),
+	progress func(downloaded, total int64),
+	status func(string)) error {
+	reportStatus := func(value string) {
+		if status != nil {
+			status(value)
+		}
+	}
+
 	release, err := m.Provider.GetLatestRelease(ctx)
 	if err != nil {
 		return err
@@ -64,17 +77,20 @@ func (m *Manager) Install(ctx context.Context, pid int, currentDir string, exeNa
 	}()
 
 	zipPath := filepath.Join(tempDir, asset.Name)
-	// TODO: Progress
-	err = m.Downloader.Download(ctx, *asset, zipPath, nil)
+	err = m.Downloader.Download(ctx, *asset, zipPath, progress)
 	if err != nil {
 		return err
 	}
+
+	reportStatus("extracting")
 
 	extractDir := filepath.Join(tempDir, "files")
 	err = m.Installer.Extract(zipPath, extractDir)
 	if err != nil {
 		return err
 	}
+
+	reportStatus("installing")
 
 	updaterPath := filepath.Join(currentDir, updaterName())
 	err = m.Launcher.Start(updaterPath, pid, extractDir, currentDir, exeName)
@@ -83,6 +99,7 @@ func (m *Manager) Install(ctx context.Context, pid int, currentDir string, exeNa
 	}
 
 	success = true
+	reportStatus("restarting")
 	quit()
 	return nil
 }
@@ -102,7 +119,7 @@ func FindAsset(release *entity.ReleaseInfo, platform entity.Platform) (*entity.A
 
 		switch platform {
 		case entity.PlatformWindows:
-			if strings.Contains(name, "windows") && strings.HasSuffix(name, ".zip") {
+			if (strings.Contains(name, "windows") || strings.Contains(name, "-win-")) && strings.HasSuffix(name, ".zip") {
 				return &asset, nil
 			}
 		case entity.PlatformLinux:

@@ -23,12 +23,13 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/rateLimiter"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/version"
 	"github.com/joho/godotenv"
 )
 
 func main() {
 	logDir := "logs"
-	err := logger.Init(logDir, true)
+	err := logger.Init(logDir, version.DebugMode == "true")
 	if err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)

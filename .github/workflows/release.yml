@@ -56,7 +56,8 @@ jobs:
       - name: Build application
         run: >
           wails build --clean
-          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.Current=${{ github.ref_name }}"
+          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.Current=${{ github.ref_name }}
+          -X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=false"
 
       - name: Build updater
         run: go build -o build/bin/updater.exe ./cmd/updater

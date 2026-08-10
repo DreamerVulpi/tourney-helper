@@ -17,6 +17,7 @@ const UpdateModal = ({
   settings,
   updateConfig,
   currentVersion,
+  onInstallUpdate,
 }) => {
   if (!isOpen) return null;
 
@@ -41,12 +42,13 @@ const UpdateModal = ({
   const footerButtonLabel = locale.GetUpdateButtonLabel
 
   const handleMainAction = () => {
-    if (hasUpdate) {
-      // TODO: Function for start update (download + replace files + relaunch)
+    if (!hasUpdate) {
+      onClose();
       return;
     }
 
     onClose();
+    onInstallUpdate();
   };
 
 

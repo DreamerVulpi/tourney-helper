@@ -7,6 +7,7 @@ type Ui struct {
 	NotificationSystemPanel NotificationSystemPanel
 	DatabasePanel           DatabasePanel
 	ValidationAlertModal    ValidationAlertModal
+	ProgressModal           ProgressModal
 }
 
 type HeaderPanel struct {

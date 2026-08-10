@@ -48,6 +48,8 @@ import { useAutoSave } from "./hooks/App/useAutoSave.jsx";
 import { useConfigUpdater } from "./hooks/App/useConfigUpdater.jsx";
 import { getThemeClasses } from "./utils/themeClasses.jsx";
 import { useCheckUpdate } from "./hooks/App/useCheckUpdate.jsx";
+import { InstallUpdate } from "../wailsjs/go/application/App.js";
+import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
 
 const App = () => {
   // Scale UI
@@ -109,6 +111,33 @@ const App = () => {
 
   // Statement for update modal window
   const { checking, updateInfo, error, check } = useCheckUpdate();
+  const [updateProgressOpen, setUpdateProgressOpen] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState("idle");
+  const [updateMessage, setUpdateMessage] = useState("");
+  const [updateProgress, setUpdateProgress] = useState(0);
+
+  const handleInstallUpdate = async () => {
+    setUpdateStatus("loading");
+    setUpdateProgress(0);
+    setUpdateMessage(
+      locale.ProgressModal.Download
+    );
+    setUpdateProgressOpen(true);
+
+    try {
+      await InstallUpdate();
+    } catch (err) {
+      const errorText =
+        err?.message ||
+        err?.toString() ||
+        "Unknown error";
+
+      setUpdateStatus("error");
+      setUpdateMessage(
+        `${locale.ProgressModal.Error} ${errorText}`
+      );
+    }
+  };
 
   useEffect(() => {
       if (!settings) return;
@@ -130,6 +159,50 @@ const App = () => {
 
       return () => clearTimeout(timer);
   }, [updateInfo, settings?.IgnoredVersion, settings?.CheckUpdatesOnStartUp]);
+
+  useEffect(() => {
+    const unsubscribe = EventsOn(
+      "update-download-progress",
+      (downloaded, total) => {
+        if (!total || total <= 0) {
+          return;
+        }
+
+        const progress = Math.round((downloaded / total) * 100);
+
+        setUpdateProgress(progress);
+      }
+    );
+
+    return () => {
+      EventsOff("update-download-progress");
+    };
+  }, []);
+
+    useEffect(() => {
+    EventsOn("update-status", (status) => {
+      switch (status) {
+        case "extracting":
+          setUpdateStatus("loading");
+          setUpdateMessage(locale.ProgressModal.Extract);
+          break;
+
+        case "installing":
+          setUpdateStatus("loading");
+          setUpdateMessage(locale.ProgressModal.Install);
+          break;
+
+        case "restarting":
+          setUpdateStatus("loading");
+          setUpdateMessage(locale.ProgressModal.Restart);
+          break;
+      }
+    });
+
+    return () => {
+      EventsOff("update-status");
+    };
+  }, [locale]);
 
   return (
     <div
@@ -159,6 +232,15 @@ const App = () => {
             setActiveModal={setActiveModal}
             settings={settings}
             setSettings={setSettings}
+            handleInstallUpdate={handleInstallUpdate}
+            updateProgressOpen={updateProgressOpen}
+            updateStatus={updateStatus}
+            updateMessage={updateMessage}
+            updateProgress={updateProgress}
+            setUpdateProgressOpen={setUpdateProgressOpen}
+            setUpdateStatus={setUpdateStatus}
+            setUpdateMessage={setUpdateMessage}
+            setUpdateProgress={setUpdateProgress}
           />
 
           <div className="flex flex-1 overflow-hidden">

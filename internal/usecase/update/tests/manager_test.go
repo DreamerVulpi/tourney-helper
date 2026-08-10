@@ -140,9 +140,12 @@ func TestManagerInstall(t *testing.T) {
 			)
 			err := manager.Install(
 				context.Background(),
-				123, t.TempDir(),
+				123,
+				t.TempDir(),
 				"TourneyHelper.exe",
 				func() {},
+				nil,
+				nil,
 			)
 			switch {
 			case tt.err == nil && err != nil:

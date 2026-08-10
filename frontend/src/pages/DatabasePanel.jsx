@@ -35,7 +35,8 @@ import {
   LoadListPlayers,
   OpenImportFile,
 } from "../../wailsjs/go/application/App.js";
-import ImportProgressModal from "../components/ImportProgressModal.jsx";
+// import ImportProgressModal from "../components/ImportProgressModal.jsx";
+import ProgressModal from "../components/modals/ProgressModal.jsx";
 import ImportFileModal from "../components/ImportFileModal.jsx";
 import ParticipantModal from "../components/modals/ParticipantModal.jsx";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
@@ -85,7 +86,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [isProgressModalOpen, setIsProgressModalOpen] = useState(false);
-  const [importStatus, setImportStatus] = useState("idle"); // "idle" | "loading" | "success"
+  const [importStatus, setImportStatus] = useState(null); // "idle" | "loading" | "success"
   const [importError, setImportError] = useState(null);
   const [importResult, setImportResult] = useState(null);
 
@@ -201,14 +202,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
       } else {
         setImportStatus("success");
       }
-      const successImportDBMsgParts =
-        locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportDBMsg.split(
-          "%v",
-        );
-      const successImportBanListMsgParts =
-        locale.AddButton.ImportFile.LoadingImportFileModalWindows.SuccessImportBanListMsg.split(
-          "%v",
-        );
 
       setImportedFilePath(null);
       setImportFileType(null);
@@ -219,7 +212,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     } catch (err) {
       const errorText = err?.message || err?.toString() || "Unknown error";
       setImportError(errorText);
-      setImportStatus("idle");
+      setImportStatus("error");
     }
   };
 
@@ -630,6 +623,73 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
 
     return () => observer.disconnect();
   }, []);
+
+  const importType = activeFilter === "banned"
+    ? "banList"
+    : "database";
+
+  const formatImportMessage = (template, values) => {
+    let result = template;
+
+    for (const value of values) {
+      result = result.replace("%v", value);
+    }
+
+    return result;
+  };
+
+  const getImportMessage = () => {
+    const messages = locale.AddButton.ImportFile.LoadingImportFileModalWindows;
+    const isLoading = importStatus === "loading";
+    const isError = importStatus === "error";
+    const isWarning = importStatus === "warning";
+    const isSuccess = importStatus === "success";
+
+    if (isLoading) {
+      return messages.WriteParticipantsInDBMsg;
+    }
+
+    if (isWarning) {
+      return messages.WarningStatusText;
+    }
+
+    if (isError) {
+      return `${messages.ErrorImportFileMsg} ${importError}`;
+    }
+
+    if (isSuccess) {
+      const successCount = importResult?.r1 ?? importResult?.s ?? 0;
+      const totalCount = importResult?.r2 ?? importResult?.t ?? 0;
+
+      const template =
+        activeFilter === "banned"
+          ? messages.SuccessImportBanListMsg
+          : messages.SuccessImportDBMsg;
+
+      return formatImportMessage(template, [
+        successCount,
+        totalCount,
+      ]);
+    }
+
+    return messages.InitImportFileMsg;
+  };
+
+  const importMessage = getImportMessage();
+  
+  let importProgress = 0;
+
+  if (importStatus === "loading") {
+    importProgress = 50;
+  }
+
+  if (
+    importStatus === "success" ||
+    importStatus === "warning" ||
+    importStatus === "error"
+  ) {
+    importProgress = 100;
+  }
 
   return (
     <PanelTemplate themeClasses={themeClasses}>
@@ -1294,7 +1354,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
         locale={locale.AddButton.ImportFile}
         themeClasses={themeClasses}
       />
-      <ImportProgressModal
+      {/* <ImportProgressModal
         isOpen={isProgressModalOpen}
         status={importStatus}
         errorData={importError}
@@ -1305,6 +1365,26 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
           setIsProgressModalOpen(false);
           setImportError(null);
           setImportStatus("idle");
+          setImportResult(null);
+
+          setTimeout(() => {
+            fetchData(false);
+          }, 100);
+        }}
+      /> */}
+      <ProgressModal
+        isOpen={isProgressModalOpen}
+        status={importStatus}
+        progress={importProgress}
+        title={locale.AddButton.ImportFile.LoadingImportFileModalWindows.StatusInProcess}
+        message={importMessage}
+        closeButtonLabel={
+          locale.AddButton.ImportFile.LoadingImportFileModalWindows.CloseButtonLabel
+        }
+        themeClasses={themeClasses}
+        onClose={() => {
+          setIsProgressModalOpen(false);
+          setImportError(null);
           setImportResult(null);
 
           setTimeout(() => {
