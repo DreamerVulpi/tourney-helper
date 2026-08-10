@@ -1,8 +1,21 @@
 package update
 
 import (
+	"context"
 	"time"
 )
+
+type Platform string
+
+const (
+	PlatformWindows Platform = "windows"
+	PlatformLinux   Platform = "linux"
+	PlatformMacOS   Platform = "darwin"
+)
+
+type Provider interface {
+	GetLatestRelease(ctx context.Context) (*ReleaseInfo, error)
+}
 
 type ReleaseInfo struct {
 	Version     string

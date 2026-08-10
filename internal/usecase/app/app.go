@@ -2,8 +2,11 @@ package application
 
 import (
 	"context"
+	"os"
 	"sync"
 	"time"
+
+	"path/filepath"
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
@@ -25,6 +28,7 @@ type App struct {
 	logUpdateTimer   *time.Timer
 	OAuthServer      *auth.OAuthCallbackServer
 	UpdateService    *update.Service
+	UpdateManager    *update.Manager
 
 	mu        sync.Mutex
 	ns        *sender.NotificationSystem
@@ -71,4 +75,19 @@ func (a *App) OpenImportImage() (string, error) {
 			},
 		},
 	})
+}
+
+func (a *App) InstallUpdate() error {
+	exePath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	return a.UpdateManager.Install(
+		a.ctx,
+		os.Getpid(),
+		filepath.Dir(exePath),
+		filepath.Base(exePath),
+		func() { runtime.Quit(a.ctx) },
+	)
 }

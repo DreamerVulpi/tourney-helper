@@ -112,10 +112,10 @@ const App = () => {
 
   useEffect(() => {
       if (!settings) return;
-
-      check().catch(console.error);
+      if (settings?.CheckUpdatesOnStartUp) {
+          check().catch(console.error);
+      }
   }, [check, settings?.IgnoredVersion]);
-
 
   useEffect(() => {
       if (!settings) return;

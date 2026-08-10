@@ -44,17 +44,25 @@ func main() {
 		logger.Log(entityLogger.Error, err.Error())
 	}
 
-	github := update.NewGithub(
+	provider := update.NewGithub(
 		"DreamerVulpi",
 		"tourney-helper",
 	)
 	updateService := update.NewService(
-		github,
+		provider,
 		version.Current,
+	)
+	updateManager := update.NewManager(
+		provider,
+		update.NewDownloader(nil),
+		update.NewInstaller(),
+		update.NewLauncher(),
 	)
 
 	app := application.NewApp()
 	app.UpdateService = updateService
+	app.UpdateManager = updateManager
+
 	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)
 	app.OAuthServer.Start()
 

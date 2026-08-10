@@ -7,16 +7,12 @@ import (
 	"golang.org/x/mod/semver"
 )
 
-type Provider interface {
-	GetLatestRelease(ctx context.Context) (*entity.ReleaseInfo, error)
-}
-
 type Service struct {
-	provider Provider
+	provider entity.Provider
 	current  string
 }
 
-func NewService(provider Provider, currentVersion string) *Service {
+func NewService(provider entity.Provider, currentVersion string) *Service {
 	return &Service{
 		provider: provider,
 		current:  currentVersion,
