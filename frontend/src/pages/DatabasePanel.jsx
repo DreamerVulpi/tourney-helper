@@ -35,7 +35,6 @@ import {
   LoadListPlayers,
   OpenImportFile,
 } from "../../wailsjs/go/application/App.js";
-// import ImportProgressModal from "../components/ImportProgressModal.jsx";
 import ProgressModal from "../components/modals/ProgressModal.jsx";
 import ImportFileModal from "../components/ImportFileModal.jsx";
 import ParticipantModal from "../components/modals/ParticipantModal.jsx";
@@ -1354,24 +1353,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
         locale={locale.AddButton.ImportFile}
         themeClasses={themeClasses}
       />
-      {/* <ImportProgressModal
-        isOpen={isProgressModalOpen}
-        status={importStatus}
-        errorData={importError}
-        resultData={importResult}
-        theme={theme}
-        locale={locale.AddButton.ImportFile}
-        onClose={() => {
-          setIsProgressModalOpen(false);
-          setImportError(null);
-          setImportStatus("idle");
-          setImportResult(null);
-
-          setTimeout(() => {
-            fetchData(false);
-          }, 100);
-        }}
-      /> */}
       <ProgressModal
         isOpen={isProgressModalOpen}
         status={importStatus}
