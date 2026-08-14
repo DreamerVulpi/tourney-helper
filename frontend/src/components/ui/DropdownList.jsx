@@ -56,7 +56,7 @@ export function DropdownList({
           justify-between
           rounded-xl
           border
-          transition-all
+          
           ${themeClasses.field}
           ${className}
         `}

@@ -100,7 +100,7 @@ export function Modal({
                 className="
                   p-2
                   rounded-lg
-                  transition-all
+                  
                   hover:bg-red-500/10
                   text-slate-500
                   hover:text-red-500

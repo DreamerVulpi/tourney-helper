@@ -703,7 +703,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
             >
               {/* Front side of the button */}
               <div
-                className={`absolute inset-0 flex items-center justify-center text-white rounded-xl font-black text-xs uppercase italic transition-all duration-300 z-10 ${
+                className={`absolute inset-0 flex items-center justify-center text-white rounded-xl font-black text-xs uppercase italic  duration-300 z-10 ${
                   activeFilter === "banned"
                     ? "bg-red-600 border border-red-500/30 text-red-400"
                     : "bg-blue-600"
@@ -721,7 +721,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
 
               {/* Back of the button (Available functions inside) */}
               <div
-                className={`absolute inset-0 flex gap-0.5 transition-all duration-300 z-20 ${isAddHovered ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
+                className={`absolute inset-0 flex gap-0.5  duration-300 z-20 ${isAddHovered ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
               >
                 <button
                   onClick={addButtonConfig.action}
@@ -738,7 +738,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                 </button>
                 <button
                   onClick={handleImportFile}
-                  className={`flex-[1.2] flex flex-col items-center justify-center border transition-all rounded-r-xl py-3 px-1 ${
+                  className={`flex-[1.2] flex flex-col items-center justify-center border  rounded-r-xl py-3 px-1 ${
                     theme === "dark"
                       ? activeFilter === "banned"
                         ? "bg-red-950/20 border-red-500/20 text-red-400 hover:bg-red-900/30"
@@ -767,7 +767,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                 onChange={handleSearchChange}
                 type="text"
                 placeholder={locale.SearchLineLabel}
-                className={`w-full pl-12 pr-6 h-[56px] rounded-xl border text-[12px] font-bold outline-none transition-all focus:ring-2 focus:ring-blue-600/20 ${theme === "dark" ? "bg-black/40 border-white/10 text-white" : "bg-white border-slate-200"}`}
+                className={`w-full pl-12 pr-6 h-[56px] rounded-xl border text-[12px] font-bold outline-none  focus:ring-2 focus:ring-blue-600/20 ${theme === "dark" ? "bg-black/40 border-white/10 text-white" : "bg-white border-slate-200"}`}
               />
             </div>
 
@@ -816,7 +816,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                 <button
                   key={tab.id}
                   onClick={() => setActiveFilter(tab.id)}
-                  className={`flex items-center gap-2 px-4 h-full rounded-lg text-[10px] font-black uppercase italic transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-4 h-full rounded-lg text-[10px] font-black uppercase italic  whitespace-nowrap ${
                     activeFilter === tab.id
                       ? "bg-blue-600 text-white shadow-md"
                       : "text-slate-500 hover:text-blue-500"
@@ -1041,7 +1041,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                                     activeFilter === "banned" ? "unban" : "ban",
                                   )
                                 }
-                                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg font-black uppercase text-[0.725rem] transition-all w-full ${
+                                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg font-black uppercase text-[0.725rem]  w-full ${
                                   activeFilter === "banned"
                                     ? "bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white"
                                     : "bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white"
@@ -1063,7 +1063,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                                 onClick={() =>
                                   triggerParticipantAction(p, "delete")
                                 }
-                                className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg font-black uppercase text-[0.725rem] transition-all w-full"
+                                className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg font-black uppercase text-[0.725rem]  w-full"
                               >
                                 <Trash2 size={11} />{" "}
                                 {locale.Table.Management.Delete}
@@ -1110,7 +1110,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                                     p.gameNickname,
                                   );
                               }}
-                              className="bg-transparent text-blue-500 font-black text-sm italic outline-none border-b border-transparent focus:border-blue-500/30 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              className="bg-transparent text-blue-500 font-black text-sm italic outline-none border-b border-transparent focus:border-blue-500/30  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               style={{ width: `${sizeColumnOfMMRPoints}px` }}
                             />
                             <div className="flex gap-1 mt-1">
@@ -1261,7 +1261,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                 onClick={() =>
                   triggerParticipantAction(null, "reset_rating_all")
                 }
-                className={`group flex items-center gap-2 h-[46px] px-5 border transition-all rounded-xl text-[10px] font-black uppercase italic tracking-wider ${
+                className={`group flex items-center gap-2 h-[46px] px-5 border  rounded-xl text-[10px] font-black uppercase italic tracking-wider ${
                   theme === "dark"
                     ? "bg-red-600/10 border-red-500/20 text-red-400 hover:bg-red-600 hover:text-white"
                     : "bg-red-50 border-red-200 text-red-600 hover:bg-red-600 hover:text-white"

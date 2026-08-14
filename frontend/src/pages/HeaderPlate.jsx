@@ -120,19 +120,19 @@ const HeaderPlate = ({
         {/* Theme switcher */}
         <button
           onClick={changeTheme}
-          className={`flex items-center gap-[0.25rem] p-[0.25rem] rounded-full border transition-all duration-300 ${
+          className={`flex items-center gap-[0.25rem] p-[0.25rem] rounded-full border  duration-300 ${
             headerThemeClasses.themeButton
           }`}
         >
           <div
-            className={`p-[0.25rem] rounded-full transition-all ${
+            className={`p-[0.25rem] rounded-full  ${
               headerThemeClasses.sunIcon
             }`}
           >
             <Sun style={{ width: "0.875rem", height: "0.875rem" }} />
           </div>
           <div
-            className={`p-[0.25rem] rounded-full transition-all ${
+            className={`p-[0.25rem] rounded-full  ${
               headerThemeClasses.moonIcon
             }`}
           >

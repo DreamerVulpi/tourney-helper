@@ -33,7 +33,7 @@ export function ValidationModal({
               uppercase
               italic
               tracking-wider
-              transition-all
+              
               text-white
               bg-red-600
               hover:bg-red-500

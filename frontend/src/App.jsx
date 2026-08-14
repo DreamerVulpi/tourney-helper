@@ -100,7 +100,7 @@ const App = () => {
     telegram: false,
   });
   // Detail description components for Light/Dark themes 
-  const themeClasses = getThemeClasses(theme);
+  const themeClasses = useMemo(() => getThemeClasses(theme), [theme]);
   // State for modals "About" and "Help"
   const [activeModal, setActiveModal] = useState(null);
   // State for modal "Monitoring"

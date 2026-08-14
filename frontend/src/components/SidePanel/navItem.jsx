@@ -8,7 +8,7 @@ export function NavItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 relative group overflow-hidden mb-1 ${
+      className={`w-full flex items-center gap-4 p-4 rounded-2xl  duration-300 relative group overflow-hidden mb-1 ${
         active
           ? "bg-blue-600 text-white shadow-[0_8px_20px_rgba(37,99,235,0.35)] scale-[1.02]"
           : themeClasses.navItem
@@ -25,7 +25,7 @@ export function NavItem({
       </span>
 
       <span
-        className={`relative z-10 hidden lg:block text-[10px] font-black uppercase tracking-[0.1em] text-left leading-tight italic transition-all ${
+        className={`relative z-10 hidden lg:block text-[10px] font-black uppercase tracking-[0.1em] text-left leading-tight italic  ${
           active
             ? "text-white opacity-100"
             : "opacity-70 group-hover:opacity-100"

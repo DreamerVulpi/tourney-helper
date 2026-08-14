@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Bug,
   Square,
@@ -40,6 +40,9 @@ import { ValidationModal } from "../components/ValidationModal.jsx";
 import  NotificationMonitorModal from "../components/modals/NotificationMonitorModal.jsx"
 import { useMessengerAuth } from "../hooks/useMessengerAuth.jsx";
 import { useTournamentPlatform } from "../hooks/useTournamentPlatform.jsx";
+import { durationItems, listFT } from "../utils/NotificationSystemPanel.jsx/lists.js";
+import { listGames } from "../utils/listGames.js";
+import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 
 const NotificationSystemPlate = ({
   theme,
@@ -117,37 +120,10 @@ const NotificationSystemPlate = ({
     message: "",
   });
   
-
   // Settings icon button for platforms
-  const toggleSettings = (id) => {
-    // open/close settings when click on icon
-    setActiveSettings(activeSettings === id ? null : id);
-  };
-
-  // Array for 2 fields
-  const listFT = [
-    {
-      label: "FT1",
-      value: 1,
-    },
-    {
-      label: "FT2",
-      value: 2,
-    },
-    {
-      label: "FT3",
-      value: 3,
-    },
-    {
-      label: "FT4",
-      value: 4,
-    },
-    {
-      label: "FT5",
-      value: 5,
-    },
-  ]
-
+  const toggleSettings = useCallback((id) => {
+    setActiveSettings((prev) => (prev === id ? null : id));
+  }, []);
 
   // Handler for start proccess - Sending notifications
   const handleStartedSendingToggle = useStartSendingToggle(
@@ -158,9 +134,24 @@ const NotificationSystemPlate = ({
     setReport,
     { activeMessenger, activePlatform, systemCfg, tourneyCfg, lang },
   );
+
+  const handleTournamentUrlChange = useCallback((value) => {
+    updateConfig("tournament", {
+      ...tourneyCfg,
+      urlToTournament: value,
+    });
+  }, [tourneyCfg, updateConfig]);
+  const handleDebugModeChange = useCallback((value) => {
+    updateConfig("system", {
+      debug: {
+        ...systemCfg.debug,
+        mode: value,
+      },
+    });
+  }, [systemCfg.debug, updateConfig]);
+
   // Button style for handler which start proccess
   const getButtonStyle = getLaunchButtonStyle(isStartedSending, debugMode);
-
   // Handler for messenger auth button
   const { handleMessengerClick } = useMessengerAuth({
     systemCfg,
@@ -170,6 +161,14 @@ const NotificationSystemPlate = ({
     setAuthStatus,
     setValidationAlert,
   });
+  const handleDiscordClick = useCallback(() => {
+    handleMessengerClick("discord");
+  }, [handleMessengerClick]);
+
+  const handleDiscordSettingsClick = useCallback(() => {
+    toggleSettings("discord");
+  }, []);
+
   // Handler for tournament platform auth button
   const { handleTournamentPlatformClick } =
   useTournamentPlatform({
@@ -180,106 +179,135 @@ const NotificationSystemPlate = ({
     setAuthStatus,
     setValidationAlert,
   });
+  const handleStartggClick = useCallback(() => {
+    handleTournamentPlatformClick("startgg");
+  }, [handleTournamentPlatformClick]);
 
-  const rightPanelFooter = (
-    <div className="flex flex-col items-end gap-3">
-      {!isStartedSending && debugMode && (
-        <div
-          className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-amber-500 slide-in-from-bottom-2 ${
-            theme === "dark"
-              ? "bg-amber-500/10 border-amber-500/20"
-              : "bg-white border-amber-200 shadow-lg"
-          }`}
-        >
-          <AlertCircle size={14} className="shrink-0" />
-          <span className="text-[9px] font-bold uppercase italic tracking-tight leading-tight">
-            {locale.Mailing.AttentionDebugModeMsg}{" "}
-            {activeMessenger ? activeMessenger : ""}
-          </span>
-        </div>
-      )}
+  const handleStartggSettingsClick = useCallback(() => {
+    toggleSettings("startgg");
+  }, []);
 
-      {/* Start/stop sending messages */}
-      <button
-        type="button"
-        disabled={!isReadyToStart || isProcessing}
-        onClick={handleStartedSendingToggle}
-        className={`
-          relative
-          flex
-          items-center
-          overflow-hidden
-          h-14
-          ${isStartedSending && !isProcessing
-            ? "w-14 justify-center px-0 gap-0 hover:w-52" 
-            : "px-10 gap-4"
-          }
-          rounded-2xl
-          font-black text-lg uppercase tracking-wider italic
-          transition-all duration-300
-          overflow-hidden
-          shadow-xl
-          group
-          text-white
-          ${getButtonStyle}
-          ${
-            !isReadyToStart || isProcessing
-              ? "opacity-40 cursor-not-allowed grayscale"
-              : "hover:scale-[1.02] active:scale-95"
-          }
-        `}
-      >
-        {isProcessing ? (
-          <>
-            {/* Loading process */}
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            {isStartedSending ? locale.Mailing.Stop : locale.Mailing.Start}
-          </>
-        ) : isStartedSending ? (
-          <>
-            <div
-              className="
-                flex
-                items-center
-                justify-center
-                w-5
-                shrink-0
-              "
-            >
-              <Square fill="white" size={20} className="shrink-0" />
-            </div>
+  const handleStandardFormatChange = useCallback((value) => {
+    changeRule("standardFormat", value, updateConfig);
+  }, [updateConfig]);
 
-            <span
-              className="
-                flex
-                items-center
-                max-w-0
-                overflow-hidden
-                whitespace-nowrap
-                opacity-0
-                transition-all
-                duration-300
-                group-hover:max-w-[200px]
-                group-hover:opacity-100
-                group-hover:ml-3
-              "
-            >
-              {locale.Mailing.Stop}
-            </span>
-          </>
-        ) : (
-          <>
-            {debugMode ? (
-              <Bug fill="white" size={20} />
-            ) : (
-              <Play fill="white" size={20} />
-            )}
-            {debugMode ? locale.Mailing.Debug : locale.Mailing.Start}
-          </>
-        )}
-      </button>
-    </div>
-  );
+  const handleFinalsFormatChange = useCallback((value) => {
+    changeRule("finalsFormat", value, updateConfig);
+  }, [updateConfig]);
+
+  const handleRoundsChange = useCallback((value) => {
+    const rounds = Math.min(5, Math.max(1, Number(value) || 1));
+    changeRule("rounds", rounds, updateConfig);
+  }, [updateConfig]);
+
+  const handleDurationChange = useCallback((value) => {
+    changeRule("duration", value, updateConfig);
+  }, [updateConfig]);
+
+  const handleStageChange = useCallback((value) => {
+    changeRule("stage", value, updateConfig);
+  }, [updateConfig]);
+
+
+  // const rightPanelFooter = (
+  //   <div className="flex flex-col items-end gap-3">
+  //     {!isStartedSending && debugMode && (
+  //       <div
+  //         className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-amber-500 slide-in-from-bottom-2 ${
+  //           theme === "dark"
+  //             ? "bg-amber-500/10 border-amber-500/20"
+  //             : "bg-white border-amber-200 shadow-lg"
+  //         }`}
+  //       >
+  //         <AlertCircle size={14} className="shrink-0" />
+  //         <span className="text-[9px] font-bold uppercase italic tracking-tight leading-tight">
+  //           {locale.Mailing.AttentionDebugModeMsg}{" "}
+  //           {activeMessenger ? activeMessenger : ""}
+  //         </span>
+  //       </div>
+  //     )}
+
+  //     {/* Start/stop sending messages */}
+  //     <button
+  //       type="button"
+  //       disabled={!isReadyToStart || isProcessing}
+  //       onClick={handleStartedSendingToggle}
+  //       className={`
+  //         relative
+  //         flex
+  //         items-center
+  //         overflow-hidden
+  //         h-14
+  //         ${isStartedSending && !isProcessing
+  //           ? "w-14 justify-center px-0 gap-0 hover:w-52" 
+  //           : "px-10 gap-4"
+  //         }
+  //         rounded-2xl
+  //         font-black text-lg uppercase tracking-wider italic
+  //          duration-300
+  //         overflow-hidden
+  //         shadow-xl
+  //         group
+  //         text-white
+  //         ${getButtonStyle}
+  //         ${
+  //           !isReadyToStart || isProcessing
+  //             ? "opacity-40 cursor-not-allowed grayscale"
+  //             : "hover:scale-[1.02] active:scale-95"
+  //         }
+  //       `}
+  //     >
+  //       {isProcessing ? (
+  //         <>
+  //           {/* Loading process */}
+  //           <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+  //           {isStartedSending ? locale.Mailing.Stop : locale.Mailing.Start}
+  //         </>
+  //       ) : isStartedSending ? (
+  //         <>
+  //           <div
+  //             className="
+  //               flex
+  //               items-center
+  //               justify-center
+  //               w-5
+  //               shrink-0
+  //             "
+  //           >
+  //             <Square fill="white" size={20} className="shrink-0" />
+  //           </div>
+
+  //           <span
+  //             className="
+  //               flex
+  //               items-center
+  //               max-w-0
+  //               overflow-hidden
+  //               whitespace-nowrap
+  //               opacity-0
+  //               
+  //               duration-300
+  //               group-hover:max-w-[200px]
+  //               group-hover:opacity-100
+  //               group-hover:ml-3
+  //             "
+  //           >
+  //             {locale.Mailing.Stop}
+  //           </span>
+  //         </>
+  //       ) : (
+  //         <>
+  //           {debugMode ? (
+  //             <Bug fill="white" size={20} />
+  //           ) : (
+  //             <Play fill="white" size={20} />
+  //           )}
+  //           {debugMode ? locale.Mailing.Debug : locale.Mailing.Start}
+  //         </>
+  //       )}
+  //     </button>
+  //   </div>
+  // );
 
   return (
     <PanelTemplate
@@ -289,7 +317,17 @@ const NotificationSystemPlate = ({
         activeModal ? null : 
         <>
           <div className="absolute bottom-8 right-8 z-100">
-            {rightPanelFooter}
+            <ButtonFooter
+              isStartedSending={isStartedSending}
+              debugMode={debugMode}
+              theme={theme}
+              locale={locale}
+              activeMessenger={activeMessenger}
+              isReadyToStart={isReadyToStart}
+              isProcessing={isProcessing}
+              handleStartedSendingToggle={handleStartedSendingToggle}
+              getButtonStyle={getButtonStyle}
+            />
           </div>
           <NotificationMonitorModal
             isOpen={report.isOpen}
@@ -312,14 +350,7 @@ const NotificationSystemPlate = ({
                 checked={systemCfg.debug.mode}
                 color="amber"
                 themeClasses={themeClasses}
-                onChange={(value) =>
-                    updateConfig("system", {
-                        debug: {
-                            ...systemCfg.debug,
-                            mode: value,
-                        },
-                    })
-                }
+                onChange={handleDebugModeChange}
             />
           </section>
 
@@ -333,8 +364,8 @@ const NotificationSystemPlate = ({
                 label="Start.gg"
                 active={activePlatform === "startgg"}
                 auth={authStatus?.startgg}
-                onClick={() => handleTournamentPlatformClick("startgg")}
-                onSettingsClick={() => toggleSettings("startgg")}
+                onClick={handleStartggClick}
+                onSettingsClick={handleStartggSettingsClick}
                 themeClasses={themeClasses}
                 locale={locale.Platform.AuthorizeStatePlatform}
               />
@@ -357,8 +388,8 @@ const NotificationSystemPlate = ({
                 label="Discord"
                 active={activeMessenger === "discord"}
                 auth={authStatus?.discord}
-                onClick={() => handleMessengerClick("discord")}
-                onSettingsClick={() => toggleSettings("discord")}
+                onClick={handleDiscordClick}
+                onSettingsClick={handleDiscordSettingsClick}
                 themeClasses={themeClasses}
                 locale={locale.Platform.AuthorizeStatePlatform}
               />
@@ -414,7 +445,7 @@ const NotificationSystemPlate = ({
                           clientID: value,
                         },
                       });
-                    }}
+                  }}
                   themeClasses={themeClasses}
                 />
 
@@ -442,7 +473,7 @@ const NotificationSystemPlate = ({
 
           {(activeSettings === "discord" || activeSettings == "telegram") && (
             <section
-              className={`p-4 rounded-2xl border space-y-3 animate-in zoom-in-95 duration-300 max-h-[40vh] custom-scrollbar overflow-y-auto ${themeClasses.tempSection}`}
+              className={`p-4 rounded-2xl border space-y-3 duration-300 max-h-[40vh] custom-scrollbar overflow-y-auto ${themeClasses.tempSection}`}
             >
               <div className="flex items-center justify-between border-b pb-2 border-current/5">
                 <h4 className="text-[9px] font-black uppercase text-blue-500 italic">
@@ -621,12 +652,7 @@ const NotificationSystemPlate = ({
                   witdh="320"
                   icon={Globe}
                   value={urlToTournament}
-                  onChange={(value) =>
-                    updateConfig("tournament", {
-                      ...tourneyCfg,
-                      urlToTournament: value,
-                    })
-                  }
+                  onChange={handleTournamentUrlChange}
                   themeClasses={themeClasses}
                 />
               </div>
@@ -644,16 +670,7 @@ const NotificationSystemPlate = ({
                       },
                     })
                   }
-                  items={[
-                    {
-                      label: "Tekken 8",
-                      value: "tekken",
-                    },
-                    {
-                      label: "Street Fighter 6",
-                      value: "sf6",
-                    },
-                  ]}
+                  items={listGames}
                   themeClasses={themeClasses}
                 />
               </div>
@@ -668,7 +685,7 @@ const NotificationSystemPlate = ({
                 <div className="flex items-center gap-4">
                   <button
                     onClick={() => setActiveTab("rules")}
-                    className={`flex items-center gap-2 transition-all ${activeTab === "rules" ? "opacity-100 scale-105" : "opacity-40 hover:opacity-70"}`}
+                    className={`flex items-center gap-2  ${activeTab === "rules" ? "opacity-100 scale-105" : "opacity-40 hover:opacity-70"}`}
                   >
                     <FileSignature size={16} className="text-blue-500" />
                     <span
@@ -680,7 +697,7 @@ const NotificationSystemPlate = ({
 
                   <button
                     onClick={() => setActiveTab("lobby")}
-                    className={`flex items-center gap-2 transition-all ${activeTab === "lobby" ? "opacity-100 scale-105" : "opacity-40 hover:opacity-70"}`}
+                    className={`flex items-center gap-2  ${activeTab === "lobby" ? "opacity-100 scale-105" : "opacity-40 hover:opacity-70"}`}
                   >
                     <Monitor size={16} className="text-blue-500" />
                     <span
@@ -703,9 +720,7 @@ const NotificationSystemPlate = ({
                         value={rules.standardFormat}
                         icon={Settings2}
                         themeClasses={themeClasses}
-                        onChange={(val) =>
-                          changeRule("standardFormat", val, updateConfig)
-                        }
+                        onChange={handleStandardFormatChange}
                         items={listFT}
                       />
                       <Field
@@ -714,9 +729,7 @@ const NotificationSystemPlate = ({
                         value={rules.finalsFormat}
                         themeClasses={themeClasses}
                         icon={Trophy}
-                        onChange={(val) =>
-                          changeRule("finalsFormat", val, updateConfig)
-                        }
+                        onChange={handleFinalsFormatChange}
                         items={listFT}
                       />
                       <Field
@@ -725,10 +738,7 @@ const NotificationSystemPlate = ({
                         icon={Trophy}
                         themeClasses={themeClasses}
                         isNumber={true}
-                        onChange={(val) => {
-                          const rounds = Math.min(5, Math.max(1, Number(val) || 1));
-                          changeRule("rounds", rounds, updateConfig);
-                        }}
+                        onChange={handleRoundsChange}
                       />
                       <Field
                         label={locale.RulesOfTournament.Time}
@@ -736,27 +746,8 @@ const NotificationSystemPlate = ({
                         value={rules.duration}
                         themeClasses={themeClasses}
                         icon={Timer}
-                        items={[
-                          {
-                            label: "30",
-                            value: 30,
-                          },
-                          {
-                            label: "45",
-                            value: 45,
-                          },
-                          {
-                            label: "60",
-                            value: 60,
-                          },
-                          {
-                            label: "99",
-                            value: 99,
-                          },
-                        ]}
-                        onChange={(val) =>
-                          changeRule("duration", val, updateConfig)
-                        }
+                        items={durationItems}
+                        onChange={handleDurationChange}
                       />
                       <Field
                         label={locale.RulesOfTournament.Stage}
@@ -782,9 +773,7 @@ const NotificationSystemPlate = ({
                             value: "Repeat",
                           },
                         ]}
-                        onChange={(val) =>
-                          changeRule("stage", val, updateConfig)
-                        }
+                        onChange={handleStageChange}
                       />
                     </div>
                   </div>
@@ -927,7 +916,7 @@ const NotificationSystemPlate = ({
               </div>
               <div className="flex gap-4 items-start">
                 <div
-                  className={`w-24 h-24 rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden shrink-0 transition-all ${themeClasses.divider}`}
+                  className={`w-24 h-24 rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden shrink-0  ${themeClasses.divider}`}
                 >
                   {previewLogo ? (
                     <img

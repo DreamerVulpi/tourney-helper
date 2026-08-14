@@ -68,7 +68,7 @@ const UpdateModal = ({
             uppercase
             italic
             tracking-wider
-            transition-all
+            
             text-white
             bg-blue-600 hover:bg-blue-500
           `}
@@ -89,7 +89,7 @@ const UpdateModal = ({
             uppercase
             italic
             tracking-wider
-            transition-all
+            
             text-white
             bg-orange-600 hover:bg-orange-500
           `}

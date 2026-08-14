@@ -89,7 +89,7 @@ const ImportFileModal = ({
         uppercase
         italic
         tracking-wider
-        transition-all
+        
         text-white
 
         ${

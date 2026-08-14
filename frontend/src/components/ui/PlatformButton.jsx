@@ -1,8 +1,10 @@
+import React from "react";
+
 import {
   Settings2,
 } from "lucide-react";
 
-export function PlatformBtn({
+function PlatformBtnBase({
   label,
   active,
   auth,
@@ -18,7 +20,7 @@ export function PlatformBtn({
         type="button"
         disabled={disabled}
         onClick={onClick}
-        className={`w-full h-[2.8rem] flex flex-col items-center justify-center py-[0.25rem] rounded-xl border transition-all relative overflow-hidden ${themeClasses.field} ${
+        className={`w-full h-[2.8rem] flex flex-col items-center justify-center py-[0.25rem] rounded-xl border  relative overflow-hidden ${themeClasses.field} ${
           disabled
             ? "opacity-30 cursor-not-allowed"
             : active
@@ -47,7 +49,7 @@ export function PlatformBtn({
             e.stopPropagation();
             onSettingsClick();
           }}
-          className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all z-20 
+          className={`absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg  z-20 
             ${active ? "text-blue-600 hover:bg-blue-600/20" : "text-slate-500 hover:bg-slate-500/10"}`}
         >
           <Settings2 size={14} />
@@ -56,3 +58,5 @@ export function PlatformBtn({
     </div>
   );
 }
+
+export const PlatformBtn = React.memo(PlatformBtnBase)

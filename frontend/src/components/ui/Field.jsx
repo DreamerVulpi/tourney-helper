@@ -1,10 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 import { DropdownList } from "./DropdownList.jsx";
 import { CopyButton } from "./CopyButton.jsx";
 
-export function Field({
+function FieldBase({
   label,
   width = "100%",
   icon: Icon,
@@ -27,6 +27,29 @@ export function Field({
 
   themeClasses,
 }) {
+  const prevProps = React.useRef(null);
+
+if (prevProps.current) {
+  const prev = prevProps.current;
+
+  console.log("Field changed:", label, {
+      value: prev.value !== value,
+      items: prev.items !== items,
+      themeClasses: prev.themeClasses !== themeClasses,
+      onChange: prev.onChange !== onChange,
+      onClick: prev.onClick !== onClick,
+      label: prev.label !== label,
+    });
+  }
+
+  prevProps.current = {
+    value,
+    items,
+    themeClasses,
+    onChange,
+    onClick,
+    label,
+  };
   const iconSize = height.endsWith("rem")
   ? Math.round(parseFloat(height) * 16 * 0.45)
   : height.endsWith("px")
@@ -95,7 +118,7 @@ export function Field({
                 flex
                 rounded-xl
                 border
-                transition-all
+                
                 gap-2
                 text-xs
                 items-center
@@ -178,7 +201,7 @@ export function Field({
               rounded-xl
               border
               outline-none
-              transition-all
+              
               ${variant === "password" ? "pr-9" : "pr-4"}
               ${Icon ? "pl-9" : "px-4"}
               text-xs
@@ -201,3 +224,5 @@ export function Field({
     </div>
   );
 }
+
+export const Field = React.memo(FieldBase)

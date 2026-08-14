@@ -132,7 +132,6 @@ func (h *Handler) Stop() error {
 	session := h.session
 	registeredCmds := h.registeredCmds
 	auth := h.Auth
-	ns := h.Ns
 	h.mtx.Unlock()
 
 	logger.Log(entityLogger.Info, "Removing Discord commands and clearing up roles...")
@@ -168,13 +167,6 @@ func (h *Handler) Stop() error {
 
 	logger.Log(entityLogger.Info, "Closing Discord session...")
 	err := session.Close()
-
-	if ns != nil {
-		log.Printf("Unlinking messenger from dh.Ns (%p)\n", ns)
-		ns.Messenger = nil
-	} else {
-		log.Println("dh.Ns is nil, skipping messenger unlinking")
-	}
 
 	// Clear resourses
 	h.mtx.Lock()

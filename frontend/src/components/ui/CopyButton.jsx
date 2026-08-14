@@ -10,7 +10,7 @@ export function CopyButton({ text, timeout = 2000, className = "", iconSize = 12
       className={`
         p-1.5
         rounded-md
-        transition-all
+        
         shrink-0
         ${
           copied

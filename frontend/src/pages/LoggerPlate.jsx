@@ -41,7 +41,7 @@ const LoggerPlate = ({ theme, locale}) => {
           logs.map((l, i) => (
             <div
               key={i}
-              className={`flex gap-3 animate-in slide-in-from-left-2 duration-300 ${
+              className={`flex gap-3 slide-in-from-left-2 duration-300 ${
                 l.type === "success" 
                   ? "text-green-500" 
                   : l.type === "error" 

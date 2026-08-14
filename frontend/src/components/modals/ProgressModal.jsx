@@ -112,7 +112,7 @@ export function ProgressModal({
               className={`
                 h-full
                 rounded-full
-                transition-all
+                
                 duration-500
                 ${
                   isError
