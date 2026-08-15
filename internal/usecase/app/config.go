@@ -34,6 +34,7 @@ func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
 			Theme:                 "Dark",
 			CheckUpdatesOnStartUp: true,
 			IgnoredVersion:        "",
+			SidePanelCollapsed:    false,
 		}
 		return nullCfg, nil
 	}

@@ -67,8 +67,12 @@ const App = () => {
   // Load locale
   const {lang, locale, setLang } = useLocale("EN")
 
+  // Side panel hovered
+  const [isSidePanelHovered, setIsSidePanelHovered] = useState(false);
+  const [sidePanelCollapsed, setSidePanelCollapsed] = useState(null);
+
   // Initialization application
-  useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme});
+  useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed});
   // Delay before save data from fields in configs
   const {debouncedSaveSystem, debouncedSaveTourney, debouncedSaveSettings} = useAutoSave();
   const { updateConfig } = useConfigUpdater({
@@ -241,6 +245,9 @@ const App = () => {
             setUpdateStatus={setUpdateStatus}
             setUpdateMessage={setUpdateMessage}
             setUpdateProgress={setUpdateProgress}
+            isSidePanelHovered={isSidePanelHovered}
+            sidePanelCollapsed={sidePanelCollapsed}
+            setSidePanelCollapsed={setSidePanelCollapsed}
           />
 
           <div className="flex flex-1 overflow-hidden">
@@ -249,6 +256,9 @@ const App = () => {
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               locale={locale.SidePanel}
+              collapsed={sidePanelCollapsed}
+              setCollapsed={setSidePanelCollapsed}
+              setIsHovered={setIsSidePanelHovered}
             />
 
             {/* MainWindow */}

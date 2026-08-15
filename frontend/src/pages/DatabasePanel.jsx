@@ -55,7 +55,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
   const nameMessengerPlatform = "Discord";
   const nameTournamentPlatform = "Startgg";
 
-  const sizeColumnOfNickname = 40;
+  const sizeColumnOfNickname = 30;
   const sizeColumnOfGameID = 30;
   const sizeColumnOfRegion = 30;
   const sizeColumnOfLanguage = 10;
@@ -165,7 +165,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     setImportFileType(isJson ? "json" : "csv");
     setIsImportModalOpen(true);
   };
-
 
   // Handler for confirm file import of participants
   const handleConfirmFileImport = async (filePath) => {
@@ -507,6 +506,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
   // Fetch data for pagination
   const fetchDataRef = useRef(fetchData);
   fetchDataRef.current = fetchData;
+  
   // Trigger for pagination
   useEffect(() => {
     const tableContainer = document.getElementById("table-scroll-container");
@@ -690,9 +690,10 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     importProgress = 100;
   }
 
+
   return (
     <PanelTemplate themeClasses={themeClasses}>
-      <div className="max-w-[100rem] max-auto space-y-6">
+      <div className="w-full space-y-6">
         <div className="space-y-4">
           {/* Main Action Bar */}
           <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
@@ -934,9 +935,11 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
             ref={bodyScrollRef}
             onScroll={() => syncScroll("body")}
             id="table-scroll-container"
-            className="overflow-y-auto overflow-x-auto custom-scrollbar"
+            className="flex-1 min-h-0 overflow-auto custom-scrollbar"
             style={{
-              maxHeight: hasHorizontalScroll ? "22rem" : "28rem",
+              maxHeight: hasHorizontalScroll
+              ? "calc(100dvh - 500px)"
+              : "calc(100dvh - 560px)",
             }}
           >
             <table className="w-full text-left text-[11px] table-fixed min-w-[1100px] border-collapse">
@@ -1255,7 +1258,8 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
           </div>
 
           {/* Footer */}
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase italic px-2">
+          <div className="absolute bottom-8 right-8 z-100">
+          {/* <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase italic px-2"> */}
             {activeFilter === "rating" && (
               <button
                 onClick={() =>

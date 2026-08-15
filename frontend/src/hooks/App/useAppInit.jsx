@@ -7,7 +7,7 @@ import {
 } from "../../../wailsjs/go/application/App.js";
 
 export function useAppInit({
-    locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme,
+    locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed,
 }) {
     const isConfigLoadedRef = useRef(false);
     useEffect(() => {
@@ -83,8 +83,9 @@ export function useAppInit({
             if (settings) {
               const lang = settings.Language || settings.language || "EN";
               const theme = settings.Theme || settings.theme || "Dark";
-              const checkUpdatesOnStartUp = settings.CheckUpdatesOnStartUp ?? settings.checkUpdatesOnStartUp ?? true;
+              const checkUpdatesOnStartUp = settings.CheckUpdatesOnStartUp ?? settings.checkUpdatesOnStartUp ?? false;
               const ignoredVersion = settings.IgnoredVersion || settings.ignoredVersion || "";
+              const sidePanelCollapsed = settings.SidePanelCollapsed ?? settings.sidePanelCollapsed  ?? false;
               
               setSettings((prev) => ({
                 ...prev,
@@ -92,10 +93,12 @@ export function useAppInit({
                 Theme: theme,
                 CheckUpdatesOnStartUp: checkUpdatesOnStartUp,
                 IgnoredVersion: ignoredVersion,
+                SidePanelCollapsed: sidePanelCollapsed,
               }));
-    
+              // TODO: Add ability to wait load all params for correct reveal UI
               setLang(lang);
               setTheme(theme);
+              setSidePanelCollapsed(sidePanelCollapsed);
             }
     
             isConfigLoadedRef.current = true;

@@ -29,18 +29,18 @@ function FieldBase({
 }) {
   const prevProps = React.useRef(null);
 
-if (prevProps.current) {
-  const prev = prevProps.current;
+  // if (prevProps.current) {
+  //   const prev = prevProps.current;
 
-  console.log("Field changed:", label, {
-      value: prev.value !== value,
-      items: prev.items !== items,
-      themeClasses: prev.themeClasses !== themeClasses,
-      onChange: prev.onChange !== onChange,
-      onClick: prev.onClick !== onClick,
-      label: prev.label !== label,
-    });
-  }
+  //   console.log("Field changed:", label, {
+  //     value: prev.value !== value,
+  //     items: prev.items !== items,
+  //     themeClasses: prev.themeClasses !== themeClasses,
+  //     onChange: prev.onChange !== onChange,
+  //     onClick: prev.onClick !== onClick,
+  //     label: prev.label !== label,
+  //   });
+  // }
 
   prevProps.current = {
     value,
@@ -51,10 +51,10 @@ if (prevProps.current) {
     label,
   };
   const iconSize = height.endsWith("rem")
-  ? Math.round(parseFloat(height) * 16 * 0.45)
-  : height.endsWith("px")
-  ? Math.round(parseFloat(height) * 0.45)
-  : 16;
+    ? Math.round(parseFloat(height) * 16 * 0.45)
+    : height.endsWith("px")
+      ? Math.round(parseFloat(height) * 0.45)
+      : 16;
 
   const [showSecret, setShowSecret] = useState(false);
 
@@ -62,7 +62,7 @@ if (prevProps.current) {
     variant === "password" ? (showSecret ? "text" : "password") : type;
 
   return (
-    <div className="space-y-1.5"  style={{ width }}>
+    <div className="space-y-1.5" style={{ width }}>
       {label && (
         <label
           className={`text-[9px] font-black uppercase italic px-1 ${themeClasses.label}`}
@@ -74,7 +74,8 @@ if (prevProps.current) {
       {variant === "select" ? (
         <DropdownList
           selectedValue={
-            items.find((item) => String(item.value) === String(value))?.label ?? value
+            items.find((item) => String(item.value) === String(value))?.label ??
+            value
           }
           items={items}
           onChange={onChange}
@@ -103,17 +104,19 @@ if (prevProps.current) {
               <Icon size={iconSize} className="text-blue-600 shrink-0" />
             )}
 
-            <span className="truncate text-xs font-mono font-bold text-blue-600">{value}</span>
+            <span className="truncate text-xs font-mono font-bold text-blue-600">
+              {value}
+            </span>
           </div>
 
           <CopyButton text={value} className="absolute right-2" />
         </div>
       ) : variant === "button" ? (
-            <button
-              type="button"
-              onClick={onClick}
-              style={{ height }}
-              className={`
+        <button
+          type="button"
+          onClick={onClick}
+          style={{ height }}
+          className={`
                 w-full
                 flex
                 rounded-xl
@@ -129,18 +132,16 @@ if (prevProps.current) {
                 text-black
                 ${themeClasses.button}
               `}
-            >
-              {Icon && (
-                <Icon
-                  size={iconSize}
-                  className="text-blue-600 pointer-events-none z-10"
-                />
-              )}
+        >
+          {Icon && (
+            <Icon
+              size={iconSize}
+              className="text-blue-600 pointer-events-none z-10"
+            />
+          )}
 
-              <span className="leading-none translate-y-[-1px]">
-                  {labelButton}
-              </span>
-            </button>
+          <span className="leading-none translate-y-[-1px]">{labelButton}</span>
+        </button>
       ) : variant === "textarea" ? (
         <textarea
           placeholder={placeholder}
@@ -160,24 +161,22 @@ if (prevProps.current) {
             text-xs
             whitespace-pre-wrap
             break-words
-            ${
-              themeClasses.field
-            }
+            ${themeClasses.field}
           `}
         >
           {value}
         </div>
       ) : variant === "combobox" ? (
         <DropdownList
-            editable
-            selectedValue={value}
-            items={items}
-            onChange={onChange}
-            icon={Icon}
-            iconSize={iconSize}
-            themeClasses={themeClasses}
-            className="px-4 text-xs font-bold"
-            style={{ height }}
+          editable
+          selectedValue={value}
+          items={items}
+          onChange={onChange}
+          icon={Icon}
+          iconSize={iconSize}
+          themeClasses={themeClasses}
+          className="px-4 text-xs font-bold"
+          style={{ height }}
         />
       ) : (
         <div className="relative flex items-center">
@@ -225,4 +224,4 @@ if (prevProps.current) {
   );
 }
 
-export const Field = React.memo(FieldBase)
+export const Field = React.memo(FieldBase);

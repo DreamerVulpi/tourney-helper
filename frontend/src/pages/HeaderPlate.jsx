@@ -8,6 +8,8 @@ import {
   Moon,
   HelpCircle,
   Info,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { getThemeClasses } from "../utils/theme/HeaderPlate/themes.jsx";
 import { createThemeChanger } from "../utils/changeTheme";
@@ -34,7 +36,6 @@ const HeaderPlate = ({
   activeTab,
   setActiveModal,
   settings,
-  setSettings,
   handleInstallUpdate,
   updateProgressOpen,
   updateStatus,
@@ -44,6 +45,9 @@ const HeaderPlate = ({
   setUpdateStatus,
   setUpdateMessage,
   setUpdateProgress,
+  isSidePanelHovered,
+  sidePanelCollapsed,
+  setSidePanelCollapsed,
 }) => {
   // Font for logo programm
   const fontStyle = (
@@ -53,13 +57,23 @@ const HeaderPlate = ({
     `}</style>
   );
 
-
   // Variable for selector languages
   const [isLangOpen, setIsLangOpen] = useState(false);
   // Function for change theme & save to configuration of programm
   const changeTheme = createThemeChanger(theme, setTheme, updateConfig);
   // Details of theme for this page
   const headerThemeClasses = getThemeClasses(theme);
+
+  const handleSidePanelCollapse = () => {
+    const next = !sidePanelCollapsed;
+
+    setSidePanelCollapsed(next);
+
+    updateConfig("settings", {
+      ...settings,
+      SidePanelCollapsed: next,
+    });
+  };
  
   return (
     <header
@@ -88,6 +102,47 @@ const HeaderPlate = ({
               <span className="text-blue-600 ml-[0.rem]">HELPER</span>
             </span>
           </div>
+        </div>
+        <div
+          className={`
+            flex items-center
+            gap-2
+            pl-3
+            ml-2
+            border-l
+            h-6
+            transition-all duration-300
+            ${headerThemeClasses.divider}
+            ${
+              isSidePanelHovered
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-2 pointer-events-none"
+            }
+          `}
+        >
+          <button
+            type="button"
+            onClick={handleSidePanelCollapse}
+            className={`
+              w-7 h-7
+              flex items-center justify-center
+              rounded-lg
+              transition-colors duration-200
+              hover:bg-black/10
+              dark:hover:bg-white/10
+            `}
+            aria-label={
+              sidePanelCollapsed
+                ? "Expand side panel"
+                : "Collapse side panel"
+            }
+          >
+            {sidePanelCollapsed ? (
+              <PanelLeftOpen size={17} />
+            ) : (
+              <PanelLeftClose size={17} />
+            )}
+          </button>
         </div>
       </div>
 
@@ -197,7 +252,6 @@ const HeaderPlate = ({
       check={check}
       updateConfig={updateConfig}
       settings={settings}
-      setSettings={setSettings}
       onInstallUpdate={handleInstallUpdate}
     />
     <ProgressModal

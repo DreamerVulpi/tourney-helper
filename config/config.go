@@ -94,6 +94,7 @@ type SettingsApplication struct {
 	Theme                 string `toml:"theme"`
 	CheckUpdatesOnStartUp bool   `toml:"checkUpdatesOnStartUp"`
 	IgnoredVersion        string `toml:"ignoredVersion"`
+	SidePanelCollapsed    bool   `toml:"sidePanelCollapsed"`
 }
 
 func GetAbsPath(fileName string) string {
@@ -247,6 +248,7 @@ func Init(configDir string) error {
 			Theme:                 "Dark",
 			CheckUpdatesOnStartUp: true,
 			IgnoredVersion:        "",
+			SidePanelCollapsed:    false,
 		},
 	}
 
