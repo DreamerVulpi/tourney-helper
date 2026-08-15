@@ -27,29 +27,6 @@ function FieldBase({
 
   themeClasses,
 }) {
-  const prevProps = React.useRef(null);
-
-  // if (prevProps.current) {
-  //   const prev = prevProps.current;
-
-  //   console.log("Field changed:", label, {
-  //     value: prev.value !== value,
-  //     items: prev.items !== items,
-  //     themeClasses: prev.themeClasses !== themeClasses,
-  //     onChange: prev.onChange !== onChange,
-  //     onClick: prev.onClick !== onClick,
-  //     label: prev.label !== label,
-  //   });
-  // }
-
-  prevProps.current = {
-    value,
-    items,
-    themeClasses,
-    onChange,
-    onClick,
-    label,
-  };
   const iconSize = height.endsWith("rem")
     ? Math.round(parseFloat(height) * 16 * 0.45)
     : height.endsWith("px")

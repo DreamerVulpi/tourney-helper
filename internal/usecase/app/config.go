@@ -121,6 +121,7 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 				Conn:          "Wired",
 				Crossplatform: false,
 				Passcode:      "0000",
+				LinkToLobby:   "",
 			},
 			Logo: config.Logo{
 				Img: "",

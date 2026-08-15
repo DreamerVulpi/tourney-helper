@@ -54,6 +54,8 @@ type LobbyLiveBroadcast struct {
 	ListCrossplatform  ListCrossplatform
 	TypeConnection     TypeConnection
 	AccessCodeLabel    string
+	LinkToLobbyLabel   string
+	YourOpponent       string
 }
 
 type TypeConnection struct {

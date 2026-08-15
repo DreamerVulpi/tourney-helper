@@ -79,6 +79,8 @@ var En = Lang{
 			Other:        "Other",
 			ND:           "No data",
 		},
+		LinkToLobby:  "Link to the lobby",
+		YourOpponent: "Your opponent",
 	},
 	ViewDataMessage: ViewDataMessage{
 		Title:               "Check data",

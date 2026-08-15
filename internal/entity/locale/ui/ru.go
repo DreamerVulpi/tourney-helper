@@ -190,6 +190,7 @@ var Ru = Ui{
 				Any:   "Любой",
 				Lan:   "Только прямое подключение",
 			},
+			LinkToLobbyLabel: "Ссылка на лобби",
 		},
 		ConfigurationLogo: ConfigurationLogo{
 			Label:         "Конфигурация логотипа",

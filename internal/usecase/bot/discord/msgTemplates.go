@@ -149,7 +149,9 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 		if set.StreamSourse == "YOUTUBE" {
 			stream = "https://www.youtube.com/@" + set.StreamName
 		}
+
 		fields := []*discordgo.MessageEmbedField{
+			{Name: local.StreamLobbyMessage.YourOpponent, Value: opponent.GameNickname},
 			{Name: local.StreamLobbyMessage.StreamLink, Value: stream},
 			{Name: local.StreamLobbyMessage.MessageHeader, Value: set.FullInviteLink},
 			{Name: local.StreamLobbyMessage.ParamsHeader},
@@ -160,6 +162,14 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 			{Name: local.StreamLobbyMessage.Crossplatform, Value: fieldCrossplay(local, s.params.rulesMatches.Crossplatform), Inline: true},
 			{Name: local.StreamLobbyMessage.Passcode, Value: fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, s.params.streamLobby.Passcode), Inline: true},
 		}
+
+		linkToLobby := s.params.tournament.Stream.LinkToLobby
+		if linkToLobby != "" {
+			fields = append(fields, &discordgo.MessageEmbedField{
+				Name: local.StreamLobbyMessage.LinkToLobby, Value: linkToLobby,
+			})
+		}
+
 		message = msgEmbed(fmt.Sprintf(local.StreamLobbyMessage.Title, set.TournamentName), fields, embedColor, &s.params)
 		message.Description = local.StreamLobbyMessage.Description
 	}

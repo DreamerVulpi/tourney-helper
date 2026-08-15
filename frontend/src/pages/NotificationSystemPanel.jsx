@@ -82,12 +82,14 @@ const NotificationSystemPlate = ({
     stage: stage,
   };
   const passcode = tourneyCfg?.stream.passcode || "0000";
+  const linkToLobby = tourneyCfg?.stream.linkToLobby || "";
   const streamLobby = tourneyCfg?.stream || {
     area: "Any",
     language: "Any",
     connection: "Any",
     crossplatform: true,
     passcode: passcode,
+    linkToLobby: linkToLobby,
   };
   const urlLogoTournament = tourneyCfg?.logo?.img || ""
   const previewLogo = urlLogoTournament || "https://raw.githubusercontent.com/DreamerVulpi/tourney-helper/main/branding/icons/256.png"
@@ -796,6 +798,20 @@ const NotificationSystemPlate = ({
                         />
                       </div>
                     </div>
+                    <Field
+                        icon={Globe}
+                        label={locale.LobbyLiveBroadcast.LinkToLobbyLabel}
+                        themeClasses={themeClasses}
+                        value={linkToLobby}
+                        onChange={(value) =>
+                          updateConfig("tournament", {
+                            stream: {
+                              ...streamLobby,
+                              linkToLobby: value,
+                            },
+                          })
+                        }
+                      />
                   </div>
                 )}
               </div>

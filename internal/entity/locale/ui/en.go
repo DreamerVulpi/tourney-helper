@@ -192,6 +192,7 @@ var En = Ui{
 				Any:   "Any",
 				Lan:   "Only LAN",
 			},
+			LinkToLobbyLabel: "Link to the lobby",
 		},
 		ConfigurationLogo: ConfigurationLogo{
 			Label:         "Logo Configuration",

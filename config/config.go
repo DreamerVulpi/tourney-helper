@@ -58,6 +58,7 @@ type StreamLobby struct {
 	Conn          string `toml:"connection" json:"connection"`
 	Crossplatform bool   `toml:"crossplatform" json:"crossplatform"`
 	Passcode      string `toml:"passcode" json:"passcode"`
+	LinkToLobby   string `toml:"linkToLobby" json:"linkToLobby"`
 }
 
 type Logo struct {
@@ -232,6 +233,7 @@ func Init(configDir string) error {
 				Conn:          "Wired",
 				Crossplatform: false,
 				Passcode:      "0000",
+				LinkToLobby:   "",
 			},
 			Logo: Logo{
 				Img: "",
