@@ -14,6 +14,8 @@ const SidePanel = ({
   collapsed,
   setCollapsed,
   setIsHovered,
+  statusNotificationSystem,
+  statusDatabase,
 }) => {
   const hoverTimeout = useRef(null);
 
@@ -59,6 +61,7 @@ const SidePanel = ({
           active={activeTab === "notifications"}
           onClick={() => setActiveTab("notifications")}
           themeClasses={themeClasses}
+          status={statusNotificationSystem}
         />
 
         <NavItem
@@ -68,6 +71,7 @@ const SidePanel = ({
           active={activeTab === "database"}
           onClick={() => setActiveTab("database")}
           themeClasses={themeClasses}
+          status={statusDatabase}
         />
       </div>
     </nav>

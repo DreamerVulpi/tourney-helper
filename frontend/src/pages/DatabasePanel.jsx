@@ -43,6 +43,7 @@ import ParticipantActionModal from "../components/modals/ParticipantActionModal.
 import { debounce } from "../utils/debounce.jsx";
 import { CopyButton } from "../components/ui/CopyButton.jsx";
 import { Field } from "../components/ui/Field.jsx";
+import { SERVICE_STATUS } from "../utils/listStatus.js";
 
 const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSelectedGame }) => {
   // Notes in 1 request to database
@@ -177,7 +178,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     try {
       const isBanChecked = activeFilter === "banned";
 
-      console.log(filePath)
       const result = await LoadListPlayers(
         filePath,
         nameTournamentPlatform,
@@ -306,7 +306,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
               }
             : null,
         };
-
         await EditParticipant(updateRequest);
         setIsModalOpen(false);
         await fetchData(false, searchQuery);

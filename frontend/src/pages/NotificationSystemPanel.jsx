@@ -67,6 +67,7 @@ const NotificationSystemPlate = ({
   activeModal,
   report,
   setReport,
+  setStatusNotificationSystem,
 }) => {
   // Get data from configs
   const debugMode = systemCfg?.debug?.mode || false;
@@ -132,6 +133,7 @@ const NotificationSystemPlate = ({
     isProcessing,
     setIsProcessing,
     setReport,
+    setStatusNotificationSystem,
     { activeMessenger, activePlatform, systemCfg, tourneyCfg, lang },
   );
 

@@ -50,6 +50,7 @@ import { getThemeClasses } from "./utils/themeClasses.jsx";
 import { useCheckUpdate } from "./hooks/App/useCheckUpdate.jsx";
 import { InstallUpdate } from "../wailsjs/go/application/App.js";
 import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
+import { SERVICE_STATUS } from "./utils/listStatus.js";
 
 const App = () => {
   // Scale UI
@@ -67,9 +68,11 @@ const App = () => {
   // Load locale
   const {lang, locale, setLang } = useLocale("EN")
 
-  // Side panel hovered
+  // Side panel
   const [isSidePanelHovered, setIsSidePanelHovered] = useState(false);
   const [sidePanelCollapsed, setSidePanelCollapsed] = useState(null);
+  const [statusNotificationSystem, setStatusNotificationSystem] = useState(SERVICE_STATUS.OFF);
+  const [statusDatabase, setStatusDatabase] = useState(SERVICE_STATUS.RUNNING);
 
   // Initialization application
   useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed});
@@ -259,6 +262,8 @@ const App = () => {
               collapsed={sidePanelCollapsed}
               setCollapsed={setSidePanelCollapsed}
               setIsHovered={setIsSidePanelHovered}
+              statusNotificationSystem={statusNotificationSystem}
+              statusDatabase={statusDatabase}
             />
 
             {/* MainWindow */}
@@ -287,6 +292,7 @@ const App = () => {
                     activeModal={activeModal}
                     report={report}
                     setReport={setReport}
+                    setStatusNotificationSystem={setStatusNotificationSystem}
                   />
                 )}
 
@@ -298,6 +304,7 @@ const App = () => {
                     themeClasses={themeClasses}
                     selectedGame={selectedGame}
                     setSelectedGame={setSelectedGame}
+                    setStatusDatabase={setStatusDatabase}
                   />
                 )}
                 {/* In future updates */}
