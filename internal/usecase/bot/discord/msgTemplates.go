@@ -203,7 +203,7 @@ func (s *DiscordSender) btnSupport(donName, donURL, donEmoji, subName, subURL, s
 	}
 }
 
-func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*discordgo.MessageEmbed, entityLocale.Lang, entitySender.Participant) {
+func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData, discordLocale string) (*discordgo.MessageEmbed, entityLocale.Lang, entitySender.Participant) {
 	var recipient entitySender.Participant
 	var opponent entitySender.Participant
 	var sidePrefix string
@@ -224,11 +224,16 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*d
 	}
 
 	var local entityLocale.Lang
-	switch recipient.Locale {
-	case string(entityLocale.LocaleRu):
-		local = entityLocale.Ru
-	default:
-		local = entityLocale.En
+
+	if discordLocale == "" || discordLocale == "N/D" {
+		local = s.defaultLocale
+	} else {
+		localeTarget, errL := s.reconizeLocale(discordLocale)
+		if errL != nil {
+			local = s.defaultLocale
+		} else {
+			local = localeTarget
+		}
 	}
 
 	message, err := s.prepareMsgSetData(opponent, set, local)
@@ -252,6 +257,8 @@ func (_ *Handler) typeLocale(language string) entityLocale.Lang {
 	var local entityLocale.Lang
 	switch language {
 	case "Russian":
+		local = entityLocale.Ru
+	case "ru":
 		local = entityLocale.Ru
 	default:
 		local = entityLocale.En

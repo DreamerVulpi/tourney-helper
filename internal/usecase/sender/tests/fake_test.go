@@ -68,6 +68,9 @@ func (f fakeNotificationSender) FindContactOfParticipant(
 	return f.findParticipant, f.findErr
 }
 
+// TODO: Add test
+func (f fakeNotificationSender) GetParticipantLocale(ctx context.Context, messengerID string) (string, error)
+
 func (f fakeNotificationSender) SendMessage(
 	ctx context.Context,
 	targetID string,

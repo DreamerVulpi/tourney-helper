@@ -50,6 +50,7 @@ type NotificationSender interface {
 	GetPlatformMessengerName() string
 	CreateDMChannel(ctx context.Context, platformID string) (*string, error)
 	IsLogChannelEnabled() bool
+	GetParticipantLocale(ctx context.Context, messengerID string) (string, error)
 }
 
 type NotificationData interface {

@@ -155,6 +155,7 @@ var En = Ui{
 			RedirectURL:                  "Redirect URL",
 			ParamsBot:                    "Params %v bot",
 			TokenBot:                     "Bot Token",
+			DefaultLocale:                "Default locale",
 			Messenger:                    "Messenger",
 			Tourney:                      "Tournament Platform",
 			RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",

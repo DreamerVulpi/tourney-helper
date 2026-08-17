@@ -24,8 +24,9 @@ type MessengerPlatform struct {
 }
 
 type RolesID struct {
-	En string `toml:"en" json:"en"`
-	Ru string `toml:"ru" json:"ru"`
+	Default string `toml:"default" json:"default"`
+	En      string `toml:"en" json:"en"`
+	Ru      string `toml:"ru" json:"ru"`
 }
 
 type DebugMode struct {
@@ -185,8 +186,9 @@ func Init(configDir string) error {
 				GuildID:        "",
 				DebugChannelID: "",
 				Roles: RolesID{
-					Ru: "",
-					En: "",
+					Default: "en",
+					Ru:      "",
+					En:      "",
 				},
 			},
 			Telegram: MessengerPlatform{
@@ -196,8 +198,9 @@ func Init(configDir string) error {
 				GuildID:        "",
 				DebugChannelID: "",
 				Roles: RolesID{
-					Ru: "",
-					En: "",
+					Default: "en",
+					Ru:      "",
+					En:      "",
 				},
 			},
 			DebugMode: DebugMode{

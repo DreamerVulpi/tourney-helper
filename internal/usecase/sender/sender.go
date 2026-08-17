@@ -91,8 +91,6 @@ func (ns *NotificationSystem) Run(ctx context.Context) error {
 	}
 }
 
-// func (ns *NotificationSystem)
-
 func (ns *NotificationSystem) processSet(ctx context.Context, slug string, set entitySender.SetData) error {
 	select {
 	case <-ctx.Done():

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	entityLocale "github.com/dreamervulpi/tourney-helper/internal/entity/locale/bot"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
@@ -17,6 +18,7 @@ import (
 type DiscordSender struct {
 	session       *discordgo.Session
 	params        params
+	defaultLocale entityLocale.Lang
 	Metrics       *metrics.Collector
 	searchLimiter chan struct{}
 }
@@ -85,7 +87,13 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 		channelID = *channel
 	}
 
-	message, local, recipient := s.msgInvite(targetID, set)
+	discordLocale, err := s.getMemberLocale(ctx, targetID)
+	if err != nil {
+		logger.Log(entityLogger.Debug, fmt.Sprintf("failed to get Discord locale: %v", err))
+		discordLocale = ""
+	}
+
+	message, local, recipient := s.msgInvite(targetID, set, discordLocale)
 	_, err = s.session.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
 		Embed: message,
 		Components: s.btnSupport(
@@ -124,9 +132,11 @@ func (s *DiscordSender) getLocale(roles []string) string {
 		switch roleID {
 		case s.params.rolesIdList.Ru:
 			return "ru"
+		case s.params.rolesIdList.En:
+			return "en"
 		}
 	}
-	return "en"
+	return ""
 }
 
 func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySender.Participant) (entitySender.Participant, error) {
@@ -145,7 +155,7 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 		TournamentPlatformLogin: p.TournamentPlatformLogin,
 		GameNickname:            p.GameNickname,
 		GameID:                  p.GameID,
-		Locale:                  "en",
+		Locale:                  "",
 		IsFound:                 false,
 	}
 
@@ -179,4 +189,16 @@ func (s *DiscordSender) FindContactOfParticipant(ctx context.Context, p entitySe
 		Locale:                  s.getLocale(targetMember.Roles),
 		IsFound:                 true,
 	}, nil
+}
+
+func (s *DiscordSender) GetParticipantLocale(ctx context.Context, messengerID string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
+	member, err := s.session.GuildMember(s.params.guildID, messengerID)
+	if err != nil {
+		return "", fmt.Errorf("getParticipantLocale | failed to get Discord member %s: %w", messengerID, err)
+	}
+	return s.getLocale(member.Roles), nil
 }

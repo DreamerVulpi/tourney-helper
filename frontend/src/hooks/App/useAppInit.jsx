@@ -27,6 +27,7 @@ export function useAppInit({
                   ...(sys.discord || {}),
                   token: sys.discord?.token || "",
                   roles: {
+                    default: sys.discord?.roles?.default || "en",
                     ru: sys.discord?.roles?.ru || "",
                     en: sys.discord?.roles?.en || "",
                   },
@@ -35,6 +36,7 @@ export function useAppInit({
                   ...prev.telegram,
                   ...(sys.telegram || {}),
                   roles: {
+                    default: sys.discord?.roles?.default || "en",
                     ru: sys.telegram?.roles?.ru || "",
                     en: sys.telegram?.roles?.en || "",
                   },

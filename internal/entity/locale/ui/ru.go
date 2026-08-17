@@ -156,6 +156,7 @@ var Ru = Ui{
 			RedirectURL:                  "Ссылка на перенаправление (Redirect URL)",
 			ParamsBot:                    "Параметры %v бота",
 			TokenBot:                     "Токен бота",
+			DefaultLocale:                "Стандартная локаль",
 			Messenger:                    "Мессенджер",
 			Tourney:                      "Турнирная платформа",
 			RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",

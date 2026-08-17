@@ -43,6 +43,7 @@ import { useTournamentPlatform } from "../hooks/useTournamentPlatform.jsx";
 import { durationItems, listFT } from "../utils/NotificationSystemPanel.jsx/lists.js";
 import { listGames } from "../utils/listGames.js";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
+import { locales } from "../utils/listLocales.js";
 
 const NotificationSystemPlate = ({
   theme,
@@ -211,6 +212,19 @@ const NotificationSystemPlate = ({
   const handleStageChange = useCallback((value) => {
     changeRule("stage", value, updateConfig);
   }, [updateConfig]);
+
+  const handleDefaulLocaleChange = useCallback((value) => {
+    updateConfig("system", {
+      ...systemCfg,
+      [activeSettings]: {
+        ...systemCfg[activeSettings],
+        roles: {
+          ...systemCfg[activeSettings]?.roles,
+          default: value,
+        },
+      },
+    });
+  }, [updateConfig])
   
   return (
     <PanelTemplate
@@ -401,8 +415,7 @@ const NotificationSystemPlate = ({
                   />
                 </div>
               )}
-
-              <div className="space-y-1">
+              <div className="grid grid-cols-2 gap-2 pt-1">
                 <Field
                   label={locale.Platform.TokenBot+"*"}
                   icon={Key}
@@ -420,6 +433,24 @@ const NotificationSystemPlate = ({
                       });
                     }}
                 />
+              <Field
+                label={locale.Platform.DefaultLocale}
+                variant="select"
+                value={systemCfg[activeSettings]?.roles?.default}
+                icon={Languages}
+                themeClasses={themeClasses}
+                onChange={handleDefaulLocaleChange}
+                items={locales}
+              />
+              {/* <Field
+                label={`${locale.RulesOfTournament.StandardFormat} (1-5)`}
+                variant="select"
+                value={rules.standardFormat}
+                icon={Settings2}
+                themeClasses={themeClasses}
+                onChange={handleStandardFormatChange}
+                items={listFT}
+              /> */}
               </div>
 
               {(activeSettings === "discord" ||
