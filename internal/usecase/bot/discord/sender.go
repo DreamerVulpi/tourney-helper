@@ -21,6 +21,7 @@ type DiscordSender struct {
 	defaultLocale entityLocale.Lang
 	Metrics       *metrics.Collector
 	searchLimiter chan struct{}
+	saveLocale    func(ctx context.Context, gameNickname string, locale string) error
 }
 
 func (s *DiscordSender) GetPlatformMessengerName() string {
@@ -75,7 +76,6 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 	}
 
 	var channelID string
-	log.Printf("dmChannelID(%v) != nil && *dmChannelID(%v) != 0", dmChannelID, dmChannelID)
 	if dmChannelID != nil && *dmChannelID != "" {
 		channelID = *dmChannelID
 	} else {
@@ -94,6 +94,15 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 	}
 
 	message, local, recipient := s.msgInvite(targetID, set, discordLocale)
+
+	if !set.IsTest && discordLocale != "" && discordLocale != "N/D" {
+		if s.saveLocale != nil {
+			if err := s.saveLocale(ctx, recipient.GameNickname, discordLocale); err != nil {
+				logger.Log(entityLogger.Debug, fmt.Sprintf("failed to save Discord locale for %s: %v", recipient.GameNickname, err))
+			}
+		}
+	}
+
 	_, err = s.session.ChannelMessageSendComplex(channelID, &discordgo.MessageSend{
 		Embed: message,
 		Components: s.btnSupport(

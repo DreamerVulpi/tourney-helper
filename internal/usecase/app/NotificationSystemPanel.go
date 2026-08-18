@@ -113,7 +113,6 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 	return nil
 }
 
-// TODO: Need refactor metrics in this method
 func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament) (discord.Handler, error) {
 	collectorStartgg := metrics.NewCollector()
 	limiterStartgg := rateLimiter.NewStartggLimiter(collectorStartgg)

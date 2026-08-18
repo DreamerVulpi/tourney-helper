@@ -205,8 +205,6 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 			if err != nil {
 				return err
 			}
-		} else {
-			log.Println("Бизнес-логика: Изменений не обнаружено, пропускаем UPDATE основной инфы.")
 		}
 	}
 
@@ -447,4 +445,22 @@ func (db *Database) AddParticipants(ctx context.Context, list []entityStartgg.Im
 	log.Printf("db | Bulk insert successful. %d participants added", successful)
 
 	return successful, total, nil
+}
+
+func (db *Database) EditParticipantLocale(ctx context.Context, gameNickname string, locale string) error {
+	p, errP := db.Participant.GetParticipantByNickname(ctx, entityDB.ParticipantGetRequestByNickname{Nickname: gameNickname})
+	if errP != nil {
+		return errP
+	}
+
+	if p.Locale == locale {
+		return nil
+	}
+
+	_, errR := db.Participant.EditParticipantLocale(ctx, entityDB.ParticipantEditLocaleRequest{Id: p.Id, Locale: locale})
+	if errR != nil {
+		return errR
+	}
+
+	return nil
 }

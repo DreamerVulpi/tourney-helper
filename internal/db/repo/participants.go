@@ -445,3 +445,25 @@ func (p *Participants) Del(ctx context.Context, id int) error {
 
 	return nil
 }
+
+func (p *Participants) EditLocale(ctx context.Context, id int, locale string) error {
+	const sql = `
+		UPDATE participants
+		SET locale = $2, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1`
+
+	tag, err := p.Conn.ExecContext(ctx, sql, id, locale)
+	if err != nil {
+		return fmt.Errorf("don't edited participant from database, %w", err)
+	}
+
+	rows, err := tag.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("participant doesn't exist")
+	}
+
+	return nil
+}

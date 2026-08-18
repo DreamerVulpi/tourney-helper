@@ -54,6 +54,14 @@ func (p *Participant) EditParticipant(ctx context.Context, request entity.Partic
 	return entity.ParticipantEditResponse{}, nil
 }
 
+func (p *Participant) EditParticipantLocale(ctx context.Context, request entity.ParticipantEditLocaleRequest) (entity.ParticipantEditResponse, error) {
+	err := p.Repo.EditLocale(ctx, request.Id, request.Locale)
+	if err != nil {
+		return entity.ParticipantEditResponse{}, err
+	}
+	return entity.ParticipantEditResponse{}, nil
+}
+
 func (p *Participant) DelParticipant(ctx context.Context, request entity.ParticipantDeleteRequest) (entity.ParticipantDeleteResponse, error) {
 	_, err := p.Repo.GetById(ctx, request.Id)
 	if err != nil {

@@ -90,9 +90,10 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 
 	h.InitBot(cfg, tourneyAuth.NamePlatform, tournament)
 	ds := &DiscordSender{
-		session: session,
-		params:  h.params,
-		Metrics: h.Metrics,
+		session:    session,
+		params:     h.params,
+		Metrics:    h.Metrics,
+		saveLocale: h.Ns.Db.EditParticipantLocale,
 	}
 	standart, errL := ds.reconizeLocale(ds.params.rolesIdList.Default)
 	if errL != nil {

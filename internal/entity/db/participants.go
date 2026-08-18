@@ -26,6 +26,11 @@ type ParticipantRepo interface {
 		nickname string,
 		region string,
 		locale string) error
+	EditLocale(
+		ctx context.Context,
+		id int,
+		locale string,
+	) error
 	Del(
 		ctx context.Context,
 		id int) error
@@ -61,6 +66,11 @@ type ParticipantEditRequest struct {
 	Nickname string `json:"nickname"`
 	Region   string `json:"region"`
 	Locale   string `json:"locale"`
+}
+
+type ParticipantEditLocaleRequest struct {
+	Id     int    `json:"id"`
+	Locale string `json:"locale"`
 }
 
 type ParticipantDeleteRequest struct {
