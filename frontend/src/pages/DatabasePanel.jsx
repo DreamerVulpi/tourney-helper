@@ -4,7 +4,6 @@ import {
   Search,
   UserPlus,
   FileUp,
-  ExternalLink,
   LayoutGrid,
   Trophy,
   ShieldAlert,
@@ -14,11 +13,6 @@ import {
   Ban,
   RotateCcw,
   Minus,
-  ChevronDown,
-  RefreshCcw,
-  SearchX,
-  Copy,
-  Check,
   ShieldOff,
 } from "lucide-react";
 import {
@@ -40,39 +34,398 @@ import ImportFileModal from "../components/ImportFileModal.jsx";
 import ParticipantModal from "../components/modals/ParticipantModal.jsx";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import ParticipantActionModal from "../components/modals/ParticipantActionModal.jsx";
+import ExpandableAction from "../components/ui/ExpandableAction.jsx";
 import { debounce } from "../utils/debounce.jsx";
 import { CopyButton } from "../components/ui/CopyButton.jsx";
 import { Field } from "../components/ui/Field.jsx";
-import { SERVICE_STATUS } from "../utils/listStatus.js";
+import { TableHeader } from "../components/ui/TableHeader.jsx";
+import { TableBody } from "../components/ui/TableBody.jsx";
 
-const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSelectedGame }) => {
+const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSelectedGame, sidePanelCollapsed }) => {
   // Notes in 1 request to database
   const limit = 5;
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [isAddHovered, setIsAddHovered] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
 
   const nameMessengerPlatform = "Discord";
   const nameTournamentPlatform = "Startgg";
 
-  const sizeColumnOfNickname = 30;
-  const sizeColumnOfGameID = 30;
-  const sizeColumnOfRegion = 30;
-  const sizeColumnOfLanguage = 10;
-  const sizeColumnOfMMR = 10;
-  const sizeColumnOfMMRPoints = 50;
-  const sizeColumnOfPlatforms = 30;
-  const sizeColumnOfUpdateDate = 30;
-  const sizeColumnOfControl = 20;
-  const sizeColumnOfTypeBan = 40;
-  const sizeColumnOfDescriptionBan = 40;
-  const sizeColumnOfBannedAtDate = 30;
-  const sizeColumnOfExpiresDate = 40;
+  const sizeColumnOfMMRPoints = 40;
+
+  const prepareColumns = (columns) => {
+    const totalSize = columns.reduce(
+      (sum, column) => sum + column.size,
+      0
+    );
+
+    return columns.map((column) => ({
+      ...column,
+      width: `${(column.size / totalSize) * 100}%`,
+    }));
+  };
+
+const normalColumns = [
+  {
+    key: "nickname",
+    size: sidePanelCollapsed ? 0.85 : 0.55,
+    header: locale.Table.Nickname,
+    render: (p) => (
+      <span
+        className={`font-black text-[13px] italic tracking-tight break-all block ${
+          p.isBanned === "banned" ? "text-red-500" : ""
+        }`}
+      >
+        {p.gameNickname || p.messengerLogin || "N/D"}
+      </span>
+    ),
+  },
+
+  {
+    key: "gameID",
+    size: sidePanelCollapsed ? 0.75 : 0.45,
+    header: locale.Table.GameID,
+    render: (p) => (
+      <span className="font-mono text-slate-500 font-bold block">
+        {p.gameId === "N/D"
+          ? locale.AddButton.AddModalWindow.ListRegions.ND
+          : p.gameId}
+      </span>
+    ),
+  },
+
+  {
+    key: "region",
+    size: sidePanelCollapsed ? 0.75 : 0.45,
+    header: locale.Table.Region,
+    render: (p) => (
+      <span
+        className={`inline-block px-2 py-1 rounded-lg text-[9px] font-black text-left ${
+          theme === "dark" ? "bg-white/5" : "bg-slate-100"
+        }`}
+      >
+        {regionsMap[p.region] === "undefined" ||
+        regionsMap[p.region] === ""
+          ? locale.AddButton.AddModalWindow.ListRegions.ND
+          : regionsMap[p.region]}
+      </span>
+    ),
+  },
+
+  {
+    key: "language",
+    size: sidePanelCollapsed ? 0.3 : 0.2,
+    header: locale.Table.Language,
+    tdClassName:
+      "font-bold italic opacity-70 uppercase whitespace-nowrap",
+    render: (p) =>
+      p.locale === "N/D"
+        ? locale.AddButton.AddModalWindow.ListRegions.ND
+        : p.locale,
+  },
+
+  {
+    key: "mmr",
+    size: sidePanelCollapsed ? 0.4 : 0.25,
+    header: locale.Table.Rating,
+    thClassName: "text-blue-500",
+    render: (p) => (
+      <>
+        <input
+          type="number"
+          value={p.rating || 0}
+          min="0"
+          onChange={(e) => {
+            const val = parseInt(e.target.value) || 0;
+
+            if (val >= 0) {
+              handleLocalRatingChange(
+                p.id,
+                val,
+                p.gameNickname
+              );
+            }
+          }}
+          className="bg-transparent text-blue-500 font-black text-sm italic outline-none border-b border-transparent focus:border-blue-500/30 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          style={{
+            width: `${sizeColumnOfMMRPoints}%`,
+          }}
+        />
+
+        <div className="flex gap-1 mt-1">
+          <button
+            onClick={() =>
+              handleUpdateRating(
+                p.id,
+                selectedGame,
+                Math.max(0, (p.rating || 0) + 10),
+                p.gameNickname
+              )
+            }
+            className="w-7 h-7 flex items-center justify-center bg-green-600/10 text-green-500 rounded-lg border border-green-600/20 hover:bg-green-600/20 transition-colors"
+          >
+            <Plus size={12} />
+          </button>
+
+          <button
+            onClick={() =>
+              handleUpdateRating(
+                p.id,
+                selectedGame,
+                Math.max(0, (p.rating || 0) - 10),
+                p.gameNickname
+              )
+            }
+            className="w-7 h-7 flex items-center justify-center bg-red-600/10 text-red-500 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-colors"
+          >
+            <Minus size={12} />
+          </button>
+        </div>
+      </>
+    ),
+  },
+
+  {
+    key: "platforms",
+    size: sidePanelCollapsed ? 0.7 : 0.55,
+    header: locale.Table.Contacts,
+    render: (p) => (
+      <div className="flex flex-row items-center justify-between gap-2">
+        <div className="flex flex-col text-xs font-bold whitespace-nowrap leading-tight min-w-0">
+          <span className="truncate text-blue-500 font-black">
+            {nameTournamentPlatform}
+          </span>
+
+          <span className="opacity-60 text-[10px] truncate">
+            {`${locale.AddButton.AddContactOfMessenger.Login}: ${
+              p.tournamentPlatformLogin === "N/D" ||
+              p.tournamentPlatformLogin === ""
+                ? locale.AddButton.AddModalWindow.ListRegions.ND
+                : p.tournamentPlatformLogin
+            }`}
+          </span>
+
+          <span className="text-purple-500 font-black mt-1">
+            {nameMessengerPlatform}
+          </span>
+
+          <span className="opacity-60 text-[10px] truncate">
+            {`${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: ${
+              p.messengerLogin === "N/D" ||
+              p.messengerLogin === ""
+                ? locale.AddButton.AddModalWindow.ListRegions.ND
+                : p.messengerLogin
+            }`}
+          </span>
+        </div>
+
+        <CopyButton text={getParticipantCopyText(p)} />
+      </div>
+    ),
+  },
+
+  {
+    key: "updateDate",
+    size: sidePanelCollapsed ? 0.5 : 0.35,
+    header: locale.Table.UpdatedAt,
+    tdClassName:
+      "opacity-60 italic text-[10px] whitespace-nowrap",
+    render: (p) => getRelativeTime(p.updatedAt),
+  },
+
+  {
+    key: "control",
+    size: sidePanelCollapsed ? 0.45 : 0.35,
+    header: locale.Table.Management.Label,
+    render: (p) => (
+      <div className="flex flex-col gap-1.5">
+        <button
+          onClick={() => handleOpenEditModal(p)}
+          className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
+        >
+          <Edit2 size={11} />
+          {locale.Table.Management.Edit}
+        </button>
+
+        {p.isBanned === "banned" ? (
+          <button
+            onClick={() =>
+              triggerParticipantAction(p, "unban")
+            }
+            className="w-full flex items-center justify-center gap-2 p-2 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
+          >
+            <ShieldCheck size={11} />
+            {locale.Table.Management.Unban}
+          </button>
+        ) : (
+          <button
+            onClick={() =>
+              triggerParticipantAction(p, "ban")
+            }
+            className="w-full flex items-center justify-center gap-2 p-2 bg-orange-600/10 hover:bg-orange-600 text-orange-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
+          >
+            <Ban size={11} />
+            {locale.Table.Management.Ban}
+          </button>
+        )}
+
+        <button
+          onClick={() =>
+            triggerParticipantAction(p, "delete")
+          }
+          className="w-full flex items-center justify-center gap-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
+        >
+          <Trash2 size={11} />
+          {locale.Table.Management.Delete}
+        </button>
+      </div>
+    ),
+  },
+];
+
+const bannedColumns = [
+  {
+    key: "nickname",
+    size: 1,
+    header: locale.Table.Nickname,
+    render: (p) => (
+      <span
+        className={`font-black text-[13px] italic tracking-tight break-all block ${
+          p.isBanned === "banned" ? "text-red-500" : ""
+        }`}
+      >
+        {p.gameNickname || p.messengerLogin || "N/D"}
+      </span>
+    ),
+  },
+
+  {
+    key: "gameID",
+    size: 1,
+    header: locale.Table.GameID,
+    render: (p) => (
+      <span className="font-mono text-slate-500 font-bold block">
+        {p.gameId === "N/D"
+          ? locale.AddButton.AddModalWindow.ListRegions.ND
+          : p.gameId}
+      </span>
+    ),
+  },
+
+  {
+    key: "typeBan",
+    size: 1,
+    header: locale.Table.ReasonBan,
+    thClassName: "text-red-500",
+    tdClassName: "text-red-500 font-bold italic truncate",
+    render: (p) => p.typeBan || "Ban",
+  },
+
+  {
+    key: "descriptionBan",
+    size: 2,
+    header: locale.Table.DescriptionBan,
+    thClassName: "text-amber-500/80",
+    render: (p) => (
+      <div
+        className={`text-[10px] leading-snug opacity-80 whitespace-normal break-words ${
+          theme === "dark"
+            ? "text-slate-300"
+            : "text-slate-600"
+        }`}
+      >
+        {p.reason || locale.Table.EmptyDescription}
+      </div>
+    ),
+  },
+
+  {
+    key: "bannedAt",
+    size: 1,
+    header: locale.Table.DateBan,
+    thClassName: "text-slate-400",
+    tdClassName:
+      "opacity-70 italic whitespace-nowrap",
+    render: (p) => getRelativeTime(p.bannedAt),
+  },
+
+  {
+    key: "expiredAt",
+    size: 1,
+    header: locale.Table.IsExpiring,
+    thClassName: "text-slate-400",
+    tdClassName: "font-bold whitespace-nowrap",
+    render: (p) =>
+      p.expiresAt &&
+      !p.expiresAt.startsWith("0001") ? (
+        <span className="text-amber-500 opacity-80 text-[11px] font-mono">
+          {new Date(p.expiresAt).toLocaleString("ru-RU", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </span>
+      ) : (
+        <span className="text-red-600 uppercase font-black tracking-wider text-[9px] bg-red-600/10 px-1.5 py-0.5 rounded border border-red-600/20">
+          {locale.AddButton.AddBanFields.PermanentBanLabel}
+        </span>
+      ),
+  },
+
+  {
+    key: "control",
+    size: 0.7,
+    header: locale.Table.Management.Label,
+    render: (p) => (
+      <div className="flex flex-col gap-1.5 py-2">
+        <button
+          onClick={() => handleOpenEditModal(p)}
+          className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
+        >
+          <Edit2 size={11} />
+          {locale.Table.Management.Edit}
+        </button>
+
+        <button
+          onClick={() =>
+            triggerParticipantAction(p, "unban")
+          }
+          className="w-full flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg font-black uppercase text-[0.725rem] bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white"
+        >
+          <ShieldOff size={11} />
+          {locale.Table.Management.Unban}
+        </button>
+
+        <button
+          onClick={() =>
+            triggerParticipantAction(p, "delete")
+          }
+          className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg font-black uppercase text-[0.725rem] w-full"
+        >
+          <Trash2 size={11} />
+          {locale.Table.Management.Delete}
+        </button>
+      </div>
+    ),
+  },
+];
+
+const columns = prepareColumns(
+  activeFilter === "banned"
+    ? bannedColumns
+    : normalColumns
+);
 
   // Statements for UI
   const [players, setPlayers] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
+
+  const [totalCountAll, setTotalCountAll] = useState(0);
+  const [totalCountRating, setTotalCountRating] = useState(0);
+  const [totalCountBanned, setTotalCountBanned] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [importFilePath, setImportedFilePath] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -404,7 +757,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     [],
   );
 
-  // Fuction of pagination
+  // Function of pagination
   const fetchData = async (isNextPage = false, search = undefined) => {
     setLoading(true);
 
@@ -471,6 +824,14 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
         setPlayers((prev) => [...prev, ...items]);
       } else {
         setPlayers(items);
+      }
+
+      if (activeFilter === "banned") {
+        setTotalCountBanned(total);
+      } else if (activeFilter === "rating") {
+        setTotalCountRating(total);
+      } else {
+        setTotalCountAll(total);
       }
 
       setTotalCount(total);
@@ -622,10 +983,6 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     return () => observer.disconnect();
   }, []);
 
-  const importType = activeFilter === "banned"
-    ? "banList"
-    : "database";
-
   const formatImportMessage = (template, values) => {
     let result = template;
 
@@ -689,56 +1046,47 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
     importProgress = 100;
   }
 
-
   return (
     <PanelTemplate themeClasses={themeClasses}>
-      <div className="w-full space-y-6">
-        <div className="space-y-4">
+      <div className="w-full h-full min-h-0 flex flex-col">
+        <div className="flex-1 min-h-0 flex flex-col gap-4">
           {/* Main Action Bar */}
           <div className="flex flex-col lg:flex-row items-center gap-3 w-full">
-            <div
-              className="relative min-h-[56px] w-full lg:w-[220px] group shrink-0"
-              onMouseEnter={() => setIsAddHovered(true)}
-              onMouseLeave={() => setIsAddHovered(false)}
-            >
-              {/* Front side of the button */}
-              <div
-                className={`absolute inset-0 flex items-center justify-center text-white rounded-xl font-black text-xs uppercase italic  duration-300 z-10 ${
-                  activeFilter === "banned"
-                    ? "bg-red-600 border border-red-500/30 text-red-400"
-                    : "bg-blue-600"
-                } ${isAddHovered ? "opacity-0 scale-95 pointer-events-none" : "opacity-100 scale-100"}`}
-              >
-                {activeFilter === "banned" ? (
-                  <Ban size={18} className="mr-2 animate-pulse" />
+            <ExpandableAction
+              icon={
+                activeFilter === "banned" ? (
+                  <Ban size={26} />
                 ) : (
-                  <Plus size={18} className="mr-2" />
-                )}
-                {activeFilter === "banned"
-                  ? locale.AddButton.BanLabel
-                  : locale.AddButton.Label}
-              </div>
-
-              {/* Back of the button (Available functions inside) */}
-              <div
-                className={`absolute inset-0 flex gap-0.5  duration-300 z-20 ${isAddHovered ? "opacity-100 scale-100" : "opacity-0 scale-95 pointer-events-none"}`}
-              >
-                <button
-                  onClick={addButtonConfig.action}
-                  className={`flex-1 flex flex-col items-center justify-center rounded-l-xl transition-colors text-white ${
+                  <Plus size={26} />
+                )
+              }
+              collapsedClassName={
+                activeFilter === "banned"
+                  ? "bg-red-600 border border-red-500/30"
+                  : "bg-blue-600 text-white"
+              }
+              items={[
+                {
+                  id: "add",
+                  icon: addButtonConfig.icon,
+                  label: addButtonConfig.text,
+                  onClick: addButtonConfig.action,
+                  flex: 1,
+                  className: `text-white ${
                     activeFilter === "banned"
                       ? "bg-red-700 hover:bg-red-600"
                       : "bg-blue-700 hover:bg-blue-500"
-                  }`}
-                >
-                  {addButtonConfig.icon}
-                  <span className="text-[0.625rem] font-black uppercase mt-1 text-center px-1">
-                    {addButtonConfig.text}
-                  </span>
-                </button>
-                <button
-                  onClick={handleImportFile}
-                  className={`flex-[1.2] flex flex-col items-center justify-center border  rounded-r-xl py-3 px-1 ${
+                  }`,
+                },
+                {
+                  id: "import",
+                  icon: <FileUp size={15} className="animate-pulse" />,
+                  label: locale.AddButton.ImportFile.Label,
+                  onClick: handleImportFile,
+                  flex: 1.2,
+                  labelClassName:
+                    "text-[7px] font-black uppercase tracking-wider mt-1 text-center leading-tight",
+                  className: `border py-3 px-1 ${
                     theme === "dark"
                       ? activeFilter === "banned"
                         ? "bg-red-950/20 border-red-500/20 text-red-400 hover:bg-red-900/30"
@@ -746,16 +1094,83 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                       : activeFilter === "banned"
                         ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
                         : "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100"
-                  }`}
-                >
-                  <FileUp size={15} className="animate-pulse" />
-                  <span className="text-[7px] font-black uppercase tracking-wider mt-1 text-center leading-tight">
-                    {locale.AddButton.ImportFile.Label}
-                  </span>
-                </button>
-              </div>
-            </div>
-
+                  }`,
+                },
+              ]}
+            />
+            {/* TODO: Add export database/list of participants */}
+            {/* <ExpandableAction
+              icon={<FolderUpIcon size={26} />}
+              width={activeFilter === "all" ? "120px" : undefined}
+              collapsedClassName="bg-blue-600 text-white"
+              items={[
+                {
+                  id: "database",
+                  icon: <DatabaseIcon size={15} />,
+                  label: "База данных",
+                  // onClick: handleExportDatabase,
+                  flex: 1,
+                  className:
+                    "text-white bg-blue-700 hover:bg-blue-500",
+                },
+                ...(activeFilter !== "all"
+                  ? [
+                      {
+                        id: activeFilter,
+                        icon:
+                          activeFilter === "rating" ? (
+                            <List size={15} />
+                          ) : (
+                            <ListCheck size={15} />
+                          ),
+                        label:
+                          activeFilter === "rating"
+                            ? "Список рейтинга"
+                            : "Бан-лист",
+                        // onClick:
+                        //   activeFilter === "rating"
+                        //     ? handleExportRating
+                        //     : handleExportBanned,
+                        flex: 1.2,
+                        labelClassName:
+                          "text-[7px] font-black uppercase tracking-wider mt-1 text-center leading-tight",
+                        className:
+                          "border py-3 px-1 bg-blue-600/10 border-blue-500/20 text-blue-400 hover:bg-blue-600/20",
+                      },
+                    ]
+                  : []),
+              ]}
+            /> */}
+            {activeFilter === "rating" && (
+              <ExpandableAction
+                icon={<RotateCcw size={26} />}
+                width="120px"
+                collapsedClassName={
+                  theme === "dark"
+                    ? "bg-red-600/10 border border-red-500/20 text-red-400"
+                    : "bg-red-50 border border-red-200 text-red-600"
+                }
+                items={[
+                  {
+                    id: "reset-rating",
+                    icon: (
+                      <RotateCcw
+                        size={14}
+                        className="group-hover:rotate-[-180deg] transition-transform duration-500"
+                      />
+                    ),
+                    label: locale.ResetRatingButton.Label,
+                    onClick: () =>
+                      triggerParticipantAction(null, "reset_rating_all"),
+                    className:
+                      theme === "dark"
+                        ? "bg-red-600/10 hover:bg-red-600 text-red-400 hover:text-white"
+                        : "bg-red-50 hover:bg-red-600 text-red-600 hover:text-white",
+                  },
+                ]}
+              />
+            )}
+            
             {/* Search panel */}
             <div className="flex-1 relative w-full lg:w-auto">
               <Search
@@ -770,7 +1185,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
                 className={`w-full pl-12 pr-6 h-[56px] rounded-xl border text-[12px] font-bold outline-none  focus:ring-2 focus:ring-blue-600/20 ${theme === "dark" ? "bg-black/40 border-white/10 text-white" : "bg-white border-slate-200"}`}
               />
             </div>
-
+            
             {/* Selector of games */}
             <div className="relative group">
               <Field
@@ -799,17 +1214,17 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
               {[
                 {
                   id: "all",
-                  label: locale.Filters.All,
+                  label: `${locale.Filters.All} (${totalCountAll})`,
                   icon: <LayoutGrid size={14} />,
                 },
                 {
                   id: "rating",
-                  label: locale.Filters.Rating,
+                  label: `${locale.Filters.Rating} (${totalCountRating})`,
                   icon: <Trophy size={14} />,
                 },
                 {
                   id: "banned",
-                  label: locale.Filters.BanList,
+                  label: `${locale.Filters.BanList} (${totalCountBanned})`,
                   icon: <ShieldAlert size={14} />,
                 },
               ].map((tab) => (
@@ -834,98 +1249,11 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
             onScroll={() => syncScroll("header")}
             className={`${theme === "dark" ? "bg-[#111]" : "bg-slate-100"} border-b border-white/5 overflow-hidden`}
           >
-            <table className="w-full text-left text-[11px] table-fixed min-w-[1100px]">
-              <thead>
-                <tr
-                  className={`${theme === "dark" ? "text-slate-400" : "text-slate-600"} uppercase font-black italic`}
-                >
-                  <th
-                    className="p-4"
-                    style={{ width: `${sizeColumnOfNickname}px` }}
-                  >
-                    {locale.Table.Nickname}
-                  </th>
-                  <th
-                    className="p-4"
-                    style={{ width: `${sizeColumnOfGameID}px` }}
-                  >
-                    {locale.Table.GameID}
-                  </th>
-                  {activeFilter === "banned" ? (
-                    <>
-                      <th
-                        className="p-4 text-red-500"
-                        style={{ width: `${sizeColumnOfTypeBan}px` }}
-                      >
-                        {locale.Table.ReasonBan}
-                      </th>
-                      <th
-                        className="p-4 text-amber-500/80"
-                        style={{ width: `${sizeColumnOfDescriptionBan}px` }}
-                      >
-                        {locale.Table.DescriptionBan}
-                      </th>
-                      <th
-                        className="p-4 text-slate-400"
-                        style={{ width: `${sizeColumnOfBannedAtDate}px` }}
-                      >
-                        {locale.Table.DateBan}
-                      </th>
-                      <th
-                        className="p-4 text-slate-400"
-                        style={{ width: `${sizeColumnOfExpiresDate}px` }}
-                      >
-                        {locale.Table.IsExpiring}
-                      </th>
-                      <th
-                        className="p-4"
-                        style={{ width: `${sizeColumnOfControl}px` }}
-                      >
-                        {locale.Table.Management.Label}
-                      </th>
-                    </>
-                  ) : (
-                    <>
-                      <th
-                        className="p-4"
-                        style={{ width: `${sizeColumnOfRegion}px` }}
-                      >
-                        {locale.Table.Region}
-                      </th>
-                      <th
-                        className="p-4"
-                        style={{ width: `${sizeColumnOfLanguage}px` }}
-                      >
-                        {locale.Table.Language}
-                      </th>
-                      <th
-                        className="p-4 text-blue-500"
-                        style={{ width: `${sizeColumnOfMMR}px` }}
-                      >
-                        {locale.Table.Rating}
-                      </th>
-                      <th
-                        className="p-3"
-                        style={{ width: `${sizeColumnOfPlatforms}px` }}
-                      >
-                        {locale.Table.Contacts}
-                      </th>
-                      <th
-                        className="p-3"
-                        style={{ width: `${sizeColumnOfUpdateDate}px` }}
-                      >
-                        {locale.Table.UpdatedAt}
-                      </th>
-                      <th
-                        className="p-4"
-                        style={{ width: `${sizeColumnOfControl}px` }}
-                      >
-                        {locale.Table.Management.Label}
-                      </th>
-                    </>
-                  )}
-                </tr>
-              </thead>
+            <table className="w-full text-left text-[11px] table-fixed min-w-[800px]">
+              <TableHeader
+                columns={columns}
+                theme={theme}
+              />  
             </table>
           </div>
 
@@ -935,385 +1263,25 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
             onScroll={() => syncScroll("body")}
             id="table-scroll-container"
             className="flex-1 min-h-0 overflow-auto custom-scrollbar"
-            style={{
-              maxHeight: hasHorizontalScroll
-              ? "calc(100dvh - 500px)"
-              : "calc(100dvh - 560px)",
-            }}
+            // style={{
+            //   maxHeight: hasHorizontalScroll
+            //   ? "calc(100dvh - 430px)"
+            //   : "calc(100dvh - 402px)",
+            // }}
           >
-            <table className="w-full text-left text-[11px] table-fixed min-w-[1100px] border-collapse">
-              <tbody>
-                {filteredPlayers.length > 0 ? (
-                  filteredPlayers.map((p, index) => (
-                    <tr
-                      key={p.id}
-                      className={`
-                        hover:bg-blue-600/5
-                        transition-colors
-                        align-middle
-                        ${index !== filteredPlayers.length - 1 ? "border-b border-white/5" : ""}
-                      `}
-                    >
-                      <td
-                        className="p-4"
-                        style={{ width: `${sizeColumnOfNickname}px` }}
-                      >
-                        <span
-                          className={`font-black text-[13px] italic tracking-tight break-all block ${p.isBanned === "banned" ? "text-red-500" : ""}`}
-                        >
-                          {p.gameNickname || p.messengerLogin || "N/D"}
-                        </span>
-                      </td>
-                      <td
-                        className="p-4"
-                        style={{ width: `${sizeColumnOfGameID}px` }}
-                      >
-                        <span className="font-mono text-slate-500 font-bold block">
-                          {p.gameId === "N/D"
-                            ? locale.AddButton.AddModalWindow.ListRegions.ND
-                            : p.gameId}
-                        </span>
-                      </td>
-
-                      {activeFilter === "banned" ? (
-                        <>
-                          <td
-                            className="p-4 text-red-500 font-bold italic truncate"
-                            style={{ width: `${sizeColumnOfTypeBan}px` }}
-                          >
-                            {p.typeBan || "Ban"}
-                          </td>
-                          <td
-                            className="p-4"
-                            style={{
-                              width: `${sizeColumnOfDescriptionBan}px`,
-                            }}
-                          >
-                            <div
-                              className={`text-[10px] leading-snug opacity-80 whitespace-normal break-words ${theme === "dark" ? "text-slate-300" : "text-slate-600"}`}
-                            >
-                              {p.reason || locale.Table.EmptyDescription}
-                            </div>
-                          </td>
-                          <td
-                            className="p-4 opacity-70 italic whitespace-nowrap"
-                            style={{ width: `${sizeColumnOfBannedAtDate}px` }}
-                          >
-                            {getRelativeTime(p.bannedAt)}
-                          </td>
-                          <td
-                            className="p-4 font-bold whitespace-nowrap"
-                            style={{ width: `${sizeColumnOfExpiresDate}px` }}
-                          >
-                            {p.expiresAt && !p.expiresAt.startsWith("0001") ? (
-                              <span className="text-amber-500 opacity-80 text-[11px] font-mono">
-                                {new Date(p.expiresAt).toLocaleString("ru-RU", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </span>
-                            ) : (
-                              <span className="text-red-600 uppercase font-black tracking-wider text-[9px] bg-red-600/10 px-1.5 py-0.5 rounded border border-red-600/20">
-                                {
-                                  locale.AddButton.AddBanFields
-                                    .PermanentBanLabel
-                                }
-                              </span>
-                            )}
-                          </td>
-                          <td
-                            className="p-4"
-                            style={{ width: `${sizeColumnOfControl}px` }}
-                          >
-                            <div className="flex flex-col gap-1.5 py-2">
-                              <button
-                                onClick={() => handleOpenEditModal(p)}
-                                className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
-                              >
-                                <Edit2 size={11} />{" "}
-                                {locale.Table.Management.Edit}
-                              </button>
-                              <button
-                                onClick={() =>
-                                  triggerParticipantAction(
-                                    p,
-                                    activeFilter === "banned" ? "unban" : "ban",
-                                  )
-                                }
-                                className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg font-black uppercase text-[0.725rem]  w-full ${
-                                  activeFilter === "banned"
-                                    ? "bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white"
-                                    : "bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white"
-                                }`}
-                              >
-                                {activeFilter === "banned" ? (
-                                  <>
-                                    <ShieldOff size={11} />
-                                    {locale.Table.Management.Unban}
-                                  </>
-                                ) : (
-                                  <>
-                                    <ShieldCheck size={11} />
-                                    {locale.Table.Management.Ban}
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                onClick={() =>
-                                  triggerParticipantAction(p, "delete")
-                                }
-                                className="flex items-center justify-center gap-1.5 px-2 py-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg font-black uppercase text-[0.725rem]  w-full"
-                              >
-                                <Trash2 size={11} />{" "}
-                                {locale.Table.Management.Delete}
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      ) : (
-                        <>
-                          <td
-                            className="p-4"
-                            style={{ width: `${sizeColumnOfRegion}px` }}
-                          >
-                            <span
-                              className={`inline-block px-2 py-1 rounded-lg text-[9px] font-black text-left ${
-                                theme === "dark" ? "bg-white/5" : "bg-slate-100"
-                              }`}
-                            >
-                              {regionsMap[p.region] === "undefined" || regionsMap[p.region] === "" ?  locale.AddButton.AddModalWindow.ListRegions.ND : regionsMap[p.region]}
-                            </span>
-                          </td>
-                          <td
-                            className="p-4 font-bold italic opacity-70 uppercase whitespace-nowrap"
-                            style={{ width: `${sizeColumnOfLanguage}px` }}
-                          >
-                            {p.locale === "N/D"
-                              ? locale.AddButton.AddModalWindow.ListRegions.ND
-                              : p.locale}
-                          </td>
-                          <td
-                            className="p-4"
-                            style={{ width: `${sizeColumnOfMMR}px` }}
-                          >
-                            <input
-                              type="number"
-                              value={p.rating || 0}
-                              min="0"
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value) || 0;
-                                if (val >= 0)
-                                  handleLocalRatingChange(
-                                    p.id,
-                                    val,
-                                    p.gameNickname,
-                                  );
-                              }}
-                              className="bg-transparent text-blue-500 font-black text-sm italic outline-none border-b border-transparent focus:border-blue-500/30  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              style={{ width: `${sizeColumnOfMMRPoints}px` }}
-                            />
-                            <div className="flex gap-1 mt-1">
-                              {/* Button plus */}
-                              <button
-                                onClick={() =>
-                                  handleUpdateRating(
-                                    p.id,
-                                    selectedGame,
-                                    Math.max(0, (p.rating || 0) + 10),
-                                    p.gameNickname,
-                                  )
-                                }
-                                className="w-7 h-7 flex items-center justify-center bg-green-600/10 text-green-500 rounded-lg border border-green-600/20 hover:bg-green-600/20 transition-colors"
-                              >
-                                <Plus size={12} />
-                              </button>
-
-                              {/* Button minus */}
-                              <button
-                                onClick={() =>
-                                  handleUpdateRating(
-                                    p.id,
-                                    selectedGame,
-                                    Math.max(0, (p.rating || 0) - 10),
-                                    p.gameNickname,
-                                  )
-                                }
-                                className="w-7 h-7 flex items-center justify-center bg-red-600/10 text-red-500 rounded-lg border border-red-500/20 hover:bg-red-600/20 transition-colors"
-                              >
-                                <Minus size={12} />
-                              </button>
-                            </div>
-                          </td>
-                          <td
-                            className="p-4"
-                            style={{ width: `${sizeColumnOfPlatforms}px` }}
-                          >
-                            <div className="flex flex-row items-center justify-between gap-2">
-                              <div className="flex flex-col text-xs font-bold whitespace-nowrap leading-tight min-w-0">
-                                <span className="truncate text-blue-500 font-black">
-                                  {nameTournamentPlatform}
-                                </span>
-                                <span className="opacity-60 text-[10px] truncate">
-                                  {`${locale.AddButton.AddContactOfMessenger.Login}: ${p.tournamentPlatformLogin === "N/D" || p.tournamentPlatformLogin === "" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.tournamentPlatformLogin}`}
-                                </span>
-                                <span className="text-purple-500 font-black mt-1">
-                                  {nameMessengerPlatform}
-                                </span>
-                                <span className="opacity-60 text-[10px] truncate">
-                                  {`${locale.AddButton.AddDataOfTourneyPlatform.Nickname}: ${p.messengerLogin === "N/D" || p.messengerLogin === "" ? locale.AddButton.AddModalWindow.ListRegions.ND : p.messengerLogin}`}
-                                </span>
-                              </div>
-                              <CopyButton text={getParticipantCopyText(p)} />
-                            </div>
-                          </td>
-                          <td
-                            className="p-4 opacity-60 italic text-[10px] whitespace-nowrap"
-                            style={{ width: `${sizeColumnOfUpdateDate}px` }}
-                          >
-                            {getRelativeTime(p.updatedAt)}
-                          </td>
-                          <td
-                            className="p-4"
-                            style={{ width: `${sizeColumnOfControl}px` }}
-                          >
-                            <div className="flex flex-col gap-1.5">
-                              <button
-                                onClick={() => handleOpenEditModal(p)}
-                                className="w-full flex items-center justify-center gap-2 p-2 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
-                              >
-                                <Edit2 size={11} />{" "}
-                                {locale.Table.Management.Edit}
-                              </button>
-                              {p.isBanned === "banned" ? (
-                                <button
-                                  onClick={() =>
-                                    triggerParticipantAction(p, "unban")
-                                  }
-                                  className="w-full flex items-center justify-center gap-2 p-2 bg-green-600/10 hover:bg-green-600 text-green-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
-                                >
-                                  <ShieldCheck size={11} />{" "}
-                                  {locale.Table.Management.Unban}
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() =>
-                                    triggerParticipantAction(p, "ban")
-                                  }
-                                  className="w-full flex items-center justify-center gap-2 p-2 bg-orange-600/10 hover:bg-orange-600 text-orange-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
-                                >
-                                  <Ban size={11} />{" "}
-                                  {locale.Table.Management.Ban}
-                                </button>
-                              )}
-                              <button
-                                onClick={() =>
-                                  triggerParticipantAction(p, "delete")
-                                }
-                                className="w-full flex items-center justify-center gap-2 p-2 bg-red-600/10 hover:bg-red-600 text-red-500 hover:text-white rounded-lg text-[0.725rem] font-black uppercase"
-                              >
-                                <Trash2 size={11} />{" "}
-                                {locale.Table.Management.Delete}
-                              </button>
-                            </div>
-                          </td>
-                        </>
-                      )}
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={activeFilter === "banned" ? 7 : 8}
-                      className="p-12 text-center"
-                    >
-                      <div className="flex flex-col items-center justify-center py-6">
-                        <div className="p-4 bg-slate-500/5 border border-slate-500/10 rounded-2xl text-slate-500/40 mb-4 shadow-inner">
-                          <Search
-                            size={32}
-                            strokeWidth={1.5}
-                            className="animate-pulse"
-                          />
-                        </div>
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1 italic">
-                          {locale.Table.NoData}
-                        </h3>
-                        <p className="text-[10px] text-slate-500 max-w-[250px] leading-relaxed uppercase font-bold">
-                          {locale.Table.NoDataAccordingFilters}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
+            <table className="w-full text-left text-[11px] table-fixed min-w-[800px] border-collapse">
+              <TableBody
+                players={filteredPlayers}
+                columns={columns}
+                locale={locale}
+                loading={loading}
+              />
             </table>
             {loading && (
               <div className="p-4 text-center text-[10px] font-black uppercase italic text-amber-500">
                 {locale.Table.LoadingDataPlayers}
               </div>
             )}
-          </div>
-
-          {/* Footer */}
-          <div className="absolute bottom-8 right-8 z-100">
-          {/* <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase italic px-2"> */}
-            {activeFilter === "rating" && (
-              <button
-                onClick={() =>
-                  triggerParticipantAction(null, "reset_rating_all")
-                }
-                className={`group flex items-center gap-2 h-[46px] px-5 border  rounded-xl text-[10px] font-black uppercase italic tracking-wider ${
-                  theme === "dark"
-                    ? "bg-red-600/10 border-red-500/20 text-red-400 hover:bg-red-600 hover:text-white"
-                    : "bg-red-50 border-red-200 text-red-600 hover:bg-red-600 hover:text-white"
-                }`}
-              >
-                <RotateCcw
-                  size={14}
-                  className="transform group-hover:rotate-[-180deg] transition-transform duration-500 shrink-0"
-                />
-                <span>{locale.ResetRatingButton.Label}</span>
-              </button>
-            )}
-            <div className="hidden sm:block" />
-            <div
-              className={`flex items-center h-[46px] px-5 border rounded-xl text-[10px] font-black uppercase italic tracking-wider ${
-                theme === "dark"
-                  ? "bg-blue-600/5 border-blue-500/10 text-slate-400"
-                  : "bg-blue-50/50 border-blue-200 text-slate-600"
-              }`}
-            >
-              {activeFilter === "banned" ? (
-                <span>
-                  {locale.TotalCountBannedNotesInDBLabel}:{" "}
-                  <span
-                    className={`ml-1 font-mono text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}
-                  >
-                    {totalCount}
-                  </span>
-                </span>
-              ) : activeFilter === "rating" ? (
-                <span>
-                  {locale.TotalCountRatingParticipants}:{" "}
-                  <span
-                    className={`ml-1 font-mono text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}
-                  >
-                    {totalCount}
-                  </span>
-                </span>
-              ) : (
-                <span>
-                  {locale.TotalCountNotesInDBLabel}:{" "}
-                  <span
-                    className={`ml-1 font-mono text-xs font-bold ${theme === "dark" ? "text-blue-400" : "text-blue-600"}`}
-                  >
-                    {totalCount}
-                  </span>
-                </span>
-              )}
-            </div>
           </div>
         </div>
       </div>

@@ -214,9 +214,9 @@ var En = Ui{
 	},
 	DatabasePanel: DatabasePanel{
 		AddButton: AddButton{
+			Label:           "Add player",
 			ErrorFillParams: "Error filling in parameters",
 			OkButtonLabel:   "OK",
-			Label:           "Add Player",
 			One:             "Single",
 			EditTitle:       "Edit player information",
 			AddBanTitle:     "Add the offender to the ban list",
@@ -232,7 +232,7 @@ var En = Ui{
 				Nickname:    "Nickname",
 			},
 			ImportFile: ImportFileModalWindow{
-				Label:                         "Import CSV/JSON File",
+				Label:                         "Import file",
 				Title:                         "Importing tournament participants",
 				BanTitle:                      "Importing a ban list file",
 				NameFile:                      "File name:",
@@ -269,7 +269,6 @@ var En = Ui{
 				},
 			},
 			ConfirmDurationBan:     "Please specify a valid ban duration or select 'Permanent'!",
-			BanLabel:               "Ban Management",
 			BanTitle:               "Ban player",
 			BanButtonLabel:         "Ban",
 			UnbanTitle:             "Unban player",
@@ -373,7 +372,7 @@ var En = Ui{
 			},
 		},
 		ResetRatingButton: ResetRatingModal{
-			Label:                   "Reset Rating for All Players",
+			Label:                   "Reset Rating",
 			Title:                   "Reset Rating",
 			Message:                 "Are you sure you want to reset the rating of %v absolutely all players for %v game %v in the database to 0?",
 			Attension:               "This action will wipe the current rating statistics!",

@@ -212,9 +212,9 @@ var Ru = Ui{
 	},
 	DatabasePanel: DatabasePanel{
 		AddButton: AddButton{
+			Label:           "Добавить игрока",
 			ErrorFillParams: "Ошибка заполнения параметров",
 			OkButtonLabel:   "Понятно",
-			Label:           "Добавить игрока",
 			One:             "Одного",
 			EditTitle:       "Изменение данных игрока",
 			AddBanTitle:     "Внести нарушителя в бан-лист",
@@ -230,7 +230,7 @@ var Ru = Ui{
 				Nickname:    "Никнейм",
 			},
 			ImportFile: ImportFileModalWindow{
-				Label:                         "Импорт CSV/JSON файла",
+				Label:                         "Импорт файла",
 				Title:                         "Импорт участников турнира",
 				BanTitle:                      "Импорт файла бан-листа",
 				NameFile:                      "Имя файла:",
@@ -267,7 +267,6 @@ var Ru = Ui{
 				},
 			},
 			ConfirmDurationBan:     "Укажите корректный срок бана или выберите вариант 'Навсегда'!",
-			BanLabel:               "Управление банами",
 			BanTitle:               "Забанить игрока",
 			BanButtonLabel:         "Забанить",
 			UnbanTitle:             "Разбанить игрока",
@@ -372,7 +371,7 @@ var Ru = Ui{
 			},
 		},
 		ResetRatingButton: ResetRatingModal{
-			Label:                   "Сброс рейтинга всех игроков",
+			Label:                   "Сброс рейтинга",
 			Title:                   "Сброс рейтинга",
 			Message:                 "Вы уверены, что хотите сбросить рейтинг %v абсолютно всех игроков %v игры %v в базе данных до 0?",
 			Attension:               "Действие сотрет текущую статистику рейтинга!",

@@ -12,7 +12,6 @@ const SidePanel = ({
   setActiveTab,
   locale,
   collapsed,
-  setCollapsed,
   setIsHovered,
   statusNotificationSystem,
   statusDatabase,

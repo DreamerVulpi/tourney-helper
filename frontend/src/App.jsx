@@ -305,6 +305,7 @@ const App = () => {
                     selectedGame={selectedGame}
                     setSelectedGame={setSelectedGame}
                     setStatusDatabase={setStatusDatabase}
+                    sidePanelCollapsed={sidePanelCollapsed}
                   />
                 )}
                 {/* In future updates */}

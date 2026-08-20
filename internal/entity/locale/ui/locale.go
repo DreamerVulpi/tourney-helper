@@ -120,16 +120,15 @@ type Filters struct {
 }
 
 type AddButton struct {
+	Label                    string
 	ErrorFillParams          string
 	OkButtonLabel            string
-	Label                    string
 	One                      string
 	EditTitle                string
 	AddBanTitle              string
 	EditBanTitle             string
 	ImportFile               ImportFileModalWindow
 	ConfirmDurationBan       string
-	BanLabel                 string
 	AddBanFields             AddBanFields
 	AddContactOfMessenger    AddContactOfMessenger
 	AddDataOfTourneyPlatform AddDataOfTourneyPlatform
