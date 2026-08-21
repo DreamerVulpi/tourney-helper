@@ -51,7 +51,7 @@ const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSel
   const nameMessengerPlatform = "Discord";
   const nameTournamentPlatform = "Startgg";
 
-  const sizeColumnOfMMRPoints = 40;
+  const sizeColumnOfMMRPoints = 45;
 
   const prepareColumns = (columns) => {
     const totalSize = columns.reduce(
@@ -114,7 +114,7 @@ const normalColumns = [
 
   {
     key: "language",
-    size: sidePanelCollapsed ? 0.3 : 0.2,
+    size: sidePanelCollapsed ? 0.4 : 0.2,
     header: locale.Table.Language,
     tdClassName:
       "font-bold italic opacity-70 uppercase whitespace-nowrap",
@@ -443,10 +443,6 @@ const columns = prepareColumns(
   const [importError, setImportError] = useState(null);
   const [importResult, setImportResult] = useState(null);
 
-  useEffect(() => {
-    console.log("File type:", importFileType);
-  }, [importFileType]);
-
   const listRegions = [
     {
       label: locale.AddButton.AddModalWindow.ListRegions.Europe,
@@ -757,6 +753,51 @@ const columns = prepareColumns(
     [],
   );
 
+  const fetchTotalCounts = async () => {
+    try {
+      const [
+        allResponse,
+        ratingResponse,
+        bannedResponse,
+      ] = await Promise.all([
+        GetParticipants(
+          nameMessengerPlatform,
+          nameTournamentPlatform,
+          selectedGame,
+          1,
+          0,
+          "",
+        ),
+
+        GetParticipantsSortedByRatingList(
+          nameMessengerPlatform,
+          nameTournamentPlatform,
+          selectedGame,
+          1,
+          0,
+          "",
+        ),
+
+        GetBanned(
+          nameMessengerPlatform,
+          nameTournamentPlatform,
+          selectedGame,
+          1,
+          0,
+          "",
+        ),
+      ]);
+
+      setTotalCountAll(allResponse?.totalCount ?? 0);
+      setTotalCountRating(ratingResponse?.totalCount ?? 0);
+      setTotalCountBanned(bannedResponse?.totalCount ?? 0);
+    } catch (err) {
+      console.error(
+        `Failed to get total counts: ${err.message || err}`,
+      );
+    }
+  };
+
   // Function of pagination
   const fetchData = async (isNextPage = false, search = undefined) => {
     setLoading(true);
@@ -858,6 +899,28 @@ const columns = prepareColumns(
     debouncedFetch(value);
   };
 
+  useEffect(() => {
+    if (
+      loading ||
+      players.length === 0 ||
+      players.length >= totalCount
+    ) {
+      return;
+    }
+
+    const container = bodyScrollRef.current;
+
+    if (!container) {
+      return;
+    }
+
+    // If table not create a scroll,
+    // then text page not enogth for fill case.
+    if (container.scrollHeight <= container.clientHeight) {
+      fetchDataRef.current(true);
+    }
+  }, [players.length, totalCount, loading]);
+
   // Trigger for search line
   useEffect(() => {
     fetchDataRef.current = (isNext, search) => fetchData(isNext, search);
@@ -892,6 +955,15 @@ const columns = prepareColumns(
     fetchData(false);
   }, [selectedGame, activeFilter]);
 
+  // Update count for every filter
+  useEffect(() => {
+    fetchTotalCounts();
+  }, [
+    selectedGame,
+    nameMessengerPlatform,
+    nameTournamentPlatform,
+  ]);
+
   // Filter list of players for table
   const filteredPlayers = useMemo(() => {
     let list = players ? [...players] : [];
@@ -902,9 +974,6 @@ const columns = prepareColumns(
 
     if (activeFilter === "rating") {
       return list
-        .filter(
-          (p) => String(p?.isBanned || p?.status).toLowerCase() !== "banned",
-        )
         .sort((a, b) => (b.rating || 0) - (a.rating || 0));
     }
 
@@ -960,28 +1029,6 @@ const columns = prepareColumns(
       }
     }
   };
-
-  // Horizontal scroll for double table
-  const [hasHorizontalScroll, setHasHorizontalScroll] = useState(false);
-  useEffect(() => {
-    const checkHorizontalScroll = () => {
-      const el = bodyScrollRef.current;
-
-      if (!el) return;
-
-      setHasHorizontalScroll(el.scrollWidth > el.clientWidth);
-    };
-
-    const observer = new ResizeObserver(checkHorizontalScroll);
-
-    if (bodyScrollRef.current) {
-      observer.observe(bodyScrollRef.current);
-    }
-
-    checkHorizontalScroll();
-
-    return () => observer.disconnect();
-  }, []);
 
   const formatImportMessage = (template, values) => {
     let result = template;
@@ -1045,6 +1092,18 @@ const columns = prepareColumns(
   ) {
     importProgress = 100;
   }
+  console.log("RATING DEBUG", {
+  activeFilter,
+  players: players.length,
+  filteredPlayers: filteredPlayers.length,
+  totalCount,
+  ratings: players.map((p) => ({
+    nickname: p.nickname,
+    rating: p.rating,
+    status: p.status,
+    isBanned: p.isBanned,
+  })),
+});
 
   return (
     <PanelTemplate themeClasses={themeClasses}>
@@ -1263,11 +1322,6 @@ const columns = prepareColumns(
             onScroll={() => syncScroll("body")}
             id="table-scroll-container"
             className="flex-1 min-h-0 overflow-auto custom-scrollbar"
-            // style={{
-            //   maxHeight: hasHorizontalScroll
-            //   ? "calc(100dvh - 430px)"
-            //   : "calc(100dvh - 402px)",
-            // }}
           >
             <table className="w-full text-left text-[11px] table-fixed min-w-[800px] border-collapse">
               <TableBody
