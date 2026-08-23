@@ -33,6 +33,11 @@ func parseLogLine(line string) (entityLogger.LogEntry, bool) {
 		entityLogger.Warning,
 		entityLogger.Debug,
 		entityLogger.Error:
+
+		if strings.Contains(strings.ToLower(entry.Msg), "context canceled") {
+			return entityLogger.LogEntry{}, false
+		}
+
 		fields := strings.Fields(line[:start])
 		if len(fields) >= 2 {
 			entry.Time = fields[1]
