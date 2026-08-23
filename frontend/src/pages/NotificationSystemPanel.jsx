@@ -233,7 +233,7 @@ const NotificationSystemPlate = ({
       exceptionElement={
         activeModal ? null : 
         <>
-          <div className="absolute bottom-8 right-8 z-100">
+          <div className={`absolute bottom-8 right-8 ${isStartedSending ? "z-100" : "z-40"}`}>
             <ButtonFooter
               isStartedSending={isStartedSending}
               debugMode={debugMode}

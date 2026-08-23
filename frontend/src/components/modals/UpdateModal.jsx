@@ -170,6 +170,7 @@ const UpdateModal = ({
       onClose={onClose}
       title={title}
       icon={Router}
+      layer={"1000"}
       iconColor="blue"
       children={content}
       themeClasses={themeClasses}

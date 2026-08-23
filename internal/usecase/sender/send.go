@@ -2,6 +2,7 @@ package sender
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -32,7 +33,7 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 
 	t := time.Now()
 	debugChannelID, err := ns.getDebugDMChannel(ctx)
-	if err != nil {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Can't get debug DM channel for test contact: %v", ns.TestContact.MessengerLogin))
 		return
 	}
@@ -48,9 +49,10 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 	}
 
 	_, errP1 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP1)
-	if errP1 != nil {
+	if errP1 != nil && !errors.Is(errP1, context.Canceled) {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin, errP1.Error()))
-	} else {
+	}
+	if errP1 == nil {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
 	}
 	ns.MetricsMessenger.RecordMessageSend(errP1, time.Since(t))
@@ -68,9 +70,10 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 	}
 
 	_, errP2 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP2)
-	if errP2 != nil {
+	if errP2 != nil && !errors.Is(errP2, context.Canceled) {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin, errP2.Error()))
-	} else {
+	}
+	if errP2 == nil {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
 	}
 	ns.MetricsMessenger.RecordMessageSend(errP2, time.Since(t))
@@ -88,7 +91,7 @@ func (ns *NotificationSystem) sendNotification(ctx context.Context, contact enti
 	}
 
 	dmChannelID, err := ns.Messenger.SendMessage(ctx, contact.MessengerID, contact.DmChannelId, set)
-	if err != nil {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		return lastSent, fmt.Errorf("sendNotification | Can't send notification to %s: %v", contact.MessengerID, err)
 	}
 
@@ -98,7 +101,7 @@ func (ns *NotificationSystem) sendNotification(ctx context.Context, contact enti
 			PlatformName:  contact.MessengerName,
 			DmChannelId:   &dmChannelID,
 		}
-		if err := ns.Db.Accounts.EditDmChannelParticipantAccount(ctx, request); err != nil {
+		if err := ns.Db.Accounts.EditDmChannelParticipantAccount(ctx, request); err != nil && !errors.Is(err, context.Canceled) {
 			log.Printf("sendNotification | can't update DM channel: %v", err)
 		}
 	}

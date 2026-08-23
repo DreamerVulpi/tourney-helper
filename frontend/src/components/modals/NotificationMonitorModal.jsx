@@ -35,12 +35,10 @@ const NotificationMonitorModal = ({
   const snapshotSender = useNotificationMetrics(isOpen);
   const totalsSender = snapshotSender?.Totals;
   const currentSender = snapshotSender?.Current;
-  const stateSender = snapshotSender?.State;
 
   const snapshotGetter = useGetDataMetrics(isOpen);
   const totalsGetter = snapshotGetter?.Totals;
   const currentGetter = snapshotGetter?.Current;
-  const stateggGetter = snapshotGetter?.State;
 
   const [notificationReady, setNotificationReady] = useState(false);
 

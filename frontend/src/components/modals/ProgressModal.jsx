@@ -43,7 +43,7 @@ export function ProgressModal({
       icon={icon}
       iconColor={iconColor}
       themeClasses={themeClasses}
-      showCloseButton={!isLoading}
+      layer={150}
       width="max-w-md"
     >
       <div className="p-6 space-y-5">

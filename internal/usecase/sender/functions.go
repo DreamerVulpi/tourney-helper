@@ -10,9 +10,7 @@ import (
 	"errors"
 
 	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
-	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
-	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 func ValidationParticipant(p entitySender.Participant) error {
@@ -29,7 +27,6 @@ func ValidationParticipant(p entitySender.Participant) error {
 
 func (ns *NotificationSystem) CheckParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
 	dbData, err := ns.Db.GetParticipant(ctx, apiData)
-	logger.Log(entityLogger.Debug, fmt.Sprintf("apiData (%v) vs (%v) dbData", apiData.Locale, dbData.Locale))
 
 	switch {
 	case err == nil:
@@ -43,7 +40,6 @@ func (ns *NotificationSystem) CheckParticipant(ctx context.Context, apiData enti
 		if err != nil {
 			return dbData, err
 		}
-		logger.Log(entityLogger.Debug, fmt.Sprintf("dbData locale: %v", dbData.Locale))
 		return participant, nil
 
 	case errors.Is(err, sql.ErrNoRows):
@@ -96,7 +92,7 @@ func (ns *NotificationSystem) CountMessages(ctx context.Context, sets []entitySe
 		select {
 		case <-ctx.Done():
 			log.Println("Process | Loop interrupted by context cancellation")
-			return 0, ctx.Err()
+			return 0, nil
 		default:
 		}
 		sentInfo, err := ns.Db.SentSets.GetSentSet(ctx, set.SetID)

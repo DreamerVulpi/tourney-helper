@@ -11,8 +11,6 @@ const AboutModal = ({
   onClose,
   locale,
   check,
-  settings,
-  updateInfo,
   themeClasses,
   setActiveModal,
 }) => {
