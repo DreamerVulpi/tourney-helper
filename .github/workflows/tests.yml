@@ -13,7 +13,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
@@ -44,15 +44,16 @@ jobs:
 
       - name: Verify formatting
         run: |
-          if [ -n "$(gofmt -l .)" ]; then
+          if (gofmt -l .) {
             echo "Files are not formatted:"
             gofmt -l .
             exit 1
-          fi
+          }
 
       - name: Create Wails configuration
+        shell: pwsh
         run: |
-          cat > wails.json <<'EOF'
+          @'
           {
             "$schema": "https://wails.io/schemas/config.v2.json",
             "name": "TourneyHelper",
@@ -66,12 +67,12 @@ jobs:
               "email": "test@test.com"
             }
           }
-          EOF
+          '@ | Set-Content -Path wails.json
 
       - name: Build application
         run: >
           wails build --clean
-          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=true"
+          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=false"
 
       - name: Run go vet
         run: go vet ./...
