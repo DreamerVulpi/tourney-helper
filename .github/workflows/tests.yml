@@ -18,13 +18,31 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
-      - name: Download dependecies
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Download dependencies
         run: go mod download
+
       - name: Verify formatting
         run: |
           if [ -n "$(gofmt -l .)" ]; then
@@ -32,7 +50,9 @@ jobs:
             gofmt -l .
             exit 1
           fi 
+          
       - name: Run go vet
         run: go vet ./...
+
       - name: Run Tests
         run: go test -race -cover -timeout 1m ./...
