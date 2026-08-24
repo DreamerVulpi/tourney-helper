@@ -113,13 +113,13 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 	return nil
 }
 
-func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament) (discord.Handler, error) {
+func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament) (*discord.Handler, error) {
 	collectorStartgg := metrics.NewCollector()
 	limiterStartgg := rateLimiter.NewStartggLimiter(collectorStartgg)
 
 	adapter, err := sender.GetTournamentAdapter(collectorStartgg, a.TournamentClient, "Discord", cfgTournament.UrlToTournament, cfgBot.DebugMode.Mode, cfgTournament.Game.Name, nil)
 	if err != nil {
-		return discord.Handler{}, err
+		return &discord.Handler{}, err
 	}
 
 	collectorDiscord := metrics.NewCollector()
@@ -128,7 +128,7 @@ func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessen
 	dh := discord.Handler{Auth: a.MessengerClient, Metrics: collectorDiscord}
 	meDiscordPlatform, err := dh.Auth.GetDiscordMe(a.ctx)
 	if err != nil {
-		return discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
+		return &discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
 	}
 
 	ns := sender.NewNotificationSystem(nil, adapter, a.Db, cfgBot.DebugMode.Mode, entitySender.Participant{
@@ -142,7 +142,7 @@ func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessen
 		logger.Log(entityLogger.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
 	}
 
-	return dh, nil
+	return &dh, nil
 }
 
 func (a *App) ParseTournamentURL(platform string, rawURL string) (string, error) {
@@ -304,7 +304,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 	ctx, cancel := context.WithCancel(context.Background())
 	a.mu.Lock()
 	a.ns = sn.Ns
-	a.activeBot = &sn
+	a.activeBot = sn
 	a.nsCancel = cancel
 	sn.ReadyChan = make(chan struct{})
 	a.mu.Unlock()
