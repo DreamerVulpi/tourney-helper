@@ -69,11 +69,7 @@ jobs:
 
       - name: Archive build
         shell: pwsh
-        run: |
-          Compress-Archive `
-            -Path build/bin/* `
-            -DestinationPath TourneyHelper-${{ github.ref_name }}-Windows-x64.zip
-            -Force `
+        run: Compress-Archive -Path build/bin/* -DestinationPath "TourneyHelper-${{ github.ref_name }}-Windows-x64.zip" -Force
 
       - name: Create draft release
         uses: softprops/action-gh-release@v2
