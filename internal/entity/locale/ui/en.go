@@ -49,7 +49,8 @@ var En = Ui{
 					Answer: `1. Fill in the required "CLIENT ID" and "SECRET CLIENT" fields for the tournament platform. 
 					2. Fill in the required fields "BOT TOKEN," "GUILD ID," "CLIENT ID," and "CLIENT SECRET" for the messenger. (The remaining fields are optional.)
 					3. Select the tournament data source and the messenger for notifications by clicking the platform button itself. 
-					4. After clicking the platform button, TourneyHelper will redirect you to the authorization page and invite the bot to your messaging server. The result will be displayed in the log window.`,
+					4. After clicking the platform button, the “TourneyHelper” program will redirect you to the login page. The result of the query will be displayed in the log window.
+                    5. Invite the bot you created for the messaging app to the server where the tournament players are located.`,
 				},
 				HowIsWorks: HelpQA{
 					Question: "How does the notification system work?",
