@@ -43,10 +43,13 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.1
 
       - name: Verify formatting
+        shell: pwsh
         run: |
-          if (gofmt -l .) {
-            echo "Files are not formatted:"
-            gofmt -l .
+          $files = gofmt -l .
+
+          if ($files) {
+            Write-Host "Files are not formatted:"
+            $files
             exit 1
           }
 
