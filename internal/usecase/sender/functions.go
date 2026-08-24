@@ -92,7 +92,7 @@ func (ns *NotificationSystem) CountMessages(ctx context.Context, sets []entitySe
 		select {
 		case <-ctx.Done():
 			log.Println("Process | Loop interrupted by context cancellation")
-			return 0, nil
+			return 0, ctx.Err()
 		default:
 		}
 		sentInfo, err := ns.Db.SentSets.GetSentSet(ctx, set.SetID)
