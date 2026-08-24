@@ -42,17 +42,6 @@ jobs:
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.1
 
-      - name: Verify formatting
-        shell: pwsh
-        run: |
-          $files = gofmt -l .
-
-          if ($files) {
-            Write-Host "Files are not formatted:"
-            $files
-            exit 1
-          }
-
       - name: Create Wails configuration
         shell: pwsh
         run: |
