@@ -7,7 +7,12 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/entity/locale/ui"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/version"
 )
+
+func (a *App) GetVersion() string {
+	return strings.Replace(version.Current, "v", "", 1)
+}
 
 func (a *App) GetUiLocale(lang string) ui.Ui {
 	switch strings.ToUpper(lang) {
@@ -25,8 +30,11 @@ func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
 	cfg, err := config.LoadSettings(path)
 	if err != nil {
 		nullCfg := config.SettingsApplication{
-			Language: "EN",
-			Theme:    "dark",
+			Language:              "EN",
+			Theme:                 "Dark",
+			CheckUpdatesOnStartUp: true,
+			IgnoredVersion:        "",
+			SidePanelCollapsed:    false,
 		}
 		return nullCfg, nil
 	}
@@ -113,6 +121,7 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 				Conn:          "Wired",
 				Crossplatform: false,
 				Passcode:      "0000",
+				LinkToLobby:   "",
 			},
 			Logo: config.Logo{
 				Img: "",

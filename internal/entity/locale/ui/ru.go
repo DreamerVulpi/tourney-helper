@@ -47,7 +47,8 @@ var Ru = Ui{
 					Answer: `1. Заполнить обязательные поля "CLIENT ID" и "SECRET CLIENT" у турнирной платформы.
 					2. Заполнить обязательные поля "BOT TOKEN", "GUILD ID", "CLIENT ID", "CLIENT SECRET" у мессенджера. (остальные поля по желанию)
 					3. Выбрать источник данных турнира и мессенджер для рассылки нажав на саму кнопку платформы.
-					4. После нажатия на кнопку платформы программа "TourneyHelper" перенаправит на авторизацию и приглашению бота на ваш сервер мессенджера. Результат чтения будет написан в окне логов.`,
+					4. После нажатия на кнопку платформы программа "TourneyHelper" перенаправит на авторизацию. Результат чтения будет написан в окне логов.
+					5. Созданного бота для мессенджера пригласите на сервер где находятся игроки турнира.`,
 				},
 				HowIsWorks: HelpQA{
 					Question: "Как работает система рассылки уведомлений?",
@@ -95,7 +96,7 @@ var Ru = Ui{
 				HowUse: HelpQA{
 					Question: "Как использовать?",
 					Answer: `Программа поддерживает возможность полного контроля над хранилищем - добавлять (вручную или файлом), редактировать, изменять, удалять данные о игроках, а также можно вести учет своей игровой лиги или бан-листа.%v
-					В случае добавления игроков через файл необходимо заранее авторизоваться на start.gg во вкладке "Рассылка уведомлений"`,
+					В случае добавления игроков необходимо заранее авторизоваться на start.gg во вкладке "Рассылка уведомлений"`,
 				},
 			},
 		},
@@ -117,8 +118,32 @@ var Ru = Ui{
 			SubscribeOnProject: "Бусти",
 			SubscribeLink:      "https://boosty.to/dreamervulpi",
 		},
+		Update: UpdateModal{
+			Title:                           "Обновление программы",
+			NoUpdateTitle:                   "Новых обновлений не найдено",
+			NoUpdateDescription:             "В случае, если пропустили версию по ошибке, то скачайте архив последней версии из %v GitHub %v и замените исполняемый файл формата \"exe\" самостоятельно",
+			NoData:                          "Нет данных",
+			UpdateDescriptionLabel:          "Описание обновления",
+			DontShowAlertOnStartApplication: "Не показывать уведомление при старте приложения",
+			GetUpdateButtonLabel:            "Получить обновление",
+			SkipUpdateButtonLabel:           "Пропустить обновление",
+		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
+		MonitoringSystem: MonitoringSystem{
+			Title:                 "Мониторинг",
+			TimeRemains:           "Осталось до конца цикла рассылки",
+			WaitingCycle:          "Ожидание старта цикла рассылки",
+			Min:                   "Мин.",
+			Sec:                   "Сек.",
+			LimitRequestPerMinute: "Лимит за 1 мин.:",
+			LimitRequestPerSecond: "Лимит за 1 сек.:",
+			TotalSuccessSent:      "Успешно отправлено:",
+			TotalAttemptsSent:     "Всего попыток:",
+			SuccessRate:           "Процент успешности:",
+			AverageTime:           "Среднее время:",
+			Ms:                    "мс",
+		},
 		DebugModeSwitchLabel: "Режим отладки",
 		Platform: Platform{
 			AuthorizeStatePlatform: AuthorizeStatePlatform{
@@ -132,6 +157,7 @@ var Ru = Ui{
 			RedirectURL:                  "Ссылка на перенаправление (Redirect URL)",
 			ParamsBot:                    "Параметры %v бота",
 			TokenBot:                     "Токен бота",
+			DefaultLocale:                "Стандартная локаль",
 			Messenger:                    "Мессенджер",
 			Tourney:                      "Турнирная платформа",
 			RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
@@ -166,6 +192,7 @@ var Ru = Ui{
 				Any:   "Любой",
 				Lan:   "Только прямое подключение",
 			},
+			LinkToLobbyLabel: "Ссылка на лобби",
 		},
 		ConfigurationLogo: ConfigurationLogo{
 			Label:         "Конфигурация логотипа",
@@ -186,9 +213,9 @@ var Ru = Ui{
 	},
 	DatabasePanel: DatabasePanel{
 		AddButton: AddButton{
+			Label:           "Добавить игрока",
 			ErrorFillParams: "Ошибка заполнения параметров",
 			OkButtonLabel:   "Понятно",
-			Label:           "Добавить игрока",
 			One:             "Одного",
 			EditTitle:       "Изменение данных игрока",
 			AddBanTitle:     "Внести нарушителя в бан-лист",
@@ -204,7 +231,7 @@ var Ru = Ui{
 				Nickname:    "Никнейм",
 			},
 			ImportFile: ImportFileModalWindow{
-				Label:                         "Импорт CSV/JSON файла",
+				Label:                         "Импорт файла",
 				Title:                         "Импорт участников турнира",
 				BanTitle:                      "Импорт файла бан-листа",
 				NameFile:                      "Имя файла:",
@@ -241,7 +268,6 @@ var Ru = Ui{
 				},
 			},
 			ConfirmDurationBan:     "Укажите корректный срок бана или выберите вариант 'Навсегда'!",
-			BanLabel:               "Управление банами",
 			BanTitle:               "Забанить игрока",
 			BanButtonLabel:         "Забанить",
 			UnbanTitle:             "Разбанить игрока",
@@ -346,7 +372,7 @@ var Ru = Ui{
 			},
 		},
 		ResetRatingButton: ResetRatingModal{
-			Label:                   "Сброс рейтинга всех игроков",
+			Label:                   "Сброс рейтинга",
 			Title:                   "Сброс рейтинга",
 			Message:                 "Вы уверены, что хотите сбросить рейтинг %v абсолютно всех игроков %v игры %v в базе данных до 0?",
 			Attension:               "Действие сотрет текущую статистику рейтинга!",
@@ -355,5 +381,14 @@ var Ru = Ui{
 		TotalCountNotesInDBLabel:       "Всего игроков в базе данных",
 		TotalCountBannedNotesInDBLabel: "Всего игроков в бан-листе",
 		TotalCountRatingParticipants:   "Всего игроков в рейтинговой лиге",
+	},
+	ProgressModal: ProgressModal{
+		Title:    "Загрузка данных",
+		Download: "Загрузка",
+		Success:  "Успешно!",
+		Error:    "Ошибка:",
+		Extract:  "Извлечение...",
+		Install:  "Установка...",
+		Restart:  "Перезапуск...",
 	},
 }

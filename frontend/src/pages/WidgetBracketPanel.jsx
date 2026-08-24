@@ -19,7 +19,7 @@ const SbField = ({ label, value, onChange, inputClasses }) => (
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-xl p-3 text-xs border font-bold outline-none transition-all focus:border-blue-500/50 ${inputClasses}`}
+      className={`w-full rounded-xl p-3 text-xs border font-bold outline-none  focus:border-blue-500/50 ${inputClasses}`}
     />
   </div>
 );
@@ -68,7 +68,7 @@ const WidgetBracketPlate = ({ theme }) => {
       )}
 
       {/* 2. LAYER: MAIN CONTENT */}
-      <div className={`grid grid-cols-12 gap-8 transition-all duration-700 ${isWip ? "blur-xl grayscale opacity-40 pointer-events-none scale-[0.98]" : "opacity-100"}`}>
+      <div className={`grid grid-cols-12 gap-8  duration-700 ${isWip ? "blur-xl grayscale opacity-40 pointer-events-none scale-[0.98]" : "opacity-100"}`}>
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {/* URL Виджета */}
           <div className={`p-4 rounded-2xl border flex items-center justify-between ${isDark ? "bg-blue-600/5 border-blue-600/20" : "bg-blue-50 border-blue-100"}`}>
@@ -99,7 +99,7 @@ const WidgetBracketPlate = ({ theme }) => {
               const newState = !isGridOverlayActive;
               setIsGridOverlayActive(newState);
             }}
-            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase italic text-xs transition-all duration-300 ${
+            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase italic text-xs  duration-300 ${
               isGridOverlayActive
                 ? "bg-red-500 text-white shadow-lg shadow-red-500/20 ring-4 ring-red-500/10"
                 : "bg-green-600 text-white shadow-lg shadow-green-600/20 hover:bg-green-500"
@@ -163,7 +163,7 @@ const WidgetBracketPlate = ({ theme }) => {
               <button className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 transition-transform active:scale-95">
                 <RefreshCw size={14} /> Обновить виджет
               </button>
-              <button className={`w-full py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 border transition-all hover:bg-white/5 ${inputClasses}`}>
+              <button className={`w-full py-3 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 border  hover:bg-white/5 ${inputClasses}`}>
                 <FileCode size={14} /> Редактировать CSS
               </button>
             </div>

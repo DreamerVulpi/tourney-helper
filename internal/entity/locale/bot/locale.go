@@ -74,6 +74,8 @@ type StreamLobbyMessage struct {
 	PasscodeTemplate         string
 	StreamLink               string
 	ListRegions              ListRegions
+	LinkToLobby              string
+	YourOpponent             string
 }
 
 type Connection struct {

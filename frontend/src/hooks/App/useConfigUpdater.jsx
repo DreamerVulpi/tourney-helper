@@ -1,3 +1,5 @@
+import { useCallback } from "react";
+
 export function useConfigUpdater({
     isLoaded,
     setSystemCfg,
@@ -7,7 +9,7 @@ export function useConfigUpdater({
     debouncedSaveSettings,
     debouncedSaveTourney,
 }) {
-    const updateConfig = (type, data) => {
+    const updateConfig = useCallback((type, data) => {
     if (!isLoaded) return;
 
     if (type === "system") {
@@ -55,7 +57,7 @@ export function useConfigUpdater({
         return newCfg;
       });
     }
-  };
+  });
   return {
     updateConfig,
   };

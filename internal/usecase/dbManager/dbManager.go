@@ -10,11 +10,9 @@ import (
 
 	entityApp "github.com/dreamervulpi/tourney-helper/internal/entity/app"
 	entityDB "github.com/dreamervulpi/tourney-helper/internal/entity/db"
-	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	entityStartgg "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/db"
-	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
 type Database struct {
@@ -175,7 +173,6 @@ func (db *Database) GetParticipant(ctx context.Context, p entitySender.Participa
 		return entitySender.Participant{}, fmt.Errorf("db | failed to get participant: %v | %v | %v | %v | %v", participantId, errMessenger, errTournament, errStats, errParticipant)
 	}
 
-	log.Println("db | Successfully get information from database")
 	return db.buildDataOfParticipant(responseParticipant, responseMessenger, responseTournamentAccount, responseStats, p), nil
 }
 
@@ -208,8 +205,6 @@ func (db *Database) EditParticipant(ctx context.Context, p entitySender.Particip
 			if err != nil {
 				return err
 			}
-		} else {
-			log.Println("Бизнес-логика: Изменений не обнаружено, пропускаем UPDATE основной инфы.")
 		}
 	}
 
@@ -283,7 +278,6 @@ func (db *Database) AddParticipant(ctx context.Context, p entitySender.Participa
 	}
 	defer tx.Rollback()
 
-	logger.Log(entityLogger.Info, fmt.Sprintf("AddParticipant: participant=%v, gameName=%v, gameID=%v", p.GameNickname, p.GameName, p.GameID))
 	response, err := db.addParticipantWithTx(ctx, tx, p, false)
 	if err != nil {
 		return entityDB.ParticipantAddResponse{}, err
@@ -451,4 +445,22 @@ func (db *Database) AddParticipants(ctx context.Context, list []entityStartgg.Im
 	log.Printf("db | Bulk insert successful. %d participants added", successful)
 
 	return successful, total, nil
+}
+
+func (db *Database) EditParticipantLocale(ctx context.Context, gameNickname string, locale string) error {
+	p, errP := db.Participant.GetParticipantByNickname(ctx, entityDB.ParticipantGetRequestByNickname{Nickname: gameNickname})
+	if errP != nil {
+		return errP
+	}
+
+	if p.Locale == locale {
+		return nil
+	}
+
+	_, errR := db.Participant.EditParticipantLocale(ctx, entityDB.ParticipantEditLocaleRequest{Id: p.Id, Locale: locale})
+	if errR != nil {
+		return errR
+	}
+
+	return nil
 }

@@ -323,8 +323,12 @@ func (p *Participants) GetListSortByRating(ctx context.Context, nameMessengerPla
                 s.game_name = $3 OR NOT EXISTS (SELECT 1 FROM participant_stats WHERE participant_id = p.id) OR $3 = '' OR $3 IS NULL
             )
 			AND COALESCE(s.rating, 0) > 0
-			AND 
-			(
+
+			AND NOT (
+				b.participant_id IS NOT NULL
+				AND (b.expires_at IS NULL OR b.expires_at > DATETIME('now'))
+			)
+			AND (
 				$6 IS NULL OR $6 = '' OR 
 				LOWER(p.nickname) LIKE '%' || LOWER($6) || '%' OR
 				LOWER(a_tour.platform_login) LIKE '%' || LOWER($6) || '%' OR 
@@ -433,6 +437,28 @@ func (p *Participants) Del(ctx context.Context, id int) error {
 	tag, err := p.Conn.ExecContext(ctx, sql, id)
 	if err != nil {
 		return fmt.Errorf("don't deleted participant from database, %w", err)
+	}
+
+	rows, err := tag.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+	if rows == 0 {
+		return fmt.Errorf("participant doesn't exist")
+	}
+
+	return nil
+}
+
+func (p *Participants) EditLocale(ctx context.Context, id int, locale string) error {
+	const sql = `
+		UPDATE participants
+		SET locale = $2, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $1`
+
+	tag, err := p.Conn.ExecContext(ctx, sql, id, locale)
+	if err != nil {
+		return fmt.Errorf("don't edited participant from database, %w", err)
 	}
 
 	rows, err := tag.RowsAffected()

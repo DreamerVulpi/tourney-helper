@@ -20,13 +20,16 @@ import (
 	usecaseDB "github.com/dreamervulpi/tourney-helper/internal/usecase/db"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/rateLimiter"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/version"
 	"github.com/joho/godotenv"
 )
 
 func main() {
 	logDir := "logs"
-	err := logger.Init(logDir, true)
+	err := logger.Init(logDir, version.DebugMode == "true")
 	if err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)
@@ -112,7 +115,7 @@ func main() {
 		}
 		tournament, err := config.LoadTournament(config.GetAbsPath("tournament.toml"))
 		if err != nil {
-			logger.Log(entityLogger.Info, fmt.Sprintf("not loaded: %w", err))
+			logger.Log(entityLogger.Info, fmt.Sprintf("not loaded: %v", err))
 		} else {
 			db := dbManager.Database{
 				Conn:        conn,
@@ -125,30 +128,38 @@ func main() {
 
 			contacts, err := sender.LoadCSV(config.GetAbsPath(tournament.Csv.NameFile))
 			if err != nil {
-				logger.Log(entityLogger.Info, fmt.Sprintf("CSV isn't loaded: %w", err))
+				logger.Log(entityLogger.Info, fmt.Sprintf("CSV isn't loaded: %v", err))
 			}
 
+			collectorStartgg := metrics.NewCollector()
+
 			logger.Log(entityLogger.Info, fmt.Sprintf("Check config: %v", tournament.UrlToTournament))
-			adapter, err := sender.GetTournamentAdapter(ggAuth, "Discord", tournament.UrlToTournament, cfg.DebugMode.Mode, tournament.Game.Name, contacts)
+			adapter, err := sender.GetTournamentAdapter(collectorStartgg, ggAuth, "Discord", tournament.UrlToTournament, cfg.DebugMode.Mode, tournament.Game.Name, contacts)
 			if err != nil {
 				logger.Log(entityLogger.Error, err.Error())
 				return
 			}
 
-			dh := discord.Handler{Auth: dsAuth}
+			collectorDiscord := metrics.NewCollector()
+			dh := discord.Handler{Auth: dsAuth, Metrics: collectorDiscord}
 			ctx := context.Background()
 			meDiscordPlatform, err := dh.Auth.GetDiscordMe(ctx)
 			if err != nil {
 				logger.Log(entityLogger.Error, fmt.Sprintf("InitBot | Failed to get debug user: %v", err))
 				return
 			}
+
+			limiterStartgg := rateLimiter.NewStartggLimiter(collectorStartgg)
+			limiterDiscord := rateLimiter.NewDiscordLimiter(collectorDiscord)
 			ns := sender.NewNotificationSystem(nil, adapter, &db, cfg.DebugMode.Mode, entitySender.Participant{
 				MessengerID:    meDiscordPlatform.ID,
 				MessengerLogin: meDiscordPlatform.Username,
 				Locale:         "ru",
 				GameName:       tournament.Game.Name,
-			}, 5*time.Minute)
+			}, limiterDiscord, limiterStartgg, collectorDiscord, collectorStartgg, 5*time.Minute)
+
 			dh.Ns = ns
+
 			if cfg.DebugMode.Mode {
 				logger.Log(entityLogger.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
 			}

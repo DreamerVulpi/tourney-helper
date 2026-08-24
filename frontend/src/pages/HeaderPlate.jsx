@@ -8,15 +8,19 @@ import {
   Moon,
   HelpCircle,
   Info,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { getThemeClasses } from "../utils/theme/HeaderPlate/themes.jsx";
 import { createThemeChanger } from "../utils/changeTheme";
 import { ExtraButton } from "../components/ui/ExtraButton";
 import { DropdownList } from "../components/ui/DropdownList";
 import { Field } from "../components/ui/Field.jsx";
-import  AboutModal from "../components/modals/AboutModal.jsx"
-import  HelpModal from "../components/modals/help/HelpModal.jsx"
+import AboutModal from "../components/modals/AboutModal.jsx"
+import HelpModal from "../components/modals/help/HelpModal.jsx"
+import UpdateModal from "../components/modals/UpdateModal.jsx"
 import Logo from "../../../branding/icons/256.png";
+import ProgressModal from "../components/modals/ProgressModal.jsx";
 
 const HeaderPlate = ({
   theme,
@@ -24,11 +28,26 @@ const HeaderPlate = ({
   lang,
   setLang,
   locale,
+  updateInfo,
+  check,
   updateConfig,
   themeClasses,
   activeModal,
   activeTab,
   setActiveModal,
+  settings,
+  handleInstallUpdate,
+  updateProgressOpen,
+  updateStatus,
+  updateMessage,
+  updateProgress,
+  setUpdateProgressOpen,
+  setUpdateStatus,
+  setUpdateMessage,
+  setUpdateProgress,
+  isSidePanelHovered,
+  sidePanelCollapsed,
+  setSidePanelCollapsed,
 }) => {
   // Font for logo programm
   const fontStyle = (
@@ -44,6 +63,17 @@ const HeaderPlate = ({
   const changeTheme = createThemeChanger(theme, setTheme, updateConfig);
   // Details of theme for this page
   const headerThemeClasses = getThemeClasses(theme);
+
+  const handleSidePanelCollapse = () => {
+    const next = !sidePanelCollapsed;
+
+    setSidePanelCollapsed(next);
+
+    updateConfig("settings", {
+      ...settings,
+      SidePanelCollapsed: next,
+    });
+  };
  
   return (
     <header
@@ -72,6 +102,47 @@ const HeaderPlate = ({
               <span className="text-blue-600 ml-[0.rem]">HELPER</span>
             </span>
           </div>
+        </div>
+        <div
+          className={`
+            flex items-center
+            gap-2
+            pl-3
+            ml-2
+            border-l
+            h-6
+            transition-all duration-300
+            ${headerThemeClasses.divider}
+            ${
+              isSidePanelHovered
+                ? "opacity-100 translate-x-0"
+                : "opacity-0 -translate-x-2 pointer-events-none"
+            }
+          `}
+        >
+          <button
+            type="button"
+            onClick={handleSidePanelCollapse}
+            className={`
+              w-7 h-7
+              flex items-center justify-center
+              rounded-lg
+              transition-colors duration-200
+              hover:bg-black/10
+              dark:hover:bg-white/10
+            `}
+            aria-label={
+              sidePanelCollapsed
+                ? "Expand side panel"
+                : "Collapse side panel"
+            }
+          >
+            {sidePanelCollapsed ? (
+              <PanelLeftOpen size={17} />
+            ) : (
+              <PanelLeftClose size={17} />
+            )}
+          </button>
         </div>
       </div>
 
@@ -104,19 +175,19 @@ const HeaderPlate = ({
         {/* Theme switcher */}
         <button
           onClick={changeTheme}
-          className={`flex items-center gap-[0.25rem] p-[0.25rem] rounded-full border transition-all duration-300 ${
+          className={`flex items-center gap-[0.25rem] p-[0.25rem] rounded-full border  duration-300 ${
             headerThemeClasses.themeButton
           }`}
         >
           <div
-            className={`p-[0.25rem] rounded-full transition-all ${
+            className={`p-[0.25rem] rounded-full  ${
               headerThemeClasses.sunIcon
             }`}
           >
             <Sun style={{ width: "0.875rem", height: "0.875rem" }} />
           </div>
           <div
-            className={`p-[0.25rem] rounded-full transition-all ${
+            className={`p-[0.25rem] rounded-full  ${
               headerThemeClasses.moonIcon
             }`}
           >
@@ -154,10 +225,11 @@ const HeaderPlate = ({
       themeClasses={themeClasses}
       onClose={() => {
           setActiveModal(null);
-          setTimeout(() => {
-            fetchData(false);
-          }, 100);
       }}
+      settings={settings}
+      updateInfo={updateInfo}
+      setActiveModal={setActiveModal}
+      check={check}
     />
     <HelpModal
       activeTab={activeTab}
@@ -166,10 +238,35 @@ const HeaderPlate = ({
       themeClasses={themeClasses}
       onClose={() => {
           setActiveModal(null);
-          setTimeout(() => {
-            fetchData(false);
-          }, 100);
       }}
+    />
+    <UpdateModal 
+      isOpen={activeModal === "update"}
+      locale={locale.Update}
+      themeClasses={themeClasses}
+      onClose={() => {
+          setActiveModal(null);
+      }}
+      lang={lang}
+      updateInfo={updateInfo}
+      check={check}
+      updateConfig={updateConfig}
+      settings={settings}
+      onInstallUpdate={handleInstallUpdate}
+    />
+    <ProgressModal
+        isOpen={updateProgressOpen}
+        status={updateStatus}
+        progress={updateProgress}
+        message={updateMessage}
+        title={locale.Update.Title}
+        themeClasses={themeClasses}
+        onClose={() => {
+          setUpdateProgressOpen(false);
+          setUpdateStatus("idle");
+          setUpdateMessage("");
+          setUpdateProgress(0);
+        }}
     />
     </header>
   );

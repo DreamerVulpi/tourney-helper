@@ -21,7 +21,7 @@ const SbField = ({ label, value, onChange, inputClasses, type = "text" }) => (
       type={type}
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-xl p-3 text-xs border font-bold outline-none transition-all focus:border-blue-500/50 ${inputClasses}`}
+      className={`w-full rounded-xl p-3 text-xs border font-bold outline-none  focus:border-blue-500/50 ${inputClasses}`}
     />
   </div>
 );
@@ -74,7 +74,7 @@ const WidgetScoreboardPlate = ({ theme }) => {
       
       {/* --- LAYER 1: WIP OVERLAY --- */}
       {isWip && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center backdrop-blur-md bg-black/40 rounded-[2.5rem] animate-in fade-in zoom-in duration-500">
+        <div className="absolute inset-0 z-[100] flex items-center justify-center backdrop-blur-md bg-black/40 rounded-[2.5rem] duration-500">
           <div className={`flex flex-col items-center gap-4 p-12 rounded-[3rem] border shadow-2xl ${isDark ? "bg-[#0a0a0a]/90 border-white/10" : "bg-white/90 border-slate-200"}`}>
             <div className="relative">
                <Wrench size={40} className="text-blue-500 animate-bounce" />
@@ -93,7 +93,7 @@ const WidgetScoreboardPlate = ({ theme }) => {
       )}
 
       {/* --- LAYER 2: MAIN CONTENT --- */}
-      <div className={`grid grid-cols-12 gap-8 transition-all duration-700 ${isWip ? "blur-xl grayscale opacity-40 pointer-events-none scale-[0.98]" : "opacity-100"}`}>
+      <div className={`grid grid-cols-12 gap-8  duration-700 ${isWip ? "blur-xl grayscale opacity-40 pointer-events-none scale-[0.98]" : "opacity-100"}`}>
         <div className="col-span-12 lg:col-span-8 space-y-6">
           {/* URL Виджета */}
           <div className={`p-4 rounded-2xl border flex items-center justify-between ${isDark ? "bg-blue-600/5 border-blue-600/20" : "bg-blue-50 border-blue-100"}`}>
@@ -121,7 +121,7 @@ const WidgetScoreboardPlate = ({ theme }) => {
               const newState = !isScoreboardOverlayActive;
               setIsScoreboardOverlayActive(newState);
             }}
-            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase italic text-xs transition-all duration-300 ${
+            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase italic text-xs  duration-300 ${
               isScoreboardOverlayActive
                 ? "bg-red-500 text-white shadow-lg shadow-red-500/20 ring-4 ring-red-500/10"
                 : "bg-green-600 text-white shadow-lg shadow-green-600/20 hover:bg-green-500"
@@ -133,7 +133,7 @@ const WidgetScoreboardPlate = ({ theme }) => {
 
           {/* ПРЕВЬЮ */}
           <div
-            className={`aspect-video rounded-[3rem] border-8 relative overflow-hidden flex items-center justify-center transition-all ${isDark ? "bg-black border-white/5" : "bg-slate-300 border-white shadow-2xl"}`}
+            className={`aspect-video rounded-[3rem] border-8 relative overflow-hidden flex items-center justify-center  ${isDark ? "bg-black border-white/5" : "bg-slate-300 border-white shadow-2xl"}`}
             style={{
               backgroundImage: sbConfig.background ? `url(${sbConfig.background})` : "none",
               backgroundSize: "cover",
@@ -214,14 +214,14 @@ const WidgetScoreboardPlate = ({ theme }) => {
                 onClick={() => setSbConfig({ ...sbConfig, showFlags: !sbConfig.showFlags })}
                 className={`w-8 h-4 rounded-full relative transition-colors ${sbConfig.showFlags ? "bg-blue-600" : "bg-slate-600"}`}
               >
-                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${sbConfig.showFlags ? "right-0.5" : "left-0.5"}`} />
+                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full  ${sbConfig.showFlags ? "right-0.5" : "left-0.5"}`} />
               </button>
             </div>
 
             <div className="flex flex-col gap-2 pt-4">
               <button
                 onClick={() => setSbConfig({ ...sbConfig, p1Score: 0, p2Score: 0 })}
-                className="w-full py-3 bg-red-600/10 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 hover:bg-red-600/20 transition-all"
+                className="w-full py-3 bg-red-600/10 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 hover:bg-red-600/20 "
               >
                 <RotateCcw size={14} /> Reset Match
               </button>
@@ -235,7 +235,7 @@ const WidgetScoreboardPlate = ({ theme }) => {
           </section>
 
           {sbConfig.showDesignTools && (
-            <section className={`p-6 rounded-[2rem] border space-y-4 animate-in slide-in-from-right-4 duration-300 ${cardClasses}`}>
+            <section className={`p-6 rounded-[2rem] border space-y-4 slide-in-from-right-4 duration-300 ${cardClasses}`}>
               <h3 className="text-[10px] font-black uppercase tracking-widest text-green-500 italic border-b border-white/5 pb-2">
                 Custom Theme Engine
               </h3>
@@ -245,7 +245,7 @@ const WidgetScoreboardPlate = ({ theme }) => {
                   <input type="text" placeholder="URL..." className={`w-full p-2 text-[10px] rounded-lg border ${inputClasses}`} onChange={(e) => setSbConfig({ ...sbConfig, background: e.target.value })} />
                 </div>
                 <textarea placeholder="Custom CSS..." className={`w-full h-24 p-3 text-[10px] font-mono border rounded-lg resize-none outline-none ${inputClasses}`} />
-                <button className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95">
+                <button className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 shadow-lg  active:scale-95">
                   <Save size={14} /> Сохранить
                 </button>
               </div>

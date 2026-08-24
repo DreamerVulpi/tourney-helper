@@ -15,6 +15,8 @@ import (
 	usecaseDB "github.com/dreamervulpi/tourney-helper/internal/usecase/db"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
+	"github.com/dreamervulpi/tourney-helper/internal/version"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -25,7 +27,7 @@ var assets embed.FS
 
 func main() {
 	// Build: Realise -> false | Dev -> true
-	if err := logger.Init(config.GetAbsPath("logs"), false); err != nil {
+	if err := logger.Init(config.GetAbsPath("logs"), version.DebugMode == "true"); err != nil {
 		fmt.Printf("Can't launch logging: %v\n", err)
 		os.Exit(1)
 	}
@@ -42,7 +44,25 @@ func main() {
 		logger.Log(entityLogger.Error, err.Error())
 	}
 
+	provider := update.NewGithub(
+		"DreamerVulpi",
+		"tourney-helper",
+	)
+	updateService := update.NewService(
+		provider,
+		version.Current,
+	)
+	updateManager := update.NewManager(
+		provider,
+		update.NewDownloader(nil),
+		update.NewInstaller(),
+		update.NewLauncher(),
+	)
+
 	app := application.NewApp()
+	app.UpdateService = updateService
+	app.UpdateManager = updateManager
+
 	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)
 	app.OAuthServer.Start()
 

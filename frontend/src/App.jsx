@@ -47,6 +47,10 @@ import { useAppInit } from "./hooks/App/useAppInit.jsx"
 import { useAutoSave } from "./hooks/App/useAutoSave.jsx";
 import { useConfigUpdater } from "./hooks/App/useConfigUpdater.jsx";
 import { getThemeClasses } from "./utils/themeClasses.jsx";
+import { useCheckUpdate } from "./hooks/App/useCheckUpdate.jsx";
+import { InstallUpdate } from "../wailsjs/go/application/App.js";
+import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
+import { SERVICE_STATUS } from "./utils/listStatus.js";
 
 const App = () => {
   // Scale UI
@@ -64,9 +68,14 @@ const App = () => {
   // Load locale
   const {lang, locale, setLang } = useLocale("EN")
 
-  // Initialization application
-  useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme});
+  // Side panel
+  const [isSidePanelHovered, setIsSidePanelHovered] = useState(false);
+  const [sidePanelCollapsed, setSidePanelCollapsed] = useState(null);
+  const [statusNotificationSystem, setStatusNotificationSystem] = useState(SERVICE_STATUS.OFF);
+  const [statusDatabase, setStatusDatabase] = useState(SERVICE_STATUS.RUNNING);
 
+  // Initialization application
+  useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed});
   // Delay before save data from fields in configs
   const {debouncedSaveSystem, debouncedSaveTourney, debouncedSaveSettings} = useAutoSave();
   const { updateConfig } = useConfigUpdater({
@@ -98,12 +107,109 @@ const App = () => {
     telegram: false,
   });
   // Detail description components for Light/Dark themes 
-  const themeClasses = getThemeClasses(theme);
+  const themeClasses = useMemo(() => getThemeClasses(theme), [theme]);
   // State for modals "About" and "Help"
   const [activeModal, setActiveModal] = useState(null);
+  // State for modal "Monitoring"
+  const [report, setReport] = useState({isOpen: false});
 
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
+
+  // Statement for update modal window
+  const { checking, updateInfo, error, check } = useCheckUpdate();
+  const [updateProgressOpen, setUpdateProgressOpen] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState("idle");
+  const [updateMessage, setUpdateMessage] = useState("");
+  const [updateProgress, setUpdateProgress] = useState(0);
+
+  const handleInstallUpdate = async () => {
+    setUpdateStatus("loading");
+    setUpdateProgress(0);
+    setUpdateMessage(
+      locale.ProgressModal.Download
+    );
+    setUpdateProgressOpen(true);
+
+    try {
+      await InstallUpdate();
+    } catch (err) {
+      const errorText =
+        err?.message ||
+        err?.toString() ||
+        "Unknown error";
+
+      setUpdateStatus("error");
+      setUpdateMessage(
+        `${locale.ProgressModal.Error} ${errorText}`
+      );
+    }
+  };
+
+  useEffect(() => {
+      if (!settings) return;
+      if (settings?.CheckUpdatesOnStartUp) {
+          check().catch(console.error);
+      }
+  }, [check, settings?.IgnoredVersion]);
+
+  useEffect(() => {
+      if (!settings) return;
+      if (!updateInfo?.Available) return;
+
+      if (settings.IgnoredVersion === updateInfo.Latest.Version) return;
+      if (!settings.CheckUpdatesOnStartUp) return;
+
+      const timer = setTimeout(() => {
+          setActiveModal("update");
+      }, 1000);
+
+      return () => clearTimeout(timer);
+  }, [updateInfo, settings?.IgnoredVersion, settings?.CheckUpdatesOnStartUp]);
+
+  useEffect(() => {
+    const unsubscribe = EventsOn(
+      "update-download-progress",
+      (downloaded, total) => {
+        if (!total || total <= 0) {
+          return;
+        }
+
+        const progress = Math.round((downloaded / total) * 100);
+
+        setUpdateProgress(progress);
+      }
+    );
+
+    return () => {
+      EventsOff("update-download-progress");
+    };
+  }, []);
+
+    useEffect(() => {
+    EventsOn("update-status", (status) => {
+      switch (status) {
+        case "extracting":
+          setUpdateStatus("loading");
+          setUpdateMessage(locale.ProgressModal.Extract);
+          break;
+
+        case "installing":
+          setUpdateStatus("loading");
+          setUpdateMessage(locale.ProgressModal.Install);
+          break;
+
+        case "restarting":
+          setUpdateStatus("loading");
+          setUpdateMessage(locale.ProgressModal.Restart);
+          break;
+      }
+    });
+
+    return () => {
+      EventsOff("update-status");
+    };
+  }, [locale]);
 
   return (
     <div
@@ -125,10 +231,26 @@ const App = () => {
             setLang={setLang}
             activeTab={activeTab}
             updateConfig={updateConfig}
+            updateInfo={updateInfo}
+            check={check}
             locale={locale.HeaderPanel}
             themeClasses={themeClasses}
             activeModal={activeModal}
             setActiveModal={setActiveModal}
+            settings={settings}
+            setSettings={setSettings}
+            handleInstallUpdate={handleInstallUpdate}
+            updateProgressOpen={updateProgressOpen}
+            updateStatus={updateStatus}
+            updateMessage={updateMessage}
+            updateProgress={updateProgress}
+            setUpdateProgressOpen={setUpdateProgressOpen}
+            setUpdateStatus={setUpdateStatus}
+            setUpdateMessage={setUpdateMessage}
+            setUpdateProgress={setUpdateProgress}
+            isSidePanelHovered={isSidePanelHovered}
+            sidePanelCollapsed={sidePanelCollapsed}
+            setSidePanelCollapsed={setSidePanelCollapsed}
           />
 
           <div className="flex flex-1 overflow-hidden">
@@ -137,6 +259,11 @@ const App = () => {
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               locale={locale.SidePanel}
+              collapsed={sidePanelCollapsed}
+              setCollapsed={setSidePanelCollapsed}
+              setIsHovered={setIsSidePanelHovered}
+              statusNotificationSystem={statusNotificationSystem}
+              statusDatabase={statusDatabase}
             />
 
             {/* MainWindow */}
@@ -163,6 +290,9 @@ const App = () => {
                     isProcessing={isProcessing}
                     setIsProcessing={setIsProcessing}
                     activeModal={activeModal}
+                    report={report}
+                    setReport={setReport}
+                    setStatusNotificationSystem={setStatusNotificationSystem}
                   />
                 )}
 
@@ -174,6 +304,8 @@ const App = () => {
                     themeClasses={themeClasses}
                     selectedGame={selectedGame}
                     setSelectedGame={setSelectedGame}
+                    setStatusDatabase={setStatusDatabase}
+                    sidePanelCollapsed={sidePanelCollapsed}
                   />
                 )}
                 {/* In future updates */}

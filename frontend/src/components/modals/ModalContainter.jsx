@@ -1,22 +1,32 @@
 export function ModalContainer({
-    isOpen,
-    onClose,
-    closeOnOverlay = true,
-    width = "max-w-lg",
-    children,
+  isOpen,
+  onClose,
+  closeOnOverlay = true,
+  width = "max-w-lg",
+  children,
+  layer = 100,
+  position = "screen",
 }) {
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                onClick={closeOnOverlay ? onClose : undefined}
-            />
+  const positionClass = {
+    screen: "fixed inset-0",
+    content: "absolute inset-x-0 bottom-0 top-0",
+  }[position];
 
-            <div className={`relative w-full ${width}`}>
-                {children}
-            </div>
-        </div>
-    );
+  return (
+    <div
+      className={`${positionClass} flex items-center justify-center p-4`}
+      style={{ zIndex: layer }}
+    >
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={closeOnOverlay ? onClose : undefined}
+      />
+
+      <div className={`relative w-full ${width}`}>
+        {children}
+      </div>
+    </div>
+  );
 }

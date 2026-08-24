@@ -7,7 +7,7 @@ import {
 } from "../../../wailsjs/go/application/App.js";
 
 export function useAppInit({
-    locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme,
+    locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed,
 }) {
     const isConfigLoadedRef = useRef(false);
     useEffect(() => {
@@ -27,6 +27,7 @@ export function useAppInit({
                   ...(sys.discord || {}),
                   token: sys.discord?.token || "",
                   roles: {
+                    default: sys.discord?.roles?.default || "en",
                     ru: sys.discord?.roles?.ru || "",
                     en: sys.discord?.roles?.en || "",
                   },
@@ -35,6 +36,7 @@ export function useAppInit({
                   ...prev.telegram,
                   ...(sys.telegram || {}),
                   roles: {
+                    default: sys.discord?.roles?.default || "en",
                     ru: sys.telegram?.roles?.ru || "",
                     en: sys.telegram?.roles?.en || "",
                   },
@@ -82,16 +84,23 @@ export function useAppInit({
             const settings = await LoadSettingsApp();
             if (settings) {
               const lang = settings.Language || settings.language || "EN";
-              const theme = settings.Theme || settings.theme || "dark";
-    
+              const theme = settings.Theme || settings.theme || "Dark";
+              const checkUpdatesOnStartUp = settings.CheckUpdatesOnStartUp ?? settings.checkUpdatesOnStartUp ?? false;
+              const ignoredVersion = settings.IgnoredVersion || settings.ignoredVersion || "";
+              const sidePanelCollapsed = settings.SidePanelCollapsed ?? settings.sidePanelCollapsed  ?? false;
+              
               setSettings((prev) => ({
                 ...prev,
                 Language: lang,
                 Theme: theme,
+                CheckUpdatesOnStartUp: checkUpdatesOnStartUp,
+                IgnoredVersion: ignoredVersion,
+                SidePanelCollapsed: sidePanelCollapsed,
               }));
-    
+              // TODO: Add ability to wait load all params for correct reveal UI
               setLang(lang);
               setTheme(theme);
+              setSidePanelCollapsed(sidePanelCollapsed);
             }
     
             isConfigLoadedRef.current = true;

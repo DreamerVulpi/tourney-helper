@@ -24,8 +24,9 @@ type MessengerPlatform struct {
 }
 
 type RolesID struct {
-	En string `toml:"en" json:"en"`
-	Ru string `toml:"ru" json:"ru"`
+	Default string `toml:"default" json:"default"`
+	En      string `toml:"en" json:"en"`
+	Ru      string `toml:"ru" json:"ru"`
 }
 
 type DebugMode struct {
@@ -58,6 +59,7 @@ type StreamLobby struct {
 	Conn          string `toml:"connection" json:"connection"`
 	Crossplatform bool   `toml:"crossplatform" json:"crossplatform"`
 	Passcode      string `toml:"passcode" json:"passcode"`
+	LinkToLobby   string `toml:"linkToLobby" json:"linkToLobby"`
 }
 
 type Logo struct {
@@ -90,8 +92,11 @@ type ConfigTournament struct {
 }
 
 type SettingsApplication struct {
-	Language string `toml:"language"`
-	Theme    string `toml:"theme"`
+	Language              string `toml:"language"`
+	Theme                 string `toml:"theme"`
+	CheckUpdatesOnStartUp bool   `toml:"checkUpdatesOnStartUp"`
+	IgnoredVersion        string `toml:"ignoredVersion"`
+	SidePanelCollapsed    bool   `toml:"sidePanelCollapsed"`
 }
 
 func GetAbsPath(fileName string) string {
@@ -181,8 +186,9 @@ func Init(configDir string) error {
 				GuildID:        "",
 				DebugChannelID: "",
 				Roles: RolesID{
-					Ru: "",
-					En: "",
+					Default: "en",
+					Ru:      "",
+					En:      "",
 				},
 			},
 			Telegram: MessengerPlatform{
@@ -192,8 +198,9 @@ func Init(configDir string) error {
 				GuildID:        "",
 				DebugChannelID: "",
 				Roles: RolesID{
-					Ru: "",
-					En: "",
+					Default: "en",
+					Ru:      "",
+					En:      "",
 				},
 			},
 			DebugMode: DebugMode{
@@ -229,6 +236,7 @@ func Init(configDir string) error {
 				Conn:          "Wired",
 				Crossplatform: false,
 				Passcode:      "0000",
+				LinkToLobby:   "",
 			},
 			Logo: Logo{
 				Img: "",
@@ -241,8 +249,11 @@ func Init(configDir string) error {
 			},
 		},
 		"settings.toml": SettingsApplication{
-			Language: "EN",
-			Theme:    "Dark",
+			Language:              "EN",
+			Theme:                 "Dark",
+			CheckUpdatesOnStartUp: true,
+			IgnoredVersion:        "",
+			SidePanelCollapsed:    false,
 		},
 	}
 

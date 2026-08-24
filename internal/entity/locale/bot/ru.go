@@ -77,6 +77,8 @@ var Ru = Lang{
 			Other:        "Другое",
 			ND:           "Нет данных",
 		},
+		LinkToLobby:  "Ссылка на лобби",
+		YourOpponent: "Ваш оппонент",
 	},
 	ViewDataMessage: ViewDataMessage{
 		Title:               "Проверка данных",

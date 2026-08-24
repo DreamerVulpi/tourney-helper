@@ -1,10 +1,10 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 import { DropdownList } from "./DropdownList.jsx";
 import { CopyButton } from "./CopyButton.jsx";
 
-export function Field({
+function FieldBase({
   label,
   width = "100%",
   icon: Icon,
@@ -12,6 +12,7 @@ export function Field({
   variant = "input", // input | password | select | copy
   type = "text",
   isNumber,
+  readOnly = false,
 
   value,
   onChange,
@@ -27,10 +28,10 @@ export function Field({
   themeClasses,
 }) {
   const iconSize = height.endsWith("rem")
-  ? Math.round(parseFloat(height) * 16 * 0.45)
-  : height.endsWith("px")
-  ? Math.round(parseFloat(height) * 0.45)
-  : 16;
+    ? Math.round(parseFloat(height) * 16 * 0.45)
+    : height.endsWith("px")
+      ? Math.round(parseFloat(height) * 0.45)
+      : 16;
 
   const [showSecret, setShowSecret] = useState(false);
 
@@ -38,7 +39,7 @@ export function Field({
     variant === "password" ? (showSecret ? "text" : "password") : type;
 
   return (
-    <div className="space-y-1.5"  style={{ width }}>
+    <div className="space-y-1.5" style={{ width }}>
       {label && (
         <label
           className={`text-[9px] font-black uppercase italic px-1 ${themeClasses.label}`}
@@ -50,7 +51,8 @@ export function Field({
       {variant === "select" ? (
         <DropdownList
           selectedValue={
-            items.find((item) => String(item.value) === String(value))?.label ?? value
+            items.find((item) => String(item.value) === String(value))?.label ??
+            value
           }
           items={items}
           onChange={onChange}
@@ -79,22 +81,24 @@ export function Field({
               <Icon size={iconSize} className="text-blue-600 shrink-0" />
             )}
 
-            <span className="truncate text-xs font-mono font-bold text-blue-600">{value}</span>
+            <span className="truncate text-xs font-mono font-bold text-blue-600">
+              {value}
+            </span>
           </div>
 
           <CopyButton text={value} className="absolute right-2" />
         </div>
       ) : variant === "button" ? (
-            <button
-              type="button"
-              onClick={onClick}
-              style={{ height }}
-              className={`
+        <button
+          type="button"
+          onClick={onClick}
+          style={{ height }}
+          className={`
                 w-full
                 flex
                 rounded-xl
                 border
-                transition-all
+                
                 gap-2
                 text-xs
                 items-center
@@ -105,22 +109,21 @@ export function Field({
                 text-black
                 ${themeClasses.button}
               `}
-            >
-              {Icon && (
-                <Icon
-                  size={iconSize}
-                  className="text-blue-600 pointer-events-none z-10"
-                />
-              )}
+        >
+          {Icon && (
+            <Icon
+              size={iconSize}
+              className="text-blue-600 pointer-events-none z-10"
+            />
+          )}
 
-              <span className="leading-none translate-y-[-1px]">
-                  {labelButton}
-              </span>
-            </button>
+          <span className="leading-none translate-y-[-1px]">{labelButton}</span>
+        </button>
       ) : variant === "textarea" ? (
         <textarea
           placeholder={placeholder}
           value={value}
+          readOnly={readOnly}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full ${height} p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${themeClasses.field}`}
         />
@@ -135,24 +138,22 @@ export function Field({
             text-xs
             whitespace-pre-wrap
             break-words
-            ${
-              themeClasses.field
-            }
+            ${themeClasses.field}
           `}
         >
           {value}
         </div>
       ) : variant === "combobox" ? (
         <DropdownList
-            editable
-            selectedValue={value}
-            items={items}
-            onChange={onChange}
-            icon={Icon}
-            iconSize={iconSize}
-            themeClasses={themeClasses}
-            className="px-4 text-xs font-bold"
-            style={{ height }}
+          editable
+          selectedValue={value}
+          items={items}
+          onChange={onChange}
+          icon={Icon}
+          iconSize={iconSize}
+          themeClasses={themeClasses}
+          className="px-4 text-xs font-bold"
+          style={{ height }}
         />
       ) : (
         <div className="relative flex items-center">
@@ -176,7 +177,7 @@ export function Field({
               rounded-xl
               border
               outline-none
-              transition-all
+              
               ${variant === "password" ? "pr-9" : "pr-4"}
               ${Icon ? "pl-9" : "px-4"}
               text-xs
@@ -199,3 +200,5 @@ export function Field({
     </div>
   );
 }
+
+export const Field = React.memo(FieldBase);

@@ -47,9 +47,10 @@ var En = Ui{
 				InitialSetup: HelpQA{
 					Question: "How do I set up the notification system for the first time?",
 					Answer: `1. Fill in the required "CLIENT ID" and "SECRET CLIENT" fields for the tournament platform. 
-					2. Fill in the required fields “BOT TOKEN,” “GUILD ID,” “CLIENT ID,” and “CLIENT SECRET” for the messenger. (The remaining fields are optional.)
+					2. Fill in the required fields "BOT TOKEN," "GUILD ID," "CLIENT ID," and "CLIENT SECRET" for the messenger. (The remaining fields are optional.)
 					3. Select the tournament data source and the messenger for notifications by clicking the platform button itself. 
-					4. After clicking the platform button, TourneyHelper will redirect you to the authorization page and invite the bot to your messaging server. The result will be displayed in the log window.`,
+					4. After clicking the platform button, the “TourneyHelper” program will redirect you to the login page. The result of the query will be displayed in the log window.
+                    5. Invite the bot you created for the messaging app to the server where the tournament players are located.`,
 				},
 				HowIsWorks: HelpQA{
 					Question: "How does the notification system work?",
@@ -97,7 +98,7 @@ var En = Ui{
 				HowUse: HelpQA{
 					Question: "How do I use it?",
 					Answer: `The program allows you to fully control the database — you can add (manually or via a file), edit, modify, and delete player data, as well as keep track of your game league or ban list.%v
-					If you're adding players via a file, you must log in to start.gg in advance in the "Sending notifications" tab.`,
+					If you're adding players, you must log in to start.gg in advance in the "Sending notifications" tab.`,
 				},
 			},
 		},
@@ -119,8 +120,32 @@ var En = Ui{
 			SubscribeOnProject: "Boosty",
 			SubscribeLink:      "https://boosty.to/dreamervulpi",
 		},
+		Update: UpdateModal{
+			Title:                           "Software Update",
+			NoUpdateTitle:                   "No new updates found",
+			NoUpdateDescription:             "If you accidentally skipped a version, download the archive with last version from %v GitHub %v and replace the .exe file yourself.",
+			NoData:                          "No data available",
+			UpdateDescriptionLabel:          "Update description",
+			DontShowAlertOnStartApplication: "Don't display the notification when the app starts",
+			GetUpdateButtonLabel:            "Get an update",
+			SkipUpdateButtonLabel:           "Skip the update",
+		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
+		MonitoringSystem: MonitoringSystem{
+			Title:                 "Monitoring",
+			TimeRemains:           "Time remaining until the end of the mailing cycle",
+			WaitingCycle:          "Waiting for the newsletter cycle to begin",
+			Min:                   "Min.",
+			Sec:                   "Sec.",
+			LimitRequestPerMinute: "Limit per minute:",
+			LimitRequestPerSecond: "Limit per second:",
+			TotalSuccessSent:      "Successfully sent:",
+			TotalAttemptsSent:     "Total attempts:",
+			SuccessRate:           "Success rate:",
+			AverageTime:           "Average time:",
+			Ms:                    "ms",
+		},
 		DebugModeSwitchLabel: "Debug Mode",
 		Platform: Platform{
 			AuthorizeStatePlatform: AuthorizeStatePlatform{
@@ -131,6 +156,7 @@ var En = Ui{
 			RedirectURL:                  "Redirect URL",
 			ParamsBot:                    "Params %v bot",
 			TokenBot:                     "Bot Token",
+			DefaultLocale:                "Default locale",
 			Messenger:                    "Messenger",
 			Tourney:                      "Tournament Platform",
 			RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",
@@ -168,6 +194,7 @@ var En = Ui{
 				Any:   "Any",
 				Lan:   "Only LAN",
 			},
+			LinkToLobbyLabel: "Link to the lobby",
 		},
 		ConfigurationLogo: ConfigurationLogo{
 			Label:         "Logo Configuration",
@@ -188,9 +215,9 @@ var En = Ui{
 	},
 	DatabasePanel: DatabasePanel{
 		AddButton: AddButton{
+			Label:           "Add player",
 			ErrorFillParams: "Error filling in parameters",
 			OkButtonLabel:   "OK",
-			Label:           "Add Player",
 			One:             "Single",
 			EditTitle:       "Edit player information",
 			AddBanTitle:     "Add the offender to the ban list",
@@ -206,7 +233,7 @@ var En = Ui{
 				Nickname:    "Nickname",
 			},
 			ImportFile: ImportFileModalWindow{
-				Label:                         "Import CSV/JSON File",
+				Label:                         "Import file",
 				Title:                         "Importing tournament participants",
 				BanTitle:                      "Importing a ban list file",
 				NameFile:                      "File name:",
@@ -243,7 +270,6 @@ var En = Ui{
 				},
 			},
 			ConfirmDurationBan:     "Please specify a valid ban duration or select 'Permanent'!",
-			BanLabel:               "Ban Management",
 			BanTitle:               "Ban player",
 			BanButtonLabel:         "Ban",
 			UnbanTitle:             "Unban player",
@@ -347,7 +373,7 @@ var En = Ui{
 			},
 		},
 		ResetRatingButton: ResetRatingModal{
-			Label:                   "Reset Rating for All Players",
+			Label:                   "Reset Rating",
 			Title:                   "Reset Rating",
 			Message:                 "Are you sure you want to reset the rating of %v absolutely all players for %v game %v in the database to 0?",
 			Attension:               "This action will wipe the current rating statistics!",
@@ -356,5 +382,14 @@ var En = Ui{
 		TotalCountNotesInDBLabel:       "Total players in database",
 		TotalCountBannedNotesInDBLabel: "Total players in ban list",
 		TotalCountRatingParticipants:   "Total players in rating league",
+	},
+	ProgressModal: ProgressModal{
+		Title:    "Downloading data",
+		Extract:  "Extract...",
+		Install:  "Installing...",
+		Restart:  "Restaring...",
+		Download: "Downloading",
+		Success:  "Success!",
+		Error:    "Error:",
 	},
 }

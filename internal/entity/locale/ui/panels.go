@@ -7,11 +7,13 @@ type Ui struct {
 	NotificationSystemPanel NotificationSystemPanel
 	DatabasePanel           DatabasePanel
 	ValidationAlertModal    ValidationAlertModal
+	ProgressModal           ProgressModal
 }
 
 type HeaderPanel struct {
-	Help  HelpModal
-	About AboutModal
+	Help   HelpModal
+	About  AboutModal
+	Update UpdateModal
 }
 
 type SidePanel struct {
@@ -26,6 +28,7 @@ type SidePanel struct {
 }
 
 type NotificationSystemPanel struct {
+	MonitoringSystem     MonitoringSystem
 	DebugModeSwitchLabel string
 	Platform             Platform
 	UrlToTournamentLabel string

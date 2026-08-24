@@ -12,11 +12,62 @@ import (
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	entityMetrics "github.com/dreamervulpi/tourney-helper/internal/entity/metrics"
+	entityPlatformRules "github.com/dreamervulpi/tourney-helper/internal/entity/platformRules"
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/update"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/bot/discord"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/rateLimiter"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 )
+
+func (a *App) CheckUpdate() (*update.UpdateInfo, error) {
+	return a.UpdateService.Check(a.ctx)
+}
+
+func (a *App) IsNotificationSystemReady() bool {
+	if a.ns == nil {
+		return false
+	}
+	return a.ns.IsReady()
+}
+
+func (a *App) GetNotificationMetrics() entityMetrics.Snapshot {
+	if a.ns == nil {
+		return entityMetrics.Snapshot{}
+	}
+	return a.ns.GetMessengerMetrics()
+}
+
+func (a *App) GetGetDataMetrics() entityMetrics.Snapshot {
+	if a.ns == nil {
+		return entityMetrics.Snapshot{}
+	}
+	return a.ns.GetTournamentPlatformMetrics()
+}
+
+func (a *App) GetNotificationLimits() entityPlatformRules.Limits {
+	if a.ns == nil {
+		return entityPlatformRules.Limits{}
+	}
+	return a.ns.GetMessengerLimits()
+}
+
+func (a *App) GetMessengerMessageLimit() int64 {
+	if a.ns == nil {
+		return 0
+	}
+	return a.ns.GetMessengerMessageLimit()
+}
+
+func (a *App) GetTournamentPlatformLimits() entityPlatformRules.Limits {
+	if a.ns == nil {
+		return entityPlatformRules.Limits{}
+	}
+	return a.ns.GetTournamentPlatformLimits()
+}
 
 func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
 	client := &auth.AuthClient{
@@ -62,16 +113,22 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 	return nil
 }
 
-func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament) (discord.Handler, error) {
-	adapter, err := sender.GetTournamentAdapter(a.TournamentClient, "Discord", cfgTournament.UrlToTournament, cfgBot.DebugMode.Mode, cfgTournament.Game.Name, nil)
+func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament) (*discord.Handler, error) {
+	collectorStartgg := metrics.NewCollector()
+	limiterStartgg := rateLimiter.NewStartggLimiter(collectorStartgg)
+
+	adapter, err := sender.GetTournamentAdapter(collectorStartgg, a.TournamentClient, "Discord", cfgTournament.UrlToTournament, cfgBot.DebugMode.Mode, cfgTournament.Game.Name, nil)
 	if err != nil {
-		return discord.Handler{}, err
+		return &discord.Handler{}, err
 	}
 
-	dh := discord.Handler{Auth: a.MessengerClient}
+	collectorDiscord := metrics.NewCollector()
+	limiterDiscord := rateLimiter.NewDiscordLimiter(collectorDiscord)
+
+	dh := discord.Handler{Auth: a.MessengerClient, Metrics: collectorDiscord}
 	meDiscordPlatform, err := dh.Auth.GetDiscordMe(a.ctx)
 	if err != nil {
-		return discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
+		return &discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
 	}
 
 	ns := sender.NewNotificationSystem(nil, adapter, a.Db, cfgBot.DebugMode.Mode, entitySender.Participant{
@@ -79,13 +136,13 @@ func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessen
 		MessengerLogin: meDiscordPlatform.Username,
 		Locale:         strings.ToLower(language),
 		GameName:       a.ConfigTournament.Game.Name,
-	}, 5*time.Minute)
+	}, limiterDiscord, limiterStartgg, collectorDiscord, collectorStartgg, 5*time.Minute)
 	dh.Ns = ns
 	if a.ConfigMessenger.DebugMode.Mode {
 		logger.Log(entityLogger.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
 	}
 
-	return dh, nil
+	return &dh, nil
 }
 
 func (a *App) ParseTournamentURL(platform string, rawURL string) (string, error) {
@@ -200,7 +257,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.TournamentClient.NamePlatform, a.TournamentClient))
+		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed", a.TournamentClient.NamePlatform))
 	}
 
 	if len(cfgTournament.UrlToTournament) == 0 {
@@ -225,7 +282,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed: %v", a.MessengerClient.NamePlatform, a.MessengerClient))
+		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed", a.MessengerClient.NamePlatform))
 	}
 
 	slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.UrlToTournament)
@@ -247,7 +304,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 	ctx, cancel := context.WithCancel(context.Background())
 	a.mu.Lock()
 	a.ns = sn.Ns
-	a.activeBot = &sn
+	a.activeBot = sn
 	a.nsCancel = cancel
 	sn.ReadyChan = make(chan struct{})
 	a.mu.Unlock()

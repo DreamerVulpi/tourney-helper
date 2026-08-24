@@ -13,13 +13,17 @@ import (
 	"strconv"
 	"strings"
 
+	"time"
+
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 )
 
 type Client struct {
 	httpClient *http.Client
+	Metrics    *metrics.Collector
 }
 
 func NewClient(clt *http.Client) *Client {
@@ -48,6 +52,15 @@ func validateData(data []byte) (string, error) {
 
 // Execute query for get raw data
 func (c *Client) RunQuery(query []byte) ([]byte, error) {
+	start := time.Now()
+
+	var err error
+	defer func() {
+		if c.Metrics != nil {
+			c.Metrics.RecordAPIRequest(err, time.Since(start))
+		}
+	}()
+
 	// Creates the POST request and checks for errors.
 	req, err := http.NewRequest("POST", "https://api.start.gg/gql/alpha", bytes.NewBuffer(query))
 	if err != nil {

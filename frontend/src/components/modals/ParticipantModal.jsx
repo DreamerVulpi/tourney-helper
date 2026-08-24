@@ -281,7 +281,7 @@ const ParticipantModal = ({
         uppercase
         italic
         tracking-wider
-        transition-all
+        
         text-white
 
         ${

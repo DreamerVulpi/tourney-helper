@@ -1,4 +1,6 @@
-export function ToggleSwitch({
+import React from "react";
+
+function ToggleSwitchBase({
   label,
   icon: Icon,
 
@@ -72,7 +74,7 @@ export function ToggleSwitch({
           w-10
           h-5
           rounded-full
-          transition-all
+          
           ${
             checked
               ? style.active
@@ -88,7 +90,7 @@ export function ToggleSwitch({
             h-4
             bg-white
             rounded-full
-            transition-all
+            
             ${
               checked
                 ? "right-0.5"
@@ -100,3 +102,5 @@ export function ToggleSwitch({
     </div>
   );
 }
+
+export const ToggleSwitch = React.memo(ToggleSwitchBase)

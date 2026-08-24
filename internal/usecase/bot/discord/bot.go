@@ -12,8 +12,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	entityLocale "github.com/dreamervulpi/tourney-helper/internal/entity/locale/bot"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 	usecaseSender "github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 )
 
@@ -40,6 +42,8 @@ type Handler struct {
 	registeredCmds []*discordgo.ApplicationCommand
 	cfgCache       config.ConfigMessenger
 	ReadyChan      chan struct{}
+
+	Metrics *metrics.Collector
 }
 
 func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform string, tournament config.ConfigTournament) {
@@ -86,14 +90,22 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 
 	h.InitBot(cfg, tourneyAuth.NamePlatform, tournament)
 	ds := &DiscordSender{
-		session: session,
-		params:  h.params,
+		session:    session,
+		params:     h.params,
+		Metrics:    h.Metrics,
+		saveLocale: h.Ns.Db.EditParticipantLocale,
 	}
+	standart, errL := ds.reconizeLocale(ds.params.rolesIdList.Default)
+	if errL != nil {
+		ds.defaultLocale = entityLocale.En
+	} else {
+		ds.defaultLocale = standart
+	}
+
 	if ds.params.debugChannelID == "" {
 		logger.Log(entityLogger.Info, "Notification System | Working without log channel...")
 	}
 	h.Ns.Messenger = ds
-
 	registeredCommands, err := h.InitCommands(h.Auth.Config.ClientID, session, &tournament, &cfg)
 	if err != nil {
 		session.Close()
@@ -112,12 +124,10 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 }
 
 func (h *Handler) Stop() error {
-	logger.Log(entityLogger.Info, fmt.Sprintf("Starting bot stop procedure. dh pointer: %p\n", h))
 	if h == nil {
 		return fmt.Errorf("handler is nil")
 	}
 	h.mtx.Lock()
-	logger.Log(entityLogger.Info, fmt.Sprintf("dh.session: %p, dh.Auth: %p, dh.Ns: %p\n", h.session, h.Auth, h.Ns))
 
 	if h.cancel != nil {
 		h.cancel()
@@ -131,7 +141,6 @@ func (h *Handler) Stop() error {
 	session := h.session
 	registeredCmds := h.registeredCmds
 	auth := h.Auth
-	ns := h.Ns
 	h.mtx.Unlock()
 
 	logger.Log(entityLogger.Info, "Removing Discord commands and clearing up roles...")
@@ -142,7 +151,6 @@ func (h *Handler) Stop() error {
 
 	// Check Auth & Config before delete commands
 	if auth != nil {
-		log.Printf("auth.Config pointer: %p\n", auth.Config)
 		if auth.Config != nil {
 			log.Printf("Processing %d registered commands for deletion\n", len(registeredCmds))
 
@@ -168,13 +176,6 @@ func (h *Handler) Stop() error {
 
 	logger.Log(entityLogger.Info, "Closing Discord session...")
 	err := session.Close()
-
-	if ns != nil {
-		log.Printf("Unlinking messenger from dh.Ns (%p)\n", ns)
-		ns.Messenger = nil
-	} else {
-		log.Println("dh.Ns is nil, skipping messenger unlinking")
-	}
 
 	// Clear resourses
 	h.mtx.Lock()

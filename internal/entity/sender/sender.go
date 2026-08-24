@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-const NotificationDelay = 1000 * time.Millisecond
-
 type Participant struct {
 	Id                      int        `json:"id"`
 	MessengerID             string     `json:"messengerId"`
@@ -51,6 +49,8 @@ type NotificationSender interface {
 	SendMessage(ctx context.Context, targetID string, dmChannelID *string, data SetData) (string, error)
 	GetPlatformMessengerName() string
 	CreateDMChannel(ctx context.Context, platformID string) (*string, error)
+	IsLogChannelEnabled() bool
+	GetParticipantLocale(ctx context.Context, messengerID string) (string, error)
 }
 
 type NotificationData interface {

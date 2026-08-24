@@ -1,0 +1,73 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.11.0
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Download Go modules
+        run: go mod download
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.1
+
+      - name: Create Wails configuration
+        shell: pwsh
+        run: |
+          @'
+          {
+            "$schema": "https://wails.io/schemas/config.v2.json",
+            "name": "TourneyHelper",
+            "outputfilename": "TourneyHelper.exe",
+            "frontend:install": "npm install",
+            "frontend:build": "npm run build",
+            "frontend:dev:watcher": "npm run dev",
+            "frontend:dev:serverUrl": "auto",
+            "author": {
+              "name": "DreamerVulpi",
+              "email": "test@test.com"
+            }
+          }
+          '@ | Set-Content -Path wails.json
+
+      - name: Build application
+        run: >
+          wails build --clean
+          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=false"
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run tests
+        run: go test -race -cover -timeout 1m ./...

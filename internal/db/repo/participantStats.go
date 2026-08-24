@@ -108,7 +108,8 @@ func (p *ParticipantStats) GetById(ctx context.Context, participantId int) ([]en
 	const sql = `
 		SELECT ps.id, ps.participant_id, ps.game_name, ps.game_id, ps.rating, ps.updated_at
 		FROM participant_stats ps
-		WHERE participant_id = $1`
+		WHERE participant_id = $1
+		ORDER BY ps.id`
 	rows, err := p.Conn.QueryContext(ctx, sql, participantId)
 	if err != nil {
 		return nil, fmt.Errorf("query error: %w", err)

@@ -124,7 +124,6 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 			}
 		}
 	}
-	// logger.Log(entityLogger.Info, fmt.Sprintf("prepareSetData | Set: %v | Recipient: %s vs Opponent: %s | Link: %s", set.SetID, recipient.MessengerLogin, opponent.MessengerLogin, set.FullInviteLink))
 
 	if len(set.StreamSourse) == 0 {
 		fields := []*discordgo.MessageEmbedField{
@@ -150,7 +149,9 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 		if set.StreamSourse == "YOUTUBE" {
 			stream = "https://www.youtube.com/@" + set.StreamName
 		}
+
 		fields := []*discordgo.MessageEmbedField{
+			{Name: local.StreamLobbyMessage.YourOpponent, Value: opponent.GameNickname},
 			{Name: local.StreamLobbyMessage.StreamLink, Value: stream},
 			{Name: local.StreamLobbyMessage.MessageHeader, Value: set.FullInviteLink},
 			{Name: local.StreamLobbyMessage.ParamsHeader},
@@ -161,6 +162,14 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 			{Name: local.StreamLobbyMessage.Crossplatform, Value: fieldCrossplay(local, s.params.rulesMatches.Crossplatform), Inline: true},
 			{Name: local.StreamLobbyMessage.Passcode, Value: fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, s.params.streamLobby.Passcode), Inline: true},
 		}
+
+		linkToLobby := s.params.tournament.Stream.LinkToLobby
+		if linkToLobby != "" {
+			fields = append(fields, &discordgo.MessageEmbedField{
+				Name: local.StreamLobbyMessage.LinkToLobby, Value: linkToLobby,
+			})
+		}
+
 		message = msgEmbed(fmt.Sprintf(local.StreamLobbyMessage.Title, set.TournamentName), fields, embedColor, &s.params)
 		message.Description = local.StreamLobbyMessage.Description
 	}
@@ -194,7 +203,7 @@ func (s *DiscordSender) btnSupport(donName, donURL, donEmoji, subName, subURL, s
 	}
 }
 
-func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*discordgo.MessageEmbed, entityLocale.Lang, entitySender.Participant) {
+func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData, discordLocale string) (*discordgo.MessageEmbed, entityLocale.Lang, entitySender.Participant) {
 	var recipient entitySender.Participant
 	var opponent entitySender.Participant
 	var sidePrefix string
@@ -215,11 +224,16 @@ func (s *DiscordSender) msgInvite(targetID string, set entitySender.SetData) (*d
 	}
 
 	var local entityLocale.Lang
-	switch recipient.Locale {
-	case string(entityLocale.LocaleRu):
-		local = entityLocale.Ru
-	default:
-		local = entityLocale.En
+
+	if discordLocale == "" || discordLocale == "N/D" {
+		local = s.defaultLocale
+	} else {
+		localeTarget, errL := s.reconizeLocale(discordLocale)
+		if errL != nil {
+			local = s.defaultLocale
+		} else {
+			local = localeTarget
+		}
 	}
 
 	message, err := s.prepareMsgSetData(opponent, set, local)
@@ -243,6 +257,8 @@ func (_ *Handler) typeLocale(language string) entityLocale.Lang {
 	var local entityLocale.Lang
 	switch language {
 	case "Russian":
+		local = entityLocale.Ru
+	case "ru":
 		local = entityLocale.Ru
 	default:
 		local = entityLocale.En
@@ -307,7 +323,7 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 	}
 
 	logEmbed := msgEmbed(fmt.Sprintf(local.LogMessage.Title, set.TournamentName), logFields, color, &s.params)
-	if _, err := s.session.ChannelMessageSendComplex(s.params.debugChannelID, &discordgo.MessageSend{
+	_, err := s.session.ChannelMessageSendComplex(s.params.debugChannelID, &discordgo.MessageSend{
 		Embed: logEmbed,
 		Components: s.btnSupport(
 			local.DonateField.Name,
@@ -317,7 +333,8 @@ func (s *DiscordSender) logMsgToDiscord(success bool, errStr string, set entityS
 			local.SubscribeField.URL,
 			local.SubscribeField.Emoji,
 		),
-	}); err != nil {
+	})
+	if err != nil {
 		log.Printf("logToDiscord | error sending to debug channel: %v", err)
 	}
 }

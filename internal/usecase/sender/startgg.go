@@ -182,7 +182,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 
 			for _, set := range sets {
 				if ctx.Err() != nil {
-					return nil, err
+					return nil, ctx.Err()
 				}
 
 				if len(set.Slots[0].Entrant.Participants) == 0 || len(set.Slots[1].Entrant.Participants) == 0 {

@@ -2,6 +2,42 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type ProgressModal struct {
+	Title    string
+	Download string
+	Extract  string
+	Install  string
+	Restart  string
+	Success  string
+	Error    string
+}
+
+type UpdateModal struct {
+	Title                           string
+	NoData                          string
+	NoUpdateTitle                   string
+	NoUpdateDescription             string
+	UpdateDescriptionLabel          string
+	DontShowAlertOnStartApplication string
+	GetUpdateButtonLabel            string
+	SkipUpdateButtonLabel           string
+}
+
+type MonitoringSystem struct {
+	Title                 string
+	TimeRemains           string
+	WaitingCycle          string
+	Min                   string
+	Sec                   string
+	LimitRequestPerMinute string
+	LimitRequestPerSecond string
+	TotalSuccessSent      string
+	TotalAttemptsSent     string
+	SuccessRate           string
+	AverageTime           string
+	Ms                    string
+}
+
 type NspLogs struct {
 	NotificationDeliveryStopped string
 	LaunchNewsletterInDebugMode string
@@ -18,6 +54,8 @@ type LobbyLiveBroadcast struct {
 	ListCrossplatform  ListCrossplatform
 	TypeConnection     TypeConnection
 	AccessCodeLabel    string
+	LinkToLobbyLabel   string
+	YourOpponent       string
 }
 
 type TypeConnection struct {
@@ -82,16 +120,15 @@ type Filters struct {
 }
 
 type AddButton struct {
+	Label                    string
 	ErrorFillParams          string
 	OkButtonLabel            string
-	Label                    string
 	One                      string
 	EditTitle                string
 	AddBanTitle              string
 	EditBanTitle             string
 	ImportFile               ImportFileModalWindow
 	ConfirmDurationBan       string
-	BanLabel                 string
 	AddBanFields             AddBanFields
 	AddContactOfMessenger    AddContactOfMessenger
 	AddDataOfTourneyPlatform AddDataOfTourneyPlatform
@@ -228,6 +265,7 @@ type Platform struct {
 	SuccessMsg                   string
 	ErrMsg                       string
 	TokenBot                     string
+	DefaultLocale                string
 	Messenger                    string
 	Tourney                      string
 	DownloadSettings             string

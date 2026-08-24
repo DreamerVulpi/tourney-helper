@@ -2,14 +2,18 @@ package application
 
 import (
 	"context"
+	"os"
 	"sync"
 	"time"
+
+	"path/filepath"
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/bot"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -23,6 +27,8 @@ type App struct {
 	Locale           *config.SettingsApplication
 	logUpdateTimer   *time.Timer
 	OAuthServer      *auth.OAuthCallbackServer
+	UpdateService    *update.Service
+	UpdateManager    *update.Manager
 
 	mu        sync.Mutex
 	ns        *sender.NotificationSystem
@@ -37,6 +43,7 @@ func NewApp() *App {
 func (a *App) Startup(ctx context.Context) {
 	a.ctx = ctx
 
+	go a.CheckUpdate()
 	go a.StartBanCleaner(a.ctx)
 }
 
@@ -68,4 +75,41 @@ func (a *App) OpenImportImage() (string, error) {
 			},
 		},
 	})
+}
+
+func (a *App) InstallUpdate() error {
+	exePath, err := os.Executable()
+	if err != nil {
+		return err
+	}
+
+	return a.UpdateManager.Install(
+		a.ctx,
+		os.Getpid(),
+		filepath.Dir(exePath),
+		filepath.Base(exePath),
+		func() {
+			runtime.EventsEmit(
+				a.ctx,
+				"update-status",
+				"restarting",
+			)
+			runtime.Quit(a.ctx)
+		},
+		func(downloaded int64, total int64) {
+			runtime.EventsEmit(
+				a.ctx,
+				"update-download-progress",
+				downloaded,
+				total,
+			)
+		},
+		func(status string) {
+			runtime.EventsEmit(
+				a.ctx,
+				"update-status",
+				status,
+			)
+		},
+	)
 }

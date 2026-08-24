@@ -191,7 +191,7 @@ const ParticipantActionModal = ({
         uppercase
         italic
         tracking-wider
-        transition-all
+        
         text-white
 
         ${actionConfig.btnBg}

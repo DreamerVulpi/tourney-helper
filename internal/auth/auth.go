@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"os"
 
 	"log"
@@ -185,6 +186,11 @@ func (ac *AuthClient) GetDiscordMe(ctx context.Context) (*Identity, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("Discord API returned %s: %s", resp.Status, string(body))
+	}
 
 	var data struct {
 		ID       string `json:"id"`

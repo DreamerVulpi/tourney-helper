@@ -2,13 +2,25 @@ package discord
 
 import (
 	"fmt"
+	"time"
 
 	"strings"
 
 	"context"
 
 	"github.com/bwmarrin/discordgo"
+	entityLocale "github.com/dreamervulpi/tourney-helper/internal/entity/locale/bot"
 )
+
+func (s *DiscordSender) reconizeLocale(locale string) (entityLocale.Lang, error) {
+	switch locale {
+	case string(entityLocale.LocaleRu):
+		return entityLocale.Ru, nil
+	case string(entityLocale.LocaleEn):
+		return entityLocale.En, nil
+	}
+	return entityLocale.Lang{}, fmt.Errorf("unknown locale: %v", locale)
+}
 
 func escapeMarkdown(text string) string {
 	return strings.NewReplacer(
@@ -56,4 +68,18 @@ func (h *Handler) getContact(i *discordgo.InteractionCreate, local responseLocal
 	embed = append(embed, msgContactData[0])
 
 	return embed, nil
+}
+
+func (s *DiscordSender) getMemberLocale(ctx context.Context, targetID string) (string, error) {
+	start := time.Now()
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
+
+	member, err := s.session.GuildMember(s.params.guildID, targetID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get Discord member %s: %w", targetID, err)
+	}
+	s.Metrics.RecordAPIRequest(err, time.Since(start))
+	return s.getLocale(member.Roles), nil
 }
