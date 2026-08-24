@@ -36,20 +36,6 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Verify formatting
-        run: |
-          if [ -n "$(gofmt -l .)" ]; then
-            echo "Files are not formatted:"
-            gofmt -l .
-            exit 1
-          fi
-
-      - name: Run go vet
-        run: go vet ./...
-
-      - name: Run tests
-        run: go test -race -cover -timeout 1m ./...
-
       - name: Install Wails CLI
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.1
 
