@@ -65,7 +65,7 @@ jobs:
           -X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=false"
 
       - name: Build updater
-        run: go build -o build/bin/updater.exe ./cmd/updater
+        run: go build -o build/bin/updater.exe ./cmd/update
 
       - name: Archive build
         shell: pwsh
