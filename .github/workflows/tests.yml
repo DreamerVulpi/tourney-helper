@@ -50,13 +50,13 @@ jobs:
             exit 1
           fi
 
+      - name: Build application
+        run: >
+          wails build --clean
+          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=false"
+
       - name: Run go vet
         run: go vet ./...
 
       - name: Run tests
         run: go test -race -cover -timeout 1m ./...
-
-      - name: Build application
-        run: >
-          wails build --clean
-          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=false"
