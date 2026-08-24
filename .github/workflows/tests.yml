@@ -50,10 +50,28 @@ jobs:
             exit 1
           fi
 
+      - name: Create Wails configuration
+        run: |
+          cat > wails.json <<'EOF'
+          {
+            "$schema": "https://wails.io/schemas/config.v2.json",
+            "name": "TourneyHelper",
+            "outputfilename": "TourneyHelper.exe",
+            "frontend:install": "npm install",
+            "frontend:build": "npm run build",
+            "frontend:dev:watcher": "npm run dev",
+            "frontend:dev:serverUrl": "auto",
+            "author": {
+              "name": "DreamerVulpi",
+              "email": "test@test.com"
+            }
+          }
+          EOF
+
       - name: Build application
         run: >
           wails build --clean
-          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=false"
+          -ldflags "-X github.com/dreamervulpi/tourney-helper/internal/version.DebugMode=true"
 
       - name: Run go vet
         run: go vet ./...
