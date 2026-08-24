@@ -723,75 +723,17 @@ const columns = prepareColumns(
     debouncedRatingUpdate(participantId, selectedGame, val, nickname);
   };
 
-  // // Handler for update rating
-  // const handleUpdateRating = async (participantId, gameName, newRating, nickname) => {
-  //   const logActionUpdateRating = locale.Table.LogsActions.UpdateRating;
-  //   const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
-  //   try {
-  //     await EditParticipantStatsRating(participantId, gameName, newRating);
-
-  //     setPlayers((prev) =>
-  //       prev.map((p) =>
-  //         p.id === participantId ? { ...p, rating: newRating } : p,
-  //       ),
-  //     );
-  //   } catch (err) {
-  //     console.error(`${logActionErrParts[0]} ${nickname || "User"}`);
-  //   }
-  // };
-
   // Handler for update rating
-const handleUpdateRating = async (
-  participantId,
-  gameName,
-  newRating,
-  nickname,
-) => {
-  const logActionUpdateRating = locale.Table.LogsActions.UpdateRating;
-  const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
-
-  console.log("[Rating] handleUpdateRating called:", {
+  const handleUpdateRating = async (
     participantId,
-    participantIdType: typeof participantId,
     gameName,
-    gameNameType: typeof gameName,
     newRating,
-    newRatingType: typeof newRating,
     nickname,
-    nicknameType: typeof nickname,
-  });
+  ) => {
+    const logActionUpdateRating = locale.Table.LogsActions.UpdateRating;
+    const logActionErrParts = locale.Table.LogsActions.Err.split("%v");
 
-  try {
-    console.log("[Rating] Calling EditParticipantStatsRating:", {
-      participantId,
-      gameName,
-      newRating,
-    });
-
-    const result = await EditParticipantStatsRating(
-      participantId,
-      gameName,
-      newRating,
-    );
-
-    console.log("[Rating] EditParticipantStatsRating success:", result);
-
-    setPlayers((prev) =>
-      prev.map((p) =>
-        p.id === participantId
-          ? { ...p, rating: newRating }
-          : p,
-      ),
-    );
-
-    console.log("[Rating] Player state updated:", {
-      participantId,
-      newRating,
-    });
-  } catch (err) {
-    console.error("[Rating] EditParticipantStatsRating ERROR:", err);
-
-    console.error("[Rating] Arguments at error:", {
+    console.log("[Rating] handleUpdateRating called:", {
       participantId,
       participantIdType: typeof participantId,
       gameName,
@@ -802,11 +744,52 @@ const handleUpdateRating = async (
       nicknameType: typeof nickname,
     });
 
-    console.error(
-      `${logActionErrParts[0]} ${nickname || "User"}`,
-    );
-  }
-};
+    try {
+      console.log("[Rating] Calling EditParticipantStatsRating:", {
+        participantId,
+        gameName,
+        newRating,
+      });
+
+      const result = await EditParticipantStatsRating(
+        participantId,
+        gameName,
+        newRating,
+      );
+
+      console.log("[Rating] EditParticipantStatsRating success:", result);
+
+      setPlayers((prev) =>
+        prev.map((p) =>
+          p.id === participantId
+            ? { ...p, rating: newRating }
+            : p,
+        ),
+      );
+
+      console.log("[Rating] Player state updated:", {
+        participantId,
+        newRating,
+      });
+    } catch (err) {
+      console.error("[Rating] EditParticipantStatsRating ERROR:", err);
+
+      console.error("[Rating] Arguments at error:", {
+        participantId,
+        participantIdType: typeof participantId,
+        gameName,
+        gameNameType: typeof gameName,
+        newRating,
+        newRatingType: typeof newRating,
+        nickname,
+        nicknameType: typeof nickname,
+      });
+
+      console.error(
+        `${logActionErrParts[0]} ${nickname || "User"}`,
+      );
+    }
+  };
 
   // Handler for rating values
   const handleUpdateRatingRef = useRef(handleUpdateRating);

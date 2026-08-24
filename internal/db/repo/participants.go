@@ -323,8 +323,12 @@ func (p *Participants) GetListSortByRating(ctx context.Context, nameMessengerPla
                 s.game_name = $3 OR NOT EXISTS (SELECT 1 FROM participant_stats WHERE participant_id = p.id) OR $3 = '' OR $3 IS NULL
             )
 			AND COALESCE(s.rating, 0) > 0
-			AND 
-			(
+
+			AND NOT (
+				b.participant_id IS NOT NULL
+				AND (b.expires_at IS NULL OR b.expires_at > DATETIME('now'))
+			)
+			AND (
 				$6 IS NULL OR $6 = '' OR 
 				LOWER(p.nickname) LIKE '%' || LOWER($6) || '%' OR
 				LOWER(a_tour.platform_login) LIKE '%' || LOWER($6) || '%' OR 

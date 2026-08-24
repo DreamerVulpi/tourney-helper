@@ -24,7 +24,7 @@ func (db *Database) syncParticipant(ctx context.Context, api, database entitySen
 	}
 	needUpdate := false
 
-	if shouldReplace(api.GameNickname, database.GameNickname) {
+	if shouldFill(api.GameNickname, database.GameNickname) {
 		request.Nickname = api.GameNickname
 		needUpdate = true
 	}
@@ -32,7 +32,7 @@ func (db *Database) syncParticipant(ctx context.Context, api, database entitySen
 		request.Region = api.Region
 		needUpdate = true
 	}
-	if shouldReplace(api.Locale, database.Locale) {
+	if shouldFill(api.Locale, database.Locale) {
 		request.Locale = api.Locale
 		needUpdate = true
 	}
@@ -62,7 +62,7 @@ func (db *Database) syncMessengerAccount(ctx context.Context, api, database enti
 		needUpdate = true
 	}
 
-	if shouldReplace(api.MessengerLogin, database.MessengerLogin) {
+	if shouldFill(api.MessengerLogin, database.MessengerLogin) {
 		request.PlatformLogin = api.MessengerLogin
 		needUpdate = true
 	}
@@ -87,12 +87,12 @@ func (db *Database) syncTournamentAccount(ctx context.Context, api, database ent
 	}
 	needUpdate := false
 
-	if shouldFill(api.TournamentPlatformID, database.TournamentPlatformID) {
+	if shouldReplace(api.TournamentPlatformID, database.TournamentPlatformID) {
 		request.PlatformId = api.TournamentPlatformID
 		needUpdate = true
 	}
 
-	if shouldReplace(api.TournamentPlatformLogin, database.TournamentPlatformLogin) {
+	if shouldFill(api.TournamentPlatformLogin, database.TournamentPlatformLogin) {
 		request.PlatformLogin = api.TournamentPlatformLogin
 		needUpdate = true
 	}
@@ -115,7 +115,7 @@ func (db *Database) syncStats(ctx context.Context, api, database entitySender.Pa
 	}
 	needUpdate := false
 
-	if shouldReplace(api.GameID, database.GameID) {
+	if shouldFill(api.GameID, database.GameID) {
 		request.GameId = api.GameID
 		needUpdate = true
 	}
