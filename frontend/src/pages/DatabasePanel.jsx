@@ -1382,11 +1382,6 @@ const columns = prepareColumns(
                 loading={loading}
               />
             </table>
-            {loading && (
-              <div className="p-4 text-center text-[10px] font-black uppercase italic text-amber-500">
-                {locale.Table.LoadingDataPlayers}
-              </div>
-            )}
           </div>
         </div>
       </div>

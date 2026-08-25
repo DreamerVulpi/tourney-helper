@@ -5,7 +5,6 @@ function TableBodyBase({
   players,
   columns,
   locale,
-  loading,
 }) {
   const totalSize = columns.reduce(
     (sum, column) => sum + column.size,
@@ -65,17 +64,6 @@ function TableBodyBase({
                 {locale.Table.NoDataAccordingFilters}
               </p>
             </div>
-          </td>
-        </tr>
-      )}
-
-      {loading && (
-        <tr>
-          <td
-            colSpan={columns.length}
-            className="p-4 text-center text-[10px] font-black uppercase italic text-amber-500"
-          >
-            {locale.Table.LoadingDataPlayers}
           </td>
         </tr>
       )}
