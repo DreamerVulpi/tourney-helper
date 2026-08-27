@@ -49,7 +49,10 @@ func (p *ParticipantBans) Edit(ctx context.Context, participantId int, typeBan s
 		INSERT INTO participant_bans (participant_id, type_ban, reason, expires_at)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (participant_id)
-		DO UPDATE SET type_ban = EXCLUDED.type_ban, reason = EXCLUDED.reason, expires_at = EXCLUDED.expires_at`
+		DO UPDATE SET
+			type_ban = COALESCE(NULLIF(EXCLUDED.type_ban, ''), participant_bans.type_ban),
+    		reason = COALESCE(NULLIF(EXCLUDED.reason, ''), participant_bans.reason),
+			expires_at = EXCLUDED.expires_at`
 	_, err := p.Conn.ExecContext(ctx, sql, participantId, typeBan, reason, expiresAt)
 	if err != nil {
 		return fmt.Errorf("don't edited ban participant account (ID: %v) from database, %w", participantId, err)

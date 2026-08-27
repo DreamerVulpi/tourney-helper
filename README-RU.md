@@ -8,9 +8,7 @@
 </p>
 <p align="center">
     <a href="https://pkg.go.dev/github.com/dreamervulpi/tourney-helper"><img src="https://img.shields.io/badge/Go.dev-reference-007d9c?logo=go&logoColor=white" alt="Go.dev"></a>
-    <a href="https://github.com/DreamerVulpi/tourney-helper/releases">
-        <img src="https://img.shields.io/badge/Версия-0.4.0-blue" alt="Version">
-    </a>
+    <a href="https://github.com/DreamerVulpi/tourney-helper/releases"><img src="https://img.shields.io/badge/Версия-0.4.0-blue" alt="Version"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/📄 Лицензия-MIT-green?logo=&logoColor=white" alt="Licenses"></a>
     <a href="https://github.com/DreamerVulpi/tourney-helper/issues"><img src="https://img.shields.io/badge/🪲 Сообщить_о_баге-BUG-red" alt="ReportBug"></a>
 </p>

@@ -71,13 +71,12 @@ func (p *ParticipantAccounts) Edit(ctx context.Context, participantId int, platf
 		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (platform_name, participant_id)
 		DO UPDATE SET
-			platform_id = EXCLUDED.platform_id,
-			dm_channel_id = COALESCE(EXCLUDED.dm_channel_id, participant_accounts.dm_channel_id),
-			platform_login = EXCLUDED.platform_login,
+			platform_id = COALESCE(NULLIF(EXCLUDED.platform_id, ''), participant_accounts.platform_id),
+			dm_channel_id = COALESCE(NULLIF(EXCLUDED.dm_channel_id, ''), participant_accounts.dm_channel_id),
+			platform_login = COALESCE(NULLIF(EXCLUDED.platform_login, ''), participant_accounts.platform_login),
 			is_found = EXCLUDED.is_found,
 			updated_at = CURRENT_TIMESTAMP
 		RETURNING id`
-
 	_, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, platformId, dmChannelId, platformLogin, isFound)
 	if err != nil {
 		return fmt.Errorf("failed edit participant account (PlatformName: %v) from database, %w", platformName, err)
@@ -89,7 +88,7 @@ func (p *ParticipantAccounts) EditDmChannel(ctx context.Context, participantId i
 	const sql = `
 		UPDATE participant_accounts
 		SET
-			dm_channel_id = $3,
+			dm_channel_id = COLEASCE(NULLIF($3, ''), dm_channel_id),
 			updated_at = CURRENT_TIMESTAMP
 		WHERE participant_id = $1 AND platform_name = $2
 	`

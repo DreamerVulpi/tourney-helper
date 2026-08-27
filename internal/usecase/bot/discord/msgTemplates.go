@@ -137,7 +137,7 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 			{Name: local.InviteMessage.Stage, Value: fieldStage(local, s.params.rulesMatches.Stage), Inline: true},
 			{Name: local.InviteMessage.Rounds, Value: fmt.Sprintf("%v", s.params.rulesMatches.Rounds), Inline: true},
 			{Name: local.InviteMessage.Duration, Value: fmt.Sprintf(local.InviteMessage.DurationCount, s.params.rulesMatches.Duration), Inline: true},
-			{Name: local.InviteMessage.Crossplatform, Value: fieldCrossplay(local, s.params.rulesMatches.Crossplatform), Inline: true},
+			{Name: local.InviteMessage.Crossplatform, Value: fieldCrossplay(local, s.params.streamLobby.Crossplatform), Inline: true},
 		}
 		message = msgEmbed(fmt.Sprintf(local.InviteMessage.Title, set.TournamentName), fields, embedColor, &s.params)
 		message.Description = local.InviteMessage.Description
@@ -159,7 +159,7 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 			{Name: local.StreamLobbyMessage.Area, Value: fieldArea(local, s.params.streamLobby.Area), Inline: true},
 			{Name: local.StreamLobbyMessage.Language, Value: fieldLanguage(local, s.params.streamLobby.Language), Inline: true},
 			{Name: local.StreamLobbyMessage.TypeConnection, Value: fieldConnection(local, s.params.streamLobby.Conn), Inline: true},
-			{Name: local.StreamLobbyMessage.Crossplatform, Value: fieldCrossplay(local, s.params.rulesMatches.Crossplatform), Inline: true},
+			{Name: local.StreamLobbyMessage.Crossplatform, Value: fieldCrossplay(local, s.params.streamLobby.Crossplatform), Inline: true},
 			{Name: local.StreamLobbyMessage.Passcode, Value: fmt.Sprintf(local.StreamLobbyMessage.PasscodeTemplate, s.params.streamLobby.Passcode), Inline: true},
 		}
 

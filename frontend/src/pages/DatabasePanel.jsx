@@ -114,7 +114,7 @@ const normalColumns = [
 
   {
     key: "language",
-    size: sidePanelCollapsed ? 0.4 : 0.2,
+    size: 0.4,
     header: locale.Table.Language,
     tdClassName:
       "font-bold italic opacity-70 uppercase whitespace-nowrap",

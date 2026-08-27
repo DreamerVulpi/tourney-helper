@@ -31,7 +31,6 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 	setForP2.ContactPlayer2 = contactP1
 	setForP2.IsTest = true
 
-	t := time.Now()
 	debugChannelID, err := ns.getDebugDMChannel(ctx)
 	if err != nil && !errors.Is(err, context.Canceled) {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Can't get debug DM channel for test contact: %v", ns.TestContact.MessengerLogin))
@@ -55,10 +54,8 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 	if errP1 == nil {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
 	}
-	ns.MetricsMessenger.RecordMessageSend(errP1, time.Since(t))
 	ns.MessagesSentCurrentCycle.Add(1)
 
-	t = time.Now()
 	errWaitP2 := ns.LimiterMessenger.Wait(ctx, entityRateLimiter.Operation{
 		Type:     entityRateLimiter.OperationMessage,
 		Priority: entityRateLimiter.PriorityHigh,
@@ -76,7 +73,6 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 	if errP2 == nil {
 		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
 	}
-	ns.MetricsMessenger.RecordMessageSend(errP2, time.Since(t))
 	ns.MessagesSentCurrentCycle.Add(1)
 }
 

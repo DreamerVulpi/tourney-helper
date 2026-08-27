@@ -1,4 +1,4 @@
 package version
 
-var Current = "v0.2.0"
+var Current = "v0.4.0"
 var DebugMode = "true"

@@ -95,7 +95,11 @@ func (s *SentSet) Del(ctx context.Context, setId int64) error {
 func (s *SentSet) Edit(ctx context.Context, setId int64, tournamentPlatform string, messengerPlatform string, tournamentSlug string, state *entity.SetState, sent_at_p1 *time.Time, sent_at_p2 *time.Time) error {
 	const sql = `
 		UPDATE sent_sets
-		SET tournament_platform = $2, messenger_platform = $3, tournament_slug = $4, state = $5, sent_at_p1 = $6, sent_at_p2 = $7
+		SET
+			tournament_platform = COALESCE(NULLIF($2, ''), tournament_platform),
+    		messenger_platform = COALESCE(NULLIF($3, ''), messenger_platform),
+			tournament_slug = COALESCE(NULLIF($4, ''), tournament_slug),
+			state = $5, sent_at_p1 = $6, sent_at_p2 = $7
 		WHERE set_id = $1`
 	tag, err := s.Conn.ExecContext(ctx, sql, setId, tournamentPlatform, messengerPlatform, tournamentSlug, state, sent_at_p1, sent_at_p2)
 	if err != nil {

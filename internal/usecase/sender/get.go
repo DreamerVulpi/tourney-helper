@@ -10,10 +10,13 @@ import (
 
 func (ns *NotificationSystem) GetMessengerMetrics() entityMetrics.Snapshot {
 	snapshot := ns.MetricsMessenger.Snapshot()
-	remaining := ns.TotalMessages.Load() - ns.MessagesSentCurrentCycle.Load()
+	total := ns.TotalMessages.Load()
+	sent := ns.MessagesSentCurrentCycle.Load()
+	remaining := total - sent
 	if remaining < 0 {
 		remaining = 0
 	}
+
 	snapshot.EstimateRemainingMs = ns.MetricsMessenger.EstimateRemaining(remaining).Milliseconds()
 	return snapshot
 }

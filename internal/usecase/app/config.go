@@ -113,7 +113,6 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 				Stage:          "Any",
 				Rounds:         3,
 				Duration:       60,
-				Crossplatform:  false,
 			},
 			Stream: config.StreamLobby{
 				Area:          "Any",

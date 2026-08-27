@@ -165,19 +165,20 @@ func (ns *NotificationSystem) processSet(ctx context.Context, slug string, set e
 		} else {
 			logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P1 notification successful to %v", set.SetID, contactP1.GameNickname))
 		}
+		ns.MessagesSentCurrentCycle.Add(1)
 	}
 
 	if p2NeedsSending && errP2 == nil && ValidationParticipant(contactP2) == nil {
 		setForP2 := set
 		setForP2.ContactPlayer1 = contactP2
 		setForP2.ContactPlayer2 = contactP1
-
 		timeP2, err = ns.sendNotification(ctx, contactP2, setForP2, timeP2)
 		if err != nil {
 			logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed to %v. Error: %v", set.SetID, contactP2.GameNickname, err.Error()))
 		} else {
 			logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P2 notification successful to %v", set.SetID, contactP2.GameNickname))
 		}
+		ns.MessagesSentCurrentCycle.Add(1)
 	}
 
 	if err := ns.SaveSentInfo(ctx, slug, set, timeP1, timeP2); err != nil {

@@ -60,7 +60,11 @@ func (p *Participants) Add(ctx context.Context, nickname string, region string, 
 func (p *Participants) Edit(ctx context.Context, id int, nickname string, region string, locale string) error {
 	const sql = `
 		UPDATE participants
-		SET nickname = $2, region = $3, locale = $4, updated_at = CURRENT_TIMESTAMP
+		SET 
+			nickname = COALESCE(NULLIF($2, ''), nickname),
+			region = COALESCE(NULLIF($3, ''), region),
+			locale = COALESCE(NULLIF($4, ''), locale),
+			updated_at = CURRENT_TIMESTAMP
 		WHERE id = $1`
 
 	tag, err := p.Conn.ExecContext(ctx, sql, id, nickname, region, locale)
