@@ -88,7 +88,7 @@ func (p *ParticipantAccounts) EditDmChannel(ctx context.Context, participantId i
 	const sql = `
 		UPDATE participant_accounts
 		SET
-			dm_channel_id = COLEASCE(NULLIF($3, ''), dm_channel_id),
+			dm_channel_id = COALESCE(NULLIF($3, ''), dm_channel_id),
 			updated_at = CURRENT_TIMESTAMP
 		WHERE participant_id = $1 AND platform_name = $2
 	`
