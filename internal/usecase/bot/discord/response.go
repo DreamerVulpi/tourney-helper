@@ -34,7 +34,7 @@ func (h *Handler) configResponseMsg(language string) responseLocale {
 	result.contactMsg = local.ContactMessage
 
 	rulesCrossplatform := local.InviteMessage.CrossplatformStatusTrue
-	if !h.params.rulesMatches.Crossplatform {
+	if !h.params.streamLobby.Crossplatform {
 		rulesCrossplatform = local.InviteMessage.CrossplatformStatusFalse
 	}
 

@@ -53,7 +53,7 @@ func (p *ParticipantStats) Edit(ctx context.Context, participantId int, gameName
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (game_name, participant_id)
 		DO UPDATE SET
-			game_id = EXCLUDED.game_id,
+			game_id = COALESCE(NULLIF(EXCLUDED.game_id, ''), participant_stats.game_id),
 			rating = EXCLUDED.rating,
 			updated_at = CURRENT_TIMESTAMP
 		RETURNING id`

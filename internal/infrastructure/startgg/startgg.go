@@ -15,6 +15,8 @@ import (
 
 	"time"
 
+	"log"
+
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
@@ -108,6 +110,34 @@ func GetData[T any](c *Client, rawQuery string, variables map[string]any) (*T, e
 	var results T
 	err = json.Unmarshal(rawData, &results)
 	if err != nil {
+		log.Printf("JSON Unmarshal error: %v", err)
+
+		var debugData struct {
+			Data struct {
+				PhaseGroup struct {
+					Sets struct {
+						Nodes []struct {
+							ID json.RawMessage `json:"id"`
+						} `json:"nodes"`
+					} `json:"sets"`
+				} `json:"phaseGroup"`
+			} `json:"data"`
+		}
+
+		if debugErr := json.Unmarshal(rawData, &debugData); debugErr == nil {
+			for i, node := range debugData.Data.PhaseGroup.Sets.Nodes {
+				var id int64
+
+				if err := json.Unmarshal(node.ID, &id); err != nil {
+					log.Printf(
+						"[DEBUG] Invalid set ID at nodes[%d]: %s",
+						i,
+						node.ID,
+					)
+				}
+			}
+		}
+
 		return nil, fmt.Errorf("JSON Unmarshal - %w", err)
 	}
 

@@ -114,7 +114,7 @@ const normalColumns = [
 
   {
     key: "language",
-    size: sidePanelCollapsed ? 0.4 : 0.2,
+    size: 0.4,
     header: locale.Table.Language,
     tdClassName:
       "font-bold italic opacity-70 uppercase whitespace-nowrap",
@@ -1382,11 +1382,6 @@ const columns = prepareColumns(
                 loading={loading}
               />
             </table>
-            {loading && (
-              <div className="p-4 text-center text-[10px] font-black uppercase italic text-amber-500">
-                {locale.Table.LoadingDataPlayers}
-              </div>
-            )}
           </div>
         </div>
       </div>

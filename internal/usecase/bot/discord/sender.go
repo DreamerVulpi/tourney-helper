@@ -75,6 +75,8 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 		return "", fmt.Errorf("SendNotification | targetID is empty")
 	}
 
+	timeMsg := time.Now()
+
 	var channelID string
 	if dmChannelID != nil && *dmChannelID != "" {
 		channelID = *dmChannelID
@@ -119,8 +121,10 @@ func (s *DiscordSender) SendMessage(ctx context.Context, targetID string, dmChan
 		if s.params.debugChannelID != "" {
 			s.logMsgToDiscord(false, err.Error(), set, local, recipient.GameNickname)
 		}
+		s.Metrics.RecordMessageSend(err, time.Since(timeMsg))
 		return "", err
 	}
+	s.Metrics.RecordMessageSend(nil, time.Since(timeMsg))
 
 	if s.params.debugChannelID != "" {
 		s.logMsgToDiscord(true, "", set, local, recipient.GameNickname)

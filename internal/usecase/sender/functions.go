@@ -27,12 +27,12 @@ func ValidationParticipant(p entitySender.Participant) error {
 
 func (ns *NotificationSystem) CheckParticipant(ctx context.Context, apiData entitySender.Participant) (entitySender.Participant, error) {
 	dbData, err := ns.Db.GetParticipant(ctx, apiData)
-
 	switch {
 	case err == nil:
 		if dbData.MessengerID == "" || dbData.MessengerID == "N/D" {
 			updated, err := ns.Messenger.FindContactOfParticipant(ctx, dbData)
 			if err == nil {
+				updated.Id = dbData.Id
 				dbData = updated
 			}
 		}

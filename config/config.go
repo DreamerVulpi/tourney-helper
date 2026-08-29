@@ -50,7 +50,6 @@ type RulesMatches struct {
 	Stage          string `toml:"stage" json:"stage"`
 	Rounds         int    `toml:"rounds" json:"rounds"`
 	Duration       int    `toml:"duration" json:"duration"`
-	Crossplatform  bool   `toml:"crossplatform" json:"crossplatform"`
 }
 
 type StreamLobby struct {
@@ -228,7 +227,6 @@ func Init(configDir string) error {
 				Stage:          "Any",
 				Rounds:         3,
 				Duration:       60,
-				Crossplatform:  false,
 			},
 			Stream: StreamLobby{
 				Area:          "Any",

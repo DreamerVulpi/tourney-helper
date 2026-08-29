@@ -56,7 +56,6 @@ func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform s
 		FinalsFormat:   tournament.Rules.FinalsFormat,
 		Rounds:         tournament.Rules.Rounds,
 		Duration:       tournament.Rules.Duration,
-		Crossplatform:  tournament.Rules.Crossplatform,
 		Stage:          tournament.Rules.Stage,
 	}
 	h.params.streamLobby = config.StreamLobby{
