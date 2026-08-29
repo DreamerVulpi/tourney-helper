@@ -88,14 +88,20 @@ func (p *ParticipantAccounts) EditDmChannel(ctx context.Context, participantId i
 	const sql = `
 		UPDATE participant_accounts
 		SET
-			dm_channel_id = COALESCE(NULLIF($3, ''), dm_channel_id),
+			dm_channel_id = $3,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE participant_id = $1 AND platform_name = $2
 	`
+
 	_, err := p.Conn.ExecContext(ctx, sql, participantId, platformName, dmChannelId)
 	if err != nil {
-		return fmt.Errorf("failed to update DM channel participant account (PlatformName: %v) from database, %w", platformName, err)
+		return fmt.Errorf(
+			"failed to update DM channel participant account (PlatformName: %v) from database, %w",
+			platformName,
+			err,
+		)
 	}
+
 	return nil
 }
 
