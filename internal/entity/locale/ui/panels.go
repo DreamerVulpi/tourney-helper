@@ -6,6 +6,7 @@ type Ui struct {
 	LogPanel                LogPanel
 	NotificationSystemPanel NotificationSystemPanel
 	DatabasePanel           DatabasePanel
+	WidgetBracketPanel      WidgetBracketPanel
 	ValidationAlertModal    ValidationAlertModal
 	ProgressModal           ProgressModal
 }
@@ -62,4 +63,12 @@ type DatabasePanel struct {
 	TotalCountNotesInDBLabel       string
 	TotalCountBannedNotesInDBLabel string
 	TotalCountRatingParticipants   string
+}
+
+type WidgetBracketPanel struct {
+	UrlToTournamentLabel string
+	ListOfBracketsLabel  string
+	ListOfThemes         string
+	Start                string
+	Stop                 string
 }

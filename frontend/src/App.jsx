@@ -73,6 +73,7 @@ const App = () => {
   const [sidePanelCollapsed, setSidePanelCollapsed] = useState(null);
   const [statusNotificationSystem, setStatusNotificationSystem] = useState(SERVICE_STATUS.OFF);
   const [statusDatabase, setStatusDatabase] = useState(SERVICE_STATUS.RUNNING);
+  const [statusWidgetBracket, setStatusWidgetBracket] = useState(SERVICE_STATUS.OFF);
 
   // Initialization application
   useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed});
@@ -91,7 +92,8 @@ const App = () => {
   // System variables
 
   // Status of the messaging system
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessingNS, setIsProcessing] = useState(false);
+  const [isProcessingWB, setIsProcessingWB] = useState(false);
   // Selected panel
   const [activeTab, setActiveTab] = useState("notifications");
   // Selected tournament platform
@@ -115,6 +117,7 @@ const App = () => {
 
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
+  const [isWidgetBracketRunning, setIsWidgetBracketRunning] = useState(false);
 
   // Statement for update modal window
   const { checking, updateInfo, error, check } = useCheckUpdate();
@@ -264,6 +267,7 @@ const App = () => {
               setIsHovered={setIsSidePanelHovered}
               statusNotificationSystem={statusNotificationSystem}
               statusDatabase={statusDatabase}
+              statusWidgetBracket={statusWidgetBracket}
             />
 
             {/* MainWindow */}
@@ -287,7 +291,7 @@ const App = () => {
                     setActivePlatform={setActivePlatform}
                     activeMessenger={activeMessenger}
                     setActiveMessenger={setActiveMessenger}
-                    isProcessing={isProcessing}
+                    isProcessing={isProcessingNS}
                     setIsProcessing={setIsProcessing}
                     activeModal={activeModal}
                     report={report}
@@ -308,11 +312,22 @@ const App = () => {
                     sidePanelCollapsed={sidePanelCollapsed}
                   />
                 )}
+                {activeTab === "widgetBracket" && (
+                  <WidgetBracketPanel 
+                    theme={theme}
+                    locale={locale.WidgetBracketPanel}
+                    themeClasses={themeClasses}
+                    activeModal={activeModal}
+                    tourneyCfg={tourneyCfg}
+                    updateConfig={updateConfig}
+                    isProcessing={isProcessingWB}
+                    isWidgetBracketRunning={isWidgetBracketRunning}
+                    setIsWidgetBracketRunning={setIsWidgetBracketRunning}
+                    setStatusWidgetBracket={setStatusWidgetBracket}
+                  />
+                )}
                 {/* In future updates */}
-                {/* {activeTab === "bracket" && (
-                    <WidgetBracketPanel theme={theme}/>
-                  )}
-
+                {/*
                   {activeTab === "scoreboard" && (
                     <WidgetScoreboardPanel theme={theme}/>
                   )} */}

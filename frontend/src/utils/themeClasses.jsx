@@ -39,8 +39,8 @@ export function getThemeClasses(theme) {
     };
 }
 
-export function getLaunchButtonStyle(isStartedSending, debugMode) {
-    if (isStartedSending) return "bg-red-600 shadow-red-600/40";
+export function getLaunchButtonStyle(isStarted, debugMode) {
+    if (isStarted) return "bg-red-600 shadow-red-600/40";
     if (debugMode) return "bg-amber-500 shadow-amber-500/40";
     return "bg-blue-600 shadow-blue-600/20";
 }

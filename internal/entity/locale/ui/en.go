@@ -14,6 +14,13 @@ var listRegionsEn = ListRegions{
 }
 
 var En = Ui{
+	WidgetBracketPanel: WidgetBracketPanel{
+		UrlToTournamentLabel: "Tournament Link",
+		ListOfBracketsLabel:  "Bracket",
+		ListOfThemes:         "Theme",
+		Start:                "Start",
+		Stop:                 "Stop",
+	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Error filling in parameters",
 		OkButtonLabel:   "OK",

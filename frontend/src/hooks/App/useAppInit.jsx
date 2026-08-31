@@ -54,6 +54,11 @@ export function useAppInit({
             if (tourney) {
               setTourneyCfg((prev) => ({
                 ...prev,
+                widgetBracket: {
+                  urlToTournament: tourney.widgetBracket?.urlToTournament || "",
+                  bracket: tourney.widgetBracket?.bracket || "",
+                  theme: tourney.widgetBracket?.theme || "StartGG",
+                },
                 urlToTournament: tourney.urlToTournament || "",
                 startgg: {
                   clientID: tourney.startgg?.clientID || "",

@@ -43,11 +43,11 @@ import { useTournamentPlatform } from "../hooks/useTournamentPlatform.jsx";
 import { durationItems, listFT } from "../utils/NotificationSystemPanel.jsx/lists.js";
 import { listGames } from "../utils/listGames.js";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
+import { NotificationButton } from "../hooks/NotificationSystemPanel/useButtonFooter.jsx";
 import { locales } from "../utils/listLocales.js";
 
 const NotificationSystemPlate = ({
   theme,
-  statusNotificationSystem,
   authStatus,
   setAuthStatus,
   systemCfg,
@@ -233,8 +233,10 @@ const NotificationSystemPlate = ({
       exceptionElement={
         activeModal ? null : 
         <>
-          <div className={`absolute bottom-8 right-8 ${isStartedSending ? "z-100" : "z-40"}`}>
-            <ButtonFooter
+          <ButtonFooter
+            zIndex={isStartedSending ? "z-[100]" : "z-40"}
+          >
+            <NotificationButton
               isStartedSending={isStartedSending}
               debugMode={debugMode}
               theme={theme}
@@ -245,7 +247,7 @@ const NotificationSystemPlate = ({
               handleStartedSendingToggle={handleStartedSendingToggle}
               getButtonStyle={getButtonStyle}
             />
-          </div>
+          </ButtonFooter>
           <NotificationMonitorModal
             isOpen={report.isOpen}
             isStartedSending={isStartedSending}

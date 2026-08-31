@@ -80,6 +80,7 @@ type TournamentPlatform struct {
 }
 
 type ConfigTournament struct {
+	WidgetBracket   WidgetBracket      `toml:"widgetBracket" json:"widgetBracket"`
 	Startgg         TournamentPlatform `toml:"startgg" json:"startgg"`
 	Challonge       TournamentPlatform `toml:"challonge" json:"challonge"`
 	UrlToTournament string             `toml:"urlToTournament" json:"urlToTournament"`
@@ -88,6 +89,12 @@ type ConfigTournament struct {
 	Logo            Logo               `toml:"logo" json:"logo"`
 	Csv             Csv                `toml:"csv" json:"csv"`
 	Game            ConfigGame         `toml:"game" json:"game"`
+}
+
+type WidgetBracket struct {
+	UrlToTournament string `toml:"urlToTournament" json:"urlToTournament"`
+	Bracket         string `toml:"bracket" json:"bracket"`
+	Theme           string `toml:"theme" json:"theme"`
 }
 
 type SettingsApplication struct {
@@ -210,6 +217,11 @@ func Init(configDir string) error {
 			},
 		},
 		"tournament.toml": ConfigTournament{
+			WidgetBracket: WidgetBracket{
+				UrlToTournament: "",
+				Bracket:         "",
+				Theme:           "StartGG",
+			},
 			Startgg: TournamentPlatform{
 				Name:         "",
 				ClientID:     "",

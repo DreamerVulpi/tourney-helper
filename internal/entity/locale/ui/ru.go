@@ -14,6 +14,13 @@ var listRegions = ListRegions{
 }
 
 var Ru = Ui{
+	WidgetBracketPanel: WidgetBracketPanel{
+		UrlToTournamentLabel: "Ссылка на турнир",
+		ListOfBracketsLabel:  "Cетка",
+		ListOfThemes:         "Тема оформления",
+		Start:                "Запустить",
+		Stop:                 "Остановить",
+	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Ошибка заполнения параметров",
 		OkButtonLabel:   "Понятно",

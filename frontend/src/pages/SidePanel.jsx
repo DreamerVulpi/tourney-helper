@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import {
+  GitFork,
   Send,
   Users
 } from "lucide-react";
@@ -15,6 +16,7 @@ const SidePanel = ({
   setIsHovered,
   statusNotificationSystem,
   statusDatabase,
+  statusWidgetBracket,
 }) => {
   const hoverTimeout = useRef(null);
 
@@ -71,6 +73,15 @@ const SidePanel = ({
           onClick={() => setActiveTab("database")}
           themeClasses={themeClasses}
           status={statusDatabase}
+        />
+        <NavItem
+          icon={<GitFork size={20} />}
+          label={locale.WidgetOfBracketLabel}
+          collapsed={collapsed}
+          active={activeTab === "widgetBracket"}
+          onClick={() => setActiveTab("widgetBracket")}
+          themeClasses={themeClasses}
+          status={statusWidgetBracket}
         />
       </div>
     </nav>

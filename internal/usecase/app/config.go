@@ -96,6 +96,11 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 	cfg, err := config.LoadTournament(config.GetAbsPath("config/tournament.toml"))
 	if err != nil {
 		nullCfg := config.ConfigTournament{
+			WidgetBracket: config.WidgetBracket{
+				UrlToTournament: "",
+				Bracket:         "",
+				Theme:           "StartGG",
+			},
 			Startgg: config.TournamentPlatform{
 				Name:         "",
 				ClientID:     "",
