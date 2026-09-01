@@ -17,6 +17,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
 	"github.com/dreamervulpi/tourney-helper/internal/version"
+	"github.com/dreamervulpi/tourney-helper/internal/widget"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -62,6 +63,7 @@ func main() {
 	app := application.NewApp()
 	app.UpdateService = updateService
 	app.UpdateManager = updateManager
+	app.WidgetServer = widget.NewServer()
 
 	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)
 	app.OAuthServer.Start()

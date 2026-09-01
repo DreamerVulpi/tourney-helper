@@ -143,6 +143,28 @@ func (f *fakeStartggClient) GetTournament(slug string) (startgg.Tournament, erro
 	return f.tournament, nil
 }
 
+func (f *fakeStartggClient) GetSetsWithScore(
+	phaseGroupID int64,
+	page int,
+	perPage int,
+) ([]startgg.Nodes, error) {
+	f.lastGroupID = phaseGroupID
+	f.lastPage = page
+	f.lastPerPage = perPage
+	f.getSetsCalls++
+
+	if f.setsErr != nil {
+		return nil, f.setsErr
+	}
+
+	pages, ok := f.sets[phaseGroupID]
+	if !ok {
+		return nil, nil
+	}
+
+	return pages[page], nil
+}
+
 func (f *fakeStartggClient) GetListGroups(slug string, states []int) ([]startgg.PhaseGroupInfo, error) {
 	f.lastStates = append([]int(nil), states...)
 

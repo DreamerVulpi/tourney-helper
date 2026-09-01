@@ -43,7 +43,7 @@ func TestGetData(t *testing.T) {
 							State:         3,
 							FullRoundText: "Winners Final",
 							Round:         3,
-							Slots: []entity.Slots{
+							Slots: []entity.Slot{
 								{
 									Entrant: entity.Entrant{
 										Id: 17340928,
@@ -93,7 +93,7 @@ func TestGetData(t *testing.T) {
 							State:         3,
 							FullRoundText: "Losers Final",
 							Round:         -6,
-							Slots: []entity.Slots{
+							Slots: []entity.Slot{
 								{
 									Entrant: entity.Entrant{
 										Id: 17340928,
@@ -139,7 +139,7 @@ func TestGetData(t *testing.T) {
 							State:         3,
 							FullRoundText: "Losers Semi-Final",
 							Round:         -5,
-							Slots: []entity.Slots{
+							Slots: []entity.Slot{
 								{
 									Entrant: entity.Entrant{
 										Id: 17327065,
@@ -185,7 +185,7 @@ func TestGetData(t *testing.T) {
 							State:         3,
 							FullRoundText: "Winners Semi-Final",
 							Round:         2,
-							Slots: []entity.Slots{
+							Slots: []entity.Slot{
 								{
 									Entrant: entity.Entrant{
 										Id: 17373189,

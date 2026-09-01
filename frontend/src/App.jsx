@@ -318,12 +318,14 @@ const App = () => {
                     locale={locale.WidgetBracketPanel}
                     themeClasses={themeClasses}
                     activeModal={activeModal}
+                    activePlatform={activePlatform}
                     tourneyCfg={tourneyCfg}
                     updateConfig={updateConfig}
                     isProcessing={isProcessingWB}
                     isWidgetBracketRunning={isWidgetBracketRunning}
                     setIsWidgetBracketRunning={setIsWidgetBracketRunning}
                     setStatusWidgetBracket={setStatusWidgetBracket}
+                    setIsProcessingWB={setIsProcessingWB}                  
                   />
                 )}
                 {/* In future updates */}

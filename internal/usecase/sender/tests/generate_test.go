@@ -40,7 +40,7 @@ func createSet(
 			StreamSource: "https://twitch.tv/test",
 		},
 
-		Slots: []startgg.Slots{
+		Slots: []startgg.Slot{
 			{
 				Entrant: startgg.Entrant{
 					Participants: []startgg.Participant{

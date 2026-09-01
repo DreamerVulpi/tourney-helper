@@ -14,6 +14,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
+	"github.com/dreamervulpi/tourney-helper/internal/widget"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -30,10 +31,12 @@ type App struct {
 	UpdateService    *update.Service
 	UpdateManager    *update.Manager
 
-	mu        sync.Mutex
-	ns        *sender.NotificationSystem
-	nsCancel  context.CancelFunc
-	activeBot bot.BotHandler
+	mu           sync.Mutex
+	ns           *sender.NotificationSystem
+	nsCancel     context.CancelFunc
+	wCancel      context.CancelFunc
+	activeBot    bot.BotHandler
+	WidgetServer *widget.Server
 }
 
 func NewApp() *App {

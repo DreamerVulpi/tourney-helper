@@ -268,7 +268,7 @@ func TestGetSetsData_NoParticipants(t *testing.T) {
 						State: 1,
 						Round: 1,
 
-						Slots: []startgg.Slots{
+						Slots: []startgg.Slot{
 							{
 								Entrant: startgg.Entrant{
 									Participants: []startgg.Participant{},

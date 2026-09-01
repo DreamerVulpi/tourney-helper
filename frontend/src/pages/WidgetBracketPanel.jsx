@@ -14,6 +14,7 @@ import { listGames } from "../utils/listGames.js";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { locales } from "../utils/listLocales.js";
 import { ActionButton } from "../components/ui/ActionButton.jsx";
+import { useStartToggle } from "../hooks/WidgetBracketPanel/useStartToggle.jsx";
 
 const WidgetBracketPlate = ({
   theme,
@@ -22,9 +23,10 @@ const WidgetBracketPlate = ({
   activeModal,
   statusWidgetBracket,
   tourneyCfg,
+  activePlatform,
   updateConfig,
   isProcessing,
-  setIsProcessing,
+  setIsProcessingWB,
   isWidgetBracketRunning,
   setIsWidgetBracketRunning,
   setStatusWidgetBracket,
@@ -34,7 +36,7 @@ const WidgetBracketPlate = ({
   const themeBracket = tourneyCfg?.widgetBracket?.theme || "StartGG";
 
   // State for ready of notification system
-  const isReadyToStart = urlToTournament && bracket && themeBracket;
+  const isReadyToStart = urlToTournament;
   
   // State for revial validation alert
   // TODO: Add validation alert modal
@@ -43,19 +45,6 @@ const WidgetBracketPlate = ({
     message: "",
   });
 
-  // Handler for start proccess
-  // TODO: Add method from backend
-  // const handleWidgetBracketToggle = useStartToogle(
-  //   isWidgetBracketRunning,
-  //   setIsWidgetBracketRunning,
-  //   isProcessing,
-  //   setIsProcessing,
-  //   setReport,
-  //   setStatusNotificationSystem,
-  //   { activeMessenger, activePlatform, systemCfg, tourneyCfg, lang },
-  // );
-
-  
   const handleTournamentUrlChange = useCallback((value) => {
     updateConfig("tournament", {
       widgetBracket: {
@@ -83,6 +72,16 @@ const WidgetBracketPlate = ({
 
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
 
+  // Handler for start proccess
+  const handleWidgetBracketToggle = useStartToggle(
+    isWidgetBracketRunning,
+    setIsWidgetBracketRunning,
+    isProcessing,
+    setIsProcessingWB,
+    setStatusWidgetBracket,
+    { activePlatform, tourneyCfg },
+  );
+
   return (
     <PanelTemplate
       themeClasses={themeClasses}
@@ -90,7 +89,13 @@ const WidgetBracketPlate = ({
       <div className="grid grid-cols-12 gap-8 items-stretch flex-1 min-h-0">
         <div className="col-span-10 min-h-0">
           <div className={`w-full h-full rounded-[2.5rem] ${themeClasses.button}`}>
-            {/* Большая область */}
+            {isWidgetBracketRunning && (
+              <iframe
+                src={`http://localhost:8080/widget/bracket/${urlToTournament}`}
+                className="w-full h-full border-0 rounded-[2.5rem]"
+                title="Tournament Bracket"
+              />
+            )}
           </div>
         </div>
 
@@ -137,7 +142,7 @@ const WidgetBracketPlate = ({
               expandOnHover={isWidgetBracketRunning && !isProcessing}
               className={getButtonStyle}
               iconClassName="fill-white"
-              // onClick={handleWidgetBracketToggle}
+              onClick={handleWidgetBracketToggle}
             >
               {isWidgetBracketRunning ? locale.Stop : locale.Start}
             </ActionButton>

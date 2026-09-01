@@ -282,7 +282,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed", a.MessengerClient.NamePlatform))
+		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed", a.TournamentClient.NamePlatform))
 	}
 
 	slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.UrlToTournament)

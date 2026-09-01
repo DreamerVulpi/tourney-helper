@@ -50,7 +50,7 @@ type Nodes struct {
 	FullRoundText string   `json:"fullRoundText"`
 	Round         int      `json:"round"`
 	Stream        Streamer `json:"stream"`
-	Slots         []Slots  `json:"slots"`
+	Slots         []Slot   `json:"slots"`
 }
 
 type Streamer struct {
@@ -58,9 +58,22 @@ type Streamer struct {
 	StreamSource string `json:"streamSource"`
 }
 
-// Slots in set
-type Slots struct {
-	Entrant Entrant `json:"entrant"`
+type Standing struct {
+	Stats Stats `json:"stats"`
+}
+
+type Stats struct {
+	Score Score `json:"score"`
+}
+
+type Score struct {
+	Value int `json:"value"`
+}
+
+// Slot in set
+type Slot struct {
+	Entrant  Entrant  `json:"entrant"`
+	Standing Standing `json:"standing"`
 }
 
 // Player in tournament
@@ -71,6 +84,7 @@ type Entrant struct {
 
 // Player data
 type Participant struct {
+	Prefix            string            `json:"prefix"`
 	GamerTag          string            `json:"gamerTag"`
 	ConnectedAccounts ConnectedAccounts `json:"connectedAccounts"`
 	User              User              `json:"user"`
