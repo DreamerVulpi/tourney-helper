@@ -27,13 +27,20 @@ func (p *StartGGBracketProvider) GetBracket(ctx context.Context, id string) (*en
 		return nil, fmt.Errorf("invalid phase group id: %w", err)
 	}
 
-	nodes, err := p.client.GetSetsWithScore(phaseGroupID, 1, 50)
+	nodes, err := p.client.GetSetsWithScore(phaseGroupID, 50)
+	if err != nil {
+		return nil, fmt.Errorf("get sets: %w", err)
+	}
+
+	conn, err := p.client.GetConnectionsBracket(phaseGroupID, 50)
 	if err != nil {
 		return nil, fmt.Errorf("get sets: %w", err)
 	}
 
 	bracket := &entity.Bracket{Id: phaseGroupID}
-	return generateBracket(bracket, nodes), nil
+	bracket = generateBracket(bracket, nodes)
+	addConnections(bracket, conn)
+	return bracket, nil
 }
 
 func generateSlot(slots []entityStartgg.Slot, index int) entity.Slot {
@@ -49,6 +56,7 @@ func generateSlot(slots []entityStartgg.Slot, index int) entity.Slot {
 
 	p := slot.Entrant.Participants[0]
 	return entity.Slot{
+		Id:           slot.Entrant.Id,
 		Prefix:       p.Prefix,
 		GameNickname: p.GamerTag,
 		Score:        slot.Standing.Stats.Score.Value,
@@ -59,17 +67,57 @@ func generateBracket(bracket *entity.Bracket, data []entityStartgg.Nodes) *entit
 	sets := []entity.Set{}
 
 	for _, node := range data {
-		set := entity.Set{}
-		set.State = int(node.State)
-		set.Stream = node.Stream.StreamSource
-		set.FullRountText = node.FullRoundText
-		set.Round = node.Round
+		set := entity.Set{
+			Id:            node.Id,
+			State:         int(node.State),
+			Stream:        node.Stream.StreamSource,
+			FullRoundText: node.FullRoundText,
+			Round:         node.Round,
+		}
+
 		slotP1 := generateSlot(node.Slots, 0)
 		slotP2 := generateSlot(node.Slots, 1)
+
 		set.Slots = []entity.Slot{slotP1, slotP2}
+
 		sets = append(sets, set)
 	}
 
 	bracket.Sets = sets
+
 	return bracket
+}
+
+func generateSource(source *entityStartgg.EntrantSource) *entity.EntrantSource {
+	if source == nil {
+		return nil
+	}
+
+	if source.Type != "set" || source.TypeID == 0 {
+		return nil
+	}
+
+	return &entity.EntrantSource{
+		Type:      source.Type,
+		TypeID:    source.TypeID,
+		Condition: source.Condition,
+	}
+}
+
+func addConnections(bracket *entity.Bracket, conn []entityStartgg.Nodes) {
+	setByID := make(map[int64]*entity.Set, len(bracket.Sets))
+
+	for i := range bracket.Sets {
+		setByID[bracket.Sets[i].Id] = &bracket.Sets[i]
+	}
+
+	for _, node := range conn {
+		set, ok := setByID[node.Id]
+		if !ok {
+			continue
+		}
+		set.WinnerId = node.WinnerId
+		set.Slots[0].Source = generateSource(node.Entrant1Source)
+		set.Slots[1].Source = generateSource(node.Entrant2Source)
+	}
 }

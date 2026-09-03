@@ -1,11 +1,15 @@
 import React, { useState, useRef } from "react";
 import {
+  ArrowLeftFromLine,
+  ArrowRightFromLine,
   GitFork,
   Send,
   Users
 } from "lucide-react";
 import { getThemeClasses } from "../utils/theme/SidePanel/themes";
 import { NavItem } from "../components/SidePanel/navItem";
+import { ProgramLogo } from "../components/ui/Logo";
+
 
 const SidePanel = ({
   theme,
@@ -17,6 +21,10 @@ const SidePanel = ({
   statusNotificationSystem,
   statusDatabase,
   statusWidgetBracket,
+  updateConfig,
+  settings,
+  sidePanelCollapsed,
+  setSidePanelCollapsed,
 }) => {
   const hoverTimeout = useRef(null);
 
@@ -41,6 +49,43 @@ const SidePanel = ({
     }, 1500);
   };
   const themeClasses = getThemeClasses(theme);
+  const handleSidePanelCollapse = () => {
+    const next = !sidePanelCollapsed;
+
+    setSidePanelCollapsed(next);
+
+    updateConfig("settings", {
+      ...settings,
+      SidePanelCollapsed: next,
+    });
+  };
+
+  function SidePanelToggle({
+    collapsed,
+    onClick,
+  }) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="
+          w-6 h-6
+          flex items-center justify-center
+          rounded-lg
+          transition-colors duration-200
+          hover:bg-black/10
+          dark:hover:bg-white/10
+        "
+        aria-label={collapsed ? "Expand side panel" : "Collapse side panel"}
+      >
+        {collapsed ? (
+          <ArrowRightFromLine size={20} />
+        ) : (
+          <ArrowLeftFromLine size={20} />
+        )}
+      </button>
+    );
+  }
 
   return (
     <nav
@@ -49,12 +94,36 @@ const SidePanel = ({
       className={`relative ${
         collapsed
           ? "w-[clamp(72px,6.5vw,96px)]"
-          : "w-[clamp(260px,15vw,320px)]"
-      } border-r flex flex-col p-4 shrink-0 transition-[width] duration-300 h-screen ${
+          : "w-[clamp(250px,15vw,320px)]"
+      } border-r flex flex-col p-4 h-full transition-[width] duration-300 ${
         themeClasses.navPanel
       }`}
     >
       <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <NavItem
+            icon={collapsed ? (
+              <ArrowRightFromLine size={20} />
+            ) : (
+              <ArrowLeftFromLine size={20} />
+            )}
+            collapsed={collapsed}
+            themeClasses={themeClasses}
+            showStatus={false}
+            onClick={handleSidePanelCollapse}
+            content={
+            <> 
+              <ProgramLogo
+                theme={getThemeClasses(theme)}
+                collapsed={collapsed}
+              />
+            </>}
+          />
+        </div>
+        
+
+        
+        
         <NavItem
           icon={<Send size={20} />}
           label={locale.NotificationSystemLabel}

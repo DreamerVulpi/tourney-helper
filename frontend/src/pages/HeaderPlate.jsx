@@ -21,6 +21,7 @@ import HelpModal from "../components/modals/help/HelpModal.jsx"
 import UpdateModal from "../components/modals/UpdateModal.jsx"
 import Logo from "../../../branding/icons/256.png";
 import ProgressModal from "../components/modals/ProgressModal.jsx";
+import { ProgramLogo } from "../components/ui/Logo.jsx";
 
 const HeaderPlate = ({
   theme,
@@ -44,36 +45,13 @@ const HeaderPlate = ({
   setUpdateProgressOpen,
   setUpdateStatus,
   setUpdateMessage,
-  setUpdateProgress,
-  isSidePanelHovered,
-  sidePanelCollapsed,
-  setSidePanelCollapsed,
+  setUpdateProgress
 }) => {
-  // Font for logo programm
-  const fontStyle = (
-    <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-      .font-super-bold { font-family: 'Inter', sans-serif; font-weight: 900; }
-    `}</style>
-  );
-
-  // Variable for selector languages
-  const [isLangOpen, setIsLangOpen] = useState(false);
   // Function for change theme & save to configuration of programm
   const changeTheme = createThemeChanger(theme, setTheme, updateConfig);
   // Details of theme for this page
   const headerThemeClasses = getThemeClasses(theme);
 
-  const handleSidePanelCollapse = () => {
-    const next = !sidePanelCollapsed;
-
-    setSidePanelCollapsed(next);
-
-    updateConfig("settings", {
-      ...settings,
-      SidePanelCollapsed: next,
-    });
-  };
  
   return (
     <header
@@ -82,68 +60,7 @@ const HeaderPlate = ({
       }`}
     >
       <div className="flex items-center gap-[1.5rem]">
-        {/* Logo */}
-        {fontStyle}
-        <div className="flex items-center gap-[0.4rem] mb-2 mt-2 select-none">
-        <div className="p-2 bg-blue-600/10 rounded-lg">
-          <img
-            src={Logo}
-            alt="Tourney Helper"
-            className="w-8 h-8 object-contain"
-          />
-        </div>
-          <div className="hidden lg:block">
-            <span
-              className={`font-super-bold italic text-2xl tracking-tighter uppercase ${
-                headerThemeClasses.logoTitle
-              }`}
-            >
-              <span>TOURNEY</span>
-              <span className="text-blue-600 ml-[0.rem]">HELPER</span>
-            </span>
-          </div>
-        </div>
-        <div
-          className={`
-            flex items-center
-            gap-2
-            pl-3
-            ml-2
-            border-l
-            h-6
-            transition-all duration-300
-            ${headerThemeClasses.divider}
-            ${
-              isSidePanelHovered
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 -translate-x-2 pointer-events-none"
-            }
-          `}
-        >
-          <button
-            type="button"
-            onClick={handleSidePanelCollapse}
-            className={`
-              w-7 h-7
-              flex items-center justify-center
-              rounded-lg
-              transition-colors duration-200
-              hover:bg-black/10
-              dark:hover:bg-white/10
-            `}
-            aria-label={
-              sidePanelCollapsed
-                ? "Expand side panel"
-                : "Collapse side panel"
-            }
-          >
-            {sidePanelCollapsed ? (
-              <PanelLeftOpen size={17} />
-            ) : (
-              <PanelLeftClose size={17} />
-            )}
-          </button>
-        </div>
+        {/* TODO: Add button Platform */}
       </div>
 
       <div className="flex items-center gap-[1rem]">

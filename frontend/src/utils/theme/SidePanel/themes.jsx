@@ -2,6 +2,9 @@ export function getThemeClasses(theme) {
     const isDark = theme === "dark";
 
     return {
+        logoTitle: isDark
+            ? "text-white"
+            : "text-slate-900",
         navItem: isDark
             ? "text-slate-400 hover:bg-white/5 hover:text-white" 
             : "text-slate-600 hover:bg-blue-600/10 hover:text-blue-600",

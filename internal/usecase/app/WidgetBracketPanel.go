@@ -15,6 +15,8 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	startggProvider "github.com/dreamervulpi/tourney-helper/internal/widget/provider/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/widget/renderer"
+	startggRenderer "github.com/dreamervulpi/tourney-helper/internal/widget/renderer/startgg"
 	"github.com/dreamervulpi/tourney-helper/internal/widget/service"
 )
 
@@ -34,6 +36,11 @@ func (a *App) LaunchWidgetBracket(tournamentPlatform string, cfgTournament confi
 		return err
 	}
 
+	var (
+		provider service.BracketProvider
+		renderer renderer.BracketRenderer
+	)
+
 	switch tournamentPlatform {
 	case "startgg":
 		if len(cfgTournament.Startgg.ClientID) == 0 {
@@ -52,6 +59,10 @@ func (a *App) LaunchWidgetBracket(tournamentPlatform string, cfgTournament confi
 			return err
 		}
 		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed", a.TournamentClient.NamePlatform))
+
+		client := startgg.NewClient(a.TournamentClient.HTTPClient)
+		provider = startggProvider.NewStartGGBracketProvider(client)
+		renderer = startggRenderer.NewStartGGRenderer()
 	}
 
 	// slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.WidgetBracket.UrlToTournament)
@@ -69,10 +80,7 @@ func (a *App) LaunchWidgetBracket(tournamentPlatform string, cfgTournament confi
 	a.wCancel = cancel
 	a.mu.Unlock()
 
-	// FIXME: Make universal
-	client := startgg.NewClient(a.TournamentClient.HTTPClient)
-	provider := startggProvider.NewStartGGBracketProvider(client)
-	bracketService := service.NewBracketService(provider)
+	bracketService := service.NewBracketService(provider, renderer)
 	a.WidgetServer.SetBracketService(bracketService)
 
 	go func() {

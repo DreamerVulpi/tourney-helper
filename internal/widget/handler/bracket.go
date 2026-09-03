@@ -26,13 +26,11 @@ func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 func (h *Handler) GetBracket(c *gin.Context) {
 	id := c.Param("id")
 
-	bracket, err := h.bracketService.Get(c.Request.Context(), id)
+	html, err := h.bracketService.Render(c.Request.Context(), id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, bracket)
+	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
 }

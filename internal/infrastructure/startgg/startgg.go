@@ -144,6 +144,26 @@ func GetData[T any](c *Client, rawQuery string, variables map[string]any) (*T, e
 	return &results, nil
 }
 
+func GetAllPages[T any](fetch func(page int) (nodes []T, total int, err error), perPage int) ([]T, error) {
+	var all []T
+	page := 1
+
+	for {
+		nodes, total, err := fetch(page)
+		if err != nil {
+			return nil, err
+		}
+
+		all = append(all, nodes...)
+		if len(all) >= total {
+			break
+		}
+
+		page++
+	}
+	return all, nil
+}
+
 func (c *Client) LoadDataFromJSON(path string, gameName string) ([]startgg.ImportedParticipantContact, error) {
 	if path == "" {
 		return nil, errors.New("loadJSON: filename is empty")

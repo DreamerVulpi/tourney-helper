@@ -43,14 +43,23 @@ type PageInfo struct {
 	Total int `json:"total"`
 }
 
+type EntrantSource struct {
+	Type      string `json:"type"`
+	TypeID    int64  `json:"typeId"`
+	Condition string `json:"condition"`
+}
+
 // Information about Set
 type Nodes struct {
-	Id            int64    `json:"id"`
-	State         State    `json:"state"`
-	FullRoundText string   `json:"fullRoundText"`
-	Round         int      `json:"round"`
-	Stream        Streamer `json:"stream"`
-	Slots         []Slot   `json:"slots"`
+	Id             int64          `json:"id"`
+	State          State          `json:"state"`
+	FullRoundText  string         `json:"fullRoundText"`
+	Round          int            `json:"round"`
+	WinnerId       int64          `json:"winnerId"`
+	Stream         Streamer       `json:"stream"`
+	Slots          []Slot         `json:"slots"`
+	Entrant1Source *EntrantSource `json:"entrant1Source"`
+	Entrant2Source *EntrantSource `json:"entrant2Source"`
 }
 
 type Streamer struct {

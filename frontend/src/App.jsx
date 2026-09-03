@@ -216,17 +216,37 @@ const App = () => {
 
   return (
     <div
-      className={`flex flex-col h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}
-    >
-      {!locale ? (
-        <div className="h-screen w-screen bg-[#050505] flex flex-col items-center justify-center gap-4">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-          <span className="font-mono text-xs text-slate-400">
-            Loading localization...
-          </span>
-        </div>
+    className={`grid grid-cols-[auto_1fr] grid-rows-[4rem_1fr] h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}
+  >
+    {!locale ? (
+      <div className="col-span-2 h-screen w-screen bg-[#050505] flex flex-col items-center justify-center gap-4">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+
+        <span className="font-mono text-xs text-slate-400">
+          Loading localization...
+        </span>
+      </div>
       ) : (
         <>
+          <div className="row-span-2 min-h-0">
+            <SidePanel
+              theme={theme}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              locale={locale.SidePanel}
+              collapsed={sidePanelCollapsed}
+              setCollapsed={setSidePanelCollapsed}
+              setIsHovered={setIsSidePanelHovered}
+              statusNotificationSystem={statusNotificationSystem}
+              statusDatabase={statusDatabase}
+              statusWidgetBracket={statusWidgetBracket}
+              isSidePanelHovered={isSidePanelHovered}
+              sidePanelCollapsed={sidePanelCollapsed}
+              setSidePanelCollapsed={setSidePanelCollapsed}
+              updateConfig={updateConfig}
+              settings={settings}
+            />
+          </div>
           <HeaderPlate
             theme={theme}
             setTheme={setTheme}
@@ -251,27 +271,10 @@ const App = () => {
             setUpdateStatus={setUpdateStatus}
             setUpdateMessage={setUpdateMessage}
             setUpdateProgress={setUpdateProgress}
-            isSidePanelHovered={isSidePanelHovered}
-            sidePanelCollapsed={sidePanelCollapsed}
-            setSidePanelCollapsed={setSidePanelCollapsed}
           />
 
-          <div className="flex flex-1 overflow-hidden">
-            <SidePanel
-              theme={theme}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              locale={locale.SidePanel}
-              collapsed={sidePanelCollapsed}
-              setCollapsed={setSidePanelCollapsed}
-              setIsHovered={setIsSidePanelHovered}
-              statusNotificationSystem={statusNotificationSystem}
-              statusDatabase={statusDatabase}
-              statusWidgetBracket={statusWidgetBracket}
-            />
-
-            {/* MainWindow */}
-            <div className="flex-1 flex flex-col min-w-0">
+          {/* MainWindow */}
+            <div className="flex flex-col min-w-0 min-h-0 overflow-hidden">
               <main className="flex-1 overflow-y-auto p-8 relative">
                 {activeTab === "notifications" && (
                   <NotificationSystemPanel
@@ -340,7 +343,6 @@ const App = () => {
                 locale={locale.LogPanel}
               />
             </div>
-          </div>
         </>
       )}
     </div>
