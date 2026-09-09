@@ -24,28 +24,6 @@
 </div>
 {{ end }}
 
-{{ define "round" }}
-<div class="round" data-round="{{ .Round }}">
-    <div class="round-title">{{ .Name }}</div>
-    <div class="round-sets">
-        {{ range .Sets }}{{ template "set" . }}{{ end }}
-    </div>
-</div>
-{{ end }}
-
-{{ define "rounds" }}
-<div class="rounds">
-    {{ range $index, $round := . }}
-        <div class="round" data-round="{{ $round.Round }}" data-round-index="{{ $index }}">
-            <div class="round-title">{{ $round.Name }}</div>
-            <div class="round-sets">
-                {{ range $round.Sets }}{{ template "set" . }}{{ end }}
-            </div>
-        </div>
-    {{ end }}
-</div>
-{{ end }}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -56,234 +34,593 @@
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Segoe UI", Arial, sans-serif; background: #111; color: #fff; }
         .bracket-wrapper { position: relative; width: 100%; height: 100%; overflow: auto; background: #111; }
-        .bracket-content { position: relative; width: max-content; min-width: 100%; min-height: 100%; padding: 40px; display: flex; flex-direction: column; gap: 60px; }
-        .connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-        .connection { fill: none; stroke: #777; stroke-width: 2; vector-effect: non-scaling-stroke; }
-        .winners-final-row { display: flex; align-items: flex-start; gap: 60px; }
-        .bracket-section { position: relative; display: flex; flex-direction: column; gap: 20px; }
-        .section-title { margin: 0; font-size: 22px; font-weight: 600; color: #fff; }
-        .rounds { display: flex; align-items: flex-start; gap: 60px; }
-        .round { position: relative; width: 220px; flex: 0 0 220px; }
-        .round-title { height: 32px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #aaa; white-space: nowrap; }
-        .round-sets { display: flex; flex-direction: column; gap: 40px; }
-        .set { position: relative; width: 220px; min-height: 76px; border: 1px solid #444; border-radius: 6px; background: #1b1b1b; overflow: hidden; z-index: 20; }
-        .player { position: relative; height: 38px; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid #333; background: #202020; white-space: nowrap; }
+        
+        /* Главный контейнер */
+        .bracket-content { 
+            position: relative; 
+            padding: 40px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 60px; 
+        }
+        
+        /* SVG слой для соединений */
+        .connections { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            pointer-events: none; 
+            z-index: 10; 
+        }
+        
+        .connection { 
+            fill: none; 
+            stroke: #777; 
+            stroke-width: 2; 
+            vector-effect: non-scaling-stroke; 
+        }
+        
+        /* Winners и Grand Final в одной строке */
+        .winners-final-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 60px;
+        }
+        
+        /* Секция */
+        .bracket-section { 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+        }
+        
+        .section-title { 
+            margin: 0; 
+            font-size: 22px; 
+            font-weight: 600; 
+            color: #fff; 
+        }
+        
+        /* Контейнер для узлов секции */
+        .section-nodes { 
+            position: relative; 
+        }
+        
+        /* Сет (узел дерева) */
+        .set { 
+            position: absolute; 
+            width: 220px; 
+            min-height: 76px; 
+            border: 1px solid #444; 
+            border-radius: 6px; 
+            background: #1b1b1b; 
+            overflow: hidden; 
+            z-index: 20; 
+        }
+        
+        .player { 
+            position: relative; 
+            height: 38px; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 10px; 
+            border-bottom: 1px solid #333; 
+            background: #202020; 
+            white-space: nowrap; 
+        }
         .player:last-child { border-bottom: none; }
         .player-slot { width: 18px; flex: 0 0 18px; margin-right: 6px; font-size: 11px; color: #666; text-align: center; }
         .player-prefix { margin-right: 5px; font-size: 12px; color: #888; }
         .player-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: #eee; }
         .player-score { margin-left: 8px; font-size: 13px; font-weight: 600; color: #fff; }
         .player.empty .player-name { color: #555; }
-        .final-sets { display: flex; align-items: flex-start; gap: 40px; }
     </style>
 </head>
 <body>
 <div class="bracket-wrapper">
-    <div class="bracket-content">
-        <svg class="connections" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
-
+    <div class="bracket-content" id="bracket-content">
+        <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+        
+        <!-- Winners и Grand Final в одной строке -->
         <div class="winners-final-row">
-            {{ if .Winners }}
-            <section class="bracket-section" id="winners-section">
+            <!-- Winners секция -->
+            <div class="bracket-section" id="winners-section">
                 <h2 class="section-title">Winners</h2>
-                {{ template "rounds" .Winners }}
-            </section>
-            {{ end }}
-
-            {{ if .Final }}
-            <section class="bracket-section" id="final-section">
+                <div class="section-nodes" id="winners-nodes"></div>
+            </div>
+            
+            <!-- Grand Final секция -->
+            <div class="bracket-section" id="final-section">
                 <h2 class="section-title">Grand Final</h2>
-                <div class="final-sets">
-                    {{ range .Final }}{{ template "set" . }}{{ end }}
-                </div>
-            </section>
-            {{ end }}
+                <div class="section-nodes" id="final-nodes"></div>
+            </div>
         </div>
-
-        {{ if .Losers }}
-        <section class="bracket-section" id="losers-section">
+        
+        <!-- Losers секция -->
+        <div class="bracket-section" id="losers-section">
             <h2 class="section-title">Losers</h2>
-            {{ template "rounds" .Losers }}
-        </section>
-        {{ end }}
+            <div class="section-nodes" id="losers-nodes"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    const connections = [
-        {{ range .Connections }}
+    // Данные из Go
+    const allSets = [
+        {{ range .Sets }}
         {
-            fromSetID: {{ .FromSetID }},
-            fromSlot: {{ .FromSlot }},
-            toSetID: {{ .ToSetID }},
-            toSlot: {{ .ToSlot }},
-            condition: "{{ .Condition }}"
+            id: {{ .Id }},
+            section: "{{ .Section }}",
+            round: {{ .Round }},
+            state: {{ .State }},
+            position: {{ .Position }},
+            players: [
+                {{ range .Players }}
+                { slot: {{ .Slot }}, prefix: "{{ .Prefix }}", nickname: "{{ .Nickname }}", score: {{ .Score }} },
+                {{ end }}
+            ]
         },
         {{ end }}
     ];
 
-    function getSet(id) { return document.getElementById(`set-${id}`); }
-    
-    function getBracketElements() {
-        const content = document.querySelector('.bracket-content');
-        const svg = document.querySelector('.connections');
-        return (content && svg) ? { content, svg } : null;
-    }
+    const connections = [
+        {{ range .Connections }}
+        { fromSetID: {{ .FromSetID }}, fromSlot: {{ .FromSlot }}, toSetID: {{ .ToSetID }}, toSlot: {{ .ToSlot }}, condition: "{{ .Condition }}" },
+        {{ end }}
+    ];
 
-    function getConnectionType(connection) {
-        const fromSet = getSet(connection.fromSetID);
-        const toSet = getSet(connection.toSetID);
-        if (!fromSet || !toSet) return 'unknown';
-        
-        const fromSection = fromSet.closest('.bracket-section');
-        const toSection = toSet.closest('.bracket-section');
-        if (!fromSection || !toSection) return 'unknown';
-        
-        const fromTitle = fromSection.querySelector('.section-title')?.textContent.trim();
-        const toTitle = toSection.querySelector('.section-title')?.textContent.trim();
-        
-        if (fromTitle === 'Winners' && toTitle === 'Losers') return 'winners-to-losers';
-        if (fromTitle === 'Winners' && toTitle === 'Winners') return 'winners-to-winners';
-        if (fromTitle === 'Losers' && toTitle === 'Losers') return 'losers-to-losers';
-        if (fromTitle === 'Winners' && toTitle === 'Grand Final') return 'winners-to-final';
-        if (fromTitle === 'Losers' && toTitle === 'Grand Final') return 'losers-to-final';
-        if (fromTitle === 'Grand Final' && toTitle === 'Grand Final') return 'final-to-final';
-        return 'unknown';
-    }
+    // Параметры отображения
+    const NODE_WIDTH = 220;
+    const NODE_HEIGHT = 76;
+    const LINK_WIDTH = 60;
+    const NODE_GAP = 20;
 
-    // Улучшенная сортировка сетов внутри раундов
-    function sortSetsInRounds() {
-        const sections = document.querySelectorAll('.bracket-section');
+    // Создание HTML для сета
+    function createSetElement(setData) {
+        const div = document.createElement('div');
+        div.className = 'set';
+        div.id = `set-${setData.id}`;
+        div.dataset.setId = setData.id;
+        div.dataset.state = setData.state;
         
-        sections.forEach(section => {
-            const rounds = Array.from(section.querySelectorAll('.round'));
+        setData.players.forEach(player => {
+            const playerDiv = document.createElement('div');
+            playerDiv.className = `player ${player.nickname === "" ? "empty" : ""}`;
+            playerDiv.dataset.slot = player.slot;
             
-            // Для каждого раунда, начиная со второго
-            for (let i = 1; i < rounds.length; i++) {
-                const currentRound = rounds[i];
-                const prevRound = rounds[i - 1];
-                if (!prevRound) continue;
+            playerDiv.innerHTML = `
+                ${player.nickname ? `
+                    ${player.prefix ? `<div class="player-prefix">${player.prefix}</div>` : ""}
+                    <div class="player-name">${player.nickname}</div>
+                    <div class="player-score">${player.score}</div>
+                ` : `<div class="player-name">—</div>`}
+            `;  
+            
+            div.appendChild(playerDiv);
+        });
+        
+        return div;
+    }
+
+    // Построение дерева из данных
+    function buildTree(sectionName) {
+        const setsMap = new Map();
+        
+        // Фильтруем сеты по секции
+        allSets.filter(s => s.section === sectionName).forEach(setData => {
+            setsMap.set(setData.id, {
+                ...setData,
+                children: [],
+                parents: []
+            });
+        });
+        
+        // Добавляем связи - ИНВЕРТИРУЕМ НАПРАВЛЕНИЕ
+        connections.forEach(conn => {
+            const from = setsMap.get(conn.fromSetID);
+            const to = setsMap.get(conn.toSetID);
+            
+            if (from && to) {
+                const toSlot = conn.toSlot !== undefined ? conn.toSlot : 0;
+                const fromSlot = conn.fromSlot !== undefined ? conn.fromSlot : 0;
                 
-                const currentSets = Array.from(currentRound.querySelectorAll('.set'));
-                const prevSets = Array.from(prevRound.querySelectorAll('.set'));
-                
-                // Создаем карту позиций предыдущего раунда
-                const prevPositionMap = new Map();
-                prevSets.forEach((set, index) => {
-                    prevPositionMap.set(set.dataset.setId, index);
+                // Инвертируем: to становится родителем, from становится ребенком
+                to.children.push({ 
+                    node: from, 
+                    slot: fromSlot,
+                    toSlot: toSlot 
                 });
                 
-                // Для каждого сета вычисляем среднюю позицию источников
-                const setsWithAvg = currentSets.map(set => {
-                    let sum = 0;
-                    let count = 0;
-                    
-                    connections.forEach(conn => {
-                        if (conn.toSetID.toString() === set.dataset.setId) {
-                            const fromPos = prevPositionMap.get(conn.fromSetID.toString());
-                            if (fromPos !== undefined) {
-                                sum += fromPos;
-                                count++;
-                            }
-                        }
-                    });
-                    
-                    const avg = count > 0 ? sum / count : Number.MAX_SAFE_INTEGER;
-                    return { set, avg };
-                });
-                
-                // Сортируем по среднему значению
-                setsWithAvg.sort((a, b) => {
-                    if (a.avg === Number.MAX_SAFE_INTEGER) return 1;
-                    if (b.avg === Number.MAX_SAFE_INTEGER) return -1;
-                    return a.avg - b.avg;
-                });
-                
-                // Переставляем элементы в DOM
-                const container = currentRound.querySelector('.round-sets');
-                setsWithAvg.forEach(item => {
-                    container.appendChild(item.set);
+                from.parents.push({ 
+                    node: to, 
+                    slot: toSlot,
+                    fromSlot: fromSlot 
                 });
             }
         });
+        
+        // Находим истинные корни - сеты, которые не являются источниками
+        const allSetsArray = Array.from(setsMap.values());
+        const sourceIds = new Set();
+        
+        connections.forEach(conn => {
+            if (setsMap.has(conn.fromSetID)) {
+                sourceIds.add(conn.fromSetID);
+            }
+        });
+        
+        // Корни - сеты, которые не являются источниками ни для одного соединения
+        const roots = allSetsArray.filter(s => !sourceIds.has(s.id));
+        
+        // Если корней нет, берем сет с максимальным round
+        if (roots.length === 0 && allSetsArray.length > 0) {
+            const maxRound = Math.max(...allSetsArray.map(s => s.round));
+            const maxRoundSets = allSetsArray.filter(s => s.round === maxRound);
+            roots.push(...maxRoundSets);
+        }
+        
+        console.log(`Roots for ${sectionName}:`, roots.map(r => ({ id: r.id, round: r.round, children: r.children.length })));
+        
+        return { setsMap, roots };
     }
 
-    function resizeSvg() {
-        const elements = getBracketElements();
-        if (!elements) return;
-        const { content, svg } = elements;
+    // In-order обход для присвоения Y координаты
+    function assignYCoordinate(node, orderCounter, visited = new Set()) {
+        if (!node || visited.has(node.id)) return;
+        visited.add(node.id);
+        
+        // Сортируем детей по слотам
+        const sortedChildren = node.children.sort((a, b) => {
+            const slotA = a.slot !== undefined ? a.slot : 0;
+            const slotB = b.slot !== undefined ? b.slot : 0;
+            return slotA - slotB;
+        });
+        
+        // Если у узла один ребенок - просто обходим его
+        if (sortedChildren.length === 1) {
+            assignYCoordinate(sortedChildren[0].node, orderCounter, visited);
+            return;
+        }
+        
+        // Левое поддерево (первый ребенок)
+        if (sortedChildren[0]) {
+            assignYCoordinate(sortedChildren[0].node, orderCounter, visited);
+        }
+        
+        // Посещаем узел
+        node.y = orderCounter.value++;
+        console.log(`Visit ${node.id} -> y=${node.y}`);
+        
+        // Правое поддерево (второй ребенок)
+        if (sortedChildren[1]) {
+            assignYCoordinate(sortedChildren[1].node, orderCounter, visited);
+        }
+    }
+
+    // Вычисление глубины и X координаты
+    function assignDepthAndX(roots) {
+        let maxDepth = 0;
+        
+        function calculateDepth(node, depth, visited = new Set()) {
+            if (!node || visited.has(node.id)) return;
+            visited.add(node.id);
+            
+            node.depth = depth;
+            if (depth > maxDepth) maxDepth = depth;
+            
+            node.children.forEach(ch => calculateDepth(ch.node, depth + 1, visited));
+        }
+        
+        roots.forEach(root => calculateDepth(root, 0));
+        
+        // Инвертируем X
+        roots.forEach(root => {
+            function invertX(node, visited = new Set()) {
+                if (!node || visited.has(node.id)) return;
+                visited.add(node.id);
+                
+                node.x = maxDepth - node.depth;
+                node.children.forEach(ch => invertX(ch.node, visited));
+            }
+            invertX(root);
+        });
+        
+        return maxDepth;
+    }
+
+    // Центрирование родителей (post-order)
+    function centerParents(roots) {
+        function postOrder(node, visited = new Set()) {
+            if (!node || visited.has(node.id)) return;
+            visited.add(node.id);
+            
+            node.children.forEach(ch => postOrder(ch.node, visited));
+            
+            // Если у узла два ребенка - центрируем между ними
+            if (node.children.length === 2) {
+                node.y = (node.children[0].node.y + node.children[1].node.y) / 2;
+            } 
+            // Если один ребенок - ставим на тот же уровень
+            else if (node.children.length === 1) {
+                node.y = node.children[0].node.y;
+            }
+            // Если нет детей и Y не установлен - устанавливаем в 0
+            else if (node.y === undefined) {
+                node.y = 0;
+            }
+        }
+        
+        roots.forEach(root => postOrder(root));
+    }
+
+    // Сжатие по вертикали с сохранением связей
+    function compressVertically(roots) {
+        roots.forEach(root => {
+            function divide(node, visited = new Set()) {
+                if (!node || visited.has(node.id)) return;
+                visited.add(node.id);
+                
+                // Сначала сжимаем детей
+                node.children.forEach(ch => divide(ch.node, visited));
+                
+                // Сжимаем текущий узел
+                node.y = node.y / 2;
+                
+                // После сжатия детей, если у узла один ребенок - выравниваем
+                if (node.children.length === 1) {
+                    node.y = node.children[0].node.y;
+                }
+                // Если два ребенка - центрируем заново
+                else if (node.children.length === 2) {
+                    node.y = (node.children[0].node.y + node.children[1].node.y) / 2;
+                }
+            }
+            divide(root);
+        });
+    }
+
+     // Отрисовка секции
+    function renderSection(sectionName, containerId) {
+        console.log(`\n=== Rendering ${sectionName} ===`);
+        
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        const { setsMap, roots } = buildTree(sectionName);
+        
+        if (roots.length === 0) {
+            console.log(`No roots found for ${sectionName}`);
+            container.style.display = 'none';
+            return;
+        }
+        
+        console.log(`Total sets: ${setsMap.size}, Roots: ${roots.length}`);
+        
+        // Присваиваем Y координаты
+        const orderCounter = { value: 0 };
+        const visited = new Set();
+        
+        roots.forEach(root => {
+            assignYCoordinate(root, orderCounter, visited);
+        });
+        
+        // Присваиваем X координаты
+        const maxDepth = assignDepthAndX(roots);
+        console.log(`Max depth: ${maxDepth}`);
+        
+        // Центрируем родителей
+        centerParents(roots);
+        
+        // Сжимаем по вертикали
+        compressVertically(roots);
+        
+        // Выводим координаты
+        console.log('Final coordinates:');
+        setsMap.forEach((set, id) => {
+            console.log(`Set ${id}: x=${set.x}, y=${set.y}`);
+        });
+        
+        // Создаем и позиционируем элементы
+        setsMap.forEach(setData => {
+            const element = createSetElement(setData);
+            const left = (setData.x || 0) * (NODE_WIDTH + LINK_WIDTH);
+            const top = (setData.y || 0) * (NODE_HEIGHT + NODE_GAP);
+            
+            element.style.left = `${left}px`;
+            element.style.top = `${top}px`;
+            
+            container.appendChild(element);
+        });
+        
+        // Вычисляем размеры
+        let maxX = 0, maxY = 0;
+        setsMap.forEach(setData => {
+            if (setData.x > maxX) maxX = setData.x;
+            if (setData.y > maxY) maxY = setData.y;
+        });
+        
+        const width = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
+        const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
+        
+        container.style.width = `${width}px`;
+        container.style.height = `${height}px`;
+        
+        console.log(`Container size: ${width}x${height}`);
+        
+        return { setsMap, roots, maxDepth };
+    }
+
+    // Специальная функция для отрисовки Grand Final
+    function renderFinalSection(winnersRootY) {
+        console.log(`\n=== Rendering Grand Final ===`);
+        
+        const container = document.getElementById('final-nodes');
+        if (!container) return;
+        
+        const { setsMap, roots } = buildTree('final');
+        
+        if (roots.length === 0) {
+            console.log('No Grand Final sets found');
+            container.style.display = 'none';
+            return;
+        }
+        
+        console.log(`Grand Final sets: ${setsMap.size}, Roots: ${roots.length}`);
+        
+        // Для Grand Final строим дерево и позиционируем
+        const orderCounter = { value: 0 };
+        const visited = new Set();
+        
+        roots.forEach(root => {
+            assignYCoordinate(root, orderCounter, visited);
+        });
+        
+        const maxDepth = assignDepthAndX(roots);
+        centerParents(roots);
+        compressVertically(roots);
+        
+        // Находим Y позицию корня
+        let rootY = 0;
+        if (roots.length > 0) {
+            rootY = roots[0].y || 0;
+        }
+        
+        // Смещаем все сеты так, чтобы корень был на уровне winnersRootY
+        const offsetY = winnersRootY - rootY;
+        
+        // Позиционируем сеты
+        setsMap.forEach((setData, id) => {
+            const element = createSetElement(setData);
+            
+            const left = (setData.x || 0) * (NODE_WIDTH + LINK_WIDTH);
+            const top = ((setData.y || 0) + offsetY) * (NODE_HEIGHT + NODE_GAP);
+            
+            element.style.left = `${left}px`;
+            element.style.top = `${top}px`;
+            
+            container.appendChild(element);
+            
+            // Обновляем координаты для отрисовки связей
+            setData.y = (setData.y || 0) + offsetY;
+        });
+        
+        // Вычисляем размеры
+        let maxX = 0, maxY = 0;
+        setsMap.forEach(setData => {
+            if (setData.x > maxX) maxX = setData.x;
+            if (setData.y > maxY) maxY = setData.y;
+        });
+        
+        const width = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
+        const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
+        
+        container.style.width = `${width}px`;
+        container.style.height = `${height}px`;
+        
+        console.log(`Grand Final container: ${width}x${height}`);
+        console.log('Grand Final coordinates:');
+        setsMap.forEach((set, id) => {
+            console.log(`Set ${id}: x=${set.x}, y=${set.y}`);
+        });
+    }
+
+    // Отрисовка связей
+    function renderConnections() {
+        const svg = document.getElementById('connections-svg');
+        const content = document.getElementById('bracket-content');
+        
+        svg.innerHTML = '';
+        
+        const contentRect = content.getBoundingClientRect();
         const width = content.scrollWidth;
         const height = content.scrollHeight;
+        
         svg.setAttribute('width', width);
         svg.setAttribute('height', height);
         svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         svg.style.width = `${width}px`;
         svg.style.height = `${height}px`;
-    }
-
-    function drawConnection(svg, content, connection) {
-        const fromSet = getSet(connection.fromSetID);
-        const toSet = getSet(connection.toSetID);
-        if (!fromSet || !toSet) return;
         
-        const contentRect = content.getBoundingClientRect();
-        const fromRect = fromSet.getBoundingClientRect();
-        const toRect = toSet.getBoundingClientRect();
-        
-        const x1 = fromRect.right - contentRect.left;
-        const y1 = fromRect.top + fromRect.height / 2 - contentRect.top;
-        const x2 = toRect.left - contentRect.left;
-        const y2 = toRect.top + toRect.height / 2 - contentRect.top;
-        
-        const midX = (x1 + x2) / 2;
-        
-        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-        path.classList.add('connection');
-        
-        const d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
-        path.setAttribute('d', d);
-        
-        svg.appendChild(path);
-    }
-
-    function drawAllConnections() {
-        const elements = getBracketElements();
-        if (!elements) return;
-        const { content, svg } = elements;
-        
-        svg.innerHTML = '';
-        resizeSvg();
-        
-        const visibleConnections = connections.filter(conn => {
-            return getConnectionType(conn) !== 'winners-to-losers';
+        connections.forEach(conn => {
+            const fromEl = document.getElementById(`set-${conn.fromSetID}`);
+            const toEl = document.getElementById(`set-${conn.toSetID}`);
+            
+            if (!fromEl || !toEl) return;
+            
+            // Определяем секции
+            const fromSection = fromEl.closest('.bracket-section');
+            const toSection = toEl.closest('.bracket-section');
+            
+            // Пропускаем winners-to-losers связи
+            if (fromSection?.id === 'winners-section' && toSection?.id === 'losers-section') {
+                return;
+            }
+            
+            // Пропускаем losers-to-final связи
+            if (fromSection?.id === 'losers-section' && toSection?.id === 'final-section') {
+                return;
+            }
+            
+            // НЕ пропускаем final-to-final связи - они должны отображаться
+            // if (fromSection?.id === 'final-section' && toSection?.id === 'final-section') {
+            //     return;
+            // }
+            
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect = toEl.getBoundingClientRect();
+            
+            const x1 = fromRect.right - contentRect.left;
+            const y1 = fromRect.top + fromRect.height / 2 - contentRect.top;
+            const x2 = toRect.left - contentRect.left;
+            const y2 = toRect.top + toRect.height / 2 - contentRect.top;
+            
+            const midX = (x1 + x2) / 2;
+            
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.classList.add('connection');
+            
+            const d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
+            path.setAttribute('d', d);
+            
+            svg.appendChild(path);
         });
-        
-        visibleConnections.forEach(conn => drawConnection(svg, content, conn));
     }
-
-    function initializeBracket() {
+   
+    
+    // Инициализация
+    function init() {
+        // Отрисовываем Winners и получаем позицию корня
+        const winnersResult = renderSection('winners', 'winners-nodes');
+        
+        // Определяем Y позицию корня Winners
+        let winnersRootY = 0;
+        if (winnersResult && winnersResult.roots.length > 0) {
+            winnersRootY = winnersResult.roots[0].y || 0;
+        }
+        
+        console.log(`Winners root Y: ${winnersRootY}`);
+        
+        // Отрисовываем Grand Final с выравниванием по Y
+        renderFinalSection(winnersRootY);
+        
+        // Отрисовываем Losers
+        renderSection('losers', 'losers-nodes');
+        
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-                // Сначала сортируем сеты
-                sortSetsInRounds();
-                // Потом рисуем соединения
-                drawAllConnections();
+                renderConnections();
             });
         });
     }
 
+    window.addEventListener('load', init);
     window.addEventListener('resize', () => {
         clearTimeout(window.resizeTimer);
-        window.resizeTimer = setTimeout(() => {
-            drawAllConnections();
-        }, 50);
+        window.resizeTimer = setTimeout(renderConnections, 50);
     });
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeBracket);
-    } else {
-        initializeBracket();
-    }
 </script>
 </body>
 </html>

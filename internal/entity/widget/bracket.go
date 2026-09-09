@@ -43,13 +43,9 @@ type SetView struct {
 	State    int
 	Stream   string
 	Position int
+	Section  string // "winners", "losers", "final"
+	Round    int    // for debug
 	Players  []PlayerView
-}
-
-type RoundView struct {
-	Name  string
-	Round int
-	Sets  []SetView
 }
 
 type ConnectionView struct {
@@ -64,8 +60,6 @@ type ConnectionView struct {
 
 type BracketView struct {
 	Id          int64
-	Winners     []RoundView
-	Losers      []RoundView
-	Final       []SetView
+	Sets        []SetView
 	Connections []ConnectionView
 }

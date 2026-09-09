@@ -12,30 +12,36 @@ import (
 
 func (r *StartGGRenderer) buildView(bracket *entity.Bracket) entity.BracketView {
 	view := entity.BracketView{
-		Id: bracket.Id,
+		Id:   bracket.Id,
+		Sets: make([]entity.SetView, 0, len(bracket.Sets)),
 	}
 
 	// Присваиваем позиции ДО создания view
 	assignPositions(bracket)
 	debugBracketStructure(bracket)
 
-	winners := make(map[int]*entity.RoundView)
-	losers := make(map[int]*entity.RoundView)
-
 	for _, set := range bracket.Sets {
-		isGrandFinal := strings.HasPrefix(set.FullRoundText, "Grand Final") && set.Round > 0
+		setView := buildSetView(set)
+
+		// Определяем секцию
 		switch {
-		case isGrandFinal:
-			view.Final = append(view.Final, buildSetView(set))
+		case strings.HasPrefix(set.FullRoundText, "Grand Final") && set.Round > 0:
+			setView.Section = "final"
+			setView.Round = 999
 		case set.Round > 0:
-			addSetToRound(winners, set)
+			setView.Section = "winners"
+			setView.Round = set.Round
 		case set.Round < 0:
-			addSetToRound(losers, set)
+			setView.Section = "losers"
+			setView.Round = set.Round
+		default:
+			setView.Section = "winners"
+			setView.Round = set.Round
 		}
+
+		view.Sets = append(view.Sets, setView)
 	}
 
-	view.Winners = sortRounds(winners)
-	view.Losers = sortRounds(losers)
 	view.Connections = buildConnections(bracket)
 
 	// Отладка
@@ -56,8 +62,8 @@ func buildSetView(set entity.Set) entity.SetView {
 		Id:       set.Id,
 		State:    set.State,
 		Stream:   set.Stream,
-		Players:  make([]entity.PlayerView, 0, len(set.Slots)),
 		Position: set.Position,
+		Players:  make([]entity.PlayerView, 0, len(set.Slots)),
 	}
 
 	for i, slot := range set.Slots {
@@ -70,49 +76,6 @@ func buildSetView(set entity.Set) entity.SetView {
 	}
 
 	return view
-}
-
-func addSetToRound(rounds map[int]*entity.RoundView, set entity.Set) {
-	round, exists := rounds[set.Round]
-
-	if !exists {
-		round = &entity.RoundView{
-			Name:  set.FullRoundText,
-			Round: set.Round,
-			Sets:  make([]entity.SetView, 0),
-		}
-		rounds[set.Round] = round
-	}
-
-	round.Sets = append(round.Sets, buildSetView(set))
-}
-
-func sortRounds(rounds map[int]*entity.RoundView) []entity.RoundView {
-	result := make([]entity.RoundView, 0, len(rounds))
-
-	for _, round := range rounds {
-		// Сортируем сеты внутри раунда по позиции
-		sort.Slice(round.Sets, func(i, j int) bool {
-			return round.Sets[i].Position < round.Sets[j].Position
-		})
-		result = append(result, *round)
-	}
-
-	sort.Slice(result, func(i, j int) bool {
-		// Для Winners (положительные номера) - по возрастанию
-		if result[i].Round > 0 && result[j].Round > 0 {
-			return result[i].Round < result[j].Round
-		}
-		// Для Losers (отрицательные номера) - от большего к меньшему
-		// -4 (ранний) -> -5 -> -6 -> ... -> -12 (поздний)
-		if result[i].Round < 0 && result[j].Round < 0 {
-			return result[i].Round > result[j].Round
-		}
-		// Winners перед Losers
-		return result[i].Round > result[j].Round
-	})
-
-	return result
 }
 
 func buildConnections(bracket *entity.Bracket) []entity.ConnectionView {
@@ -165,167 +128,50 @@ func buildConnections(bracket *entity.Bracket) []entity.ConnectionView {
 }
 
 func assignPositions(bracket *entity.Bracket) {
-	// Сначала присваиваем позиции для Winners Bracket
-	assignWinnersPositions(bracket)
+	// Группируем сеты по секциям и раундам
+	type SetGroup struct {
+		Section string
+		Round   int
+		Sets    []*entity.Set
+	}
 
-	// Затем для Losers Bracket
-	assignLosersPositions(bracket)
-}
+	groups := make(map[string]*SetGroup)
 
-func assignWinnersPositions(bracket *entity.Bracket) {
-	// Группируем Winners сеты по раундам
-	winnersRounds := make(map[int][]*entity.Set)
 	for i := range bracket.Sets {
 		set := &bracket.Sets[i]
-		if set.Round > 0 {
-			winnersRounds[set.Round] = append(winnersRounds[set.Round], set)
+
+		// Определяем секцию
+		section := "winners"
+		if strings.HasPrefix(set.FullRoundText, "Grand Final") && set.Round > 0 {
+			section = "final"
+		} else if set.Round < 0 {
+			section = "losers"
 		}
-	}
 
-	// Сортируем раунды
-	var roundNumbers []int
-	for round := range winnersRounds {
-		roundNumbers = append(roundNumbers, round)
-	}
-	sort.Ints(roundNumbers)
+		key := fmt.Sprintf("%s_%d", section, set.Round)
 
-	// Присваиваем позиции последовательно
-	for _, roundNum := range roundNumbers {
-		sets := winnersRounds[roundNum]
-
-		if roundNum == 1 {
-			// Первый раунд: просто по порядку ID
-			sort.Slice(sets, func(i, j int) bool {
-				return sets[i].Id < sets[j].Id
-			})
-			for i, set := range sets {
-				set.Position = i + 1
-			}
-		} else {
-			// Для остальных раундов используем позиции источников
-			assignPositionsBySources(sets, bracket)
-		}
-	}
-}
-
-func assignLosersPositions(bracket *entity.Bracket) {
-	// Группируем Losers сеты по раундам
-	losersRounds := make(map[int][]*entity.Set)
-	for i := range bracket.Sets {
-		set := &bracket.Sets[i]
-		if set.Round < 0 {
-			losersRounds[set.Round] = append(losersRounds[set.Round], set)
-		}
-	}
-
-	// Сортируем раунды (от большего отрицательного к меньшему)
-	var roundNumbers []int
-	for round := range losersRounds {
-		roundNumbers = append(roundNumbers, round)
-	}
-	sort.Sort(sort.Reverse(sort.IntSlice(roundNumbers)))
-
-	// Присваиваем позиции последовательно
-	for _, roundNum := range roundNumbers {
-		sets := losersRounds[roundNum]
-
-		if roundNum == -4 {
-			// Первый раунд Losers: используем позиции из Winners Round 2
-			assignLosersFirstRoundPositions(sets, bracket)
-		} else {
-			// Для остальных раундов используем позиции источников
-			assignPositionsBySources(sets, bracket)
-		}
-	}
-}
-
-func assignLosersFirstRoundPositions(sets []*entity.Set, bracket *entity.Bracket) {
-	// Для каждого сета в Losers Round -4 находим позицию проигравшего из Winners Round 2
-	for _, set := range sets {
-		minPosition := len(sets) + 1
-		hasSource := false
-
-		for _, slot := range set.Slots {
-			if slot.Source != nil && slot.Source.Type == "set" && slot.Source.TypeID != 0 {
-				sourceSet, ok := findSetByID(bracket.Sets, slot.Source.TypeID)
-				if ok && sourceSet.Position > 0 {
-					if sourceSet.Position < minPosition {
-						minPosition = sourceSet.Position
-					}
-					hasSource = true
-				}
+		if groups[key] == nil {
+			groups[key] = &SetGroup{
+				Section: section,
+				Round:   set.Round,
+				Sets:    []*entity.Set{},
 			}
 		}
 
-		if hasSource {
-			set.Position = minPosition
-		}
+		groups[key].Sets = append(groups[key].Sets, set)
 	}
 
-	// Сортируем по позиции
-	sort.Slice(sets, func(i, j int) bool {
-		if sets[i].Position == 0 && sets[j].Position == 0 {
-			return sets[i].Id < sets[j].Id
+	// Присваиваем позиции в каждой группе
+	for _, group := range groups {
+		// Сортируем по ID
+		sort.Slice(group.Sets, func(i, j int) bool {
+			return group.Sets[i].Id < group.Sets[j].Id
+		})
+
+		// Присваиваем позиции
+		for i, set := range group.Sets {
+			set.Position = i + 1
 		}
-		if sets[i].Position == 0 {
-			return false
-		}
-		if sets[j].Position == 0 {
-			return true
-		}
-		return sets[i].Position < sets[j].Position
-	})
-
-	// Перенумеровываем позиции
-	for i, set := range sets {
-		set.Position = i + 1
-	}
-}
-
-func assignPositionsBySources(sets []*entity.Set, bracket *entity.Bracket) {
-	// Создаем карту: setID -> минимальная позиция источника
-	positionMap := make(map[int64]int)
-
-	for _, set := range sets {
-		minPosition := len(sets) + 1
-		hasSource := false
-
-		for _, slot := range set.Slots {
-			if slot.Source != nil && slot.Source.Type == "set" && slot.Source.TypeID != 0 {
-				sourceSet, ok := findSetByID(bracket.Sets, slot.Source.TypeID)
-				if ok && sourceSet.Position > 0 && sourceSet.Position < minPosition {
-					minPosition = sourceSet.Position
-					hasSource = true
-				}
-			}
-		}
-
-		if hasSource {
-			positionMap[set.Id] = minPosition
-		}
-	}
-
-	// Сортируем сеты
-	sort.Slice(sets, func(i, j int) bool {
-		posI, hasI := positionMap[sets[i].Id]
-		posJ, hasJ := positionMap[sets[j].Id]
-
-		if hasI && hasJ {
-			if posI != posJ {
-				return posI < posJ
-			}
-		} else if hasI {
-			return true
-		} else if hasJ {
-			return false
-		}
-
-		return sets[i].Id < sets[j].Id
-	})
-
-	// Присваиваем позиции
-	for i, set := range sets {
-		set.Position = i + 1
 	}
 }
 
