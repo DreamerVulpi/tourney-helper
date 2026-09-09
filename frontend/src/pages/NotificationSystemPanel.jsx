@@ -61,7 +61,7 @@ const NotificationSystemPlate = ({
   lang,
   activePlatform,
   setActivePlatform,
-  activeMessenger,
+  activeMessenger: activeDeliveryMethod,
   setActiveMessenger,
   isProcessing,
   setIsProcessing,
@@ -113,8 +113,8 @@ const NotificationSystemPlate = ({
   const isReadyToStart =
     activePlatform &&
     authStatus?.[activePlatform] &&
-    activeMessenger &&
-    authStatus?.[activeMessenger] &&
+    activeDeliveryMethod &&
+    authStatus?.[activeDeliveryMethod] &&
     urlToTournament && gameName;
   // State for selected tab: Tournament Rules || Live Broadcast Lobby
   const [activeTab, setActiveTab] = useState("rules"); // "rules" or "lobby"
@@ -137,7 +137,7 @@ const NotificationSystemPlate = ({
     setIsProcessing,
     setReport,
     setStatusNotificationSystem,
-    { activeMessenger, activePlatform, systemCfg, tourneyCfg, lang },
+    { activeMessenger: activeDeliveryMethod, activePlatform, systemCfg, tourneyCfg, lang },
   );
 
   const handleTournamentUrlChange = useCallback((value) => {
@@ -161,7 +161,7 @@ const NotificationSystemPlate = ({
   const { handleMessengerClick } = useMessengerAuth({
     systemCfg,
     locale,
-    activeMessenger,
+    activeMessenger: activeDeliveryMethod,
     setActiveMessenger,
     setAuthStatus,
     setValidationAlert,
@@ -213,7 +213,7 @@ const NotificationSystemPlate = ({
     changeRule("stage", value, updateConfig);
   }, [updateConfig]);
 
-  const handleDefaulLocaleChange = useCallback((value) => {
+  const handleDefaultLocaleChange = useCallback((value) => {
     updateConfig("system", {
       ...systemCfg,
       [activeSettings]: {
@@ -241,7 +241,7 @@ const NotificationSystemPlate = ({
               debugMode={debugMode}
               theme={theme}
               locale={locale}
-              activeMessenger={activeMessenger}
+              activeMessenger={activeDeliveryMethod}
               isReadyToStart={isReadyToStart}
               isProcessing={isProcessing}
               handleStartedSendingToggle={handleStartedSendingToggle}
@@ -301,11 +301,11 @@ const NotificationSystemPlate = ({
             </div>
             <div className="space-y-2">
               <span className="text-[9px] font-black uppercase text-blue-500 italic px-1">
-                {locale.Platform.Messenger}
+                {locale.Platform.DeliveryMethod}
               </span>
               <PlatformBtn
                 label="Discord"
-                active={activeMessenger === "discord"}
+                active={activeDeliveryMethod === "discord"}
                 auth={authStatus?.discord}
                 onClick={handleDiscordClick}
                 onSettingsClick={handleDiscordSettingsClick}
@@ -441,18 +441,9 @@ const NotificationSystemPlate = ({
                 value={systemCfg[activeSettings]?.roles?.default}
                 icon={Languages}
                 themeClasses={themeClasses}
-                onChange={handleDefaulLocaleChange}
+                onChange={handleDefaultLocaleChange}
                 items={locales}
               />
-              {/* <Field
-                label={`${locale.RulesOfTournament.StandardFormat} (1-5)`}
-                variant="select"
-                value={rules.standardFormat}
-                icon={Settings2}
-                themeClasses={themeClasses}
-                onChange={handleStandardFormatChange}
-                items={listFT}
-              /> */}
               </div>
 
               {(activeSettings === "discord" ||

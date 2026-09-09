@@ -42,7 +42,6 @@ function PlatformBtnBase({
         </div>
       </button>
 
-      {/* Кнопка настроек параметров */}
       {!disabled && (
         <button
           onClick={(e) => {

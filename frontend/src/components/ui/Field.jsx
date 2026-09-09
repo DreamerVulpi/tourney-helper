@@ -6,10 +6,13 @@ import { CopyButton } from "./CopyButton.jsx";
 
 function FieldBase({
   label,
+  labelPosition = "top", // top | left
+  labelWidth = "auto",
+
   width = "100%",
   icon: Icon,
 
-  variant = "input", // input | password | select | copy
+  variant = "input", // input | password | select | copy | button | textarea | mono | combobox
   type = "text",
   isNumber,
   readOnly = false,
@@ -38,16 +41,8 @@ function FieldBase({
   const inputType =
     variant === "password" ? (showSecret ? "text" : "password") : type;
 
-  return (
-    <div className="space-y-1.5" style={{ width }}>
-      {label && (
-        <label
-          className={`text-[9px] font-black uppercase italic px-1 ${themeClasses.label}`}
-        >
-          {label}
-        </label>
-      )}
-
+  const field = (
+    <>
       {variant === "select" ? (
         <DropdownList
           selectedValue={
@@ -78,7 +73,10 @@ function FieldBase({
         >
           <div className="flex items-center justify-center w-full gap-2">
             {Icon && (
-              <Icon size={iconSize} className="text-blue-600 shrink-0" />
+              <Icon
+                size={iconSize}
+                className="text-blue-600 shrink-0"
+              />
             )}
 
             <span className="truncate text-xs font-mono font-bold text-blue-600">
@@ -86,7 +84,10 @@ function FieldBase({
             </span>
           </div>
 
-          <CopyButton text={value} className="absolute right-2" />
+          <CopyButton
+            text={value}
+            className="absolute right-2"
+          />
         </div>
       ) : variant === "button" ? (
         <button
@@ -94,21 +95,20 @@ function FieldBase({
           onClick={onClick}
           style={{ height }}
           className={`
-                w-full
-                flex
-                rounded-xl
-                border
-                
-                gap-2
-                text-xs
-                items-center
-                justify-center
-                font-black
-                uppercase
-                italic
-                text-black
-                ${themeClasses.button}
-              `}
+            w-full
+            flex
+            rounded-xl
+            border
+            gap-2
+            text-xs
+            items-center
+            justify-center
+            font-black
+            uppercase
+            italic
+            text-black
+            ${themeClasses.button}
+          `}
         >
           {Icon && (
             <Icon
@@ -117,7 +117,9 @@ function FieldBase({
             />
           )}
 
-          <span className="leading-none translate-y-[-1px]">{labelButton}</span>
+          <span className="leading-none translate-y-[-1px]">
+            {labelButton}
+          </span>
         </button>
       ) : variant === "textarea" ? (
         <textarea
@@ -125,7 +127,19 @@ function FieldBase({
           value={value}
           readOnly={readOnly}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full ${height} p-3 rounded-xl text-sm font-medium border resize-none focus:outline-none custom-scrollbar ${themeClasses.field}`}
+          className={`
+            w-full
+            ${height}
+            p-3
+            rounded-xl
+            text-sm
+            font-medium
+            border
+            resize-none
+            focus:outline-none
+            custom-scrollbar
+            ${themeClasses.field}
+          `}
         />
       ) : variant === "mono" ? (
         <div
@@ -156,7 +170,7 @@ function FieldBase({
           style={{ height }}
         />
       ) : (
-        <div className="relative flex items-center">
+        <div className="relative flex items-center w-full">
           {Icon && (
             <Icon
               size={iconSize}
@@ -170,6 +184,7 @@ function FieldBase({
             pattern={isNumber ? "[0-9]*" : ""}
             value={value}
             placeholder={placeholder}
+            readOnly={readOnly}
             onChange={(e) => onChange(e.target.value)}
             style={{ height }}
             className={`
@@ -177,7 +192,6 @@ function FieldBase({
               rounded-xl
               border
               outline-none
-              
               ${variant === "password" ? "pr-9" : "pr-4"}
               ${Icon ? "pl-9" : "px-4"}
               text-xs
@@ -190,13 +204,63 @@ function FieldBase({
             <button
               type="button"
               onClick={() => setShowSecret((prev) => !prev)}
-              className="absolute right-3 text-slate-500 hover:text-blue-500 transition-colors"
+              className="
+                absolute
+                right-3
+                text-slate-500
+                hover:text-blue-500
+                transition-colors
+              "
             >
               {showSecret ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           )}
         </div>
       )}
+    </>
+  );
+
+  const isLeftLabel = labelPosition === "left";
+
+  return (
+    <div
+      className={
+        isLeftLabel
+          ? "flex items-center gap-3"
+          : "space-y-1.5"
+      }
+      style={{ width }}
+    >
+      {label && (
+        <label
+          style={
+            isLeftLabel
+              ? { width: labelWidth }
+              : undefined
+          }
+          className={`
+            text-xs
+            font-black
+            uppercase
+            italic
+            px-1
+            shrink-0
+            ${themeClasses.label}
+          `}
+        >
+          {label}
+        </label>
+      )}
+
+      <div
+        className={
+          isLeftLabel
+            ? "flex-1 min-w-0"
+            : ""
+        }
+      >
+        {field}
+      </div>
     </div>
   );
 }

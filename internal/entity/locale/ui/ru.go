@@ -135,6 +135,28 @@ var Ru = Ui{
 			GetUpdateButtonLabel:            "Получить обновление",
 			SkipUpdateButtonLabel:           "Пропустить обновление",
 		},
+		Authorization: AuthorizationModal{
+			Title: "Авторизация платформ",
+			Label: "Авторизация",
+			Platform: Platform{
+				AuthorizeStatePlatform: AuthorizeStatePlatform{
+					Authorized:   "Авторизован",
+					Unauthorized: "Неавторизован",
+				},
+				LaunchMsg:                    "Запуск авторизации в",
+				SuccessMsg:                   "Успешная авторизация на",
+				ErrMsg:                       "Ошибка авторизации. Проверьте правильность введенных данных",
+				DownloadSettings:             "Параметры получения",
+				RedirectURL:                  "Ссылка на перенаправление (Redirect URL)",
+				ParamsBot:                    "Параметры %v бота",
+				TokenBot:                     "Токен бота",
+				DefaultLocale:                "Стандартная локаль",
+				DeliveryMethod:               "Метод отправки",
+				Tourney:                      "Турнирная платформа",
+				RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
+				RequireMsgTournamentPlatform: "Для авторизации требуется заполнить: Client ID и Client Secret",
+			},
+		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
 		MonitoringSystem: MonitoringSystem{
@@ -165,7 +187,7 @@ var Ru = Ui{
 			ParamsBot:                    "Параметры %v бота",
 			TokenBot:                     "Токен бота",
 			DefaultLocale:                "Стандартная локаль",
-			Messenger:                    "Мессенджер",
+			DeliveryMethod:               "Мессенджер",
 			Tourney:                      "Турнирная платформа",
 			RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
 			RequireMsgTournamentPlatform: "Для авторизации требуется заполнить: Client ID и Client Secret",

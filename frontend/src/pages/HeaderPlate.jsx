@@ -1,27 +1,23 @@
 import React, { useState } from "react";
 
 import {
-  Trophy,
   LanguagesIcon,
-  ChevronDown,
   Sun,
   Moon,
   HelpCircle,
   Info,
-  PanelLeftClose,
-  PanelLeftOpen,
+  UserCog,
+  Trophy,
+  Mail,
 } from "lucide-react";
 import { getThemeClasses } from "../utils/theme/HeaderPlate/themes.jsx";
 import { createThemeChanger } from "../utils/changeTheme";
-import { ExtraButton } from "../components/ui/ExtraButton";
-import { DropdownList } from "../components/ui/DropdownList";
 import { Field } from "../components/ui/Field.jsx";
 import AboutModal from "../components/modals/AboutModal.jsx"
 import HelpModal from "../components/modals/help/HelpModal.jsx"
 import UpdateModal from "../components/modals/UpdateModal.jsx"
-import Logo from "../../../branding/icons/256.png";
 import ProgressModal from "../components/modals/ProgressModal.jsx";
-import { ProgramLogo } from "../components/ui/Logo.jsx";
+import AuthorizationModal from "../components/modals/AuthorizationModal.jsx";
 
 const HeaderPlate = ({
   theme,
@@ -31,11 +27,17 @@ const HeaderPlate = ({
   locale,
   updateInfo,
   check,
-  updateConfig,
   themeClasses,
   activeModal,
   activeTab,
+  authStatus,
+  setAuthStatus,
+  activeAuthorizationSettings,
+  activeTournamentPlatform,
+  setActiveAuthorizationSettings,
   setActiveModal,
+  activeDeliveryMethod,
+  setActiveDeliveryMethod,
   settings,
   handleInstallUpdate,
   updateProgressOpen,
@@ -45,7 +47,10 @@ const HeaderPlate = ({
   setUpdateProgressOpen,
   setUpdateStatus,
   setUpdateMessage,
-  setUpdateProgress
+  setUpdateProgress,
+  updateConfig,
+  tourneyCfg,
+  systemCfg,
 }) => {
   // Function for change theme & save to configuration of programm
   const changeTheme = createThemeChanger(theme, setTheme, updateConfig);
@@ -60,33 +65,76 @@ const HeaderPlate = ({
       }`}
     >
       <div className="flex items-center gap-[1.5rem]">
-        {/* TODO: Add button Platform */}
+        <Field
+            variant="button"
+            width="10rem"
+            icon={UserCog}
+            labelButton={locale.Authorization.Label}
+            themeClasses={themeClasses}
+            onClick={()=> setActiveModal("authorization")}
+          />
+        {/* { activeTab === "notifications" && (
+          <>
+            <Field
+              variant="select"
+              labelPosition="left"
+              labelWidth={"11rem"}
+              value={"startgg"}
+              items={[
+                  {
+                    label: "Start.gg",
+                    value: "startgg",
+                  },
+                ]}
+              width={"22rem"}
+              icon={Trophy}
+              label={"Tournament platform"}
+              themeClasses={headerThemeClasses}
+            />
+            <Field
+                variant="select"
+                labelPosition="left"
+                labelWidth={"8rem"}
+                value={"Discord"}
+                width={"18rem"}
+                items={[
+                  {
+                    label: "Discord",
+                    value: "discord",
+                  },
+                ]}
+                icon={Mail}
+                label={"Delivery method"}
+                themeClasses={headerThemeClasses}
+            />
+          </>
+        )} */}
       </div>
 
       <div className="flex items-center gap-[1rem]">
         {/* Selector language */}
         <Field
-        variant="select"
-        value={lang}
-        width={"6.5rem"}
-        icon = {LanguagesIcon}
-        themeClasses={headerThemeClasses}
-        items={[
-            {
-              label: "RU",
-              value: "RU",
-            },
-            {
-              label: "EN",
-              value: "EN",
-            }
-          ]}
-        onChange={(value) => {
-            setLang(value);
-            updateConfig?.("settings", {
-              language: value,
-            });
-          }}
+          variant="select"
+          value={lang}
+          width={"6.5rem"}
+          icon = {LanguagesIcon}
+          themeClasses={headerThemeClasses}
+          items={[
+              {
+                label: "RU",
+                value: "RU",
+              },
+              {
+                label: "EN",
+                value: "EN",
+              }
+            ]}
+          onChange={(value) => {
+              setLang(value);
+              updateConfig?.("settings", {
+                language: value,
+              });
+            }}
         />
 
         {/* Theme switcher */}
@@ -136,6 +184,31 @@ const HeaderPlate = ({
           />
         </div>
       </div>
+    <AuthorizationModal
+      isOpen={activeModal === "authorization"}
+      onClose={() => {
+        setActiveModal(null);
+      }}
+      locale={locale.Authorization}
+      themeClasses={themeClasses}
+
+      systemCfg={systemCfg}
+      tourneyCfg={tourneyCfg}
+      updateConfig={updateConfig}
+
+      activeAuthorizationSettings={activeAuthorizationSettings}
+      setActiveAuthorizationSettings={setActiveAuthorizationSettings}
+      
+      activeDeliveryMethod={activeDeliveryMethod}
+      setActiveDeliveryMethod={setActiveDeliveryMethod}
+
+      activeTournamentPlatform={activeTournamentPlatform}
+      setActiveTournamentPlatform={setActiveAuthorizationSettings}
+
+      authStatus={authStatus}
+      setAuthStatus={setAuthStatus}
+      
+    />
     <AboutModal
       isOpen={activeModal === "about"}
       locale={locale.About}

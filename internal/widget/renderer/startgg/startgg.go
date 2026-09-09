@@ -10,7 +10,7 @@ import (
 	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widget"
 )
 
-//go:embed template.html
+//go:embed template.html bracketLayout.js
 var templateFS embed.FS
 
 type StartGGRenderer struct {
@@ -19,7 +19,7 @@ type StartGGRenderer struct {
 
 func NewStartGGRenderer() *StartGGRenderer {
 	tmpl := template.Must(
-		template.ParseFS(templateFS, "template.html"),
+		template.ParseFS(templateFS, "template.html", "bracketLayout.js"),
 	)
 	return &StartGGRenderer{
 		template: tmpl,
@@ -31,7 +31,7 @@ func (r *StartGGRenderer) Render(bracket *entity.Bracket) (string, error) {
 
 	var buf bytes.Buffer
 
-	if err := r.template.Execute(&buf, view); err != nil {
+	if err := r.template.ExecuteTemplate(&buf, "template.html", view); err != nil {
 		return "", fmt.Errorf("execute template: %w", err)
 	}
 

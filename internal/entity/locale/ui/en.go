@@ -137,6 +137,28 @@ var En = Ui{
 			GetUpdateButtonLabel:            "Get an update",
 			SkipUpdateButtonLabel:           "Skip the update",
 		},
+		Authorization: AuthorizationModal{
+			Title: "Platform Authorization",
+			Label: "Authorization",
+			Platform: Platform{
+				AuthorizeStatePlatform: AuthorizeStatePlatform{
+					Authorized:   "Authorized",
+					Unauthorized: "Unauthorized",
+				},
+				DownloadSettings:             "Download settings",
+				RedirectURL:                  "Redirect URL",
+				ParamsBot:                    "Params %v bot",
+				TokenBot:                     "Bot Token",
+				DefaultLocale:                "Default locale",
+				DeliveryMethod:               "Delivery method",
+				Tourney:                      "Tournament Platform",
+				RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",
+				RequireMsgTournamentPlatform: "To authorize, you must enter: Client ID and Client Secret",
+				LaunchMsg:                    "Authorisation initiated on",
+				SuccessMsg:                   "Authorisation successful on",
+				ErrMsg:                       "Authorisation error. Please check that the details you entered are correct",
+			},
+		},
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
 		MonitoringSystem: MonitoringSystem{
@@ -164,7 +186,7 @@ var En = Ui{
 			ParamsBot:                    "Params %v bot",
 			TokenBot:                     "Bot Token",
 			DefaultLocale:                "Default locale",
-			Messenger:                    "Messenger",
+			DeliveryMethod:               "Messenger",
 			Tourney:                      "Tournament Platform",
 			RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",
 			RequireMsgTournamentPlatform: "To authorize, you must enter: Client ID and Client Secret",

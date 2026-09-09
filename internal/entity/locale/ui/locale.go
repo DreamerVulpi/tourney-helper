@@ -266,7 +266,7 @@ type Platform struct {
 	ErrMsg                       string
 	TokenBot                     string
 	DefaultLocale                string
-	Messenger                    string
+	DeliveryMethod               string
 	Tourney                      string
 	DownloadSettings             string
 	RedirectURL                  string

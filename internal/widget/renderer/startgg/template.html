@@ -1,803 +1,289 @@
+{{ define "set" }}
+<div
+    class="set"
+    id="set-{{ .Id }}"
+    data-set-id="{{ .Id }}"
+    data-state="{{ .State }}"
+    data-position="{{ .Position }}"
+>
+    {{ range .Players }}
+    <div
+        class="player {{ if eq .Nickname "" }}empty{{ end }}"
+        data-slot="{{ .Slot }}"
+    >
+        <div class="player-slot">{{ .Slot }}</div>
+        {{ if .Nickname }}
+            {{ if .Prefix }}<div class="player-prefix">{{ .Prefix }}</div>{{ end }}
+            <div class="player-name">{{ .Nickname }}</div>
+            <div class="player-score">{{ .Score }}</div>
+        {{ else }}
+            <div class="player-name">—</div>
+        {{ end }}
+    </div>
+    {{ end }}
+</div>
+{{ end }}
+
+{{ define "round" }}
+<div class="round" data-round="{{ .Round }}">
+    <div class="round-title">{{ .Name }}</div>
+    <div class="round-sets">
+        {{ range .Sets }}{{ template "set" . }}{{ end }}
+    </div>
+</div>
+{{ end }}
+
+{{ define "rounds" }}
+<div class="rounds">
+    {{ range $index, $round := . }}
+        <div class="round" data-round="{{ $round.Round }}" data-round-index="{{ $index }}">
+            <div class="round-title">{{ $round.Name }}</div>
+            <div class="round-sets">
+                {{ range $round.Sets }}{{ template "set" . }}{{ end }}
+            </div>
+        </div>
+    {{ end }}
+</div>
+{{ end }}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>Bracket {{ .Id }}</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bracket</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-
-            width: 100%;
-            min-height: 100%;
-
-            font-family: Arial, sans-serif;
-
-            background: #f5f5f5;
-            color: #222;
-        }
-
-        body {
-            padding: 32px;
-        }
-
-        h1,
-        h2 {
-            margin-top: 0;
-        }
-
-        h1 {
-            margin-bottom: 32px;
-        }
-
-        h2 {
-            margin-bottom: 20px;
-        }
-
-
-        /*
-         * Main bracket container.
-         *
-         * SVG with connections is positioned relative
-         * to this element.
-         */
-        .bracket {
-            position: relative;
-
-            width: max-content;
-            min-width: 100%;
-
-            padding: 10px 20px 40px;
-        }
-
-
-        /*
-         * SVG layer.
-         *
-         * It is above the background but below
-         * the actual bracket sets.
-         */
-        .connections {
-            position: absolute;
-
-            top: 0;
-            left: 0;
-
-            width: 100%;
-            height: 100%;
-
-            overflow: visible;
-
-            pointer-events: none;
-
-            z-index: 1;
-        }
-
-        .connection {
-            fill: none;
-
-            stroke: #999;
-            stroke-width: 2;
-
-            vector-effect: non-scaling-stroke;
-        }
-
-
-        /*
-         * Every bracket section.
-         */
-        .section {
-            position: relative;
-
-            margin-bottom: 48px;
-
-            z-index: 2;
-        }
-
-
-        /*
-         * Horizontal rounds.
-         */
-        .rounds {
-            display: flex;
-
-            gap: 50px;
-
-            align-items: flex-start;
-        }
-
-
-        /*
-         * Individual round.
-         *
-         * min-width is important because connections
-         * need predictable coordinates.
-         */
-        .round {
-            flex: 0 0 220px;
-
-            width: 220px;
-        }
-
-        .round-title {
-            margin-bottom: 14px;
-
-            height: 20px;
-
-            font-size: 14px;
-            font-weight: 600;
-
-            white-space: nowrap;
-        }
-
-
-        /*
-         * Set.
-         */
-        .set {
-            position: relative;
-
-            width: 220px;
-
-            margin-bottom: 24px;
-
-            border: 1px solid #d0d0d0;
-            border-radius: 8px;
-
-            background: #fff;
-
-            overflow: hidden;
-
-            z-index: 2;
-        }
-
-
-        /*
-         * Set ID.
-         */
-        .set-id {
-            padding: 5px 10px;
-
-            font-size: 10px;
-
-            color: #888;
-
-            border-bottom: 1px solid #e5e5e5;
-
-            background: #fafafa;
-        }
-
-
-        /*
-         * Player row.
-         */
-        .player {
-            display: flex;
-
-            align-items: center;
-            justify-content: space-between;
-
-            width: 100%;
-            min-height: 36px;
-
-            padding: 6px 10px;
-
-            background: #fff;
-        }
-
-        .player + .player {
-            border-top: 1px solid #eeeeee;
-        }
-
-
-        /*
-         * Player name.
-         */
-        .player-name {
-            display: flex;
-
-            min-width: 0;
-
-            overflow: hidden;
-
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-        .player-prefix {
-            flex-shrink: 0;
-
-            margin-right: 6px;
-
-            font-size: 12px;
-
-            color: #888;
-        }
-
-        .player-nickname {
-            min-width: 0;
-
-            overflow: hidden;
-
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-
-        /*
-         * Score.
-         */
-        .player-score {
-            flex-shrink: 0;
-
-            margin-left: 12px;
-
-            font-weight: 700;
-        }
-
-
-        /*
-         * Final is kept compact.
-         */
-        .final {
-            width: 220px;
-        }
-
-
-        /*
-         * Horizontal scrolling for very large brackets.
-         */
-        .bracket-scroll {
-            width: 100%;
-
-            overflow-x: auto;
-            overflow-y: hidden;
-
-            padding-bottom: 20px;
-        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Segoe UI", Arial, sans-serif; background: #111; color: #fff; }
+        .bracket-wrapper { position: relative; width: 100%; height: 100%; overflow: auto; background: #111; }
+        .bracket-content { position: relative; width: max-content; min-width: 100%; min-height: 100%; padding: 40px; display: flex; flex-direction: column; gap: 60px; }
+        .connections { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .connection { fill: none; stroke: #777; stroke-width: 2; vector-effect: non-scaling-stroke; }
+        .winners-final-row { display: flex; align-items: flex-start; gap: 60px; }
+        .bracket-section { position: relative; display: flex; flex-direction: column; gap: 20px; }
+        .section-title { margin: 0; font-size: 22px; font-weight: 600; color: #fff; }
+        .rounds { display: flex; align-items: flex-start; gap: 60px; }
+        .round { position: relative; width: 220px; flex: 0 0 220px; }
+        .round-title { height: 32px; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #aaa; white-space: nowrap; }
+        .round-sets { display: flex; flex-direction: column; gap: 40px; }
+        .set { position: relative; width: 220px; min-height: 76px; border: 1px solid #444; border-radius: 6px; background: #1b1b1b; overflow: hidden; z-index: 20; }
+        .player { position: relative; height: 38px; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid #333; background: #202020; white-space: nowrap; }
+        .player:last-child { border-bottom: none; }
+        .player-slot { width: 18px; flex: 0 0 18px; margin-right: 6px; font-size: 11px; color: #666; text-align: center; }
+        .player-prefix { margin-right: 5px; font-size: 12px; color: #888; }
+        .player-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: #eee; }
+        .player-score { margin-left: 8px; font-size: 13px; font-weight: 600; color: #fff; }
+        .player.empty .player-name { color: #555; }
+        .final-sets { display: flex; align-items: flex-start; gap: 40px; }
     </style>
 </head>
-
 <body>
+<div class="bracket-wrapper">
+    <div class="bracket-content">
+        <svg class="connections" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
 
-<h1>Bracket {{ .Id }}</h1>
+        <div class="winners-final-row">
+            {{ if .Winners }}
+            <section class="bracket-section" id="winners-section">
+                <h2 class="section-title">Winners</h2>
+                {{ template "rounds" .Winners }}
+            </section>
+            {{ end }}
 
-<div class="bracket-scroll">
-
-    <div class="bracket">
-
-        <!-- SVG CONNECTION LAYER -->
-        <svg class="connections"></svg>
-
-
-        <!-- ========================= -->
-        <!-- WINNERS + FINAL            -->
-        <!-- ========================= -->
-
-        <div class="section">
-
-            <h2>Winners</h2>
-
-            <div class="rounds">
-
-                {{ range .Winners }}
-
-                <div class="round">
-
-                    <div class="round-title">
-                        {{ .Name }}
-                    </div>
-
-                    {{ range .Sets }}
-
-                    <div
-                        class="set"
-                        id="set-{{ .Id }}"
-                    >
-
-                        <div class="set-id">
-                            #{{ .Id }}
-                        </div>
-
-                        {{ range .Players }}
-
-                        <div
-                            class="player"
-                            data-slot="{{ .Slot }}"
-                        >
-
-                            <div class="player-name">
-
-                                {{ if .Prefix }}
-                                <span class="player-prefix">
-                                    {{ .Prefix }}
-                                </span>
-                                {{ end }}
-
-                                <span class="player-nickname">
-                                    {{ .Nickname }}
-                                </span>
-
-                            </div>
-
-                            <div class="player-score">
-                                {{ .Score }}
-                            </div>
-
-                        </div>
-
-                        {{ end }}
-
-                    </div>
-
-                    {{ end }}
-
+            {{ if .Final }}
+            <section class="bracket-section" id="final-section">
+                <h2 class="section-title">Grand Final</h2>
+                <div class="final-sets">
+                    {{ range .Final }}{{ template "set" . }}{{ end }}
                 </div>
-
-                {{ end }}
-
-
-                <!-- FINAL -->
-
-                {{ if .Final }}
-
-                <div class="round">
-
-                    <div class="round-title">
-                        Final
-                    </div>
-
-                    <div class="final">
-
-                        {{ range .Final }}
-
-                        <div
-                            class="set"
-                            id="set-{{ .Id }}"
-                        >
-
-                            <div class="set-id">
-                                #{{ .Id }}
-                            </div>
-
-                            {{ range .Players }}
-
-                            <div
-                                class="player"
-                                data-slot="{{ .Slot }}"
-                            >
-
-                                <div class="player-name">
-
-                                    {{ if .Prefix }}
-                                    <span class="player-prefix">
-                                        {{ .Prefix }}
-                                    </span>
-                                    {{ end }}
-
-                                    <span class="player-nickname">
-                                        {{ .Nickname }}
-                                    </span>
-
-                                </div>
-
-                                <div class="player-score">
-                                    {{ .Score }}
-                                </div>
-
-                            </div>
-
-                            {{ end }}
-
-                        </div>
-
-                        {{ end }}
-
-                    </div>
-
-                </div>
-
-                {{ end }}
-
-            </div>
-
+            </section>
+            {{ end }}
         </div>
 
-
-        <!-- ========================= -->
-        <!-- LOSERS                     -->
-        <!-- ========================= -->
-
-        <div class="section">
-
-            <h2>Losers</h2>
-
-            <div class="rounds">
-
-                {{ range .Losers }}
-
-                <div class="round">
-
-                    <div class="round-title">
-                        {{ .Name }}
-                    </div>
-
-                    {{ range .Sets }}
-
-                    <div
-                        class="set"
-                        id="set-{{ .Id }}"
-                    >
-
-                        <div class="set-id">
-                            #{{ .Id }}
-                        </div>
-
-                        {{ range .Players }}
-
-                        <div
-                            class="player"
-                            data-slot="{{ .Slot }}"
-                        >
-
-                            <div class="player-name">
-
-                                {{ if .Prefix }}
-                                <span class="player-prefix">
-                                    {{ .Prefix }}
-                                </span>
-                                {{ end }}
-
-                                <span class="player-nickname">
-                                    {{ .Nickname }}
-                                </span>
-
-                            </div>
-
-                            <div class="player-score">
-                                {{ .Score }}
-                            </div>
-
-                        </div>
-
-                        {{ end }}
-
-                    </div>
-
-                    {{ end }}
-
-                </div>
-
-                {{ end }}
-
-            </div>
-
-        </div>
-
+        {{ if .Losers }}
+        <section class="bracket-section" id="losers-section">
+            <h2 class="section-title">Losers</h2>
+            {{ template "rounds" .Losers }}
+        </section>
+        {{ end }}
     </div>
-
 </div>
 
-
 <script>
-
-    /*
-     * Connections generated by Go.
-     */
     const connections = [
-
         {{ range .Connections }}
-
         {
             fromSetID: {{ .FromSetID }},
             fromSlot: {{ .FromSlot }},
-
             toSetID: {{ .ToSetID }},
             toSlot: {{ .ToSlot }},
-
             condition: "{{ .Condition }}"
         },
-
         {{ end }}
-
     ];
 
-
-    console.log(
-        "Bracket connections:",
-        connections
-    );
-
-
-    /*
-     * Get set by its Start.gg ID.
-     */
-    function getSet(id) {
-
-        return document.getElementById(
-            `set-${id}`
-        );
-
+    function getSet(id) { return document.getElementById(`set-${id}`); }
+    
+    function getBracketElements() {
+        const content = document.querySelector('.bracket-content');
+        const svg = document.querySelector('.connections');
+        return (content && svg) ? { content, svg } : null;
     }
 
-
-    /*
-     * Get player slot inside a set.
-     */
-    function getSlot(set, slot) {
-
-        if (!set) {
-            return null;
-        }
-
-        return set.querySelector(
-            `.player[data-slot="${slot}"]`
-        );
-
+    function getConnectionType(connection) {
+        const fromSet = getSet(connection.fromSetID);
+        const toSet = getSet(connection.toSetID);
+        if (!fromSet || !toSet) return 'unknown';
+        
+        const fromSection = fromSet.closest('.bracket-section');
+        const toSection = toSet.closest('.bracket-section');
+        if (!fromSection || !toSection) return 'unknown';
+        
+        const fromTitle = fromSection.querySelector('.section-title')?.textContent.trim();
+        const toTitle = toSection.querySelector('.section-title')?.textContent.trim();
+        
+        if (fromTitle === 'Winners' && toTitle === 'Losers') return 'winners-to-losers';
+        if (fromTitle === 'Winners' && toTitle === 'Winners') return 'winners-to-winners';
+        if (fromTitle === 'Losers' && toTitle === 'Losers') return 'losers-to-losers';
+        if (fromTitle === 'Winners' && toTitle === 'Grand Final') return 'winners-to-final';
+        if (fromTitle === 'Losers' && toTitle === 'Grand Final') return 'losers-to-final';
+        if (fromTitle === 'Grand Final' && toTitle === 'Grand Final') return 'final-to-final';
+        return 'unknown';
     }
 
-
-    /*
-     * Draw a single connection.
-     */
-    function drawConnection(
-        svg,
-        bracket,
-        connection
-    ) {
-
-        const fromSet =
-            getSet(connection.fromSetID);
-
-        const toSet =
-            getSet(connection.toSetID);
-
-
-        if (!fromSet || !toSet) {
-
-            console.warn(
-                "Set not found:",
-                connection
-            );
-
-            return;
-        }
-
-
-        const fromPlayer =
-            getSlot(
-                fromSet,
-                connection.fromSlot
-            );
-
-        const toPlayer =
-            getSlot(
-                toSet,
-                connection.toSlot
-            );
-
-
-        if (!fromPlayer || !toPlayer) {
-
-            console.warn(
-                "Slot not found:",
-                connection
-            );
-
-            return;
-        }
-
-
-        const bracketRect =
-            bracket.getBoundingClientRect();
-
-        const fromRect =
-            fromPlayer.getBoundingClientRect();
-
-        const toRect =
-            toPlayer.getBoundingClientRect();
-
-
-        /*
-         * Start:
-         *
-         * right-center of source player.
-         */
-        const fromX =
-            fromRect.right -
-            bracketRect.left;
-
-        const fromY =
-            fromRect.top +
-            fromRect.height / 2 -
-            bracketRect.top;
-
-
-        /*
-         * End:
-         *
-         * left-center of target player.
-         */
-        const toX =
-            toRect.left -
-            bracketRect.left;
-
-        const toY =
-            toRect.top +
-            toRect.height / 2 -
-            bracketRect.top;
-
-
-        /*
-         * If the target is to the right,
-         * create a normal bracket connection.
-         */
-        let middleX;
-
-        if (toX > fromX) {
-
-            middleX =
-                fromX +
-                (toX - fromX) / 2;
-
-        } else {
-
-            /*
-             * Fallback for unexpected geometry.
-             */
-            middleX =
-                Math.max(
-                    fromX + 20,
-                    toX + 20
-                );
-
-        }
-
-
-        /*
-         * Create SVG path.
-         */
-        const path =
-            document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "path"
-            );
-
-
-        path.classList.add(
-            "connection"
-        );
-
-
-        /*
-         * Connection shape:
-         *
-         *                 ┌────────────
-         * ────────────────┤
-         *                 └────────────
-         */
-        const d = [
-            `M ${fromX} ${fromY}`,
-            `H ${middleX}`,
-            `V ${toY}`,
-            `H ${toX}`
-        ].join(" ");
-
-
-        path.setAttribute(
-            "d",
-            d
-        );
-
-
-        svg.appendChild(path);
-
-    }
-
-
-    /*
-     * Draw all connections.
-     */
-    function drawConnections() {
-
-        const bracket =
-            document.querySelector(
-                ".bracket"
-            );
-
-        const svg =
-            document.querySelector(
-                ".connections"
-            );
-
-
-        if (!bracket || !svg) {
-            return;
-        }
-
-
-        /*
-         * Remove old connections.
-         */
-        svg.innerHTML = "";
-
-
-        /*
-         * Make SVG cover the entire bracket.
-         */
-        svg.setAttribute(
-            "width",
-            bracket.scrollWidth
-        );
-
-        svg.setAttribute(
-            "height",
-            bracket.scrollHeight
-        );
-
-
-        /*
-         * Draw every connection.
-         */
-        connections.forEach(
-            connection => {
-
-                drawConnection(
-                    svg,
-                    bracket,
-                    connection
-                );
-
+    // Улучшенная сортировка сетов внутри раундов
+    function sortSetsInRounds() {
+        const sections = document.querySelectorAll('.bracket-section');
+        
+        sections.forEach(section => {
+            const rounds = Array.from(section.querySelectorAll('.round'));
+            
+            // Для каждого раунда, начиная со второго
+            for (let i = 1; i < rounds.length; i++) {
+                const currentRound = rounds[i];
+                const prevRound = rounds[i - 1];
+                if (!prevRound) continue;
+                
+                const currentSets = Array.from(currentRound.querySelectorAll('.set'));
+                const prevSets = Array.from(prevRound.querySelectorAll('.set'));
+                
+                // Создаем карту позиций предыдущего раунда
+                const prevPositionMap = new Map();
+                prevSets.forEach((set, index) => {
+                    prevPositionMap.set(set.dataset.setId, index);
+                });
+                
+                // Для каждого сета вычисляем среднюю позицию источников
+                const setsWithAvg = currentSets.map(set => {
+                    let sum = 0;
+                    let count = 0;
+                    
+                    connections.forEach(conn => {
+                        if (conn.toSetID.toString() === set.dataset.setId) {
+                            const fromPos = prevPositionMap.get(conn.fromSetID.toString());
+                            if (fromPos !== undefined) {
+                                sum += fromPos;
+                                count++;
+                            }
+                        }
+                    });
+                    
+                    const avg = count > 0 ? sum / count : Number.MAX_SAFE_INTEGER;
+                    return { set, avg };
+                });
+                
+                // Сортируем по среднему значению
+                setsWithAvg.sort((a, b) => {
+                    if (a.avg === Number.MAX_SAFE_INTEGER) return 1;
+                    if (b.avg === Number.MAX_SAFE_INTEGER) return -1;
+                    return a.avg - b.avg;
+                });
+                
+                // Переставляем элементы в DOM
+                const container = currentRound.querySelector('.round-sets');
+                setsWithAvg.forEach(item => {
+                    container.appendChild(item.set);
+                });
             }
-        );
-
+        });
     }
 
+    function resizeSvg() {
+        const elements = getBracketElements();
+        if (!elements) return;
+        const { content, svg } = elements;
+        const width = content.scrollWidth;
+        const height = content.scrollHeight;
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', height);
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.style.width = `${width}px`;
+        svg.style.height = `${height}px`;
+    }
 
-    /*
-     * Initial render.
-     *
-     * requestAnimationFrame ensures that
-     * browser has already calculated layout.
-     */
-    window.addEventListener(
-        "load",
-        () => {
+    function drawConnection(svg, content, connection) {
+        const fromSet = getSet(connection.fromSetID);
+        const toSet = getSet(connection.toSetID);
+        if (!fromSet || !toSet) return;
+        
+        const contentRect = content.getBoundingClientRect();
+        const fromRect = fromSet.getBoundingClientRect();
+        const toRect = toSet.getBoundingClientRect();
+        
+        const x1 = fromRect.right - contentRect.left;
+        const y1 = fromRect.top + fromRect.height / 2 - contentRect.top;
+        const x2 = toRect.left - contentRect.left;
+        const y2 = toRect.top + toRect.height / 2 - contentRect.top;
+        
+        const midX = (x1 + x2) / 2;
+        
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.classList.add('connection');
+        
+        const d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
+        path.setAttribute('d', d);
+        
+        svg.appendChild(path);
+    }
 
-            requestAnimationFrame(
-                drawConnections
-            );
+    function drawAllConnections() {
+        const elements = getBracketElements();
+        if (!elements) return;
+        const { content, svg } = elements;
+        
+        svg.innerHTML = '';
+        resizeSvg();
+        
+        const visibleConnections = connections.filter(conn => {
+            return getConnectionType(conn) !== 'winners-to-losers';
+        });
+        
+        visibleConnections.forEach(conn => drawConnection(svg, content, conn));
+    }
 
-        }
-    );
+    function initializeBracket() {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                // Сначала сортируем сеты
+                sortSetsInRounds();
+                // Потом рисуем соединения
+                drawAllConnections();
+            });
+        });
+    }
 
+    window.addEventListener('resize', () => {
+        clearTimeout(window.resizeTimer);
+        window.resizeTimer = setTimeout(() => {
+            drawAllConnections();
+        }, 50);
+    });
 
-    /*
-     * Redraw after resize.
-     */
-    window.addEventListener(
-        "resize",
-        () => {
-
-            requestAnimationFrame(
-                drawConnections
-            );
-
-        }
-    );
-
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeBracket);
+    } else {
+        initializeBracket();
+    }
 </script>
-
 </body>
 </html>

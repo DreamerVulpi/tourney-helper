@@ -40,6 +40,7 @@ func (p *StartGGBracketProvider) GetBracket(ctx context.Context, id string) (*en
 	bracket := &entity.Bracket{Id: phaseGroupID}
 	bracket = generateBracket(bracket, nodes)
 	addConnections(bracket, conn)
+
 	return bracket, nil
 }
 
@@ -114,9 +115,35 @@ func addConnections(bracket *entity.Bracket, conn []entityStartgg.Nodes) {
 	for _, node := range conn {
 		set, ok := setByID[node.Id]
 		if !ok {
+			fmt.Printf(
+				"CONNECTION SET NOT FOUND: id=%d round=%d\n",
+				node.Id,
+				node.Round,
+			)
 			continue
 		}
+
+		fmt.Printf(
+			"ADD CONNECTION: set=%d round=%d slots=%d winner=%d source1=%+v source2=%+v\n",
+			set.Id,
+			set.Round,
+			len(set.Slots),
+			node.WinnerId,
+			node.Entrant1Source,
+			node.Entrant2Source,
+		)
+
 		set.WinnerId = node.WinnerId
+
+		if len(set.Slots) < 2 {
+			fmt.Printf(
+				"WARNING: set=%d has only %d slots\n",
+				set.Id,
+				len(set.Slots),
+			)
+			continue
+		}
+
 		set.Slots[0].Source = generateSource(node.Entrant1Source)
 		set.Slots[1].Source = generateSource(node.Entrant2Source)
 	}

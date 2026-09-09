@@ -97,9 +97,9 @@ const App = () => {
   // Selected panel
   const [activeTab, setActiveTab] = useState("notifications");
   // Selected tournament platform
-  const [activePlatform, setActivePlatform] = useState("");
+  const [activeTournamentPlatform, setActiveTournamentPlatform] = useState("");
   // Selected messenger
-  const [activeMessenger, setActiveMessenger] = useState("");
+  const [activeDeliveryMethod, setActiveDeliveryMethod] = useState("");
   // Selected game in DatabasePanel.jsx
   const [selectedGame, setSelectedGame] = useState("Tekken8");
   // State authorization for tournament platforms and messengers
@@ -114,6 +114,8 @@ const App = () => {
   const [activeModal, setActiveModal] = useState(null);
   // State for modal "Monitoring"
   const [report, setReport] = useState({isOpen: false});
+  // Variables for settings authorizations
+  const [activeAuthorizationSettings, setActiveAuthorizationSettings] = useState(null);
 
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
@@ -248,6 +250,8 @@ const App = () => {
             />
           </div>
           <HeaderPlate
+            authStatus={authStatus}
+            setAuthStatus={setAuthStatus}
             theme={theme}
             setTheme={setTheme}
             lang={lang}
@@ -271,6 +275,16 @@ const App = () => {
             setUpdateStatus={setUpdateStatus}
             setUpdateMessage={setUpdateMessage}
             setUpdateProgress={setUpdateProgress}
+
+            systemCfg={systemCfg}
+            tourneyCfg={tourneyCfg}
+
+            activeTournamentPlatform={activeTournamentPlatform}
+            setActiveTournamentPlatform={setActiveTournamentPlatform}
+            activeDeliveryMethod={activeDeliveryMethod}
+            setActiveDeliveryMethod={setActiveDeliveryMethod}
+            activeAuthorizationSettings={activeAuthorizationSettings}
+            setActiveAuthorizationSettings={setActiveAuthorizationSettings}
           />
 
           {/* MainWindow */}
@@ -290,10 +304,10 @@ const App = () => {
                     lang={lang}
                     isStartedSending={isMailingRunning}
                     setIsStartedSending={setIsMailingRunning}
-                    activePlatform={activePlatform}
-                    setActivePlatform={setActivePlatform}
-                    activeMessenger={activeMessenger}
-                    setActiveMessenger={setActiveMessenger}
+                    activePlatform={activeTournamentPlatform}
+                    setActivePlatform={setActiveTournamentPlatform}
+                    activeMessenger={activeDeliveryMethod}
+                    setActiveMessenger={setActiveDeliveryMethod}
                     isProcessing={isProcessingNS}
                     setIsProcessing={setIsProcessing}
                     activeModal={activeModal}
@@ -321,7 +335,7 @@ const App = () => {
                     locale={locale.WidgetBracketPanel}
                     themeClasses={themeClasses}
                     activeModal={activeModal}
-                    activePlatform={activePlatform}
+                    activePlatform={activeTournamentPlatform}
                     tourneyCfg={tourneyCfg}
                     updateConfig={updateConfig}
                     isProcessing={isProcessingWB}

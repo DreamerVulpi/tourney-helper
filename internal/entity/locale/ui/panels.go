@@ -12,9 +12,10 @@ type Ui struct {
 }
 
 type HeaderPanel struct {
-	Help   HelpModal
-	About  AboutModal
-	Update UpdateModal
+	Help          HelpModal
+	About         AboutModal
+	Update        UpdateModal
+	Authorization AuthorizationModal
 }
 
 type SidePanel struct {
@@ -71,4 +72,10 @@ type WidgetBracketPanel struct {
 	ListOfThemes         string
 	Start                string
 	Stop                 string
+}
+
+type AuthorizationModal struct {
+	Title    string
+	Label    string
+	Platform Platform
 }

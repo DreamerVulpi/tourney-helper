@@ -22,6 +22,7 @@ type Set struct {
 	FullRoundText string
 	Round         int
 	WinnerId      int64
+	Position      int
 	Slots         []Slot
 }
 
@@ -38,10 +39,11 @@ type PlayerView struct {
 }
 
 type SetView struct {
-	Id      int64
-	State   int
-	Stream  string
-	Players []PlayerView
+	Id       int64
+	State    int
+	Stream   string
+	Position int
+	Players  []PlayerView
 }
 
 type RoundView struct {
