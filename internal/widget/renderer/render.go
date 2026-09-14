@@ -7,3 +7,8 @@ import (
 type BracketRenderer interface {
 	Render(bracket *entity.Bracket) (string, error)
 }
+
+type ThemeAware interface {
+	RenderWithTheme(bracket *entity.Bracket, themeName string) (string, error)
+	ListThemes() ([]string, error)
+}

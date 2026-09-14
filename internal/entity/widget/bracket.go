@@ -1,5 +1,7 @@
 package widget
 
+import "html/template"
+
 type EntrantSource struct {
 	Type      string
 	TypeID    int64
@@ -39,13 +41,14 @@ type PlayerView struct {
 }
 
 type SetView struct {
-	Id       int64
-	State    int
-	Stream   string
-	Position int
-	Section  string // "winners", "losers", "final"
-	Round    int    // for debug
-	Players  []PlayerView
+	Id            int64
+	State         int
+	Stream        string
+	Position      int
+	Section       string // "winners", "losers", "final"
+	Round         int    // for debug
+	FullRoundText string
+	Players       []PlayerView
 }
 
 type ConnectionView struct {
@@ -62,4 +65,6 @@ type BracketView struct {
 	Id          int64
 	Sets        []SetView
 	Connections []ConnectionView
+	SystemCSS   template.CSS
+	ThemeCSS    template.CSS
 }

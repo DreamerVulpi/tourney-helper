@@ -33,16 +33,44 @@ func (s *BracketService) Get(ctx context.Context, id string) (*entity.Bracket, e
 	return bracket, nil
 }
 
+// Render рендерит сетку с темой по умолчанию.
+// Оставлен для обратной совместимости с интерфейсом BracketRenderer.
 func (s *BracketService) Render(ctx context.Context, id string) (string, error) {
+	return s.RenderWithTheme(ctx, id, "")
+}
+
+// RenderWithTheme рендерит сетку с указанной темой.
+// Если рендерер поддерживает ThemeAware — используется указанная тема.
+// Иначе тема игнорируется и используется обычный Render.
+func (s *BracketService) RenderWithTheme(ctx context.Context, id string, theme string) (string, error) {
 	bracket, err := s.provider.GetBracket(ctx, id)
 	if err != nil {
 		return "", fmt.Errorf("get bracket: %w", err)
 	}
 
+	// Если рендерер поддерживает темы — используем RenderWithTheme
+	if ta, ok := s.renderer.(renderer.ThemeAware); ok {
+		html, err := ta.RenderWithTheme(bracket, theme)
+		if err != nil {
+			return "", fmt.Errorf("render bracket with theme %q: %w", theme, err)
+		}
+		return html, nil
+	}
+
+	// Иначе — обычный Render, тема игнорируется
 	html, err := s.renderer.Render(bracket)
 	if err != nil {
 		return "", fmt.Errorf("render bracket: %w", err)
 	}
 
 	return html, nil
+}
+
+// ListThemes возвращает список доступных тем.
+// Если рендерер не поддерживает темы — возвращает nil.
+func (s *BracketService) ListThemes() ([]string, error) {
+	if ta, ok := s.renderer.(renderer.ThemeAware); ok {
+		return ta.ListThemes()
+	}
+	return nil, nil
 }

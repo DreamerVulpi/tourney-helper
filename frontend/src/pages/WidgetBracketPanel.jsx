@@ -5,6 +5,8 @@ import {
   Paintbrush,
   Square,
   Play,
+  Copy,
+  List,
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -15,6 +17,8 @@ import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { locales } from "../utils/listLocales.js";
 import { ActionButton } from "../components/ui/ActionButton.jsx";
 import { useStartToggle } from "../hooks/WidgetBracketPanel/useStartToggle.jsx";
+import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
+import { useGetListThemes } from "../hooks/WidgetBracketPanel/useGetListThemes.jsx";
 
 const WidgetBracketPlate = ({
   theme,
@@ -34,6 +38,8 @@ const WidgetBracketPlate = ({
   const urlToTournament = tourneyCfg?.widgetBracket?.urlToTournament || "";
   const bracket = tourneyCfg?.widgetBracket?.bracket || "";
   const themeBracket = tourneyCfg?.widgetBracket?.theme || "StartGG";
+  const hideStages = tourneyCfg.widgetBracket?.hideStages ?? false;
+  const themeOptions = useGetListThemes();
 
   // State for ready of notification system
   const isReadyToStart = urlToTournament;
@@ -69,6 +75,14 @@ const WidgetBracketPlate = ({
        },
     });
   }, [tourneyCfg.widgetBracket, updateConfig]);
+  const handleHideStagesChange = useCallback((value) => {
+      updateConfig("tournament", {
+        widgetBracket: {
+          ...tourneyCfg.widgetBracket,
+          hideStages: value,
+       },
+      });
+    }, [tourneyCfg.widgetBracket, updateConfig]);
 
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
 
@@ -86,12 +100,12 @@ const WidgetBracketPlate = ({
     <PanelTemplate
       themeClasses={themeClasses}
     >
-      <div className="grid grid-cols-12 gap-8 items-stretch flex-1 min-h-0">
-        <div className="col-span-10 min-h-0">
+      <div className="grid grid-cols-15 gap-8 items-stretch flex-1 min-h-0">
+        <div className="col-span-12 min-h-0">
           <div className={`w-full h-full rounded-[2.5rem] ${themeClasses.button}`}>
             {isWidgetBracketRunning && (
               <iframe
-                src={`http://localhost:8080/widget/bracket/${urlToTournament}`}
+                src={`http://localhost:8080/widget/bracket/${urlToTournament}?theme=${themeBracket}`}
                 className="w-full h-full border-0 rounded-[2.5rem]"
                 title="Tournament Bracket"
               />
@@ -100,7 +114,7 @@ const WidgetBracketPlate = ({
         </div>
 
         {/* Right part */}
-        <div className="col-span-2 flex flex-col h-full">
+        <div className="col-span-3 flex flex-col h-full">
           <div className="space-y-4">
             <Field
               label={locale.UrlToTournamentLabel+"*"}
@@ -110,7 +124,6 @@ const WidgetBracketPlate = ({
               value={urlToTournament}
               themeClasses={themeClasses}
             />
-
             <Field
               variant="select"
               label={locale.ListOfBracketsLabel}
@@ -119,7 +132,6 @@ const WidgetBracketPlate = ({
               value={bracket}
               themeClasses={themeClasses}
             />
-
             <Field
               variant="select"
               label={locale.ListOfThemes}
@@ -127,10 +139,25 @@ const WidgetBracketPlate = ({
               onChange={handleThemeBracketChange}
               value={themeBracket}
               themeClasses={themeClasses}
+              items={themeOptions}
             />
-            
+            <ToggleSwitch
+                label={locale.HideTheStages}
+                icon={List}
+                checked={hideStages}
+                color="amber"
+                themeClasses={themeClasses}
+                onChange={handleHideStagesChange}
+            />
+            {isWidgetBracketRunning ? 
+            <Field
+                label={locale.LinkOfWidget}
+                variant="copy"
+                value={`http://localhost:8080/widget/bracket/${urlToTournament}?theme=${themeBracket}`}
+                icon={Copy}
+                themeClasses={themeClasses}
+            /> : ""}
           </div>
-          
           <ButtonFooter
             absolute={false}
             className="mt-auto flex justify-center w-full"

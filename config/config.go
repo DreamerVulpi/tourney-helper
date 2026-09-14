@@ -95,6 +95,7 @@ type WidgetBracket struct {
 	UrlToTournament string `toml:"urlToTournament" json:"urlToTournament"`
 	Bracket         string `toml:"bracket" json:"bracket"`
 	Theme           string `toml:"theme" json:"theme"`
+	HideStages      bool   `toml:"hideStages" json:"hideStages"`
 }
 
 type SettingsApplication struct {
@@ -221,6 +222,7 @@ func Init(configDir string) error {
 				UrlToTournament: "",
 				Bracket:         "",
 				Theme:           "StartGG",
+				HideStages:      false,
 			},
 			Startgg: TournamentPlatform{
 				Name:         "",

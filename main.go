@@ -63,6 +63,7 @@ func main() {
 	app := application.NewApp()
 	app.UpdateService = updateService
 	app.UpdateManager = updateManager
+	widget.InitDirectories()
 	app.WidgetServer = widget.NewServer()
 
 	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)

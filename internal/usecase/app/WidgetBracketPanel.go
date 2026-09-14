@@ -3,6 +3,7 @@ package application
 import (
 	"fmt"
 	"net/http"
+	"sort"
 
 	"context"
 
@@ -19,6 +20,24 @@ import (
 	startggRenderer "github.com/dreamervulpi/tourney-helper/internal/widget/renderer/startgg"
 	"github.com/dreamervulpi/tourney-helper/internal/widget/service"
 )
+
+func (a *App) GetListThemes() ([]string, error) {
+	themes, err := a.ThemeProvider.ListThemes()
+	if err != nil {
+		logger.Log(entityLogger.Error, err.Error())
+		return nil, err
+	}
+
+	sort.Strings(themes)
+
+	logger.Log(entityLogger.Debug, fmt.Sprintf(
+		"GetListThemes: found %d themes from %s",
+		len(themes),
+		a.ThemeProvider.ExternalDir(),
+	))
+
+	return themes, nil
+}
 
 func (a *App) LaunchWidgetBracket(tournamentPlatform string, cfgTournament config.ConfigTournament) error {
 	a.mu.Lock()
@@ -62,7 +81,7 @@ func (a *App) LaunchWidgetBracket(tournamentPlatform string, cfgTournament confi
 
 		client := startgg.NewClient(a.TournamentClient.HTTPClient)
 		provider = startggProvider.NewStartGGBracketProvider(client)
-		renderer = startggRenderer.NewStartGGRenderer()
+		renderer = startggRenderer.NewStartGGRendererWithThemeProvider(a.ThemeProvider)
 	}
 
 	// slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.WidgetBracket.UrlToTournament)
@@ -77,6 +96,7 @@ func (a *App) LaunchWidgetBracket(tournamentPlatform string, cfgTournament confi
 
 	_, cancel := context.WithCancel(context.Background())
 	a.mu.Lock()
+	a.RenderBracket = renderer
 	a.wCancel = cancel
 	a.mu.Unlock()
 

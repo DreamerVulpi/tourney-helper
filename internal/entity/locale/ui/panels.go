@@ -72,6 +72,8 @@ type WidgetBracketPanel struct {
 	ListOfThemes         string
 	Start                string
 	Stop                 string
+	HideTheStages        string
+	LinkOfWidget         string
 }
 
 type AuthorizationModal struct {

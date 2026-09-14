@@ -10,6 +10,41 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
+func classifySection(set entity.Set) string {
+	text := set.FullRoundText
+
+	// Grand Final
+	if strings.HasPrefix(text, "Grand Final") {
+		return "final"
+	}
+
+	// Плейсмент-матчи (5th Place Tiebreak, 7th Place Tiebreak и т.п.)
+	if strings.Contains(text, "Place") || strings.Contains(text, "Tiebreak") {
+		return "placement"
+	}
+
+	// Losers Bracket
+	if strings.HasPrefix(text, "Losers") {
+		return "losers"
+	}
+
+	// Winners Bracket
+	if strings.HasPrefix(text, "Winners") {
+		return "winners"
+	}
+
+	// Fallback по знаку round
+	if set.Round > 0 {
+		return "winners"
+	}
+	if set.Round < 0 {
+		return "losers"
+	}
+
+	// Round == 0 — обычно bye-сеты в winners
+	return "winners"
+}
+
 func (r *StartGGRenderer) buildView(bracket *entity.Bracket) entity.BracketView {
 	view := entity.BracketView{
 		Id:   bracket.Id,
@@ -21,21 +56,20 @@ func (r *StartGGRenderer) buildView(bracket *entity.Bracket) entity.BracketView 
 	debugBracketStructure(bracket)
 
 	for _, set := range bracket.Sets {
-		setView := buildSetView(set)
+		section := classifySection(set)
 
-		// Определяем секцию
-		switch {
-		case strings.HasPrefix(set.FullRoundText, "Grand Final") && set.Round > 0:
-			setView.Section = "final"
+		// Пропускаем плейсмент-матчи (5th Place Tiebreak и т.п.)
+		if section == "placement" {
+			continue
+		}
+
+		setView := buildSetView(set)
+		setView.Section = section
+
+		// Для Grand Final используем фиктивный round, чтобы он всегда был крайним справа
+		if section == "final" {
 			setView.Round = 999
-		case set.Round > 0:
-			setView.Section = "winners"
-			setView.Round = set.Round
-		case set.Round < 0:
-			setView.Section = "losers"
-			setView.Round = set.Round
-		default:
-			setView.Section = "winners"
+		} else {
 			setView.Round = set.Round
 		}
 
@@ -47,23 +81,17 @@ func (r *StartGGRenderer) buildView(bracket *entity.Bracket) entity.BracketView 
 	// Отладка
 	logger.Log(entityLogger.Debug, fmt.Sprintf("Connections count: %d", len(view.Connections)))
 
-	for i, conn := range view.Connections {
-		logger.Log(entityLogger.Debug, fmt.Sprintf(
-			"Connection[%d]: %d[%d] -> %d[%d] condition=%s",
-			i, conn.FromSetID, conn.FromSlot, conn.ToSetID, conn.ToSlot, conn.Condition,
-		))
-	}
-
 	return view
 }
 
 func buildSetView(set entity.Set) entity.SetView {
 	view := entity.SetView{
-		Id:       set.Id,
-		State:    set.State,
-		Stream:   set.Stream,
-		Position: set.Position,
-		Players:  make([]entity.PlayerView, 0, len(set.Slots)),
+		Id:            set.Id,
+		State:         set.State,
+		Stream:        set.Stream,
+		Position:      set.Position,
+		FullRoundText: set.FullRoundText,
+		Players:       make([]entity.PlayerView, 0, len(set.Slots)),
 	}
 
 	for i, slot := range set.Slots {

@@ -1,0 +1,92 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    /* Dimension sizes of bracket */
+    --node-width: 220px;
+    --node-height: 76px;
+    --link-width: 60px;
+    --node-gap: 20px;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.bracket-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+/* Главный контейнер */
+.bracket-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* SVG слой для соединений */
+.connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.connection {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+}
+
+/* Winners и Grand Final в одной строке */
+.winners-final-row {
+    display: flex;
+    align-items: flex-start;
+}
+
+/* Секция */
+.bracket-section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Контейнер для узлов секции */
+.section-nodes {
+    position: relative;
+}
+
+/* Сет (узел дерева) */
+.set {
+    position: absolute;
+    width: 220px;
+    min-height: 76px;
+    overflow: hidden;
+    z-index: 20;
+}
+
+.player {
+    position: relative;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.player-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

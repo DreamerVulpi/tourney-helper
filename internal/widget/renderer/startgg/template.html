@@ -30,100 +30,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bracket</title>
-    <style>
-        * { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: "Segoe UI", Arial, sans-serif; background: #111; color: #fff; }
-        .bracket-wrapper { position: relative; width: 100%; height: 100%; overflow: auto; background: #111; }
-        
-        /* Главный контейнер */
-        .bracket-content { 
-            position: relative; 
-            padding: 40px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 60px; 
-        }
-        
-        /* SVG слой для соединений */
-        .connections { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            pointer-events: none; 
-            z-index: 10; 
-        }
-        
-        .connection { 
-            fill: none; 
-            stroke: #777; 
-            stroke-width: 2; 
-            vector-effect: non-scaling-stroke; 
-        }
-        
-        /* Winners и Grand Final в одной строке */
-        .winners-final-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 60px;
-        }
-        
-        /* Секция */
-        .bracket-section { 
-            position: relative; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 20px; 
-        }
-        
-        .section-title { 
-            margin: 0; 
-            font-size: 22px; 
-            font-weight: 600; 
-            color: #fff; 
-        }
-        
-        /* Контейнер для узлов секции */
-        .section-nodes { 
-            position: relative; 
-        }
-        
-        /* Сет (узел дерева) */
-        .set { 
-            position: absolute; 
-            width: 220px; 
-            min-height: 76px; 
-            border: 1px solid #444; 
-            border-radius: 6px; 
-            background: #1b1b1b; 
-            overflow: hidden; 
-            z-index: 20; 
-        }
-        
-        .player { 
-            position: relative; 
-            height: 38px; 
-            display: flex; 
-            align-items: center; 
-            padding: 0 10px; 
-            border-bottom: 1px solid #333; 
-            background: #202020; 
-            white-space: nowrap; 
-        }
-        .player:last-child { border-bottom: none; }
-        .player-slot { width: 18px; flex: 0 0 18px; margin-right: 6px; font-size: 11px; color: #666; text-align: center; }
-        .player-prefix { margin-right: 5px; font-size: 12px; color: #888; }
-        .player-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: #eee; }
-        .player-score { margin-left: 8px; font-size: 13px; font-weight: 600; color: #fff; }
-        .player.empty .player-name { color: #555; }
-    </style>
+    <style> {{ .SystemCSS }}</style>
+    <style> {{ .ThemeCSS }}</style>
 </head>
 <body>
 <div class="bracket-wrapper">
     <div class="bracket-content" id="bracket-content">
         <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
-        
+
         <!-- Winners и Grand Final в одной строке -->
         <div class="winners-final-row">
             <!-- Winners секция -->
@@ -131,14 +45,14 @@
                 <h2 class="section-title">Winners</h2>
                 <div class="section-nodes" id="winners-nodes"></div>
             </div>
-            
+
             <!-- Grand Final секция -->
             <div class="bracket-section" id="final-section">
                 <h2 class="section-title">Grand Final</h2>
                 <div class="section-nodes" id="final-nodes"></div>
             </div>
         </div>
-        
+
         <!-- Losers секция -->
         <div class="bracket-section" id="losers-section">
             <h2 class="section-title">Losers</h2>
@@ -148,6 +62,36 @@
 </div>
 
 <script>
+    // Чтение CSS-переменных из :root
+    function getCSSVar(name, fallback) {
+        const value = getComputedStyle(document.documentElement)
+            .getPropertyValue(name)
+            .trim();
+        return value || fallback;
+    }
+
+    // Парсим пиксельные значения
+    function getCSSPx(name, fallback) {
+        const value = getCSSVar(name, '');
+        if (!value) return fallback;
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? fallback : parsed;
+    }
+
+    // Конфигурация сетки (читается из CSS)
+    let NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP;
+
+    function readConfig() {
+        NODE_WIDTH = getCSSPx('--node-width', 220);
+        NODE_HEIGHT = getCSSPx('--node-height', 76);
+        LINK_WIDTH = getCSSPx('--link-width', 60);
+        NODE_GAP = getCSSPx('--node-gap', 40);
+
+        console.log('Bracket config:', {
+            NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP
+        });
+    }
+
     // Данные из Go
     const allSets = [
         {{ range .Sets }}
@@ -172,12 +116,6 @@
         {{ end }}
     ];
 
-    // Параметры отображения
-    const NODE_WIDTH = 220;
-    const NODE_HEIGHT = 76;
-    const LINK_WIDTH = 60;
-    const NODE_GAP = 20;
-
     // Создание HTML для сета
     function createSetElement(setData) {
         const div = document.createElement('div');
@@ -185,31 +123,89 @@
         div.id = `set-${setData.id}`;
         div.dataset.setId = setData.id;
         div.dataset.state = setData.state;
-        
+
         setData.players.forEach(player => {
             const playerDiv = document.createElement('div');
             playerDiv.className = `player ${player.nickname === "" ? "empty" : ""}`;
             playerDiv.dataset.slot = player.slot;
-            
+
             playerDiv.innerHTML = `
                 ${player.nickname ? `
                     ${player.prefix ? `<div class="player-prefix">${player.prefix}</div>` : ""}
                     <div class="player-name">${player.nickname}</div>
                     <div class="player-score">${player.score}</div>
                 ` : `<div class="player-name">—</div>`}
-            `;  
-            
+            `;
+
             div.appendChild(playerDiv);
         });
-        
+
         return div;
     }
 
     // Построение дерева из данных
+    // function buildTree(sectionName) {
+    //     const setsMap = new Map();
+
+    //     allSets.filter(s => s.section === sectionName).forEach(setData => {
+    //         setsMap.set(setData.id, {
+    //             ...setData,
+    //             children: [],
+    //             parents: []
+    //         });
+    //     });
+
+    //     console.log(`[buildTree:${sectionName}] setsMap size:`, setsMap.size);
+
+    //     // Инвертируем направление: to становится родителем, from — ребёнком
+    //     connections.forEach(conn => {
+    //         const from = setsMap.get(conn.fromSetID);
+    //         const to = setsMap.get(conn.toSetID);
+
+    //         if (from && to) {
+    //             const toSlot = conn.toSlot !== undefined ? conn.toSlot : 0;
+    //             const fromSlot = conn.fromSlot !== undefined ? conn.fromSlot : 0;
+
+    //             to.children.push({
+    //                 node: from,
+    //                 slot: fromSlot,
+    //                 toSlot: toSlot
+    //             });
+
+    //             from.parents.push({
+    //                 node: to,
+    //                 slot: toSlot,
+    //                 fromSlot: fromSlot
+    //             });
+    //         }
+    //     });
+
+    //     // Корни — сеты, которые не являются источниками ни для одного соединения
+    //     const allSetsArray = Array.from(setsMap.values());
+    //     const sourceIds = new Set();
+
+    //     connections.forEach(conn => {
+    //         if (setsMap.has(conn.fromSetID)) {
+    //             sourceIds.add(conn.fromSetID);
+    //         }
+    //     });
+
+    //     const roots = allSetsArray.filter(s => !sourceIds.has(s.id));
+
+    //     // Fallback: если корней нет — берём сет с максимальным round
+    //     if (roots.length === 0 && allSetsArray.length > 0) {
+    //         const maxRound = Math.max(...allSetsArray.map(s => s.round));
+    //         roots.push(...allSetsArray.filter(s => s.round === maxRound));
+    //     }
+
+    //     console.log(`Roots for ${sectionName}:`, roots.map(r => ({ id: r.id, round: r.round, children: r.children.length })));
+
+    //     return { setsMap, roots };
+    // }
+    // Построение дерева из данных
     function buildTree(sectionName) {
         const setsMap = new Map();
-        
-        // Фильтруем сеты по секции
+
         allSets.filter(s => s.section === sectionName).forEach(setData => {
             setsMap.set(setData.id, {
                 ...setData,
@@ -217,53 +213,110 @@
                 parents: []
             });
         });
-        
-        // Добавляем связи - ИНВЕРТИРУЕМ НАПРАВЛЕНИЕ
+
+        console.log(`[buildTree:${sectionName}] setsMap size: ${setsMap.size}`);
+
+        // ==================== ОТЛАДКА ====================
+        console.log(`[buildTree:${sectionName}] connections.length: ${connections.length}`);
+        console.log(`[buildTree:${sectionName}] allSets.length: ${allSets.length}`);
+
+        if (connections.length > 0) {
+            const c = connections[0];
+            console.log(`[buildTree:${sectionName}] first conn: from=${c.fromSetID} (${typeof c.fromSetID}) to=${c.toSetID} (${typeof c.toSetID})`);
+            console.log(`[buildTree:${sectionName}] from in setsMap: ${setsMap.has(c.fromSetID)}`);
+            console.log(`[buildTree:${sectionName}] to in setsMap: ${setsMap.has(c.toSetID)}`);
+        }
+
+        if (setsMap.size > 0) {
+            const firstKey = Array.from(setsMap.keys())[0];
+            console.log(`[buildTree:${sectionName}] first setsMap key: ${firstKey} (${typeof firstKey})`);
+        }
+
+        // Считаем, сколько связей вообще подходит к этой секции
+        let relevantConns = 0;
+        connections.forEach(conn => {
+            if (setsMap.has(conn.fromSetID) || setsMap.has(conn.toSetID)) {
+                relevantConns++;
+            }
+        });
+        console.log(`[buildTree:${sectionName}] relevant connections (at least one end in setsMap): ${relevantConns}`);
+        // ====================================================
+
+        // Инвертируем направление: to становится родителем, from — ребёнком
+        let matched = 0;
+        let notFoundFrom = 0;
+        let notFoundTo = 0;
+
         connections.forEach(conn => {
             const from = setsMap.get(conn.fromSetID);
             const to = setsMap.get(conn.toSetID);
-            
-            if (from && to) {
-                const toSlot = conn.toSlot !== undefined ? conn.toSlot : 0;
-                const fromSlot = conn.fromSlot !== undefined ? conn.fromSlot : 0;
-                
-                // Инвертируем: to становится родителем, from становится ребенком
-                to.children.push({ 
-                    node: from, 
-                    slot: fromSlot,
-                    toSlot: toSlot 
-                });
-                
-                from.parents.push({ 
-                    node: to, 
-                    slot: toSlot,
-                    fromSlot: fromSlot 
-                });
+
+            if (!from && !to) {
+                // оба конца не в этой секции — норм
+                return;
             }
+
+            if (!from) {
+                notFoundFrom++;
+                return;
+            }
+            if (!to) {
+                notFoundTo++;
+                return;
+            }
+
+            matched++;
+
+            const toSlot = conn.toSlot !== undefined ? conn.toSlot : 0;
+            const fromSlot = conn.fromSlot !== undefined ? conn.fromSlot : 0;
+
+            to.children.push({
+                node: from,
+                slot: fromSlot,
+                toSlot: toSlot
+            });
+
+            from.parents.push({
+                node: to,
+                slot: toSlot,
+                fromSlot: fromSlot
+            });
         });
-        
-        // Находим истинные корни - сеты, которые не являются источниками
+
+        console.log(`[buildTree:${sectionName}] matched: ${matched}, notFoundFrom: ${notFoundFrom}, notFoundTo: ${notFoundTo}`);
+
+        // ==================== ПРОВЕРКА CHILDREN ====================
+        let totalChildren = 0;
+        let nodesWithChildren = 0;
+        setsMap.forEach(s => {
+            totalChildren += s.children.length;
+            if (s.children.length > 0) nodesWithChildren++;
+        });
+        console.log(`[buildTree:${sectionName}] total children links: ${totalChildren}, nodes with children: ${nodesWithChildren}`);
+        // ==========================================================
+
+        // Корни — сеты, которые не являются источниками ни для одного соединения
         const allSetsArray = Array.from(setsMap.values());
-        const sourceIds = new Set();
-        
-        connections.forEach(conn => {
-            if (setsMap.has(conn.fromSetID)) {
-                sourceIds.add(conn.fromSetID);
-            }
-        });
-        
-        // Корни - сеты, которые не являются источниками ни для одного соединения
-        const roots = allSetsArray.filter(s => !sourceIds.has(s.id));
-        
-        // Если корней нет, берем сет с максимальным round
+        let rootRound;
+        if (sectionName === 'losers') {
+            rootRound = Math.min(...allSetsArray.map(s => s.round));
+        } else {
+            rootRound = Math.max(...allSetsArray.map(s => s.round));
+        }
+        const roots = allSetsArray.filter(s => s.round === rootRound);
+
+        // Fallback: если корней нет — берём сет с максимальным round
         if (roots.length === 0 && allSetsArray.length > 0) {
             const maxRound = Math.max(...allSetsArray.map(s => s.round));
-            const maxRoundSets = allSetsArray.filter(s => s.round === maxRound);
-            roots.push(...maxRoundSets);
+            roots.push(...allSetsArray.filter(s => s.round === maxRound));
         }
-        
-        console.log(`Roots for ${sectionName}:`, roots.map(r => ({ id: r.id, round: r.round, children: r.children.length })));
-        
+
+        console.log(`Roots for ${sectionName}:`, roots.map(r => ({
+            id: r.id,
+            round: r.round,
+            children: r.children.length
+        })));
+
         return { setsMap, roots };
     }
 
@@ -271,30 +324,30 @@
     function assignYCoordinate(node, orderCounter, visited = new Set()) {
         if (!node || visited.has(node.id)) return;
         visited.add(node.id);
-        
-        // Сортируем детей по слотам
-        const sortedChildren = node.children.sort((a, b) => {
+
+        // Сортируем детей по слотам (не мутируя исходный массив)
+        const sortedChildren = node.children.slice().sort((a, b) => {
             const slotA = a.slot !== undefined ? a.slot : 0;
             const slotB = b.slot !== undefined ? b.slot : 0;
             return slotA - slotB;
         });
-        
-        // Если у узла один ребенок - просто обходим его
+
+        // Если у узла один ребёнок — выравниваем по нему
         if (sortedChildren.length === 1) {
             assignYCoordinate(sortedChildren[0].node, orderCounter, visited);
+            node.y = sortedChildren[0].node.y;
             return;
         }
-        
-        // Левое поддерево (первый ребенок)
+
+        // Левое поддерево
         if (sortedChildren[0]) {
             assignYCoordinate(sortedChildren[0].node, orderCounter, visited);
         }
-        
-        // Посещаем узел
+
+        // Сам узел
         node.y = orderCounter.value++;
-        console.log(`Visit ${node.id} -> y=${node.y}`);
-        
-        // Правое поддерево (второй ребенок)
+
+        // Правое поддерево
         if (sortedChildren[1]) {
             assignYCoordinate(sortedChildren[1].node, orderCounter, visited);
         }
@@ -303,323 +356,384 @@
     // Вычисление глубины и X координаты
     function assignDepthAndX(roots) {
         let maxDepth = 0;
-        
-        function calculateDepth(node, depth, visited = new Set()) {
+
+        function calculateDepth(node, depth, visited) {
             if (!node || visited.has(node.id)) return;
             visited.add(node.id);
-            
+
             node.depth = depth;
             if (depth > maxDepth) maxDepth = depth;
-            
+
             node.children.forEach(ch => calculateDepth(ch.node, depth + 1, visited));
         }
-        
-        roots.forEach(root => calculateDepth(root, 0));
-        
+
+        roots.forEach(root => calculateDepth(root, 0, new Set()));
+
         // Инвертируем X
         roots.forEach(root => {
-            function invertX(node, visited = new Set()) {
+            function invertX(node, visited) {
                 if (!node || visited.has(node.id)) return;
                 visited.add(node.id);
-                
+
                 node.x = maxDepth - node.depth;
                 node.children.forEach(ch => invertX(ch.node, visited));
             }
-            invertX(root);
+            invertX(root, new Set());
         });
-        
+
         return maxDepth;
     }
 
     // Центрирование родителей (post-order)
     function centerParents(roots) {
-        function postOrder(node, visited = new Set()) {
+        function postOrder(node, visited) {
             if (!node || visited.has(node.id)) return;
             visited.add(node.id);
-            
+
             node.children.forEach(ch => postOrder(ch.node, visited));
-            
-            // Если у узла два ребенка - центрируем между ними
+
             if (node.children.length === 2) {
                 node.y = (node.children[0].node.y + node.children[1].node.y) / 2;
-            } 
-            // Если один ребенок - ставим на тот же уровень
-            else if (node.children.length === 1) {
+            } else if (node.children.length === 1) {
                 node.y = node.children[0].node.y;
-            }
-            // Если нет детей и Y не установлен - устанавливаем в 0
-            else if (node.y === undefined) {
+            } else if (node.y === undefined) {
                 node.y = 0;
             }
         }
-        
-        roots.forEach(root => postOrder(root));
+
+        roots.forEach(root => postOrder(root, new Set()));
     }
 
     // Сжатие по вертикали с сохранением связей
     function compressVertically(roots) {
         roots.forEach(root => {
-            function divide(node, visited = new Set()) {
+            function divide(node, visited) {
                 if (!node || visited.has(node.id)) return;
                 visited.add(node.id);
-                
-                // Сначала сжимаем детей
+
+                // Сначала дети
                 node.children.forEach(ch => divide(ch.node, visited));
-                
-                // Сжимаем текущий узел
-                node.y = node.y / 2;
-                
-                // После сжатия детей, если у узла один ребенок - выравниваем
+
+                // Сжимаем
+                if (typeof node.y === 'number' && !isNaN(node.y)) {
+                    node.y = node.y / 2;
+                }
+
+                // Выравнивание по детям
                 if (node.children.length === 1) {
                     node.y = node.children[0].node.y;
-                }
-                // Если два ребенка - центрируем заново
-                else if (node.children.length === 2) {
+                } else if (node.children.length === 2) {
                     node.y = (node.children[0].node.y + node.children[1].node.y) / 2;
                 }
             }
-            divide(root);
+            divide(root, new Set());
         });
     }
 
-     // Отрисовка секции
+    // Отрисовка секции
     function renderSection(sectionName, containerId) {
-        console.log(`\n=== Rendering ${sectionName} ===`);
-        
+        console.log(`\n========== renderSection: ${sectionName} ==========`);
+
         const container = document.getElementById(containerId);
-        if (!container) return;
-        
-        const { setsMap, roots } = buildTree(sectionName);
-        
-        if (roots.length === 0) {
-            console.log(`No roots found for ${sectionName}`);
-            container.style.display = 'none';
-            return;
+        if (!container) {
+            console.error(`Container not found: ${containerId}`);
+            return null;
         }
-        
-        console.log(`Total sets: ${setsMap.size}, Roots: ${roots.length}`);
-        
-        // Присваиваем Y координаты
+
+        const { setsMap, roots } = buildTree(sectionName);
+        if (setsMap.size === 0) {
+            const section = container.closest('.bracket-section');
+            if (section) section.classList.add('hidden');
+            return { setsMap, roots, maxDepth: 0 };
+        }
+        console.log(`[${sectionName}] setsMap.size:`, setsMap.size);
+        console.log(`[${sectionName}] roots:`, roots.length);
+
+        if (roots.length === 0 || setsMap.size === 0) {
+            const section = container.closest('.bracket-section');
+            if (section) {
+                section.classList.add('hidden');
+                section.style.display = 'none';   // ← надёжнее любого CSS
+            }
+            return null;
+        }
+
+        // Y-координаты с отступом между поддеревьями
+        const SUBTREE_GAP_UNITS = 2;
         const orderCounter = { value: 0 };
-        const visited = new Set();
-        
-        roots.forEach(root => {
-            assignYCoordinate(root, orderCounter, visited);
+        const visitedY = new Set();
+
+        roots.forEach((root, index) => {
+            if (index > 0) orderCounter.value += SUBTREE_GAP_UNITS;
+            assignYCoordinate(root, orderCounter, visitedY);
         });
-        
-        // Присваиваем X координаты
+
+        // Depth и X
         const maxDepth = assignDepthAndX(roots);
-        console.log(`Max depth: ${maxDepth}`);
-        
-        // Центрируем родителей
+
+        // Центрирование и сжатие
         centerParents(roots);
-        
-        // Сжимаем по вертикали
         compressVertically(roots);
-        
-        // Выводим координаты
-        console.log('Final coordinates:');
-        setsMap.forEach((set, id) => {
-            console.log(`Set ${id}: x=${set.x}, y=${set.y}`);
-        });
-        
-        // Создаем и позиционируем элементы
+
+        // Отладка
+        let ySet = 0, yUnset = 0;
+        setsMap.forEach(s => { if (typeof s.y === 'number' && !isNaN(s.y)) ySet++; else yUnset++; });
+        console.log(`[${sectionName}] y set: ${ySet}, y unset: ${yUnset}, maxDepth: ${maxDepth}`);
+
+        // Создание и позиционирование
         setsMap.forEach(setData => {
             const element = createSetElement(setData);
             const left = (setData.x || 0) * (NODE_WIDTH + LINK_WIDTH);
             const top = (setData.y || 0) * (NODE_HEIGHT + NODE_GAP);
-            
+
             element.style.left = `${left}px`;
             element.style.top = `${top}px`;
-            
+
             container.appendChild(element);
         });
-        
-        // Вычисляем размеры
-        let maxX = 0, maxY = 0;
+
+        // Размеры контейнера
+        let maxY = 0;
         setsMap.forEach(setData => {
-            if (setData.x > maxX) maxX = setData.x;
-            if (setData.y > maxY) maxY = setData.y;
+            if (typeof setData.y === 'number' && !isNaN(setData.y) && setData.y > maxY) {
+                maxY = setData.y;
+            }
         });
-        
+
         const width = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
         const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
-        
+
         container.style.width = `${width}px`;
         container.style.height = `${height}px`;
-        
-        console.log(`Container size: ${width}x${height}`);
-        
+
+        console.log(`[${sectionName}] container: ${width}x${height}, maxY=${maxY}`);
+
         return { setsMap, roots, maxDepth };
     }
 
     // Специальная функция для отрисовки Grand Final
     function renderFinalSection(winnersRootY) {
-        console.log(`\n=== Rendering Grand Final ===`);
-        
+        console.log(`\n========== renderFinalSection ==========`);
+
         const container = document.getElementById('final-nodes');
         if (!container) return;
-        
+
         const { setsMap, roots } = buildTree('final');
-        
         if (roots.length === 0) {
-            console.log('No Grand Final sets found');
-            container.style.display = 'none';
+            const section = container.closest('.bracket-section');
+            if (section) {
+                section.classList.add('hidden');
+                section.style.display = 'none';
+            }
             return;
         }
-        
         console.log(`Grand Final sets: ${setsMap.size}, Roots: ${roots.length}`);
-        
-        // Для Grand Final строим дерево и позиционируем
+
         const orderCounter = { value: 0 };
-        const visited = new Set();
-        
-        roots.forEach(root => {
-            assignYCoordinate(root, orderCounter, visited);
-        });
-        
+        const visitedY = new Set();
+
+        roots.forEach(root => assignYCoordinate(root, orderCounter, visitedY));
+
         const maxDepth = assignDepthAndX(roots);
         centerParents(roots);
         compressVertically(roots);
-        
-        // Находим Y позицию корня
+
+        // Находим Y-позицию корня
         let rootY = 0;
-        if (roots.length > 0) {
-            rootY = roots[0].y || 0;
+        if (roots.length > 0 && typeof roots[0].y === 'number') {
+            rootY = roots[0].y;
         }
-        
-        // Смещаем все сеты так, чтобы корень был на уровне winnersRootY
+
+        // Смещение для выравнивания по корню Winners
         const offsetY = winnersRootY - rootY;
-        
-        // Позиционируем сеты
-        setsMap.forEach((setData, id) => {
-            const element = createSetElement(setData);
-            
-            const left = (setData.x || 0) * (NODE_WIDTH + LINK_WIDTH);
-            const top = ((setData.y || 0) + offsetY) * (NODE_HEIGHT + NODE_GAP);
-            
-            element.style.left = `${left}px`;
-            element.style.top = `${top}px`;
-            
-            container.appendChild(element);
-            
-            // Обновляем координаты для отрисовки связей
-            setData.y = (setData.y || 0) + offsetY;
-        });
-        
-        // Вычисляем размеры
-        let maxX = 0, maxY = 0;
+
+        // Позиционирование и обновление координат
         setsMap.forEach(setData => {
-            if (setData.x > maxX) maxX = setData.x;
-            if (setData.y > maxY) maxY = setData.y;
+            const finalY = (setData.y || 0) + offsetY;
+
+            const element = createSetElement(setData);
+            element.style.left = `${(setData.x || 0) * (NODE_WIDTH + LINK_WIDTH)}px`;
+            element.style.top = `${finalY * (NODE_HEIGHT + NODE_GAP)}px`;
+
+            container.appendChild(element);
+
+            // Обновляем координаты для отрисовки связей
+            setData.y = finalY;
         });
-        
+
+        // Размеры контейнера
+        let maxY = 0;
+        setsMap.forEach(setData => {
+            if (typeof setData.y === 'number' && !isNaN(setData.y) && setData.y > maxY) {
+                maxY = setData.y;
+            }
+        });
+
         const width = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
         const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
-        
+
         container.style.width = `${width}px`;
         container.style.height = `${height}px`;
-        
-        console.log(`Grand Final container: ${width}x${height}`);
-        console.log('Grand Final coordinates:');
-        setsMap.forEach((set, id) => {
-            console.log(`Set ${id}: x=${set.x}, y=${set.y}`);
-        });
+
+        console.log(`Grand Final container: ${width}x${height}, maxY=${maxY}`);
     }
 
     // Отрисовка связей
     function renderConnections() {
         const svg = document.getElementById('connections-svg');
         const content = document.getElementById('bracket-content');
-        
+
         svg.innerHTML = '';
-        
+
         const contentRect = content.getBoundingClientRect();
         const width = content.scrollWidth;
         const height = content.scrollHeight;
-        
+
         svg.setAttribute('width', width);
         svg.setAttribute('height', height);
         svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         svg.style.width = `${width}px`;
         svg.style.height = `${height}px`;
-        
+
         connections.forEach(conn => {
             const fromEl = document.getElementById(`set-${conn.fromSetID}`);
             const toEl = document.getElementById(`set-${conn.toSetID}`);
-            
+
             if (!fromEl || !toEl) return;
-            
-            // Определяем секции
+
             const fromSection = fromEl.closest('.bracket-section');
             const toSection = toEl.closest('.bracket-section');
-            
-            // Пропускаем winners-to-losers связи
+
+            // Пропускаем winners → losers
             if (fromSection?.id === 'winners-section' && toSection?.id === 'losers-section') {
                 return;
             }
-            
-            // Пропускаем losers-to-final связи
-            if (fromSection?.id === 'losers-section' && toSection?.id === 'final-section') {
-                return;
-            }
-            
-            // НЕ пропускаем final-to-final связи - они должны отображаться
-            // if (fromSection?.id === 'final-section' && toSection?.id === 'final-section') {
-            //     return;
-            // }
-            
+
             const fromRect = fromEl.getBoundingClientRect();
             const toRect = toEl.getBoundingClientRect();
-            
+
             const x1 = fromRect.right - contentRect.left;
             const y1 = fromRect.top + fromRect.height / 2 - contentRect.top;
             const x2 = toRect.left - contentRect.left;
             const y2 = toRect.top + toRect.height / 2 - contentRect.top;
-            
+
             const midX = (x1 + x2) / 2;
-            
+
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.classList.add('connection');
-            
+
             const d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
             path.setAttribute('d', d);
-            
+
             svg.appendChild(path);
         });
     }
-   
-    
+
+    // Перерисовка (например, при смене темы)
+    function refreshBracket() {
+        readConfig();
+
+        document.getElementById('winners-nodes').innerHTML = '';
+        document.getElementById('final-nodes').innerHTML = '';
+        document.getElementById('losers-nodes').innerHTML = '';
+        document.getElementById('connections-svg').innerHTML = '';
+
+        init();
+    }
+
     // Инициализация
     function init() {
-        // Отрисовываем Winners и получаем позицию корня
+        readConfig();
+
         const winnersResult = renderSection('winners', 'winners-nodes');
-        
-        // Определяем Y позицию корня Winners
+
         let winnersRootY = 0;
         if (winnersResult && winnersResult.roots.length > 0) {
             winnersRootY = winnersResult.roots[0].y || 0;
         }
-        
+
         console.log(`Winners root Y: ${winnersRootY}`);
-        
-        // Отрисовываем Grand Final с выравниванием по Y
+
         renderFinalSection(winnersRootY);
-        
-        // Отрисовываем Losers
         renderSection('losers', 'losers-nodes');
-        
+
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 renderConnections();
             });
         });
     }
+    // =============================================================
+    // Подсветка ячейки игрока при наведении
+    // =============================================================
 
+    function setupPlayerHighlight() {
+        const content = document.getElementById('bracket-content');
+        if (!content) return;
+
+        let currentNickname = null;
+
+        function clearHighlight() {
+            document.querySelectorAll('.player.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+            currentNickname = null;
+        }
+
+        function applyHighlight(nickname) {
+            if (!nickname) return;
+            currentNickname = nickname;
+
+            // Ищем все .player с этим никнеймом
+            document.querySelectorAll('.player').forEach(playerEl => {
+                const nameEl = playerEl.querySelector('.player-name');
+                if (!nameEl) return;
+
+                if (nameEl.textContent.trim() === nickname) {
+                    playerEl.classList.add('highlighted');
+                }
+            });
+        }
+
+        content.addEventListener('mouseover', (e) => {
+            const playerEl = e.target.closest('.player');
+            if (!playerEl) return;
+
+            const nameEl = playerEl.querySelector('.player-name');
+            if (!nameEl) return;
+
+            const nickname = nameEl.textContent.trim();
+            if (!nickname || nickname === '—') return;
+
+            if (nickname === currentNickname) return;
+
+            clearHighlight();
+            applyHighlight(nickname);
+        });
+
+        content.addEventListener('mouseleave', clearHighlight);
+    }
+
+    // Вызов после инициализации
+    window.addEventListener('load', () => {
+        // init() уже вызывается в load. Добавляем подписку после него.
+        setupPlayerHighlight();
+    });
     window.addEventListener('load', init);
     window.addEventListener('resize', () => {
         clearTimeout(window.resizeTimer);
         window.resizeTimer = setTimeout(renderConnections, 50);
+    });
+
+    // Смена темы (если селектор есть на странице)
+    const themeSelector = document.getElementById('theme-selector');
+    if (themeSelector) {
+        themeSelector.addEventListener('change', refreshBracket);
+    }
+
+    window.addEventListener('load', () => {
+        init();
+        setupPlayerHighlight();
     });
 </script>
 </body>

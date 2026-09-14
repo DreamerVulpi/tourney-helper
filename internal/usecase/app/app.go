@@ -15,6 +15,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
 	"github.com/dreamervulpi/tourney-helper/internal/widget"
+	"github.com/dreamervulpi/tourney-helper/internal/widget/renderer"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -31,16 +32,20 @@ type App struct {
 	UpdateService    *update.Service
 	UpdateManager    *update.Manager
 
-	mu           sync.Mutex
-	ns           *sender.NotificationSystem
-	nsCancel     context.CancelFunc
-	wCancel      context.CancelFunc
-	activeBot    bot.BotHandler
-	WidgetServer *widget.Server
+	mu            sync.Mutex
+	ns            *sender.NotificationSystem
+	nsCancel      context.CancelFunc
+	wCancel       context.CancelFunc
+	activeBot     bot.BotHandler
+	WidgetServer  *widget.Server
+	RenderBracket renderer.BracketRenderer
+	ThemeProvider *widget.ThemeProvider
 }
 
 func NewApp() *App {
-	return &App{}
+	return &App{
+		ThemeProvider: widget.NewThemeProvider(""),
+	}
 }
 
 func (a *App) Startup(ctx context.Context) {

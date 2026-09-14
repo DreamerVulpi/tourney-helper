@@ -20,6 +20,8 @@ var Ru = Ui{
 		ListOfThemes:         "Тема оформления",
 		Start:                "Запустить",
 		Stop:                 "Остановить",
+		HideTheStages:        "Скрыть этапы",
+		LinkOfWidget:         "Ссылка на виджет",
 	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Ошибка заполнения параметров",

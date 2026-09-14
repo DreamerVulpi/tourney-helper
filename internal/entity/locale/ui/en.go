@@ -20,6 +20,8 @@ var En = Ui{
 		ListOfThemes:         "Theme",
 		Start:                "Start",
 		Stop:                 "Stop",
+		HideTheStages:        "Hide the stages",
+		LinkOfWidget:         "Link of widget",
 	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Error filling in parameters",

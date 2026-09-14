@@ -1,0 +1,163 @@
+:root {
+    --bg-color: #111;
+    --text-color: #fff;
+    --text-muted: #aaa;
+    --text-dim: #666;
+    --text-empty: #555;
+
+    --set-bg: #1b1b1b;
+    --set-border: #444;
+    --set-border-active: #2a8cff;   /* ← добавлено */
+    --player-bg: #202020;
+    --player-border: #333;
+
+    --player-name-color: #eee;
+    --player-prefix-color: #888;
+    --player-score-color: #fff;
+
+    --connection-color: #777;
+    --connection-width: 2px;
+
+    --font-family: "Segoe UI", Arial, sans-serif;
+    --section-title-size: 22px;
+    --player-name-size: 13px;
+    --player-score-size: 13px;
+    --player-prefix-size: 12px;
+
+    --content-padding: 40px;
+    --content-gap: 60px;
+    --section-gap: 20px;
+    --row-gap: 60px;
+
+    --set-radius: 6px;
+}
+
+html,
+body {
+    font-family: var(--font-family);
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.bracket-wrapper {
+    background: var(--bg-color);
+}
+
+.bracket-content {
+    padding: var(--content-padding);
+    gap: var(--content-gap);
+}
+
+/* ============================================ */
+/* Соединения */
+/* ============================================ */
+
+.connection {
+    stroke: var(--connection-color);
+    stroke-width: var(--connection-width);
+    transition: opacity 0.15s ease;
+}
+
+/* ============================================ */
+/* Layout секций */
+/* ============================================ */
+
+.winners-final-row {
+    gap: var(--row-gap);
+}
+
+.bracket-section {
+    gap: var(--section-gap);
+}
+
+/* Скрытие пустой секции */
+.bracket-section.hidden {
+    display: none !important;
+}
+
+/* Скрытие пустого ряда (Winners + Final) */
+.winners-final-row.hidden {
+    display: none !important;
+}
+
+.section-title {
+    margin: 0;
+    font-size: var(--section-title-size);
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* ============================================ */
+/* Сет (match box) */
+/* ============================================ */
+
+.set {
+    border: 1px solid var(--set-border);
+    border-radius: var(--set-radius);
+    background: var(--set-bg);
+    transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+/* ============================================ */
+/* Игрок */
+/* ============================================ */
+
+.player {
+    padding: 0 10px;
+    border-bottom: 1px solid var(--player-border);
+    background: var(--player-bg);
+}
+
+.player:last-child {
+    border-bottom: none;
+}
+
+.player-slot {
+    margin-right: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.player-prefix {
+    margin-right: 5px;
+    font-size: var(--player-prefix-size);
+    color: var(--player-prefix-color);
+}
+
+.player-name {
+    font-size: var(--player-name-size);
+    color: var(--player-name-color);
+}
+
+.player-score {
+    margin-left: 8px;
+    font-size: var(--player-score-size);
+    font-weight: 600;
+    color: var(--player-score-color);
+}
+
+.player.empty .player-name {
+    color: var(--text-empty);
+}
+
+/* ============================================ */
+/* Подсветка игрока при наведении */
+/* ============================================ */
+
+.player.highlighted {
+    background-color: rgba(42, 140, 255, 0.18);
+    box-shadow: inset 0 0 0 1px var(--set-border-active);
+}
+
+.set.has-highlighted {
+    border-color: var(--set-border-active);
+}
+
+/* Приглушение остальных сетов и связей */
+.bracket-content.has-focus .set:not(.has-highlighted) {
+    opacity: 0.5;
+}
+
+.bracket-content.has-focus .connection {
+    opacity: 0.35;
+}
