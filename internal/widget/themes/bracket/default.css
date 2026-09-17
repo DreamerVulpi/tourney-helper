@@ -1,56 +1,82 @@
+/*
+ * Default theme for tourney-helper bracket widget.
+ *
+ * Structure & sizes come from system.css.
+ * Visuals & colors come from this theme.
+ */
+
 :root {
     /* ============================================================
      * Colors — base
      * ============================================================ */
+    --primary: #155dfc;
+    --primary-dim: #0f4bc7;
+    --primary-soft: #4a82ff;
+
     --bg-color: #111;
-    --text-color: #fff;
-    --text-muted: #aaa;
-    --text-dim: #666;
+    --bg-gradient: none;
+    --text-color: #f1f5f9;
+    --text-muted: #a0aab8;
+    --text-dim: #6a7380;
     --text-empty: #555;
 
     /* ============================================================
-     * Colors — set
+     * Colors — set (match box)
      * ============================================================ */
     --set-bg: #1b1b1b;
     --set-border: #444;
-    --set-border-active: #2a8cff;
+    --set-border-active: var(--primary);
     --set-shadow: none;
 
     /* ============================================================
-     * Colors — player
+     * Colors — player row
      * ============================================================ */
     --player-bg: #202020;
     --player-bg-alt: #202020;
     --player-border: #333;
     --player-hover-bg: #262626;
 
-    --player-name-color: #eee;
-    --player-prefix-color: #888;
-    --player-score-color: #fff;
-    --player-score-bg: #161616;
+    --player-name-color: #f1f5f9;
+    --player-prefix-color: #a0aab8;
+    --player-score-color: #f1f5f9;
 
     /* ============================================================
-     * Colors — highlight
+     * Colors — highlight (игрок + связь)
      * ============================================================ */
-    --player-highlight-bg: rgba(42, 140, 255, 0.18);
-    --player-highlight-border: #2a8cff;
+    --player-highlight-bg: rgba(21, 93, 252, 0.22);
+    --player-highlight-border: var(--primary);
 
     /* ============================================================
-     * Colors — connections
+     * Colors — connections (SVG lines)
      * ============================================================ */
-    --connection-color: #777;
+    --connection-color: #7f7f7f;
+    --connection-color-active: var(--primary);
     --connection-width: 2px;
 
     /* ============================================================
-     * Colors — section title
+     * Colors — connection highlight
      * ============================================================ */
-    --section-title-color: #fff;
+    --connection-highlight-color: var(--primary);
 
     /* ============================================================
-     * Colors — live indicator
+     * Colors — section headers
      * ============================================================ */
-    --live-bg: #4a4e50;
-    --live-text: #ffffff;
+    --section-title-color: #f1f5f9;
+
+    /* ============================================================
+     * Colors — LIVE indicator
+     * ============================================================ */
+    --live-bg: var(--primary);
+    --live-bg-twitch:  #9146ff;
+    --live-bg-youtube: #ff0000;
+    --live-text: #f1f5f9;
+
+    /* ============================================================
+     * Colors — score plates
+     * ============================================================ */
+    --score-bg-default: #3a3a3a;    /* нейтральный */
+    --score-bg-winner:  #155dfc;    /* победитель — синий */
+    --score-bg-loser:   #4a5568;    /* проигравший */
 
     /* ============================================================
      * Typography
@@ -60,13 +86,15 @@
 
     --section-title-size: 22px;
     --section-title-weight: 600;
+    --section-title-transform: none;
+    --section-title-spacing: 0;
 
     --player-name-size: 13px;
     --player-name-weight: 400;
     --player-prefix-size: 12px;
     --player-prefix-weight: 400;
-    --player-score-size: 13px;
-    --player-score-weight: 600;
+    --player-score-size: 18px;
+    --player-score-weight: 700;
 
     --live-font-size: 11px;
     --live-font-weight: 700;
@@ -81,11 +109,16 @@
     --row-gap: 60px;
 
     /* ============================================================
+     * Sizes — score plate
+     * ============================================================ */
+    --score-width: 40px;
+
+    /* ============================================================
      * Borders / radius
      * ============================================================ */
-    --set-radius: 6px;
+    --set-radius: 0;
     --player-radius: 0;
-    --score-radius: 4px;
+    --score-radius: 0;
 }
 
 /* ================================================================
@@ -97,10 +130,22 @@ body {
     font-family: var(--font-family);
     background: var(--bg-color);
     color: var(--text-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html.transparent-bg,
+html.transparent-bg body,
+html.transparent-bg .bracket-wrapper,
+html.transparent-bg .bracket-content,
+html.transparent-bg .set,
+html.transparent-bg .player {
+    background: transparent !important;
+    background-image: none !important;
 }
 
 .bracket-wrapper {
-    background: var(--bg-color);
+    background: transparent;
 }
 
 .bracket-content {
@@ -109,13 +154,15 @@ body {
 }
 
 /* ================================================================
- * Section title
+ * Section titles
  * ================================================================ */
 
 .section-title {
     margin: 0;
     font-size: var(--section-title-size);
     font-weight: var(--section-title-weight);
+    text-transform: var(--section-title-transform);
+    letter-spacing: var(--section-title-spacing);
     color: var(--section-title-color);
 }
 
@@ -128,7 +175,7 @@ body {
 }
 
 /* ================================================================
- * Скрытие пустых секций
+ * Hide empty sections
  * ================================================================ */
 
 .bracket-section.hidden {
@@ -140,7 +187,7 @@ body {
 }
 
 /* ================================================================
- * Set
+ * Match box (set)
  * ================================================================ */
 
 .set {
@@ -156,11 +203,11 @@ body {
 }
 
 /* ================================================================
- * Player
+ * Player row
  * ================================================================ */
 
 .player {
-    padding: 0 10px;
+    padding: 0 0 0 10px;
     background: var(--player-bg);
     border-bottom: 1px solid var(--player-border);
     transition: background 0.1s ease, opacity 0.1s ease;
@@ -170,46 +217,89 @@ body {
     border-bottom: none;
 }
 
+/* Slot indicator (0 / 1) */
 .player-slot {
-    width: 18px;
-    margin-right: 6px;
-    font-size: 11px;
+    width: 22px;
+    margin-right: 8px;
+    font-size: 14px;
+    font-weight: 400;
     color: var(--text-dim);
+    text-align: left;
 }
 
+/* Player prefix (team tag) */
 .player-prefix {
-    margin-right: 5px;
+    margin-right: 6px;
     font-size: var(--player-prefix-size);
     font-weight: var(--player-prefix-weight);
     color: var(--player-prefix-color);
 }
 
+/* Player nickname */
 .player-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: var(--player-name-size);
     font-weight: var(--player-name-weight);
     color: var(--player-name-color);
 }
 
+/* ================================================================
+ * Player score — плашка на всю высоту ячейки
+ * ================================================================ */
+
 .player-score {
-    margin-left: 8px;
-    padding: 2px 8px;
-    min-width: 24px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    flex: 0 0 auto;
+
+    width: var(--score-width);
+    min-width: var(--score-width);
+    height: auto;
+    margin: 0 0 0 8px;
+    padding: 0;
+
     font-family: var(--font-mono);
     font-size: var(--player-score-size);
     font-weight: var(--player-score-weight);
+    line-height: 1;
+
     color: var(--player-score-color);
-    background: var(--player-score-bg);
+    background: var(--score-bg-default);
     border-radius: var(--score-radius);
 }
 
+.player.winner .player-score {
+    background: var(--score-bg-winner);
+    color: var(--player-score-color);
+}
+
+.player.loser .player-score {
+    background: var(--score-bg-loser);
+    color: var(--player-score-color);
+}
+
 /* ================================================================
- * Player highlight
+ * Player highlight (hover)
  * ================================================================ */
 
 .player.highlighted {
     background: var(--player-highlight-bg);
-    box-shadow: inset 0 0 0 1px var(--player-highlight-border);
+    position: relative;
+}
+
+.player.highlighted::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--player-highlight-border);
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* ================================================================
@@ -227,11 +317,22 @@ body {
 .connection {
     stroke: var(--connection-color);
     stroke-width: var(--connection-width);
+    stroke-linecap: butt;
+    stroke-linejoin: miter;
+    stroke-miterlimit: 2;
 }
 
-/* ================================================================
- * LIVE indicator
- * ================================================================ */
+.connection.active {
+    stroke: var(--connection-color-active);
+}
+
+.connection.highlighted {
+    stroke: var(--connection-highlight-color);
+}
+
+/* ============================================================
+ * LIVE indicator — базовый
+ * ============================================================ */
 
 .set-live {
     font-family: var(--font-mono);
@@ -240,4 +341,48 @@ body {
     letter-spacing: var(--live-letter-spacing);
     color: var(--live-text);
     background: var(--live-bg);
+}
+
+/* ============================================================
+ * LIVE — по платформам
+ * ============================================================ */
+
+.set-live.set-live--twitch {
+    background: var(--live-bg-twitch);
+    color: #ffffff;
+}
+
+.set-live.set-live--youtube {
+    background: var(--live-bg-youtube);
+    color: #ffffff;
+}
+
+/* ================================================================
+ * Round headers
+ * ================================================================ */
+
+.round-header {
+    font-family: var(--font-family);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-transform: none;
+}
+
+/* ================================================================
+ * Прямые углы везде
+ * ================================================================ */
+
+.set,
+.set-live,
+.player,
+.player:first-child,
+.player:last-child,
+.player.highlighted,
+.player.highlighted:first-child,
+.player.highlighted:last-child,
+.player-score,
+.player.highlighted::after {
+    border-radius: 0 !important;
 }

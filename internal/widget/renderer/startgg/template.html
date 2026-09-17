@@ -635,15 +635,17 @@
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.classList.add('connection');
+            path.dataset.fromSet  = conn.fromSetID;
+            path.dataset.toSet    = conn.toSetID;
+            path.dataset.fromSlot = conn.fromSlot;   // ← добавить
+            path.dataset.toSlot   = conn.toSlot;     // ← добавить
 
             const d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
             path.setAttribute('d', d);
-
             svg.appendChild(path);
-        });
+        });    
     }
 
-    // Перерисовка (например, при смене темы)
     function refreshBracket() {
         readConfig();
 
@@ -658,7 +660,7 @@
         init();
     }
 
-    // Инициализация
+
     function init() {
         readConfig();
 
@@ -680,9 +682,6 @@
             });
         });
     }
-    // =============================================================
-    // Подсветка ячейки игрока при наведении
-    // =============================================================
 
     function setupPlayerHighlight() {
         const content = document.getElementById('bracket-content');
@@ -694,6 +693,9 @@
             document.querySelectorAll('.player.highlighted').forEach(el => {
                 el.classList.remove('highlighted');
             });
+            document.querySelectorAll('.connection.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
             currentNickname = null;
         }
 
@@ -701,63 +703,81 @@
             if (!nickname) return;
             currentNickname = nickname;
 
-            // Ищем все .player с этим никнеймом
-            document.querySelectorAll('.player').forEach(playerEl => {
-                const nameEl = playerEl.querySelector('.player-name');
-                if (!nameEl) return;
+            const highlightedSlots = new Set();
 
-                if (nameEl.textContent.trim() === nickname) {
-                    playerEl.classList.add('highlighted');
+            document.querySelectorAll('.set').forEach(setEl => {
+                const setId = setEl.dataset.setId;
+                if (!setId) return;
+
+                setEl.querySelectorAll('.player').forEach(playerEl => {
+                    const nameEl = playerEl.querySelector('.player-name');
+                    if (!nameEl) return;
+
+                    if (nameEl.textContent.trim() === nickname) {
+                        playerEl.classList.add('highlighted');
+                        const slot = playerEl.dataset.slot;
+                        if (slot !== undefined) {
+                            highlightedSlots.add(`${setId}:${slot}`);
+                        }
+                    }
+                });
+            });
+
+            // Снимаем старые подсветки
+            document.querySelectorAll('.connection.highlighted').forEach(el => {
+                el.classList.remove('highlighted');
+            });
+
+            // Собираем подходящие (без навешивания класса)
+            const toHighlight = [];
+            document.querySelectorAll('.connection').forEach(pathEl => {
+                const fromSetId = pathEl.dataset.fromSet;
+                const toSetId   = pathEl.dataset.toSet;
+                const fromSlot  = pathEl.dataset.fromSlot;
+                const toSlot    = pathEl.dataset.toSlot;
+
+                if (!fromSetId || !toSetId) return;
+
+                const fromMatch = highlightedSlots.has(`${fromSetId}:${fromSlot}`);
+                const toMatch   = highlightedSlots.has(`${toSetId}:${toSlot}`);
+
+                // Проверяем, что на другом конце связи есть игрок
+                const toHasPlayer = document.querySelector(
+                    `#set-${toSetId} .player[data-slot="${toSlot}"] .player-name`
+                )?.textContent.trim();
+
+                const toIsEmpty = !toHasPlayer || toHasPlayer === '—';
+
+                if ((fromMatch || toMatch) && !toIsEmpty) {
+                    toHighlight.push(pathEl);
                 }
             });
-        }
 
-        content.addEventListener('mouseover', (e) => {
-            const playerEl = e.target.closest('.player');
-            if (!playerEl) return;
-
-            const nameEl = playerEl.querySelector('.player-name');
-            if (!nameEl) return;
-
-            const nickname = nameEl.textContent.trim();
-            if (!nickname || nickname === '—') return;
-
-            if (nickname === currentNickname) return;
-
-            clearHighlight();
-            applyHighlight(nickname);
-        });
-
-        content.addEventListener('mouseleave', clearHighlight);
-    }
-
-    window.addEventListener('resize', () => {
-        clearTimeout(window.resizeTimer);
-        window.resizeTimer = setTimeout(renderConnections, 50);
-    });
-
-    // Смена темы (если селектор есть на странице)
-    const themeSelector = document.getElementById('theme-selector');
-    if (themeSelector) {
-        themeSelector.addEventListener('change', refreshBracket);
-    }
-
-    window.addEventListener('load', () => {
-        init();
-        setupPlayerHighlight();
-    });
-    window.addEventListener('message', (event) => {
-        if (!event.data || event.data.type !== 'bracket:flags-changed') return;
-        
-        applyFlags(event.data.flags);
-        
-        // Пересчитываем связи — сеты могли сдвинуться
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                renderConnections();
+            // Навешиваем класс и перемещаем в конец SVG — поверх остальных
+            const svg = document.getElementById('connections-svg');
+            toHighlight.forEach(pathEl => {
+                pathEl.classList.add('highlighted');
+                svg.appendChild(pathEl);
             });
-        });
+        }
+    content.addEventListener('mouseover', (e) => {
+        const playerEl = e.target.closest('.player');
+        if (!playerEl) return;
+
+        const nameEl = playerEl.querySelector('.player-name');
+        if (!nameEl) return;
+
+        const nickname = nameEl.textContent.trim();
+        if (!nickname || nickname === '—') return;
+
+        if (nickname === currentNickname) return;
+
+        clearHighlight();
+        applyHighlight(nickname);
     });
+
+    content.addEventListener('mouseleave', clearHighlight);
+}
     // ============================================================
     // Флаги отображения (от React-панели через postMessage)
     // ============================================================
@@ -769,7 +789,7 @@
         console.log('[bracket] flags applied:', flags);
     }
 
-    // Начальное состояние — из URL-параметров
+        // Начальное состояние — из URL-параметров
     (function applyInitialFlags() {
         const params = new URLSearchParams(location.search);
         applyFlags({
@@ -778,6 +798,32 @@
             losersOnly:  params.has('losersOnly'),
         });
     })();
+
+    // Реакция на изменение флагов из React-панели
+    window.addEventListener('message', (event) => {
+        if (!event.data || event.data.type !== 'bracket:flags-changed') return;
+
+        applyFlags(event.data.flags);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                renderConnections();
+            });
+        });
+    });
+
+    // Реакция на resize
+    window.addEventListener('resize', () => {
+        clearTimeout(window.resizeTimer);
+        window.resizeTimer = setTimeout(renderConnections, 50);
+    });
+
+    // Старт
+    window.addEventListener('load', () => {
+        init();
+        setupPlayerHighlight();
+    });
+
 </script>
 </body>
 </html>
