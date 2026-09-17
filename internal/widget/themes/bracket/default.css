@@ -296,8 +296,8 @@ html.transparent-bg .player {
     content: '';
     position: absolute;
     inset: 0;
-    border: 1px solid var(--player-highlight-border);
-    border-radius: inherit;
+    border: 2px solid var(--player-highlight-border);
+    border-radius: 0;
     pointer-events: none;
     z-index: 1;
 }
