@@ -4,9 +4,9 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 )
 
-func (c *Client) GetConnectionsBracket(phaseGroupID int64, perPage int) ([]startgg.Nodes, error) {
+func (c *Client) GetConnectionsBracket(phaseGroupID int64, perPage int) ([]startgg.WidgetSetNode, error) {
 	return GetAllPages(
-		func(page int) ([]startgg.Nodes, int, error) {
+		func(page int) ([]startgg.WidgetSetNode, int, error) {
 			var variables = map[string]any{
 				"phaseGroupId": phaseGroupID,
 				"page":         page,
@@ -14,7 +14,7 @@ func (c *Client) GetConnectionsBracket(phaseGroupID int64, perPage int) ([]start
 				"states":       []int{1, 2, 3},
 			}
 
-			results, err := GetData[startgg.RawPhaseGroupSetsData](c, startgg.GetConnectionsBracket, variables)
+			results, err := GetData[startgg.WidgetPhaseGroupSetsResponse](c, startgg.GetConnectionsBracket, variables)
 			if err != nil {
 				return nil, 0, err
 			}

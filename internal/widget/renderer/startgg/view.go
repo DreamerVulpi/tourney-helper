@@ -3,11 +3,13 @@ package startgg
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widget"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/widget/renderer"
 )
 
 func classifySection(set entity.Set) string {
@@ -51,9 +53,7 @@ func (r *StartGGRenderer) buildView(bracket *entity.Bracket) entity.BracketView 
 		Sets: make([]entity.SetView, 0, len(bracket.Sets)),
 	}
 
-	// Присваиваем позиции ДО создания view
 	assignPositions(bracket)
-	debugBracketStructure(bracket)
 
 	for _, set := range bracket.Sets {
 		section := classifySection(set)
@@ -91,14 +91,16 @@ func buildSetView(set entity.Set) entity.SetView {
 		Stream:        set.Stream,
 		Position:      set.Position,
 		FullRoundText: set.FullRoundText,
+		WinnerId:      set.WinnerId,
 		Players:       make([]entity.PlayerView, 0, len(set.Slots)),
 	}
 
 	for i, slot := range set.Slots {
 		view.Players = append(view.Players, entity.PlayerView{
 			Slot:     i,
-			Prefix:   slot.Prefix,
-			Nickname: slot.GameNickname,
+			Id:       strconv.FormatInt(slot.Id, 10),
+			Prefix:   renderer.ClearString(slot.Prefix),
+			Nickname: renderer.ClearString(slot.GameNickname),
 			Score:    slot.Score,
 		})
 	}
@@ -109,36 +111,28 @@ func buildSetView(set entity.Set) entity.SetView {
 func buildConnections(bracket *entity.Bracket) []entity.ConnectionView {
 	var connections []entity.ConnectionView
 
-	// Строим соединения
+	setsByID := make(map[string]entity.Set, len(bracket.Sets))
+	for _, set := range bracket.Sets {
+		setsByID[set.Id] = set
+	}
+
 	for _, toSet := range bracket.Sets {
 		for toSlotIndex, slot := range toSet.Slots {
 			source := slot.Source
-
 			if source == nil {
 				continue
 			}
-
-			if source.Type != "set" || source.TypeID == 0 {
+			if source.Type != "set" || source.TypeID == "" {
 				continue
 			}
 
-			fromSet, ok := findSetByID(bracket.Sets, source.TypeID)
-
+			fromSet, ok := setsByID[source.TypeID]
 			if !ok {
-				fmt.Printf(
-					"SOURCE SET NOT FOUND: toSet=%d sourceSet=%d condition=%s\n",
-					toSet.Id, source.TypeID, source.Condition,
-				)
 				continue
 			}
 
 			fromSlotIndex := findSourceSlot(fromSet, source.Condition)
-
 			if fromSlotIndex < 0 {
-				fmt.Printf(
-					"INVALID SOURCE SLOT: fromSet=%d toSet=%d condition=%s\n",
-					fromSet.Id, toSet.Id, source.Condition,
-				)
 				continue
 			}
 
@@ -203,24 +197,21 @@ func assignPositions(bracket *entity.Bracket) {
 	}
 }
 
-func findSetByID(sets []entity.Set, id int64) (entity.Set, bool) {
-	for _, set := range sets {
-		if set.Id == id {
-			return set, true
-		}
-	}
-	return entity.Set{}, false
-}
-
 func findSourceSlot(set entity.Set, condition string) int {
 	switch condition {
 	case "winner":
+		if set.WinnerId == 0 {
+			return 0
+		}
 		for i, slot := range set.Slots {
 			if slot.Id == set.WinnerId {
 				return i
 			}
 		}
 	case "loser":
+		if set.WinnerId == 0 {
+			return 1
+		}
 		for i, slot := range set.Slots {
 			if slot.Id != set.WinnerId {
 				return i
@@ -228,46 +219,4 @@ func findSourceSlot(set entity.Set, condition string) int {
 		}
 	}
 	return -1
-}
-
-func debugBracketStructure(bracket *entity.Bracket) {
-	fmt.Println("=== BRACKET STRUCTURE ===")
-
-	roundsMap := make(map[int][]entity.Set)
-	for _, set := range bracket.Sets {
-		roundsMap[set.Round] = append(roundsMap[set.Round], set)
-	}
-
-	var roundNumbers []int
-	for round := range roundsMap {
-		roundNumbers = append(roundNumbers, round)
-	}
-	sort.Ints(roundNumbers)
-
-	for _, roundNum := range roundNumbers {
-		sets := roundsMap[roundNum]
-		fmt.Printf("Round %d: %d sets\n", roundNum, len(sets))
-
-		// Сортируем по позиции для отображения
-		sort.Slice(sets, func(i, j int) bool {
-			return sets[i].Position < sets[j].Position
-		})
-
-		for _, set := range sets {
-			fmt.Printf("  Pos %d: Set %d (ID: %d)\n", set.Position, set.Id, set.Id)
-
-			// Выводим источники
-			for i, slot := range set.Slots {
-				if slot.Source != nil && slot.Source.Type == "set" {
-					sourceSet, ok := findSetByID(bracket.Sets, slot.Source.TypeID)
-					sourceRound := 0
-					if ok {
-						sourceRound = sourceSet.Round
-					}
-					fmt.Printf("    Slot %d: from Set %d (Round %d, Pos %d) [%s]\n",
-						i, slot.Source.TypeID, sourceRound, sourceSet.Position, slot.Source.Condition)
-				}
-			}
-		}
-	}
 }

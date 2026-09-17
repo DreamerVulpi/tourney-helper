@@ -57,8 +57,10 @@ export function useAppInit({
                 widgetBracket: {
                   urlToTournament: tourney.widgetBracket?.urlToTournament || "",
                   bracket: tourney.widgetBracket?.bracket || "",
-                  theme: tourney.widgetBracket?.theme || "StartGG",
+                  theme: tourney.widgetBracket?.theme || "Default",
                   hideStages: tourney.widgetBracket?.hideStages ?? false,
+                  clearBackground: tourney.widgetBracket?.clearBackground ?? false,
+                  losersBracket: tourney.widgetBracket?.losersBracket ?? false,
                 },
                 urlToTournament: tourney.urlToTournament || "",
                 startgg: {

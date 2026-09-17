@@ -15,13 +15,15 @@ var listRegions = ListRegions{
 
 var Ru = Ui{
 	WidgetBracketPanel: WidgetBracketPanel{
-		UrlToTournamentLabel: "Ссылка на турнир",
-		ListOfBracketsLabel:  "Cетка",
-		ListOfThemes:         "Тема оформления",
-		Start:                "Запустить",
-		Stop:                 "Остановить",
-		HideTheStages:        "Скрыть этапы",
-		LinkOfWidget:         "Ссылка на виджет",
+		UrlToBracketLabel:   "Ссылка на сетку",
+		ListOfBracketsLabel: "Cетка",
+		ListOfThemes:        "Тема оформления",
+		Start:               "Запустить",
+		Stop:                "Остановить",
+		HideTheStages:       "Скрыть этапы",
+		ClearBackground:     "Чистый фон",
+		LosersBracket:       "Только сетка Лузеров",
+		LinkOfWidget:        "Ссылка на виджет",
 	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Ошибка заполнения параметров",

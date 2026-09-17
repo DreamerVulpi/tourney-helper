@@ -392,3 +392,25 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 
 	return participants, nil
 }
+
+func RawMessageToString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	s := string(raw)
+	if s == "null" || s == `""` {
+		return ""
+	}
+	if raw[0] == '"' {
+		var str string
+		if err := json.Unmarshal(raw, &str); err != nil {
+			return ""
+		}
+		return str
+	}
+	var num json.Number
+	if err := json.Unmarshal(raw, &num); err != nil {
+		return ""
+	}
+	return num.String()
+}

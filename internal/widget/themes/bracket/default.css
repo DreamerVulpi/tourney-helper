@@ -1,36 +1,96 @@
 :root {
+    /* ============================================================
+     * Colors — base
+     * ============================================================ */
     --bg-color: #111;
     --text-color: #fff;
     --text-muted: #aaa;
     --text-dim: #666;
     --text-empty: #555;
 
+    /* ============================================================
+     * Colors — set
+     * ============================================================ */
     --set-bg: #1b1b1b;
     --set-border: #444;
-    --set-border-active: #2a8cff;   /* ← добавлено */
+    --set-border-active: #2a8cff;
+    --set-shadow: none;
+
+    /* ============================================================
+     * Colors — player
+     * ============================================================ */
     --player-bg: #202020;
+    --player-bg-alt: #202020;
     --player-border: #333;
+    --player-hover-bg: #262626;
 
     --player-name-color: #eee;
     --player-prefix-color: #888;
     --player-score-color: #fff;
+    --player-score-bg: #161616;
 
+    /* ============================================================
+     * Colors — highlight
+     * ============================================================ */
+    --player-highlight-bg: rgba(42, 140, 255, 0.18);
+    --player-highlight-border: #2a8cff;
+
+    /* ============================================================
+     * Colors — connections
+     * ============================================================ */
     --connection-color: #777;
     --connection-width: 2px;
 
-    --font-family: "Segoe UI", Arial, sans-serif;
-    --section-title-size: 22px;
-    --player-name-size: 13px;
-    --player-score-size: 13px;
-    --player-prefix-size: 12px;
+    /* ============================================================
+     * Colors — section title
+     * ============================================================ */
+    --section-title-color: #fff;
 
+    /* ============================================================
+     * Colors — live indicator
+     * ============================================================ */
+    --live-bg: #4a4e50;
+    --live-text: #ffffff;
+
+    /* ============================================================
+     * Typography
+     * ============================================================ */
+    --font-family: "Segoe UI", Arial, sans-serif;
+    --font-mono: "Consolas", monospace;
+
+    --section-title-size: 22px;
+    --section-title-weight: 600;
+
+    --player-name-size: 13px;
+    --player-name-weight: 400;
+    --player-prefix-size: 12px;
+    --player-prefix-weight: 400;
+    --player-score-size: 13px;
+    --player-score-weight: 600;
+
+    --live-font-size: 11px;
+    --live-font-weight: 700;
+    --live-letter-spacing: 0.15em;
+
+    /* ============================================================
+     * Spacing
+     * ============================================================ */
     --content-padding: 40px;
     --content-gap: 60px;
     --section-gap: 20px;
     --row-gap: 60px;
 
+    /* ============================================================
+     * Borders / radius
+     * ============================================================ */
     --set-radius: 6px;
+    --player-radius: 0;
+    --score-radius: 4px;
 }
+
+/* ================================================================
+ * Base
+ * ================================================================ */
 
 html,
 body {
@@ -48,64 +108,62 @@ body {
     gap: var(--content-gap);
 }
 
-/* ============================================ */
-/* Соединения */
-/* ============================================ */
+/* ================================================================
+ * Section title
+ * ================================================================ */
 
-.connection {
-    stroke: var(--connection-color);
-    stroke-width: var(--connection-width);
-    transition: opacity 0.15s ease;
-}
-
-/* ============================================ */
-/* Layout секций */
-/* ============================================ */
-
-.winners-final-row {
-    gap: var(--row-gap);
+.section-title {
+    margin: 0;
+    font-size: var(--section-title-size);
+    font-weight: var(--section-title-weight);
+    color: var(--section-title-color);
 }
 
 .bracket-section {
     gap: var(--section-gap);
 }
 
-/* Скрытие пустой секции */
+.winners-final-row {
+    gap: var(--row-gap);
+}
+
+/* ================================================================
+ * Скрытие пустых секций
+ * ================================================================ */
+
 .bracket-section.hidden {
     display: none !important;
 }
 
-/* Скрытие пустого ряда (Winners + Final) */
 .winners-final-row.hidden {
     display: none !important;
 }
 
-.section-title {
-    margin: 0;
-    font-size: var(--section-title-size);
-    font-weight: 600;
-    color: var(--text-color);
-}
-
-/* ============================================ */
-/* Сет (match box) */
-/* ============================================ */
+/* ================================================================
+ * Set
+ * ================================================================ */
 
 .set {
+    background: var(--set-bg);
     border: 1px solid var(--set-border);
     border-radius: var(--set-radius);
-    background: var(--set-bg);
-    transition: opacity 0.15s ease, border-color 0.15s ease;
+    box-shadow: var(--set-shadow);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
-/* ============================================ */
-/* Игрок */
-/* ============================================ */
+.set[data-state="2"] {
+    border-color: var(--set-border-active);
+}
+
+/* ================================================================
+ * Player
+ * ================================================================ */
 
 .player {
     padding: 0 10px;
-    border-bottom: 1px solid var(--player-border);
     background: var(--player-bg);
+    border-bottom: 1px solid var(--player-border);
+    transition: background 0.1s ease, opacity 0.1s ease;
 }
 
 .player:last-child {
@@ -113,6 +171,7 @@ body {
 }
 
 .player-slot {
+    width: 18px;
     margin-right: 6px;
     font-size: 11px;
     color: var(--text-dim);
@@ -121,43 +180,64 @@ body {
 .player-prefix {
     margin-right: 5px;
     font-size: var(--player-prefix-size);
+    font-weight: var(--player-prefix-weight);
     color: var(--player-prefix-color);
 }
 
 .player-name {
     font-size: var(--player-name-size);
+    font-weight: var(--player-name-weight);
     color: var(--player-name-color);
 }
 
 .player-score {
     margin-left: 8px;
+    padding: 2px 8px;
+    min-width: 24px;
+    text-align: center;
+    font-family: var(--font-mono);
     font-size: var(--player-score-size);
-    font-weight: 600;
+    font-weight: var(--player-score-weight);
     color: var(--player-score-color);
+    background: var(--player-score-bg);
+    border-radius: var(--score-radius);
 }
+
+/* ================================================================
+ * Player highlight
+ * ================================================================ */
+
+.player.highlighted {
+    background: var(--player-highlight-bg);
+    box-shadow: inset 0 0 0 1px var(--player-highlight-border);
+}
+
+/* ================================================================
+ * Empty / TBD slots
+ * ================================================================ */
 
 .player.empty .player-name {
     color: var(--text-empty);
 }
 
-/* ============================================ */
-/* Подсветка игрока при наведении */
-/* ============================================ */
+/* ================================================================
+ * Connections (SVG)
+ * ================================================================ */
 
-.player.highlighted {
-    background-color: rgba(42, 140, 255, 0.18);
-    box-shadow: inset 0 0 0 1px var(--set-border-active);
+.connection {
+    stroke: var(--connection-color);
+    stroke-width: var(--connection-width);
 }
 
-.set.has-highlighted {
-    border-color: var(--set-border-active);
-}
+/* ================================================================
+ * LIVE indicator
+ * ================================================================ */
 
-/* Приглушение остальных сетов и связей */
-.bracket-content.has-focus .set:not(.has-highlighted) {
-    opacity: 0.5;
-}
-
-.bracket-content.has-focus .connection {
-    opacity: 0.35;
+.set-live {
+    font-family: var(--font-mono);
+    font-size: var(--live-font-size);
+    font-weight: var(--live-font-weight);
+    letter-spacing: var(--live-letter-spacing);
+    color: var(--live-text);
+    background: var(--live-bg);
 }

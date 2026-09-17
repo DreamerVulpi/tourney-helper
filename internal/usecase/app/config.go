@@ -98,9 +98,10 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 		nullCfg := config.ConfigTournament{
 			WidgetBracket: config.WidgetBracket{
 				UrlToTournament: "",
-				Bracket:         "",
 				Theme:           "StartGG",
 				HideStages:      false,
+				LosersBracket:   false,
+				ClearBackground: false,
 			},
 			Startgg: config.TournamentPlatform{
 				Name:         "",

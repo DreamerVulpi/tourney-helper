@@ -35,34 +35,30 @@
 </head>
 <body>
 <div class="bracket-wrapper">
-    <div class="bracket-content" id="bracket-content">
-        <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="bracket-viewport" id="bracket-viewport">
+        <div class="bracket-content" id="bracket-content">
+            <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
 
-        <!-- Winners и Grand Final в одной строке -->
-        <div class="winners-final-row">
-            <!-- Winners секция -->
-            <div class="bracket-section" id="winners-section">
-                <h2 class="section-title">Winners</h2>
-                <div class="section-nodes" id="winners-nodes"></div>
+            <div class="winners-final-row">
+                <div class="bracket-section" id="winners-section">
+                    <div class="round-headers" id="winners-headers"></div>
+                    <div class="section-nodes" id="winners-nodes"></div>
+                </div>
+                <div class="bracket-section" id="final-section"> 
+                    <div class="round-headers" id="final-headers"></div>
+                    <div class="section-nodes" id="final-nodes"></div>
+                </div>
             </div>
 
-            <!-- Grand Final секция -->
-            <div class="bracket-section" id="final-section">
-                <h2 class="section-title">Grand Final</h2>
-                <div class="section-nodes" id="final-nodes"></div>
+            <div class="bracket-section" id="losers-section">
+                <div class="round-headers" id="losers-headers"></div>
+                <div class="section-nodes" id="losers-nodes"></div>
             </div>
-        </div>
-
-        <!-- Losers секция -->
-        <div class="bracket-section" id="losers-section">
-            <h2 class="section-title">Losers</h2>
-            <div class="section-nodes" id="losers-nodes"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // Чтение CSS-переменных из :root
     function getCSSVar(name, fallback) {
         const value = getComputedStyle(document.documentElement)
             .getPropertyValue(name)
@@ -70,7 +66,6 @@
         return value || fallback;
     }
 
-    // Парсим пиксельные значения
     function getCSSPx(name, fallback) {
         const value = getCSSVar(name, '');
         if (!value) return fallback;
@@ -96,14 +91,17 @@
     const allSets = [
         {{ range .Sets }}
         {
-            id: {{ .Id }},
+            id: "{{ .Id | js }}",
             section: "{{ .Section }}",
             round: {{ .Round }},
             state: {{ .State }},
             position: {{ .Position }},
+            fullRoundText: "{{ .FullRoundText | js }}",
+            stream: "{{ .Stream | js }}",
+            winnerId: "{{ .WinnerId | js }}",
             players: [
                 {{ range .Players }}
-                { slot: {{ .Slot }}, prefix: "{{ .Prefix }}", nickname: "{{ .Nickname }}", score: {{ .Score }} },
+                { slot: {{ .Slot }}, id: "{{ .Id | js }}", prefix: "{{ .Prefix | js }}", nickname: "{{ .Nickname | js }}", score: {{ .Score }} },
                 {{ end }}
             ]
         },
@@ -112,21 +110,54 @@
 
     const connections = [
         {{ range .Connections }}
-        { fromSetID: {{ .FromSetID }}, fromSlot: {{ .FromSlot }}, toSetID: {{ .ToSetID }}, toSlot: {{ .ToSlot }}, condition: "{{ .Condition }}" },
+        { fromSetID: "{{ .FromSetID | js }}", fromSlot: {{ .FromSlot }}, toSetID: "{{ .ToSetID | js }}", toSlot: {{ .ToSlot }}, condition: "{{ .Condition }}" },
         {{ end }}
     ];
 
-    // Создание HTML для сета
+    function detectStreamPlatform(stream) {
+        if (!stream) return '';
+
+        const s = String(stream).toLowerCase().trim();
+
+        if (s === 'twitch') return 'twitch';
+        if (s === 'youtube') return 'youtube';
+
+        if (s.includes('twitch.tv') || s.includes('twitch.com')) return 'twitch';
+        if (s.includes('youtube.com') || s.includes('youtu.be')) return 'youtube';
+
+        return '';
+    }
+
     function createSetElement(setData) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'set-wrapper';
+
         const div = document.createElement('div');
         div.className = 'set';
         div.id = `set-${setData.id}`;
         div.dataset.setId = setData.id;
         div.dataset.state = setData.state;
 
+        const playersDiv = document.createElement('div');
+        playersDiv.className = 'set-players';
+
+        const winnerId = setData.winnerId || '';
+
         setData.players.forEach(player => {
+            const isEmpty = !player.nickname || player.nickname === "";
+            const playerId = player.id || '';
+
+            // winner: winnerId, field not empty, id same
+            const isWinner = !isEmpty && winnerId !== '' && playerId === winnerId;
+
+            // loser: winnerId, field not empty, id not sameы
+            const isLoser = !isEmpty && winnerId !== '' && playerId !== winnerId;
+
             const playerDiv = document.createElement('div');
-            playerDiv.className = `player ${player.nickname === "" ? "empty" : ""}`;
+            playerDiv.className = 'player'
+                + (isEmpty  ? ' empty'  : '')
+                + (isWinner ? ' winner' : '')
+                + (isLoser  ? ' loser'  : '');
             playerDiv.dataset.slot = player.slot;
 
             playerDiv.innerHTML = `
@@ -137,72 +168,30 @@
                 ` : `<div class="player-name">—</div>`}
             `;
 
-            div.appendChild(playerDiv);
+            playersDiv.appendChild(playerDiv);
         });
 
-        return div;
+        div.appendChild(playersDiv);
+
+        if (setData.stream) {
+            const liveDiv = document.createElement('div');
+            liveDiv.className = 'set-live';
+            liveDiv.title = setData.stream;
+            liveDiv.textContent = 'LIVE';
+
+            // Определяем платформу по URL
+            const platform = detectStreamPlatform(setData.stream);
+            if (platform) {
+                liveDiv.classList.add(`set-live--${platform}`);
+            }
+
+            div.appendChild(liveDiv);
+        }
+
+        wrapper.appendChild(div);
+        return wrapper;
     }
 
-    // Построение дерева из данных
-    // function buildTree(sectionName) {
-    //     const setsMap = new Map();
-
-    //     allSets.filter(s => s.section === sectionName).forEach(setData => {
-    //         setsMap.set(setData.id, {
-    //             ...setData,
-    //             children: [],
-    //             parents: []
-    //         });
-    //     });
-
-    //     console.log(`[buildTree:${sectionName}] setsMap size:`, setsMap.size);
-
-    //     // Инвертируем направление: to становится родителем, from — ребёнком
-    //     connections.forEach(conn => {
-    //         const from = setsMap.get(conn.fromSetID);
-    //         const to = setsMap.get(conn.toSetID);
-
-    //         if (from && to) {
-    //             const toSlot = conn.toSlot !== undefined ? conn.toSlot : 0;
-    //             const fromSlot = conn.fromSlot !== undefined ? conn.fromSlot : 0;
-
-    //             to.children.push({
-    //                 node: from,
-    //                 slot: fromSlot,
-    //                 toSlot: toSlot
-    //             });
-
-    //             from.parents.push({
-    //                 node: to,
-    //                 slot: toSlot,
-    //                 fromSlot: fromSlot
-    //             });
-    //         }
-    //     });
-
-    //     // Корни — сеты, которые не являются источниками ни для одного соединения
-    //     const allSetsArray = Array.from(setsMap.values());
-    //     const sourceIds = new Set();
-
-    //     connections.forEach(conn => {
-    //         if (setsMap.has(conn.fromSetID)) {
-    //             sourceIds.add(conn.fromSetID);
-    //         }
-    //     });
-
-    //     const roots = allSetsArray.filter(s => !sourceIds.has(s.id));
-
-    //     // Fallback: если корней нет — берём сет с максимальным round
-    //     if (roots.length === 0 && allSetsArray.length > 0) {
-    //         const maxRound = Math.max(...allSetsArray.map(s => s.round));
-    //         roots.push(...allSetsArray.filter(s => s.round === maxRound));
-    //     }
-
-    //     console.log(`Roots for ${sectionName}:`, roots.map(r => ({ id: r.id, round: r.round, children: r.children.length })));
-
-    //     return { setsMap, roots };
-    // }
-    // Построение дерева из данных
     function buildTree(sectionName) {
         const setsMap = new Map();
 
@@ -215,8 +204,6 @@
         });
 
         console.log(`[buildTree:${sectionName}] setsMap size: ${setsMap.size}`);
-
-        // ==================== ОТЛАДКА ====================
         console.log(`[buildTree:${sectionName}] connections.length: ${connections.length}`);
         console.log(`[buildTree:${sectionName}] allSets.length: ${allSets.length}`);
 
@@ -232,7 +219,6 @@
             console.log(`[buildTree:${sectionName}] first setsMap key: ${firstKey} (${typeof firstKey})`);
         }
 
-        // Считаем, сколько связей вообще подходит к этой секции
         let relevantConns = 0;
         connections.forEach(conn => {
             if (setsMap.has(conn.fromSetID) || setsMap.has(conn.toSetID)) {
@@ -242,7 +228,7 @@
         console.log(`[buildTree:${sectionName}] relevant connections (at least one end in setsMap): ${relevantConns}`);
         // ====================================================
 
-        // Инвертируем направление: to становится родителем, from — ребёнком
+        // to - root, from — leaf
         let matched = 0;
         let notFoundFrom = 0;
         let notFoundTo = 0;
@@ -252,7 +238,6 @@
             const to = setsMap.get(conn.toSetID);
 
             if (!from && !to) {
-                // оба конца не в этой секции — норм
                 return;
             }
 
@@ -285,7 +270,6 @@
 
         console.log(`[buildTree:${sectionName}] matched: ${matched}, notFoundFrom: ${notFoundFrom}, notFoundTo: ${notFoundTo}`);
 
-        // ==================== ПРОВЕРКА CHILDREN ====================
         let totalChildren = 0;
         let nodesWithChildren = 0;
         setsMap.forEach(s => {
@@ -295,7 +279,7 @@
         console.log(`[buildTree:${sectionName}] total children links: ${totalChildren}, nodes with children: ${nodesWithChildren}`);
         // ==========================================================
 
-        // Корни — сеты, которые не являются источниками ни для одного соединения
+        // Roots — sets, which don't source for any connection
         const allSetsArray = Array.from(setsMap.values());
         let rootRound;
         if (sectionName === 'losers') {
@@ -305,7 +289,7 @@
         }
         const roots = allSetsArray.filter(s => s.round === rootRound);
 
-        // Fallback: если корней нет — берём сет с максимальным round
+        // Fallback: if roots is nil — takes sets with max round
         if (roots.length === 0 && allSetsArray.length > 0) {
             const maxRound = Math.max(...allSetsArray.map(s => s.round));
             roots.push(...allSetsArray.filter(s => s.round === maxRound));
@@ -320,40 +304,33 @@
         return { setsMap, roots };
     }
 
-    // In-order обход для присвоения Y координаты
     function assignYCoordinate(node, orderCounter, visited = new Set()) {
         if (!node || visited.has(node.id)) return;
         visited.add(node.id);
 
-        // Сортируем детей по слотам (не мутируя исходный массив)
         const sortedChildren = node.children.slice().sort((a, b) => {
             const slotA = a.slot !== undefined ? a.slot : 0;
             const slotB = b.slot !== undefined ? b.slot : 0;
             return slotA - slotB;
         });
 
-        // Если у узла один ребёнок — выравниваем по нему
         if (sortedChildren.length === 1) {
             assignYCoordinate(sortedChildren[0].node, orderCounter, visited);
             node.y = sortedChildren[0].node.y;
             return;
         }
 
-        // Левое поддерево
         if (sortedChildren[0]) {
             assignYCoordinate(sortedChildren[0].node, orderCounter, visited);
         }
 
-        // Сам узел
         node.y = orderCounter.value++;
 
-        // Правое поддерево
         if (sortedChildren[1]) {
             assignYCoordinate(sortedChildren[1].node, orderCounter, visited);
         }
     }
 
-    // Вычисление глубины и X координаты
     function assignDepthAndX(roots) {
         let maxDepth = 0;
 
@@ -368,8 +345,6 @@
         }
 
         roots.forEach(root => calculateDepth(root, 0, new Set()));
-
-        // Инвертируем X
         roots.forEach(root => {
             function invertX(node, visited) {
                 if (!node || visited.has(node.id)) return;
@@ -384,7 +359,6 @@
         return maxDepth;
     }
 
-    // Центрирование родителей (post-order)
     function centerParents(roots) {
         function postOrder(node, visited) {
             if (!node || visited.has(node.id)) return;
@@ -404,17 +378,14 @@
         roots.forEach(root => postOrder(root, new Set()));
     }
 
-    // Сжатие по вертикали с сохранением связей
     function compressVertically(roots) {
         roots.forEach(root => {
             function divide(node, visited) {
                 if (!node || visited.has(node.id)) return;
                 visited.add(node.id);
 
-                // Сначала дети
                 node.children.forEach(ch => divide(ch.node, visited));
 
-                // Сжимаем
                 if (typeof node.y === 'number' && !isNaN(node.y)) {
                     node.y = node.y / 2;
                 }
@@ -430,8 +401,47 @@
         });
     }
 
+    function renderRoundHeaders(headersContainerId, setsMap) {
+        const container = document.getElementById(headersContainerId);
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        // Группируем сеты по X-координате (колонке)
+        const roundsByX = new Map();
+
+        setsMap.forEach(setData => {
+            if (typeof setData.x !== 'number') return;
+
+            const key = setData.x;
+            if (!roundsByX.has(key)) {
+                roundsByX.set(key, {
+                    x: key,
+                    fullRoundText: setData.fullRoundText || `Round ${setData.round}`,
+                    count: 0,
+                });
+            }
+            roundsByX.get(key).count++;
+        });
+
+        // Сортируем по X и рисуем
+        Array.from(roundsByX.values())
+            .sort((a, b) => a.x - b.x)
+            .forEach(round => {
+                const header = document.createElement('div');
+                header.className = 'round-header';
+                header.textContent = round.fullRoundText;
+                header.title = round.fullRoundText;
+                header.style.left = `${round.x * (NODE_WIDTH + LINK_WIDTH)}px`;
+                container.appendChild(header);
+            });
+
+        console.log(`[${headersContainerId}] headers rendered:`,
+        Array.from(roundsByX.values()).map(r => `x=${r.x} "${r.fullRoundText}" (${r.count})`));
+}
+
     // Отрисовка секции
-    function renderSection(sectionName, containerId) {
+    function renderSection(sectionName, containerId, headersContainerId) {
         console.log(`\n========== renderSection: ${sectionName} ==========`);
 
         const container = document.getElementById(containerId);
@@ -508,6 +518,8 @@
 
         console.log(`[${sectionName}] container: ${width}x${height}, maxY=${maxY}`);
 
+        renderRoundHeaders(`${sectionName}-headers`, setsMap);
+
         return { setsMap, roots, maxDepth };
     }
 
@@ -576,6 +588,8 @@
         container.style.height = `${height}px`;
 
         console.log(`Grand Final container: ${width}x${height}, maxY=${maxY}`);
+    
+        renderRoundHeaders('final-headers', setsMap);
     }
 
     // Отрисовка связей
@@ -636,6 +650,9 @@
         document.getElementById('winners-nodes').innerHTML = '';
         document.getElementById('final-nodes').innerHTML = '';
         document.getElementById('losers-nodes').innerHTML = '';
+        document.getElementById('winners-headers').innerHTML = '';
+        document.getElementById('final-headers').innerHTML = '';
+        document.getElementById('losers-headers').innerHTML = ''; 
         document.getElementById('connections-svg').innerHTML = '';
 
         init();
@@ -645,7 +662,7 @@
     function init() {
         readConfig();
 
-        const winnersResult = renderSection('winners', 'winners-nodes');
+        const winnersResult = renderSection('winners', 'winners-nodes', 'winners-headers');
 
         let winnersRootY = 0;
         if (winnersResult && winnersResult.roots.length > 0) {
@@ -655,7 +672,7 @@
         console.log(`Winners root Y: ${winnersRootY}`);
 
         renderFinalSection(winnersRootY);
-        renderSection('losers', 'losers-nodes');
+        renderSection('losers', 'losers-nodes', 'losers-headers');
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -714,12 +731,6 @@
         content.addEventListener('mouseleave', clearHighlight);
     }
 
-    // Вызов после инициализации
-    window.addEventListener('load', () => {
-        // init() уже вызывается в load. Добавляем подписку после него.
-        setupPlayerHighlight();
-    });
-    window.addEventListener('load', init);
     window.addEventListener('resize', () => {
         clearTimeout(window.resizeTimer);
         window.resizeTimer = setTimeout(renderConnections, 50);
@@ -735,6 +746,38 @@
         init();
         setupPlayerHighlight();
     });
+    window.addEventListener('message', (event) => {
+        if (!event.data || event.data.type !== 'bracket:flags-changed') return;
+        
+        applyFlags(event.data.flags);
+        
+        // Пересчитываем связи — сеты могли сдвинуться
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                renderConnections();
+            });
+        });
+    });
+    // ============================================================
+    // Флаги отображения (от React-панели через postMessage)
+    // ============================================================
+
+    function applyFlags(flags) {
+        document.body.classList.toggle('transparent-bg', !!flags.transparent);
+        document.body.classList.toggle('hide-rounds',    !!flags.hideRounds);
+        document.body.classList.toggle('losers-only',    !!flags.losersOnly);
+        console.log('[bracket] flags applied:', flags);
+    }
+
+    // Начальное состояние — из URL-параметров
+    (function applyInitialFlags() {
+        const params = new URLSearchParams(location.search);
+        applyFlags({
+            transparent: params.has('transparent'),
+            hideRounds:  params.has('hideRounds'),
+            losersOnly:  params.has('losersOnly'),
+        });
+    })();
 </script>
 </body>
 </html>

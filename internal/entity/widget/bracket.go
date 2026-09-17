@@ -4,7 +4,7 @@ import "html/template"
 
 type EntrantSource struct {
 	Type      string
-	TypeID    int64
+	TypeID    string
 	Condition string
 }
 
@@ -18,7 +18,7 @@ type Slot struct {
 }
 
 type Set struct {
-	Id            int64
+	Id            string
 	State         int
 	Stream        string
 	FullRoundText string
@@ -35,25 +35,27 @@ type Bracket struct {
 
 type PlayerView struct {
 	Slot     int
+	Id       string
 	Prefix   string
 	Nickname string
 	Score    int
 }
 
 type SetView struct {
-	Id            int64
+	Id            string
 	State         int
 	Stream        string
 	Position      int
 	Section       string // "winners", "losers", "final"
 	Round         int    // for debug
 	FullRoundText string
+	WinnerId      int64
 	Players       []PlayerView
 }
 
 type ConnectionView struct {
-	FromSetID int64
-	ToSetID   int64
+	FromSetID string
+	ToSetID   string
 
 	FromSlot int
 	ToSlot   int

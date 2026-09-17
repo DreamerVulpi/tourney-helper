@@ -44,32 +44,46 @@ func (p *StartGGBracketProvider) GetBracket(ctx context.Context, id string) (*en
 	return bracket, nil
 }
 
-func generateSlot(slots []entityStartgg.Slot, index int) entity.Slot {
+func generateSlot(slots []entityStartgg.WidgetSlot, index int) entity.Slot {
+	// Индекс вне диапазона — возвращаем пустой слот
 	if index >= len(slots) {
 		return entity.Slot{}
 	}
 
 	slot := slots[index]
 
+	// Entrant может быть nil (например, "entrant": null в JSON)
+	if slot.Entrant == nil {
+		return entity.Slot{}
+	}
+
+	// Participants может быть пустым — тоже валидный пустой слот
 	if len(slot.Entrant.Participants) == 0 {
 		return entity.Slot{}
 	}
 
 	p := slot.Entrant.Participants[0]
+
+	// Standing может быть nil — тогда Score = 0
+	var score int
+	if slot.Standing != nil {
+		score = slot.Standing.Stats.Score.Value
+	}
+
 	return entity.Slot{
 		Id:           slot.Entrant.Id,
 		Prefix:       p.Prefix,
 		GameNickname: p.GamerTag,
-		Score:        slot.Standing.Stats.Score.Value,
+		Score:        score,
 	}
 }
 
-func generateBracket(bracket *entity.Bracket, data []entityStartgg.Nodes) *entity.Bracket {
+func generateBracket(bracket *entity.Bracket, data []entityStartgg.WidgetSetNode) *entity.Bracket {
 	sets := []entity.Set{}
 
 	for _, node := range data {
 		set := entity.Set{
-			Id:            node.Id,
+			Id:            startgg.RawMessageToString(node.Id),
 			State:         int(node.State),
 			Stream:        node.Stream.StreamSource,
 			FullRoundText: node.FullRoundText,
@@ -89,31 +103,33 @@ func generateBracket(bracket *entity.Bracket, data []entityStartgg.Nodes) *entit
 	return bracket
 }
 
-func generateSource(source *entityStartgg.EntrantSource) *entity.EntrantSource {
+func generateSource(source *entityStartgg.WidgetEntrantSource) *entity.EntrantSource {
 	if source == nil {
 		return nil
 	}
 
-	if source.Type != "set" || source.TypeID == 0 {
+	typeId := startgg.RawMessageToString(source.TypeID)
+
+	if source.Type != "set" || typeId == "" {
 		return nil
 	}
 
 	return &entity.EntrantSource{
 		Type:      source.Type,
-		TypeID:    source.TypeID,
+		TypeID:    typeId,
 		Condition: source.Condition,
 	}
 }
 
-func addConnections(bracket *entity.Bracket, conn []entityStartgg.Nodes) {
-	setByID := make(map[int64]*entity.Set, len(bracket.Sets))
+func addConnections(bracket *entity.Bracket, conn []entityStartgg.WidgetSetNode) {
+	setByID := make(map[string]*entity.Set, len(bracket.Sets))
 
 	for i := range bracket.Sets {
 		setByID[bracket.Sets[i].Id] = &bracket.Sets[i]
 	}
 
 	for _, node := range conn {
-		set, ok := setByID[node.Id]
+		set, ok := setByID[startgg.RawMessageToString(node.Id)]
 		if !ok {
 			fmt.Printf(
 				"CONNECTION SET NOT FOUND: id=%d round=%d\n",
@@ -124,7 +140,7 @@ func addConnections(bracket *entity.Bracket, conn []entityStartgg.Nodes) {
 		}
 
 		fmt.Printf(
-			"ADD CONNECTION: set=%d round=%d slots=%d winner=%d source1=%+v source2=%+v\n",
+			"ADD CONNECTION: set=%v round=%d slots=%d winner=%d source1=%+v source2=%+v\n",
 			set.Id,
 			set.Round,
 			len(set.Slots),
@@ -137,7 +153,7 @@ func addConnections(bracket *entity.Bracket, conn []entityStartgg.Nodes) {
 
 		if len(set.Slots) < 2 {
 			fmt.Printf(
-				"WARNING: set=%d has only %d slots\n",
+				"WARNING: set=%v has only %d slots\n",
 				set.Id,
 				len(set.Slots),
 			)

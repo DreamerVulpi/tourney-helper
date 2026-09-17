@@ -1,13 +1,16 @@
-* {
-    box-sizing: border-box;
-}
-
 :root {
-    /* Dimension sizes of bracket */
+    /* Размеры элементов сетки */
     --node-width: 220px;
     --node-height: 76px;
     --link-width: 60px;
-    --node-gap: 20px;
+    --node-gap: 40px;
+
+    /* Ширина полосы LIVE */
+    --live-width: 28px;
+}
+
+* {
+    box-sizing: border-box;
 }
 
 html,
@@ -22,18 +25,30 @@ body {
 .bracket-wrapper {
     position: relative;
     width: 100%;
+    max-width: 1920px;
+    max-height: 1080px;
     height: 100%;
     overflow: auto;
 }
 
-/* Главный контейнер */
-.bracket-content {
-    position: relative;
-    display: flex;
-    flex-direction: column;
+.bracket-viewport {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
+    /* БЕЗ width/height — размер по содержимому */
 }
 
-/* SVG слой для соединений */
+.bracket-content {
+    position: relative;
+    width: max-content;       /* размер по содержимому */
+    min-width: 100%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+}
+
 .connections {
     position: absolute;
     top: 0;
@@ -49,36 +64,101 @@ body {
     vector-effect: non-scaling-stroke;
 }
 
-/* Winners и Grand Final в одной строке */
+/* Winners + Grand Final в одной строке */
 .winners-final-row {
     display: flex;
     align-items: flex-start;
 }
 
-/* Секция */
 .bracket-section {
     position: relative;
     display: flex;
     flex-direction: column;
 }
 
-/* Контейнер для узлов секции */
 .section-nodes {
     position: relative;
 }
 
-/* Сет (узел дерева) */
-.set {
+/* ============================================================
+ * Обёртка вокруг сета
+ * ============================================================ */
+
+.set-wrapper {
     position: absolute;
-    width: 220px;
-    min-height: 76px;
-    overflow: hidden;
+    width: var(--node-width);
+    min-height: var(--node-height);
     z-index: 20;
 }
 
+/* ============================================================
+ * Сет — flex-контейнер: игроки + опциональная полоса LIVE
+ * ============================================================ */
+
+.set {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    min-height: var(--node-height);
+    overflow: visible;
+}
+
+/* ============================================================
+ * Контейнер игроков — растягивается на всю доступную ширину
+ * ============================================================ */
+
+.set-players {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* важно для truncation длинных ников */
+}
+
+/* Скругление углов у крайних игроков */
+.player:first-child {
+    border-top-left-radius: var(--set-radius);
+}
+
+.player:last-child {
+    border-bottom-left-radius: var(--set-radius);
+}
+
+/* Правые углы скругляем ТОЛЬКО если нет .set-live */
+.set:not(:has(.set-live)) .player:first-child {
+    border-top-right-radius: var(--set-radius);
+}
+
+.set:not(:has(.set-live)) .player:last-child {
+    border-bottom-right-radius: var(--set-radius);
+}
+
+/* ============================================================
+ * Полоса LIVE — фиксированная ширина справа
+ * ============================================================ */
+
+.set-live {
+    flex: 0 0 var(--live-width);
+    width: var(--live-width);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    user-select: none;
+    pointer-events: none;
+    border-top-right-radius: var(--set-radius);
+    border-bottom-right-radius: var(--set-radius);
+}
+
+/* ============================================================
+ * Игрок
+ * ============================================================ */
+
 .player {
     position: relative;
-    height: 38px;
+    flex: 1;
+    min-height: calc(var(--node-height) / 2);
     display: flex;
     align-items: center;
     white-space: nowrap;
@@ -89,4 +169,75 @@ body {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.player-slot {
+    flex: 0 0 auto;
+    text-align: center;
+}
+
+.round-headers {
+    position: relative;
+    width: 100%;
+    height: 32px;
+    margin-bottom: 12px;
+}
+
+.round-header {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: var(--node-width);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* ============================================================
+ * Режим прозрачного фона
+ * ============================================================ */
+
+body.transparent-bg,
+body.transparent-bg .bracket-wrapper,
+body.transparent-bg .set,
+body.transparent-bg .player {
+    background: transparent !important;
+}
+
+body.transparent-bg .set {
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: none;
+}
+
+body.transparent-bg .set-live {
+    /* LIVE — оставляем видимым */
+    background: var(--live-bg, #3b4350) !important;
+}
+
+/* ============================================================
+ * Режим скрытых этапов
+ * ============================================================ */
+
+body.hide-rounds .round-headers {
+    display: none !important;
+}
+
+/* ============================================================
+ * Режим "только Losers"
+ * ============================================================ */
+
+body.losers-only #winners-section,
+body.losers-only #final-section {
+    display: none !important;
+}
+
+iframe {
+    background: transparent;
 }

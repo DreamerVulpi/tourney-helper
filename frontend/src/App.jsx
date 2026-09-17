@@ -216,6 +216,9 @@ const App = () => {
     };
   }, [locale]);
 
+  const iframeRef_WidgetBracket = useRef(null);
+
+
   return (
     <div
     className={`grid grid-cols-[auto_1fr] grid-rows-[4rem_1fr] h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}
@@ -342,7 +345,8 @@ const App = () => {
                     isWidgetBracketRunning={isWidgetBracketRunning}
                     setIsWidgetBracketRunning={setIsWidgetBracketRunning}
                     setStatusWidgetBracket={setStatusWidgetBracket}
-                    setIsProcessingWB={setIsProcessingWB}                  
+                    setIsProcessingWB={setIsProcessingWB}        
+                    iframeRef_WidgetBracket={iframeRef_WidgetBracket}          
                   />
                 )}
                 {/* In future updates */}

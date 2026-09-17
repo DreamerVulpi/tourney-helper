@@ -15,13 +15,14 @@ var listRegionsEn = ListRegions{
 
 var En = Ui{
 	WidgetBracketPanel: WidgetBracketPanel{
-		UrlToTournamentLabel: "Tournament Link",
-		ListOfBracketsLabel:  "Bracket",
-		ListOfThemes:         "Theme",
-		Start:                "Start",
-		Stop:                 "Stop",
-		HideTheStages:        "Hide the stages",
-		LinkOfWidget:         "Link of widget",
+		UrlToBracketLabel: "Bracket of link",
+		ListOfThemes:      "Theme",
+		Start:             "Start",
+		Stop:              "Stop",
+		HideTheStages:     "Hide the stages",
+		LinkOfWidget:      "Link of widget",
+		ClearBackground:   "Clear background",
+		LosersBracket:     "Only losers bracket",
 	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Error filling in parameters",

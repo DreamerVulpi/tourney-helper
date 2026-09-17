@@ -121,9 +121,6 @@ const SidePanel = ({
           />
         </div>
         
-
-        
-        
         <NavItem
           icon={<Send size={20} />}
           label={locale.NotificationSystemLabel}
