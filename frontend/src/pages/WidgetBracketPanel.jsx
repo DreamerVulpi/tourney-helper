@@ -1,11 +1,9 @@
 import React, { useCallback, useState, useMemo, useRef, useEffect } from "react";
 import {
   Globe,
-  GitFork,
   Paintbrush,
   Square,
   Play,
-  Copy,
   List,
   Wallpaper,
   GitGraph,
@@ -13,10 +11,7 @@ import {
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
 import { Field } from "../components/ui/Field.jsx";
-import { ValidationModal } from "../components/ValidationModal.jsx";
-import { listGames } from "../utils/listGames.js";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
-import { locales } from "../utils/listLocales.js";
 import { ActionButton } from "../components/ui/ActionButton.jsx";
 import { useStartToggle } from "../hooks/WidgetBracketPanel/useStartToggle.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
@@ -37,68 +32,75 @@ const WidgetBracketPlate = ({
   setIsWidgetBracketRunning,
   setStatusWidgetBracket,
   iframeRef_WidgetBracket,
-}) => {
-  const urlToTournament = tourneyCfg?.widgetBracket?.urlToTournament || "";
-  const themeBracket = tourneyCfg?.widgetBracket?.theme || "StartGG";
-  const clearBackground = tourneyCfg.widgetBracket?.clearBackground ?? false;
-  const losersBracket = tourneyCfg.widgetBracket?.losersBracket ?? false;
-  const hideStages = tourneyCfg.widgetBracket?.hideStages ?? false;
-  const themeOptions = useGetListThemes();
 
-  // State for ready of notification system
+  // Флаги и сеттер из App.jsx
+  bracketFlags,
+  setBracketFlags,     // (prev => ({...}))
+}) => {
+  console.log('[WidgetBracketPlate] props:', {
+    bracketFlags,
+    setBracketFlags,
+    typeofSetBracketFlags: typeof setBracketFlags,
+});
+  const urlToTournament = tourneyCfg?.widgetBracket?.urlToTournament || "";
+  const themeBracket     = tourneyCfg?.widgetBracket?.theme || "StartGG";
+  const themeOptions     = useGetListThemes();
+
+  // Значения флагов из общего состояния
+  const {
+    transparent: clearBackground,
+    hideRounds:  hideStages,
+    losersOnly:  losersBracket,
+  } = bracketFlags;
+
   const isReadyToStart = urlToTournament;
-  
-  // State for revial validation alert
-  // TODO: Add validation alert modal
+
   const [validationAlert, setValidationAlert] = useState({
     isOpen: false,
     message: "",
   });
 
+  // ---------- Обработчики полей туринра ----------
   const handleTournamentUrlChange = useCallback((value) => {
     updateConfig("tournament", {
       widgetBracket: {
-          ...tourneyCfg.widgetBracket,
-          urlToTournament: value,
-       },
+        ...tourneyCfg.widgetBracket,
+        urlToTournament: value,
+      },
     });
   }, [tourneyCfg.widgetBracket, updateConfig]);
+
   const handleThemeBracketChange = useCallback((value) => {
     updateConfig("tournament", {
       widgetBracket: {
-          ...tourneyCfg.widgetBracket,
-          theme: value,
-       },
+        ...tourneyCfg.widgetBracket,
+        theme: value,
+      },
     });
   }, [tourneyCfg.widgetBracket, updateConfig]);
-  const handleHideStagesChange = useCallback((value) => {
-      updateConfig("tournament", {
-        widgetBracket: {
-          ...tourneyCfg.widgetBracket,
-          hideStages: value,
-       },
-      });
-    }, [tourneyCfg.widgetBracket, updateConfig]);
+
+  // ---------- Обработчики тумблеров ----------
+  // Обновляем флаги в App через setBracketFlags (functional update)
   const handleClearBackgroundChange = useCallback((value) => {
-      updateConfig("tournament", {
-        widgetBracket: {
-          ...tourneyCfg.widgetBracket,
-          clearBackground: value,
-       },
-      });
-    }, [tourneyCfg.widgetBracket, updateConfig]);
+    console.log('[WidgetBracketPlate] clearBackground change:', value);
+    setBracketFlags(prev => {
+        console.log('[WidgetBracketPlate] prev:', prev);
+        const next = { ...prev, transparent: value };
+        console.log('[WidgetBracketPlate] next:', next);
+        return next;
+    });
+}, [setBracketFlags]);
+
+  const handleHideStagesChange = useCallback((value) => {
+    setBracketFlags(prev => ({ ...prev, hideRounds: value }));
+  }, [setBracketFlags]);
+
   const handleOnlyLosersChange = useCallback((value) => {
-      updateConfig("tournament", {
-        widgetBracket: {
-          ...tourneyCfg.widgetBracket,
-          losersBracket: value,
-       },
-      });
-    }, [tourneyCfg.widgetBracket, updateConfig]);
+    setBracketFlags(prev => ({ ...prev, losersOnly: value }));
+  }, [setBracketFlags]);
 
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
 
-  // Handler for start proccess
   const handleWidgetBracketToggle = useStartToggle(
     isWidgetBracketRunning,
     setIsWidgetBracketRunning,
@@ -108,9 +110,7 @@ const WidgetBracketPlate = ({
     { activePlatform, tourneyCfg },
   );
 
-   // ============================================================
-  // URL с флагами — пересчитывается при любом изменении
-  // ============================================================
+  // ---------- URL с флагами ----------
   const bracketUrl = useMemo(() => {
     const params = new URLSearchParams();
     params.set('theme', themeBracket);
@@ -122,9 +122,20 @@ const WidgetBracketPlate = ({
     return `http://localhost:8080/widget/bracket/${urlToTournament}?${params.toString()}`;
   }, [urlToTournament, themeBracket, clearBackground, hideStages, losersBracket]);
 
-  // ============================================================
-  // Отправка изменений в iframe через postMessage
-  // ============================================================
+  // ---------- Фиксируем начальный URL при старте виджета ----------
+  const initialSrcRef = useRef(null);
+
+  useEffect(() => {
+    if (isWidgetBracketRunning && !initialSrcRef.current) {
+      initialSrcRef.current = bracketUrl;
+    }
+    if (!isWidgetBracketRunning) {
+      initialSrcRef.current = null;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWidgetBracketRunning]);
+
+  // ---------- Отправка postMessage в iframe ----------
   useEffect(() => {
     if (!isWidgetBracketRunning) return;
 
@@ -143,56 +154,25 @@ const WidgetBracketPlate = ({
       }, '*');
     };
 
-    // Отправляем при изменении флагов
+    // 1. Отправляем сразу
     sendFlags();
 
-    // И повторно — при загрузке iframe (на случай, если он ещё грузился)
+    // 2. Повторяем при загрузке iframe (если он ещё грузился)
     iframe.addEventListener('load', sendFlags);
 
     return () => {
       iframe.removeEventListener('load', sendFlags);
     };
-  }, [clearBackground, hideStages, losersBracket, isWidgetBracketRunning]);
-
-  const initialSrcRef = useRef(null);
-
-  // Фиксируем начальный URL при СТАРТЕ виджета
-  useEffect(() => {
-    if (isWidgetBracketRunning && !initialSrcRef.current) {
-      initialSrcRef.current = bracketUrl;
-    }
-    if (!isWidgetBracketRunning) {
-      initialSrcRef.current = null;
-    }
-  }, [isWidgetBracketRunning, bracketUrl]);
-
-  // Отправка postMessage
-  useEffect(() => {
-    if (!isWidgetBracketRunning) return;
-    const iframe = iframeRef_WidgetBracket?.current;
-    if (!iframe) return;
-
-    const sendFlags = () => {
-      iframe.contentWindow?.postMessage({
-        type: 'bracket:flags-changed',
-        flags: {
-          transparent: clearBackground,
-          hideRounds:  hideStages,
-          losersOnly:  losersBracket,
-        },
-      }, '*');
-    };
-
-    sendFlags();
-    iframe.addEventListener('load', sendFlags);
-    return () => iframe.removeEventListener('load', sendFlags);
-  }, [clearBackground, hideStages, losersBracket, isWidgetBracketRunning]);
-
+  }, [
+    clearBackground,
+    hideStages,
+    losersBracket,
+    isWidgetBracketRunning,
+    iframeRef_WidgetBracket,
+  ]);
 
   return (
-    <PanelTemplate
-      themeClasses={themeClasses}
-    >
+    <PanelTemplate themeClasses={themeClasses}>
       <div className="grid grid-cols-15 gap-8 items-stretch flex-1 min-h-0">
         <div className="col-span-12 min-h-0">
           <div className={`w-full h-full rounded-[2.5rem] ${themeClasses.button}`}>
@@ -202,17 +182,18 @@ const WidgetBracketPlate = ({
                 ref={iframeRef_WidgetBracket}
                 className="w-full h-full border-0 rounded-[2.5rem]"
                 title="Tournament Bracket"
-                allowTransparency={`${clearBackground ? true : false}`}
-              /> 
+                allowtransparency="true"
+                style={{ background: 'transparent' }}
+              />
             )}
           </div>
         </div>
 
-        {/* Right part */}
+        {/* Правая часть */}
         <div className="col-span-3 flex flex-col h-full">
           <div className="space-y-4">
             <Field
-              label={locale.UrlToBracketLabel+"*"}
+              label={locale.UrlToBracketLabel + "*"}
               witdh="320"
               icon={Globe}
               onChange={handleTournamentUrlChange}
@@ -229,36 +210,37 @@ const WidgetBracketPlate = ({
               items={themeOptions}
             />
             <ToggleSwitch
-                label={locale.ClearBackground}
-                icon={Wallpaper}
-                checked={clearBackground}
-                color="amber"
-                themeClasses={themeClasses}
-                onChange={handleClearBackgroundChange}
+              label={locale.ClearBackground}
+              icon={Wallpaper}
+              checked={clearBackground}
+              color="amber"
+              themeClasses={themeClasses}
+              onChange={handleClearBackgroundChange}
             />
             <ToggleSwitch
-                label={locale.HideTheStages}
-                icon={List}
-                checked={hideStages}
-                color="amber"
-                themeClasses={themeClasses}
-                onChange={handleHideStagesChange}
+              label={locale.HideTheStages}
+              icon={List}
+              checked={hideStages}
+              color="amber"
+              themeClasses={themeClasses}
+              onChange={handleHideStagesChange}
             />
             <ToggleSwitch
-                label={locale.LosersBracket}
-                icon={GitGraph}
-                checked={losersBracket}
-                color="amber"
-                themeClasses={themeClasses}
-                onChange={handleOnlyLosersChange}
+              label={locale.LosersBracket}
+              icon={GitGraph}
+              checked={losersBracket}
+              color="amber"
+              themeClasses={themeClasses}
+              onChange={handleOnlyLosersChange}
             />
-            {isWidgetBracketRunning ? 
-            <Field
+            {isWidgetBracketRunning && (
+              <Field
                 label={locale.LinkOfWidget}
                 variant="copy"
                 value={bracketUrl}
                 themeClasses={themeClasses}
-            /> : ""}
+              />
+            )}
           </div>
           <ButtonFooter
             absolute={false}
@@ -278,14 +260,6 @@ const WidgetBracketPlate = ({
           </ButtonFooter>
         </div>
       </div>
-      {/* <ValidationModal
-        isOpen={validationAlert.isOpen}
-        onClose={() => setValidationAlert({ isOpen: false, message: "" })}
-        message={validationAlert.message}
-        theme={theme}
-        locale={localeValidation}
-        themeClasses={themeClasses}
-      /> */}
     </PanelTemplate>
   );
 };

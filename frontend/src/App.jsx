@@ -1,6 +1,6 @@
 import "./App.css";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Send,
   Users,
@@ -150,6 +150,68 @@ const App = () => {
       );
     }
   };
+
+  // В App.jsx — при инициализации
+  // App.jsx
+
+  const [bracketFlags, setBracketFlags] = useState(() => {
+      // При старте — берём из конфига турнира, если есть
+      if (tourneyCfg?.widgetBracket) {
+          const { clearBackground, hideStages, losersOnly } = tourneyCfg.widgetBracket;
+          return {
+              transparent: !!clearBackground,
+              hideRounds:  !!hideStages,
+              losersOnly:  !!losersOnly,
+          };
+      }
+      return { transparent: false, hideRounds: false, losersOnly: false };
+  });
+
+  // При изменении флагов — сохраняем в конфиг
+  useEffect(() => {
+      // Пропускаем первый рендер, чтобы не перезаписывать конфиг тем же значением
+      // (опционально — можно и не пропускать, вреда нет)
+      updateConfig("tournament", {
+          widgetBracket: {
+              ...tourneyCfg?.widgetBracket,
+              clearBackground: bracketFlags.transparent,
+              hideStages:      bracketFlags.hideRounds,
+              losersOnly:      bracketFlags.losersOnly,
+          },
+      });
+  }, [bracketFlags]);
+
+  useEffect(() => {
+      // 1. localStorage
+      try {
+          localStorage.setItem('bracket:flags', JSON.stringify(bracketFlags));
+      } catch (e) {}
+
+      // 2. BroadcastChannel — для вкладок того же браузера
+      let channel = null;
+      try {
+          channel = new BroadcastChannel('bracket:flags');
+          channel.postMessage({
+              type: 'bracket:flags-changed',
+              flags: bracketFlags,
+          });
+      } catch (e) {}
+
+      // 3. Backend — для внешних браузеров
+      fetch('http://localhost:8080/widget/bracket/flags', {   // ← ВАШ ПУТЬ
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bracketFlags),
+      }).catch(err => {
+          console.warn('[App] POST bracket flags failed:', err);
+      });
+
+      return () => {
+          if (channel) {
+              try { channel.close(); } catch (e) {}
+          }
+      };
+  }, [bracketFlags]);
 
   useEffect(() => {
       if (!settings) return;
@@ -346,7 +408,9 @@ const App = () => {
                     setIsWidgetBracketRunning={setIsWidgetBracketRunning}
                     setStatusWidgetBracket={setStatusWidgetBracket}
                     setIsProcessingWB={setIsProcessingWB}        
-                    iframeRef_WidgetBracket={iframeRef_WidgetBracket}          
+                    iframeRef_WidgetBracket={iframeRef_WidgetBracket}
+                    bracketFlags={bracketFlags}
+                    setBracketFlags={setBracketFlags}    
                   />
                 )}
                 {/* In future updates */}

@@ -59,6 +59,10 @@
 </div>
 
 <script>
+    // ============================================================
+    // CSS variables
+    // ============================================================
+
     function getCSSVar(name, fallback) {
         const value = getComputedStyle(document.documentElement)
             .getPropertyValue(name)
@@ -73,7 +77,6 @@
         return isNaN(parsed) ? fallback : parsed;
     }
 
-    // Конфигурация сетки (читается из CSS)
     let NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP;
 
     function readConfig() {
@@ -82,12 +85,13 @@
         LINK_WIDTH = getCSSPx('--link-width', 60);
         NODE_GAP = getCSSPx('--node-gap', 40);
 
-        console.log('Bracket config:', {
-            NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP
-        });
+        console.log('Bracket config:', { NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP });
     }
 
+    // ============================================================
     // Данные из Go
+    // ============================================================
+
     const allSets = [
         {{ range .Sets }}
         {
@@ -114,19 +118,23 @@
         {{ end }}
     ];
 
+    // ============================================================
+    // Stream platform detection
+    // ============================================================
+
     function detectStreamPlatform(stream) {
         if (!stream) return '';
-
         const s = String(stream).toLowerCase().trim();
-
         if (s === 'twitch') return 'twitch';
         if (s === 'youtube') return 'youtube';
-
         if (s.includes('twitch.tv') || s.includes('twitch.com')) return 'twitch';
         if (s.includes('youtube.com') || s.includes('youtu.be')) return 'youtube';
-
         return '';
     }
+
+    // ============================================================
+    // Set element
+    // ============================================================
 
     function createSetElement(setData) {
         const wrapper = document.createElement('div');
@@ -146,11 +154,7 @@
         setData.players.forEach(player => {
             const isEmpty = !player.nickname || player.nickname === "";
             const playerId = player.id || '';
-
-            // winner: winnerId, field not empty, id same
             const isWinner = !isEmpty && winnerId !== '' && playerId === winnerId;
-
-            // loser: winnerId, field not empty, id not sameы
             const isLoser = !isEmpty && winnerId !== '' && playerId !== winnerId;
 
             const playerDiv = document.createElement('div');
@@ -179,7 +183,6 @@
             liveDiv.title = setData.stream;
             liveDiv.textContent = 'LIVE';
 
-            // Определяем платформу по URL
             const platform = detectStreamPlatform(setData.stream);
             if (platform) {
                 liveDiv.classList.add(`set-live--${platform}`);
@@ -192,94 +195,40 @@
         return wrapper;
     }
 
+    // ============================================================
+    // Tree
+    // ============================================================
+
     function buildTree(sectionName) {
         const setsMap = new Map();
 
         allSets.filter(s => s.section === sectionName).forEach(setData => {
-            setsMap.set(setData.id, {
-                ...setData,
-                children: [],
-                parents: []
-            });
+            setsMap.set(setData.id, { ...setData, children: [], parents: [] });
         });
 
         console.log(`[buildTree:${sectionName}] setsMap size: ${setsMap.size}`);
-        console.log(`[buildTree:${sectionName}] connections.length: ${connections.length}`);
-        console.log(`[buildTree:${sectionName}] allSets.length: ${allSets.length}`);
 
-        if (connections.length > 0) {
-            const c = connections[0];
-            console.log(`[buildTree:${sectionName}] first conn: from=${c.fromSetID} (${typeof c.fromSetID}) to=${c.toSetID} (${typeof c.toSetID})`);
-            console.log(`[buildTree:${sectionName}] from in setsMap: ${setsMap.has(c.fromSetID)}`);
-            console.log(`[buildTree:${sectionName}] to in setsMap: ${setsMap.has(c.toSetID)}`);
-        }
-
-        if (setsMap.size > 0) {
-            const firstKey = Array.from(setsMap.keys())[0];
-            console.log(`[buildTree:${sectionName}] first setsMap key: ${firstKey} (${typeof firstKey})`);
-        }
-
-        let relevantConns = 0;
-        connections.forEach(conn => {
-            if (setsMap.has(conn.fromSetID) || setsMap.has(conn.toSetID)) {
-                relevantConns++;
-            }
-        });
-        console.log(`[buildTree:${sectionName}] relevant connections (at least one end in setsMap): ${relevantConns}`);
-        // ====================================================
-
-        // to - root, from — leaf
-        let matched = 0;
-        let notFoundFrom = 0;
-        let notFoundTo = 0;
+        let matched = 0, notFoundFrom = 0, notFoundTo = 0;
 
         connections.forEach(conn => {
             const from = setsMap.get(conn.fromSetID);
             const to = setsMap.get(conn.toSetID);
 
-            if (!from && !to) {
-                return;
-            }
-
-            if (!from) {
-                notFoundFrom++;
-                return;
-            }
-            if (!to) {
-                notFoundTo++;
-                return;
-            }
+            if (!from && !to) return;
+            if (!from) { notFoundFrom++; return; }
+            if (!to)   { notFoundTo++;   return; }
 
             matched++;
 
             const toSlot = conn.toSlot !== undefined ? conn.toSlot : 0;
             const fromSlot = conn.fromSlot !== undefined ? conn.fromSlot : 0;
 
-            to.children.push({
-                node: from,
-                slot: fromSlot,
-                toSlot: toSlot
-            });
-
-            from.parents.push({
-                node: to,
-                slot: toSlot,
-                fromSlot: fromSlot
-            });
+            to.children.push({ node: from, slot: fromSlot, toSlot: toSlot });
+            from.parents.push({ node: to, slot: toSlot, fromSlot: fromSlot });
         });
 
         console.log(`[buildTree:${sectionName}] matched: ${matched}, notFoundFrom: ${notFoundFrom}, notFoundTo: ${notFoundTo}`);
 
-        let totalChildren = 0;
-        let nodesWithChildren = 0;
-        setsMap.forEach(s => {
-            totalChildren += s.children.length;
-            if (s.children.length > 0) nodesWithChildren++;
-        });
-        console.log(`[buildTree:${sectionName}] total children links: ${totalChildren}, nodes with children: ${nodesWithChildren}`);
-        // ==========================================================
-
-        // Roots — sets, which don't source for any connection
         const allSetsArray = Array.from(setsMap.values());
         let rootRound;
         if (sectionName === 'losers') {
@@ -289,16 +238,13 @@
         }
         const roots = allSetsArray.filter(s => s.round === rootRound);
 
-        // Fallback: if roots is nil — takes sets with max round
         if (roots.length === 0 && allSetsArray.length > 0) {
             const maxRound = Math.max(...allSetsArray.map(s => s.round));
             roots.push(...allSetsArray.filter(s => s.round === maxRound));
         }
 
         console.log(`Roots for ${sectionName}:`, roots.map(r => ({
-            id: r.id,
-            round: r.round,
-            children: r.children.length
+            id: r.id, round: r.round, children: r.children.length
         })));
 
         return { setsMap, roots };
@@ -337,10 +283,8 @@
         function calculateDepth(node, depth, visited) {
             if (!node || visited.has(node.id)) return;
             visited.add(node.id);
-
             node.depth = depth;
             if (depth > maxDepth) maxDepth = depth;
-
             node.children.forEach(ch => calculateDepth(ch.node, depth + 1, visited));
         }
 
@@ -349,7 +293,6 @@
             function invertX(node, visited) {
                 if (!node || visited.has(node.id)) return;
                 visited.add(node.id);
-
                 node.x = maxDepth - node.depth;
                 node.children.forEach(ch => invertX(ch.node, visited));
             }
@@ -363,7 +306,6 @@
         function postOrder(node, visited) {
             if (!node || visited.has(node.id)) return;
             visited.add(node.id);
-
             node.children.forEach(ch => postOrder(ch.node, visited));
 
             if (node.children.length === 2) {
@@ -374,7 +316,6 @@
                 node.y = 0;
             }
         }
-
         roots.forEach(root => postOrder(root, new Set()));
     }
 
@@ -383,14 +324,12 @@
             function divide(node, visited) {
                 if (!node || visited.has(node.id)) return;
                 visited.add(node.id);
-
                 node.children.forEach(ch => divide(ch.node, visited));
 
                 if (typeof node.y === 'number' && !isNaN(node.y)) {
                     node.y = node.y / 2;
                 }
 
-                // Выравнивание по детям
                 if (node.children.length === 1) {
                     node.y = node.children[0].node.y;
                 } else if (node.children.length === 2) {
@@ -404,15 +343,11 @@
     function renderRoundHeaders(headersContainerId, setsMap) {
         const container = document.getElementById(headersContainerId);
         if (!container) return;
-
         container.innerHTML = '';
 
-        // Группируем сеты по X-координате (колонке)
         const roundsByX = new Map();
-
         setsMap.forEach(setData => {
             if (typeof setData.x !== 'number') return;
-
             const key = setData.x;
             if (!roundsByX.has(key)) {
                 roundsByX.set(key, {
@@ -424,7 +359,6 @@
             roundsByX.get(key).count++;
         });
 
-        // Сортируем по X и рисуем
         Array.from(roundsByX.values())
             .sort((a, b) => a.x - b.x)
             .forEach(round => {
@@ -435,20 +369,15 @@
                 header.style.left = `${round.x * (NODE_WIDTH + LINK_WIDTH)}px`;
                 container.appendChild(header);
             });
+    }
 
-        console.log(`[${headersContainerId}] headers rendered:`,
-        Array.from(roundsByX.values()).map(r => `x=${r.x} "${r.fullRoundText}" (${r.count})`));
-}
+    // ============================================================
+    // Render sections
+    // ============================================================
 
-    // Отрисовка секции
     function renderSection(sectionName, containerId, headersContainerId) {
-        console.log(`\n========== renderSection: ${sectionName} ==========`);
-
         const container = document.getElementById(containerId);
-        if (!container) {
-            console.error(`Container not found: ${containerId}`);
-            return null;
-        }
+        if (!container) return null;
 
         const { setsMap, roots } = buildTree(sectionName);
         if (setsMap.size === 0) {
@@ -456,19 +385,16 @@
             if (section) section.classList.add('hidden');
             return { setsMap, roots, maxDepth: 0 };
         }
-        console.log(`[${sectionName}] setsMap.size:`, setsMap.size);
-        console.log(`[${sectionName}] roots:`, roots.length);
 
-        if (roots.length === 0 || setsMap.size === 0) {
+        if (roots.length === 0) {
             const section = container.closest('.bracket-section');
             if (section) {
                 section.classList.add('hidden');
-                section.style.display = 'none';   // ← надёжнее любого CSS
+                section.style.display = 'none';
             }
             return null;
         }
 
-        // Y-координаты с отступом между поддеревьями
         const SUBTREE_GAP_UNITS = 2;
         const orderCounter = { value: 0 };
         const visitedY = new Set();
@@ -478,31 +404,19 @@
             assignYCoordinate(root, orderCounter, visitedY);
         });
 
-        // Depth и X
         const maxDepth = assignDepthAndX(roots);
-
-        // Центрирование и сжатие
         centerParents(roots);
         compressVertically(roots);
 
-        // Отладка
-        let ySet = 0, yUnset = 0;
-        setsMap.forEach(s => { if (typeof s.y === 'number' && !isNaN(s.y)) ySet++; else yUnset++; });
-        console.log(`[${sectionName}] y set: ${ySet}, y unset: ${yUnset}, maxDepth: ${maxDepth}`);
-
-        // Создание и позиционирование
         setsMap.forEach(setData => {
             const element = createSetElement(setData);
             const left = (setData.x || 0) * (NODE_WIDTH + LINK_WIDTH);
-            const top = (setData.y || 0) * (NODE_HEIGHT + NODE_GAP);
-
+            const top  = (setData.y || 0) * (NODE_HEIGHT + NODE_GAP);
             element.style.left = `${left}px`;
-            element.style.top = `${top}px`;
-
+            element.style.top  = `${top}px`;
             container.appendChild(element);
         });
 
-        // Размеры контейнера
         let maxY = 0;
         setsMap.forEach(setData => {
             if (typeof setData.y === 'number' && !isNaN(setData.y) && setData.y > maxY) {
@@ -510,23 +424,17 @@
             }
         });
 
-        const width = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
+        const width  = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
         const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
 
-        container.style.width = `${width}px`;
+        container.style.width  = `${width}px`;
         container.style.height = `${height}px`;
 
-        console.log(`[${sectionName}] container: ${width}x${height}, maxY=${maxY}`);
-
         renderRoundHeaders(`${sectionName}-headers`, setsMap);
-
         return { setsMap, roots, maxDepth };
     }
 
-    // Специальная функция для отрисовки Grand Final
     function renderFinalSection(winnersRootY) {
-        console.log(`\n========== renderFinalSection ==========`);
-
         const container = document.getElementById('final-nodes');
         if (!container) return;
 
@@ -539,41 +447,29 @@
             }
             return;
         }
-        console.log(`Grand Final sets: ${setsMap.size}, Roots: ${roots.length}`);
 
         const orderCounter = { value: 0 };
         const visitedY = new Set();
-
         roots.forEach(root => assignYCoordinate(root, orderCounter, visitedY));
 
         const maxDepth = assignDepthAndX(roots);
         centerParents(roots);
         compressVertically(roots);
 
-        // Находим Y-позицию корня
         let rootY = 0;
-        if (roots.length > 0 && typeof roots[0].y === 'number') {
-            rootY = roots[0].y;
-        }
+        if (roots.length > 0 && typeof roots[0].y === 'number') rootY = roots[0].y;
 
-        // Смещение для выравнивания по корню Winners
         const offsetY = winnersRootY - rootY;
 
-        // Позиционирование и обновление координат
         setsMap.forEach(setData => {
             const finalY = (setData.y || 0) + offsetY;
-
             const element = createSetElement(setData);
             element.style.left = `${(setData.x || 0) * (NODE_WIDTH + LINK_WIDTH)}px`;
-            element.style.top = `${finalY * (NODE_HEIGHT + NODE_GAP)}px`;
-
+            element.style.top  = `${finalY * (NODE_HEIGHT + NODE_GAP)}px`;
             container.appendChild(element);
-
-            // Обновляем координаты для отрисовки связей
             setData.y = finalY;
         });
 
-        // Размеры контейнера
         let maxY = 0;
         setsMap.forEach(setData => {
             if (typeof setData.y === 'number' && !isNaN(setData.y) && setData.y > maxY) {
@@ -581,18 +477,15 @@
             }
         });
 
-        const width = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
+        const width  = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
         const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
 
-        container.style.width = `${width}px`;
+        container.style.width  = `${width}px`;
         container.style.height = `${height}px`;
 
-        console.log(`Grand Final container: ${width}x${height}, maxY=${maxY}`);
-    
         renderRoundHeaders('final-headers', setsMap);
     }
 
-    // Отрисовка связей
     function renderConnections() {
         const svg = document.getElementById('connections-svg');
         const content = document.getElementById('bracket-content');
@@ -600,31 +493,29 @@
         svg.innerHTML = '';
 
         const contentRect = content.getBoundingClientRect();
-        const width = content.scrollWidth;
+        const width  = content.scrollWidth;
         const height = content.scrollHeight;
 
         svg.setAttribute('width', width);
         svg.setAttribute('height', height);
         svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-        svg.style.width = `${width}px`;
+        svg.style.width  = `${width}px`;
         svg.style.height = `${height}px`;
 
         connections.forEach(conn => {
             const fromEl = document.getElementById(`set-${conn.fromSetID}`);
-            const toEl = document.getElementById(`set-${conn.toSetID}`);
-
+            const toEl   = document.getElementById(`set-${conn.toSetID}`);
             if (!fromEl || !toEl) return;
 
             const fromSection = fromEl.closest('.bracket-section');
-            const toSection = toEl.closest('.bracket-section');
+            const toSection   = toEl.closest('.bracket-section');
 
-            // Пропускаем winners → losers
             if (fromSection?.id === 'winners-section' && toSection?.id === 'losers-section') {
                 return;
             }
 
             const fromRect = fromEl.getBoundingClientRect();
-            const toRect = toEl.getBoundingClientRect();
+            const toRect   = toEl.getBoundingClientRect();
 
             const x1 = fromRect.right - contentRect.left;
             const y1 = fromRect.top + fromRect.height / 2 - contentRect.top;
@@ -637,29 +528,17 @@
             path.classList.add('connection');
             path.dataset.fromSet  = conn.fromSetID;
             path.dataset.toSet    = conn.toSetID;
-            path.dataset.fromSlot = conn.fromSlot;   // ← добавить
-            path.dataset.toSlot   = conn.toSlot;     // ← добавить
+            path.dataset.fromSlot = conn.fromSlot;
+            path.dataset.toSlot   = conn.toSlot;
 
-            const d = `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`;
-            path.setAttribute('d', d);
+            path.setAttribute('d', `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`);
             svg.appendChild(path);
-        });    
+        });
     }
 
-    function refreshBracket() {
-        readConfig();
-
-        document.getElementById('winners-nodes').innerHTML = '';
-        document.getElementById('final-nodes').innerHTML = '';
-        document.getElementById('losers-nodes').innerHTML = '';
-        document.getElementById('winners-headers').innerHTML = '';
-        document.getElementById('final-headers').innerHTML = '';
-        document.getElementById('losers-headers').innerHTML = ''; 
-        document.getElementById('connections-svg').innerHTML = '';
-
-        init();
-    }
-
+    // ============================================================
+    // Init
+    // ============================================================
 
     function init() {
         readConfig();
@@ -671,8 +550,6 @@
             winnersRootY = winnersResult.roots[0].y || 0;
         }
 
-        console.log(`Winners root Y: ${winnersRootY}`);
-
         renderFinalSection(winnersRootY);
         renderSection('losers', 'losers-nodes', 'losers-headers');
 
@@ -683,6 +560,10 @@
         });
     }
 
+    // ============================================================
+    // Player highlight
+    // ============================================================
+
     function setupPlayerHighlight() {
         const content = document.getElementById('bracket-content');
         if (!content) return;
@@ -690,12 +571,8 @@
         let currentNickname = null;
 
         function clearHighlight() {
-            document.querySelectorAll('.player.highlighted').forEach(el => {
-                el.classList.remove('highlighted');
-            });
-            document.querySelectorAll('.connection.highlighted').forEach(el => {
-                el.classList.remove('highlighted');
-            });
+            document.querySelectorAll('.player.highlighted').forEach(el => el.classList.remove('highlighted'));
+            document.querySelectorAll('.connection.highlighted').forEach(el => el.classList.remove('highlighted'));
             currentNickname = null;
         }
 
@@ -716,36 +593,27 @@
                     if (nameEl.textContent.trim() === nickname) {
                         playerEl.classList.add('highlighted');
                         const slot = playerEl.dataset.slot;
-                        if (slot !== undefined) {
-                            highlightedSlots.add(`${setId}:${slot}`);
-                        }
+                        if (slot !== undefined) highlightedSlots.add(`${setId}:${slot}`);
                     }
                 });
             });
 
-            // Снимаем старые подсветки
-            document.querySelectorAll('.connection.highlighted').forEach(el => {
-                el.classList.remove('highlighted');
-            });
+            document.querySelectorAll('.connection.highlighted').forEach(el => el.classList.remove('highlighted'));
 
-            // Собираем подходящие (без навешивания класса)
             const toHighlight = [];
             document.querySelectorAll('.connection').forEach(pathEl => {
                 const fromSetId = pathEl.dataset.fromSet;
                 const toSetId   = pathEl.dataset.toSet;
                 const fromSlot  = pathEl.dataset.fromSlot;
                 const toSlot    = pathEl.dataset.toSlot;
-
                 if (!fromSetId || !toSetId) return;
 
                 const fromMatch = highlightedSlots.has(`${fromSetId}:${fromSlot}`);
                 const toMatch   = highlightedSlots.has(`${toSetId}:${toSlot}`);
 
-                // Проверяем, что на другом конце связи есть игрок
                 const toHasPlayer = document.querySelector(
                     `#set-${toSetId} .player[data-slot="${toSlot}"] .player-name`
                 )?.textContent.trim();
-
                 const toIsEmpty = !toHasPlayer || toHasPlayer === '—';
 
                 if ((fromMatch || toMatch) && !toIsEmpty) {
@@ -753,33 +621,33 @@
                 }
             });
 
-            // Навешиваем класс и перемещаем в конец SVG — поверх остальных
             const svg = document.getElementById('connections-svg');
             toHighlight.forEach(pathEl => {
                 pathEl.classList.add('highlighted');
                 svg.appendChild(pathEl);
             });
         }
-    content.addEventListener('mouseover', (e) => {
-        const playerEl = e.target.closest('.player');
-        if (!playerEl) return;
 
-        const nameEl = playerEl.querySelector('.player-name');
-        if (!nameEl) return;
+        content.addEventListener('mouseover', (e) => {
+            const playerEl = e.target.closest('.player');
+            if (!playerEl) return;
 
-        const nickname = nameEl.textContent.trim();
-        if (!nickname || nickname === '—') return;
+            const nameEl = playerEl.querySelector('.player-name');
+            if (!nameEl) return;
 
-        if (nickname === currentNickname) return;
+            const nickname = nameEl.textContent.trim();
+            if (!nickname || nickname === '—') return;
+            if (nickname === currentNickname) return;
 
-        clearHighlight();
-        applyHighlight(nickname);
-    });
+            clearHighlight();
+            applyHighlight(nickname);
+        });
 
-    content.addEventListener('mouseleave', clearHighlight);
-}
+        content.addEventListener('mouseleave', clearHighlight);
+    }
+
     // ============================================================
-    // Флаги отображения (от React-панели через postMessage)
+    // Flags
     // ============================================================
 
     function applyFlags(flags) {
@@ -789,41 +657,115 @@
         console.log('[bracket] flags applied:', flags);
     }
 
-        // Начальное состояние — из URL-параметров
-    (function applyInitialFlags() {
-        const params = new URLSearchParams(location.search);
-        applyFlags({
-            transparent: params.has('transparent'),
-            hideRounds:  params.has('hideRounds'),
-            losersOnly:  params.has('losersOnly'),
-        });
-    })();
-
-    // Реакция на изменение флагов из React-панели
-    window.addEventListener('message', (event) => {
-        if (!event.data || event.data.type !== 'bracket:flags-changed') return;
-
-        applyFlags(event.data.flags);
-
+    function applyFlagsAndRedraw(flags) {
+        applyFlags(flags);
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 renderConnections();
             });
         });
+    }
+
+    // 1. Начальное состояние — из URL-параметров (приоритет) или localStorage
+    (function applyInitialFlags() {
+        const params = new URLSearchParams(location.search);
+
+        if (params.has('transparent') || params.has('hideRounds') || params.has('losersOnly')) {
+            applyFlags({
+                transparent: params.has('transparent'),
+                hideRounds:  params.has('hideRounds'),
+                losersOnly:  params.has('losersOnly'),
+            });
+            return;
+        }
+
+        try {
+            const stored = localStorage.getItem('bracket:flags');
+            if (stored) {
+                const flags = JSON.parse(stored);
+                applyFlags(flags);
+                console.log('[bracket] flags from localStorage:', flags);
+            }
+        } catch (e) {
+            console.warn('[bracket] failed to parse stored flags:', e);
+        }
+    })();
+
+    // 2. BroadcastChannel — синхронизация между вкладками/iframe одного origin
+    try {
+        const channel = new BroadcastChannel('bracket:flags');
+        channel.onmessage = (event) => {
+            if (!event.data || event.data.type !== 'bracket:flags-changed') return;
+            console.log('[bracket] BroadcastChannel message:', event.data.flags);
+            applyFlagsAndRedraw(event.data.flags);
+        };
+        console.log('[bracket] BroadcastChannel connected');
+    } catch (e) {
+        console.warn('[bracket] BroadcastChannel not available:', e);
+    }
+
+    // 3. localStorage event — fallback
+    window.addEventListener('storage', (event) => {
+        if (event.key !== 'bracket:flags' || !event.newValue) return;
+        try {
+            const flags = JSON.parse(event.newValue);
+            console.log('[bracket] storage event:', flags);
+            applyFlagsAndRedraw(flags);
+        } catch (e) {
+            console.warn('[bracket] storage event parse error:', e);
+        }
     });
 
-    // Реакция на resize
+    // 4. postMessage от React-панели (iframe внутри Wails)
+    window.addEventListener('message', (event) => {
+        if (!event.data || event.data.type !== 'bracket:flags-changed') return;
+        console.log('[bracket] postMessage:', event.data.flags);
+        applyFlagsAndRedraw(event.data.flags);
+    });
+
+    // 5. Backend polling — для внешних браузеров (BroadcastChannel не работает между разными браузерами)
+    const BRACKET_FLAGS_URL = '/widget/bracket/flags';
+    let lastFlagsJson = null;
+
+    async function fetchFlagsFromBackend() {
+        try {
+            const res = await fetch(BRACKET_FLAGS_URL, { cache: 'no-store' });
+            if (!res.ok) return null;
+            return await res.json();
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function pollFlags() {
+        const flags = await fetchFlagsFromBackend();
+        if (!flags) return;
+
+        const json = JSON.stringify(flags);
+        if (json === lastFlagsJson) return;
+        lastFlagsJson = json;
+
+        console.log('[bracket] flags from backend:', flags);
+        applyFlagsAndRedraw(flags);
+    }
+
+    pollFlags();
+    setInterval(pollFlags, 200);
+
+    // ============================================================
+    // Resize + start
+    // ============================================================
+
     window.addEventListener('resize', () => {
         clearTimeout(window.resizeTimer);
         window.resizeTimer = setTimeout(renderConnections, 50);
     });
 
-    // Старт
     window.addEventListener('load', () => {
         init();
         setupPlayerHighlight();
     });
-
 </script>
+
 </body>
 </html>
