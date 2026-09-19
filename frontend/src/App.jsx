@@ -157,14 +157,15 @@ const App = () => {
   const [bracketFlags, setBracketFlags] = useState(() => {
       // При старте — берём из конфига турнира, если есть
       if (tourneyCfg?.widgetBracket) {
-          const { clearBackground, hideStages, losersOnly } = tourneyCfg.widgetBracket;
+          const { clearBackground, hideStages, losersOnly, scale } = tourneyCfg.widgetBracket;
           return {
               transparent: !!clearBackground,
               hideRounds:  !!hideStages,
               losersOnly:  !!losersOnly,
+              scale: scale,
           };
       }
-      return { transparent: false, hideRounds: false, losersOnly: false };
+      return { transparent: false, hideRounds: false, losersOnly: false, scale: 1.0 };
   });
 
   // При изменении флагов — сохраняем в конфиг
@@ -177,40 +178,40 @@ const App = () => {
               clearBackground: bracketFlags.transparent,
               hideStages:      bracketFlags.hideRounds,
               losersOnly:      bracketFlags.losersOnly,
+              scale:           bracketFlags.scale,
           },
       });
   }, [bracketFlags]);
 
   useEffect(() => {
-      // 1. localStorage
-      try {
-          localStorage.setItem('bracket:flags', JSON.stringify(bracketFlags));
-      } catch (e) {}
+      const timer = setTimeout(() => {
+          // 1. localStorage
+          try {
+              localStorage.setItem('bracket:flags', JSON.stringify(bracketFlags));
+          } catch (e) {}
 
-      // 2. BroadcastChannel — для вкладок того же браузера
-      let channel = null;
-      try {
-          channel = new BroadcastChannel('bracket:flags');
-          channel.postMessage({
-              type: 'bracket:flags-changed',
-              flags: bracketFlags,
+          // 2. BroadcastChannel
+          let channel = null;
+          try {
+              channel = new BroadcastChannel('bracket:flags');
+              channel.postMessage({
+                  type: 'bracket:flags-changed',
+                  flags: bracketFlags,
+              });
+              channel.close();
+          } catch (e) {}
+
+          // 3. Backend
+          fetch('http://localhost:8080/widget/bracket/flags', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(bracketFlags),
+          }).catch(err => {
+              console.warn('[App] POST bracket flags failed:', err);
           });
-      } catch (e) {}
+      }, 300);
 
-      // 3. Backend — для внешних браузеров
-      fetch('http://localhost:8080/widget/bracket/flags', {   // ← ВАШ ПУТЬ
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(bracketFlags),
-      }).catch(err => {
-          console.warn('[App] POST bracket flags failed:', err);
-      });
-
-      return () => {
-          if (channel) {
-              try { channel.close(); } catch (e) {}
-          }
-      };
+      return () => clearTimeout(timer);
   }, [bracketFlags]);
 
   useEffect(() => {

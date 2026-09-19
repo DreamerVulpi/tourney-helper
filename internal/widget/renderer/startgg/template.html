@@ -35,10 +35,9 @@
 </head>
 <body>
 <div class="bracket-wrapper">
+    <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="bracket-viewport" id="bracket-viewport">
         <div class="bracket-content" id="bracket-content">
-            <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
-
             <div class="winners-final-row">
                 <div class="bracket-section" id="winners-section">
                     <div class="round-headers" id="winners-headers"></div>
@@ -488,13 +487,15 @@
 
     function renderConnections() {
         const svg = document.getElementById('connections-svg');
-        const content = document.getElementById('bracket-content');
+        const wrapper = document.querySelector('.bracket-wrapper');
+
+        if (!svg || !wrapper) return;
 
         svg.innerHTML = '';
 
-        const contentRect = content.getBoundingClientRect();
-        const width  = content.scrollWidth;
-        const height = content.scrollHeight;
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const width  = wrapper.scrollWidth;
+        const height = wrapper.scrollHeight;
 
         svg.setAttribute('width', width);
         svg.setAttribute('height', height);
@@ -517,10 +518,11 @@
             const fromRect = fromEl.getBoundingClientRect();
             const toRect   = toEl.getBoundingClientRect();
 
-            const x1 = fromRect.right - contentRect.left;
-            const y1 = fromRect.top + fromRect.height / 2 - contentRect.top;
-            const x2 = toRect.left - contentRect.left;
-            const y2 = toRect.top + toRect.height / 2 - contentRect.top;
+            // Координаты относительно .bracket-wrapper
+            const x1 = fromRect.right - wrapperRect.left;
+            const y1 = fromRect.top + fromRect.height / 2 - wrapperRect.top;
+            const x2 = toRect.left - wrapperRect.left;
+            const y2 = toRect.top + toRect.height / 2 - wrapperRect.top;
 
             const midX = (x1 + x2) / 2;
 
@@ -646,6 +648,18 @@
         content.addEventListener('mouseleave', clearHighlight);
     }
 
+    function applyScale(scale) {
+        const viewport = document.getElementById('bracket-viewport');
+        if (!viewport) return;
+
+        let s = parseFloat(scale);
+        if (isNaN(s) || s <= 0) s = 1.0;
+        s = Math.max(0.5, Math.min(2.0, s));
+
+        viewport.style.transform = `scale(${s})`;
+        viewport.style.transformOrigin = 'top left';
+    }
+
     // ============================================================
     // Flags
     // ============================================================
@@ -654,11 +668,16 @@
         document.body.classList.toggle('transparent-bg', !!flags.transparent);
         document.body.classList.toggle('hide-rounds',    !!flags.hideRounds);
         document.body.classList.toggle('losers-only',    !!flags.losersOnly);
+
+        applyScale(flags.scale);
+
         console.log('[bracket] flags applied:', flags);
     }
 
     function applyFlagsAndRedraw(flags) {
         applyFlags(flags);
+        renderConnections();
+
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 renderConnections();

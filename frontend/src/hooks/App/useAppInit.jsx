@@ -61,6 +61,7 @@ export function useAppInit({
                   hideStages: tourney.widgetBracket?.hideStages ?? false,
                   clearBackground: tourney.widgetBracket?.clearBackground ?? false,
                   losersBracket: tourney.widgetBracket?.losersBracket ?? false,
+                  scale: tourney.widgetBracket?.scale ?? 1.0,
                 },
                 urlToTournament: tourney.urlToTournament || "",
                 startgg: {

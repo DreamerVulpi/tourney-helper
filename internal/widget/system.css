@@ -36,7 +36,6 @@ body {
     top: 0;
     left: 0;
     transform-origin: top left;
-    /* БЕЗ width/height — размер по содержимому */
 }
 
 .bracket-content {

@@ -17,6 +17,10 @@ function FieldBase({
   isNumber,
   readOnly = false,
 
+  min = 0.0,
+  max = 1.0,
+  step,
+
   value,
   onChange,
   onClick,
@@ -141,6 +145,26 @@ function FieldBase({
             ${themeClasses.field}
           `}
         />
+      ) : variant === "range" ? (
+            <div className="flex items-center gap-3 w-full">
+              <input
+                  type="range"
+                  min={min}
+                  max={max}
+                  step={step ?? 1}
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  style={{ height }}
+                  className={`
+                      flex-1
+                      cursor-pointer
+                      ${themeClasses.range ?? ""}
+                  `}
+              />
+              <span className={`text-xs font-black italic px-2 shrink-0 min-w-[3rem] text-right ${themeClasses.label}`}>
+                  {value}
+              </span>
+          </div>
       ) : variant === "mono" ? (
         <div
           className={`

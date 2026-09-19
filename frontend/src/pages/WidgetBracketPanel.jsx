@@ -7,6 +7,7 @@ import {
   List,
   Wallpaper,
   GitGraph,
+  ZoomIn,
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -16,6 +17,12 @@ import { ActionButton } from "../components/ui/ActionButton.jsx";
 import { useStartToggle } from "../hooks/WidgetBracketPanel/useStartToggle.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import { useGetListThemes } from "../hooks/WidgetBracketPanel/useGetListThemes.jsx";
+
+const clampScale = (s) => {
+    const n = parseFloat(s);
+    if (!Number.isFinite(n) || n <= 0) return 1.0;
+    return Math.max(0.5, Math.min(2.0, n));
+};
 
 const WidgetBracketPlate = ({
   theme,
@@ -37,11 +44,6 @@ const WidgetBracketPlate = ({
   bracketFlags,
   setBracketFlags,     // (prev => ({...}))
 }) => {
-  console.log('[WidgetBracketPlate] props:', {
-    bracketFlags,
-    setBracketFlags,
-    typeofSetBracketFlags: typeof setBracketFlags,
-});
   const urlToTournament = tourneyCfg?.widgetBracket?.urlToTournament || "";
   const themeBracket     = tourneyCfg?.widgetBracket?.theme || "StartGG";
   const themeOptions     = useGetListThemes();
@@ -51,8 +53,10 @@ const WidgetBracketPlate = ({
     transparent: clearBackground,
     hideRounds:  hideStages,
     losersOnly:  losersBracket,
+    scale: scale,
   } = bracketFlags;
 
+  const readyScale = clampScale(scale);
   const isReadyToStart = urlToTournament;
 
   const [validationAlert, setValidationAlert] = useState({
@@ -82,14 +86,14 @@ const WidgetBracketPlate = ({
   // ---------- Обработчики тумблеров ----------
   // Обновляем флаги в App через setBracketFlags (functional update)
   const handleClearBackgroundChange = useCallback((value) => {
-    console.log('[WidgetBracketPlate] clearBackground change:', value);
-    setBracketFlags(prev => {
-        console.log('[WidgetBracketPlate] prev:', prev);
-        const next = { ...prev, transparent: value };
-        console.log('[WidgetBracketPlate] next:', next);
-        return next;
-    });
-}, [setBracketFlags]);
+      console.log('[WidgetBracketPlate] clearBackground change:', value);
+      setBracketFlags(prev => {
+          console.log('[WidgetBracketPlate] prev:', prev);
+          const next = { ...prev, transparent: value };
+          console.log('[WidgetBracketPlate] next:', next);
+          return next;
+      });
+  }, [setBracketFlags]);
 
   const handleHideStagesChange = useCallback((value) => {
     setBracketFlags(prev => ({ ...prev, hideRounds: value }));
@@ -98,6 +102,13 @@ const WidgetBracketPlate = ({
   const handleOnlyLosersChange = useCallback((value) => {
     setBracketFlags(prev => ({ ...prev, losersOnly: value }));
   }, [setBracketFlags]);
+
+ const handleScaleChange = useCallback((value) => {
+    console.log('[WidgetBracketPlate] scale input:', value, typeof value);
+    const num = clampScale(value);
+    console.log('[WidgetBracketPlate] scale normalized:', num);
+    setBracketFlags(prev => ({ ...prev, scale: num }));
+}, [setBracketFlags]);
 
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
 
@@ -232,6 +243,17 @@ const WidgetBracketPlate = ({
               color="amber"
               themeClasses={themeClasses}
               onChange={handleOnlyLosersChange}
+            />
+            <Field
+                variant="range"
+                label={`${'Scale'} (0.5–2.0)`}
+                icon={ZoomIn}
+                min={0.5}
+                max={2.0}
+                step={0.05}
+                onChange={handleScaleChange}
+                value={readyScale}
+                themeClasses={themeClasses}
             />
             {isWidgetBracketRunning && (
               <Field

@@ -92,11 +92,12 @@ type ConfigTournament struct {
 }
 
 type WidgetBracket struct {
-	UrlToTournament string `toml:"urlToTournament" json:"urlToTournament"`
-	Theme           string `toml:"theme" json:"theme"`
-	ClearBackground bool   `toml:"clearBackground" json:"clearBackground"`
-	HideStages      bool   `toml:"hideStages" json:"hideStages"`
-	LosersBracket   bool   `toml:"losersBracket" json:"losersBracket"`
+	UrlToTournament string  `toml:"urlToTournament" json:"urlToTournament"`
+	Theme           string  `toml:"theme" json:"theme"`
+	ClearBackground bool    `toml:"clearBackground" json:"clearBackground"`
+	HideStages      bool    `toml:"hideStages" json:"hideStages"`
+	LosersBracket   bool    `toml:"losersBracket" json:"losersBracket"`
+	Scale           float64 `toml:"scale" json:"scale"`
 }
 
 type SettingsApplication struct {
@@ -225,6 +226,7 @@ func Init(configDir string) error {
 				ClearBackground: false,
 				HideStages:      false,
 				LosersBracket:   false,
+				Scale:           1.0,
 			},
 			Startgg: TournamentPlatform{
 				Name:         "",

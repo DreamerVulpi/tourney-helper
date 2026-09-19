@@ -36,6 +36,12 @@ export function getThemeClasses(theme) {
         divider: isDark
             ? "border-white/5"
             : "border-slate-200",
+        range: `
+            h-1.5
+            rounded-full
+            bg-slate-300
+            accent-blue-600
+        `
     };
 }
 

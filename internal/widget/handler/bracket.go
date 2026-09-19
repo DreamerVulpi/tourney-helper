@@ -9,9 +9,10 @@ import (
 )
 
 type BracketFlags struct {
-	Transparent bool `json:"transparent"`
-	HideRounds  bool `json:"hideRounds"`
-	LosersOnly  bool `json:"losersOnly"`
+	Transparent bool    `json:"transparent"`
+	HideRounds  bool    `json:"hideRounds"`
+	LosersOnly  bool    `json:"losersOnly"`
+	Scale       float64 `json:"scale"`
 }
 
 type Handler struct {
