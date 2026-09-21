@@ -186,17 +186,17 @@ const WidgetBracketPlate = ({
     <PanelTemplate themeClasses={themeClasses}>
       <div className="grid grid-cols-15 gap-8 items-stretch flex-1 min-h-0">
         <div className="col-span-12 min-h-0">
-          <div className={`w-full h-full rounded-[2.5rem] ${themeClasses.button}`}>
-            {isWidgetBracketRunning && (
-              <iframe
-                src={initialSrcRef.current || bracketUrl}
-                ref={iframeRef_WidgetBracket}
-                className="w-full h-full border-0 rounded-[2.5rem]"
-                title="Tournament Bracket"
-                allowtransparency="true"
-                style={{ background: 'transparent' }}
-              />
-            )}
+          <div className={`w-full h-full rounded-[0.5rem] ${themeClasses.button} ${clearBackground ? 'bg-transparent' : ''}`}>
+              {isWidgetBracketRunning && (
+                  <iframe
+                      src={initialSrcRef.current || bracketUrl}
+                      ref={iframeRef_WidgetBracket}
+                      className="w-full h-full border-0 rounded-[0.5rem]"
+                      title="Tournament Bracket"
+                      allowtransparency="true"
+                      style={{ background: 'transparent' }}
+                  />
+              )}
           </div>
         </div>
 

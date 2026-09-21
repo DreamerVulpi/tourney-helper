@@ -119,6 +119,11 @@
     --set-radius: 0;
     --player-radius: 0;
     --score-radius: 0;
+
+    --scrollbar-track: #1b1b1b;         /* дорожка — тёмный */
+    --scrollbar-thumb: #4a4a4a;         /* ползунок */
+    --scrollbar-thumb-hover: #6a6a6a;   /* ползунок при наведении */
+
 }
 
 /* ================================================================
@@ -137,9 +142,7 @@ body {
 html.transparent-bg,
 html.transparent-bg body,
 html.transparent-bg .bracket-wrapper,
-html.transparent-bg .bracket-content,
-html.transparent-bg .set,
-html.transparent-bg .player {
+html.transparent-bg .bracket-content {
     background: transparent !important;
     background-image: none !important;
 }

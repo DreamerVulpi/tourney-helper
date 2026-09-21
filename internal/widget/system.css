@@ -1,9 +1,9 @@
 :root {
     /* Размеры элементов сетки */
-    --node-width: 220px;
-    --node-height: 76px;
-    --link-width: 60px;
-    --node-gap: 40px;
+    --node-width: 200px;
+    --node-height: 66px;
+    --link-width: 40px;
+    --node-gap: 16px;
 
     /* Ширина полосы LIVE */
     --live-width: 28px;
@@ -183,8 +183,8 @@ body {
 .round-headers {
     position: relative;
     width: 100%;
-    height: 32px;
-    margin-bottom: 12px;
+    height: 22px;
+    margin-bottom: 6px;
 }
 
 .round-header {
@@ -205,31 +205,10 @@ body {
 }
 
 /* ============================================================
- * Режим прозрачного фона
- * ============================================================ */
-
-body.transparent-bg,
-body.transparent-bg .bracket-wrapper,
-body.transparent-bg .set,
-body.transparent-bg .player {
-    background: transparent !important;
-}
-
-body.transparent-bg .set {
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: none;
-}
-
-body.transparent-bg .set-live {
-    /* LIVE — оставляем видимым */
-    background: var(--live-bg, #3b4350) !important;
-}
-
-/* ============================================================
  * Режим скрытых этапов
  * ============================================================ */
 
-body.hide-rounds .round-headers {
+html.hide-rounds .round-headers {
     display: none !important;
 }
 
@@ -237,11 +216,44 @@ body.hide-rounds .round-headers {
  * Режим "только Losers"
  * ============================================================ */
 
-body.losers-only #winners-section,
-body.losers-only #final-section {
+html.losers-only #winners-section,
+html.losers-only #final-section {
     display: none !important;
 }
 
 iframe {
     background: transparent;
+}
+
+/* ================================================================
+ * Scrollbar — структура
+ * ================================================================ */
+
+.bracket-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb, #888) var(--scrollbar-track, transparent);
+}
+
+.bracket-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.bracket-wrapper::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, transparent);
+    border-radius: 0;
+}
+
+.bracket-wrapper::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, #888);
+    border-radius: 0;
+    border: none;
+}
+
+.bracket-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover, #aaa);
+}
+
+.bracket-wrapper::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track, transparent);
 }

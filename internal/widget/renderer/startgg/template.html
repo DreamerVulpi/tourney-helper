@@ -665,9 +665,10 @@
     // ============================================================
 
     function applyFlags(flags) {
-        document.body.classList.toggle('transparent-bg', !!flags.transparent);
-        document.body.classList.toggle('hide-rounds',    !!flags.hideRounds);
-        document.body.classList.toggle('losers-only',    !!flags.losersOnly);
+        const root = document.documentElement;
+        root.classList.toggle('transparent-bg', !!flags.transparent);
+        root.classList.toggle('hide-rounds',    !!flags.hideRounds);
+        root.classList.toggle('losers-only',    !!flags.losersOnly);
 
         applyScale(flags.scale);
 
