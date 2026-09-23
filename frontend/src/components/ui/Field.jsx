@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ZoomOut, ZoomIn, RotateCcw } from "lucide-react";
 
 import { DropdownList } from "./DropdownList.jsx";
 import { CopyButton } from "./CopyButton.jsx";
@@ -20,6 +20,8 @@ function FieldBase({
   min = 0.0,
   max = 1.0,
   step,
+  showReset = true,
+  solid = false,
 
   value,
   onChange,
@@ -146,25 +148,75 @@ function FieldBase({
           `}
         />
       ) : variant === "range" ? (
-            <div className="flex items-center gap-3 w-full">
-              <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  step={step ?? 1}
-                  value={value}
-                  onChange={(e) => onChange(e.target.value)}
-                  style={{ height }}
-                  className={`
-                      flex-1
-                      cursor-pointer
-                      ${themeClasses.range ?? ""}
-                  `}
-              />
-              <span className={`text-xs font-black italic px-2 shrink-0 min-w-[3rem] text-right ${themeClasses.label}`}>
-                  {value}
-              </span>
-          </div>
+        <div
+            className={`
+                flex
+                items-center
+                gap-2
+                w-full
+                px-3
+                py-2
+                rounded-xl
+                border
+                ${solid
+                    ? (themeClasses.solidField)
+                    : themeClasses.field
+                }
+            `}
+        >
+            {label && (
+                <span className={`text-[10px] font-black uppercase italic shrink-0 ${themeClasses.label}`}>
+                    {label}
+                </span>
+            )}
+
+            <ZoomOut
+                size={14}
+                className="shrink-0 opacity-60"
+            />
+
+            <input
+                type="range"
+                min={min ?? 0.5}
+                max={max ?? 2.0}
+                step={step ?? 0.05}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className={`
+                    flex-1
+                    cursor-pointer
+                    accent-amber-500
+                    ${themeClasses.range ?? ""}
+                `}
+            />
+
+            <ZoomIn
+                size={14}
+                className="shrink-0 opacity-60"
+            />
+
+            <span className="text-xs font-black italic tabular-nums min-w-[3.2rem] text-right shrink-0">
+                {parseFloat(value).toFixed(2)}×
+            </span>
+
+            {showReset && (
+                <button
+                    type="button"
+                    onClick={() => onChange(1.0)}
+                    disabled={parseFloat(value) === 1.0}
+                    className={`
+                        w-5 h-5 flex items-center justify-center rounded-md
+                        hover:bg-white/10
+                        disabled:opacity-30
+                        disabled:cursor-not-allowed
+                        transition-colors
+                        shrink-0
+                    `}
+                >
+                    <RotateCcw size={11} />
+                </button>
+            )}
+        </div>
       ) : variant === "mono" ? (
         <div
           className={`

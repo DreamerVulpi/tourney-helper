@@ -67,15 +67,22 @@ type DatabasePanel struct {
 }
 
 type WidgetBracketPanel struct {
-	UrlToBracketLabel   string
-	ListOfBracketsLabel string
-	ListOfThemes        string
-	Start               string
-	Stop                string
-	HideTheStages       string
-	LinkOfWidget        string
-	ClearBackground     string
-	LosersBracket       string
+	UrlToBracketLabel     string
+	ListOfBracketsLabel   string
+	ListOfThemes          string
+	Start                 string
+	Stop                  string
+	HideTheStages         string
+	LinkOfWidget          string
+	ClearBackground       string
+	BracketDisplayMode    string
+	AllMode               string
+	WinnersMode           string
+	LosersMode            string
+	WidgetNotRunning      string
+	ClickStartDescription string
+	LoadBracket           string
+	FetchData             string
 }
 
 type AuthorizationModal struct {

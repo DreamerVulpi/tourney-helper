@@ -668,11 +668,21 @@
         const root = document.documentElement;
         root.classList.toggle('transparent-bg', !!flags.transparent);
         root.classList.toggle('hide-rounds',    !!flags.hideRounds);
-        root.classList.toggle('losers-only',    !!flags.losersOnly);
+        applyBracketMode(flags.bracketMode || 'all');
 
         applyScale(flags.scale);
-
         console.log('[bracket] flags applied:', flags);
+    }
+
+    function applyBracketMode(mode) {
+        const root = document.documentElement;
+        root.classList.remove('bracket-mode-all', 'bracket-mode-winners', 'bracket-mode-losers');
+
+        switch (mode) {
+            case 'winners': root.classList.add('bracket-mode-winners'); break;
+            case 'losers':  root.classList.add('bracket-mode-losers');  break;
+            default:        root.classList.add('bracket-mode-all');     break;
+        }
     }
 
     function applyFlagsAndRedraw(flags) {
@@ -686,15 +696,18 @@
         });
     }
 
-    // 1. Начальное состояние — из URL-параметров (приоритет) или localStorage
     (function applyInitialFlags() {
         const params = new URLSearchParams(location.search);
 
-        if (params.has('transparent') || params.has('hideRounds') || params.has('losersOnly')) {
+        const bracketMode = params.get('bracketMode') || 'all';
+
+        if (params.has('transparent') || params.has('hideRounds') ||
+            params.has('bracketMode') || params.has('scale')) {
             applyFlags({
                 transparent: params.has('transparent'),
                 hideRounds:  params.has('hideRounds'),
-                losersOnly:  params.has('losersOnly'),
+                bracketMode,
+                scale:       params.get('scale') ? parseFloat(params.get('scale')) : 1.0,
             });
             return;
         }
@@ -703,12 +716,11 @@
             const stored = localStorage.getItem('bracket:flags');
             if (stored) {
                 const flags = JSON.parse(stored);
+                // Убедимся, что bracketMode есть
+                if (!flags.bracketMode) flags.bracketMode = 'all';
                 applyFlags(flags);
-                console.log('[bracket] flags from localStorage:', flags);
             }
-        } catch (e) {
-            console.warn('[bracket] failed to parse stored flags:', e);
-        }
+        } catch (e) {}
     })();
 
     // 2. BroadcastChannel — синхронизация между вкладками/iframe одного origin

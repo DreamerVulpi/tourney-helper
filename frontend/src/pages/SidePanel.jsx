@@ -94,7 +94,7 @@ const SidePanel = ({
       className={`relative ${
         collapsed
           ? "w-[clamp(72px,6.5vw,96px)]"
-          : "w-[clamp(250px,15vw,320px)]"
+          : "w-[clamp(255px,15vw,320px)]"
       } border-r flex flex-col p-4 h-full transition-[width] duration-300 ${
         themeClasses.navPanel
       }`}

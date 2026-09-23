@@ -15,15 +15,22 @@ var listRegions = ListRegions{
 
 var Ru = Ui{
 	WidgetBracketPanel: WidgetBracketPanel{
-		UrlToBracketLabel:   "Ссылка на сетку",
-		ListOfBracketsLabel: "Cетка",
-		ListOfThemes:        "Тема оформления",
-		Start:               "Запустить",
-		Stop:                "Остановить",
-		HideTheStages:       "Скрыть этапы",
-		ClearBackground:     "Чистый фон",
-		LosersBracket:       "Только сетка Лузеров",
-		LinkOfWidget:        "Ссылка на виджет",
+		UrlToBracketLabel:     "Ссылка на сетку",
+		ListOfBracketsLabel:   "Cетка",
+		ListOfThemes:          "Тема оформления",
+		Start:                 "Запустить",
+		Stop:                  "Остановить",
+		HideTheStages:         "Скрыть этапы",
+		ClearBackground:       "Чистый фон",
+		BracketDisplayMode:    "Режим отображения сеток",
+		AllMode:               "Все",
+		WinnersMode:           "Виннера",
+		LosersMode:            "Лузера",
+		LinkOfWidget:          "Ссылка на виджет",
+		WidgetNotRunning:      "Виджет не работает",
+		ClickStartDescription: "Нажмите \"Старт\" для запуска виджета турнирной сетки",
+		LoadBracket:           "Загрузка турнирной сетки",
+		FetchData:             "Получение данных...",
 	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Ошибка заполнения параметров",
@@ -141,7 +148,7 @@ var Ru = Ui{
 		},
 		Authorization: AuthorizationModal{
 			Title: "Авторизация платформ",
-			Label: "Авторизация",
+			Label: "Интеграции",
 			Platform: Platform{
 				AuthorizeStatePlatform: AuthorizeStatePlatform{
 					Authorized:   "Авторизован",

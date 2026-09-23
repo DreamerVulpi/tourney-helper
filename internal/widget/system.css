@@ -7,6 +7,11 @@
 
     /* Ширина полосы LIVE */
     --live-width: 28px;
+
+    /* Скроллбар — дефолтные значения (тема может переопределить) */
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: rgba(160, 160, 160, 0.35);
+    --scrollbar-thumb-hover: rgba(200, 200, 200, 0.55);
 }
 
 * {
@@ -184,7 +189,8 @@ body {
     position: relative;
     width: 100%;
     height: 22px;
-    margin-bottom: 6px;
+    margin-bottom: var(--section-gap, 20px);
+    flex-shrink: 0;
 }
 
 .round-header {
@@ -213,11 +219,29 @@ html.hide-rounds .round-headers {
 }
 
 /* ============================================================
- * Режим "только Losers"
+ * Режимы отображения секций
  * ============================================================ */
 
-html.losers-only #winners-section,
-html.losers-only #final-section {
+/* All — ничего не скрыто (по умолчанию) */
+html.bracket-mode-all #winners-section,
+html.bracket-mode-all #final-section,
+html.bracket-mode-all #losers-section {
+    display: block;
+}
+
+/* Winners only — скрываем Losers */
+html.bracket-mode-winners #losers-section {
+    display: none !important;
+}
+
+/* Losers only — скрываем Winners и Final */
+html.bracket-mode-losers #winners-section,
+html.bracket-mode-losers #final-section {
+    display: none !important;
+}
+
+/* Прячем пустой ряд, если обе секции скрыты */
+html.bracket-mode-losers .winners-final-row {
     display: none !important;
 }
 
@@ -227,11 +251,21 @@ iframe {
 
 /* ================================================================
  * Scrollbar — структура
- * ================================================================ */
+ * ================================================================
+ *
+ * Скроллбар всегда имеет прозрачный трек и полупрозрачный
+ * серый ползунок — независимо от режима (transparent-bg или нет).
+ * Цвета задаются через переменные, которые тема может переопределить:
+ *
+ *   --scrollbar-track
+ *   --scrollbar-thumb
+ *   --scrollbar-thumb-hover
+ */
 
 .bracket-wrapper {
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb, #888) var(--scrollbar-track, transparent);
+    scrollbar-color: var(--scrollbar-thumb, rgba(160, 160, 160, 0.35))
+                     var(--scrollbar-track, transparent);
 }
 
 .bracket-wrapper::-webkit-scrollbar {
@@ -245,15 +279,22 @@ iframe {
 }
 
 .bracket-wrapper::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb, #888);
+    background: var(--scrollbar-thumb, rgba(160, 160, 160, 0.35));
     border-radius: 0;
     border: none;
 }
 
 .bracket-wrapper::-webkit-scrollbar-thumb:hover {
-    background: var(--scrollbar-thumb-hover, #aaa);
+    background: var(--scrollbar-thumb-hover, rgba(200, 200, 200, 0.55));
 }
 
 .bracket-wrapper::-webkit-scrollbar-corner {
     background: var(--scrollbar-track, transparent);
+}
+
+/* Убираем стрелки на скроллбаре (Windows / старые WebKit) */
+.bracket-wrapper::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+    width: 0;
 }

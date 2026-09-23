@@ -151,37 +151,93 @@ const App = () => {
     }
   };
 
-  // В App.jsx — при инициализации
-  // App.jsx
+  // Дефолтные флаги
+const DEFAULT_BRACKET_FLAGS = {
+    transparent: false,
+    hideRounds:  false,
+    bracketMode: 'all',
+    scale:       1.0,
+};
 
-  const [bracketFlags, setBracketFlags] = useState(() => {
-      // При старте — берём из конфига турнира, если есть
-      if (tourneyCfg?.widgetBracket) {
-          const { clearBackground, hideStages, losersOnly, scale } = tourneyCfg.widgetBracket;
-          return {
-              transparent: !!clearBackground,
-              hideRounds:  !!hideStages,
-              losersOnly:  !!losersOnly,
-              scale: scale,
-          };
-      }
-      return { transparent: false, hideRounds: false, losersOnly: false, scale: 1.0 };
-  });
+const [bracketFlags, setBracketFlags] = useState(DEFAULT_BRACKET_FLAGS);
 
-  // При изменении флагов — сохраняем в конфиг
-  useEffect(() => {
-      // Пропускаем первый рендер, чтобы не перезаписывать конфиг тем же значением
-      // (опционально — можно и не пропускать, вреда нет)
-      updateConfig("tournament", {
-          widgetBracket: {
-              ...tourneyCfg?.widgetBracket,
-              clearBackground: bracketFlags.transparent,
-              hideStages:      bracketFlags.hideRounds,
-              losersOnly:      bracketFlags.losersOnly,
-              scale:           bracketFlags.scale,
-          },
-      });
-  }, [bracketFlags]);
+// Флаг: инициализированы ли мы из конфига
+const bracketFlagsInitializedRef = useRef(false);
+
+// 1. Инициализация из конфига — как только он загрузился
+useEffect(() => {
+    if (bracketFlagsInitializedRef.current) return;
+    if (!tourneyCfg?.widgetBracket) return;
+
+    const { clearBackground, hideStages, bracketMode, scale } = tourneyCfg.widgetBracket;
+    console.log('[App] init bracketFlags from config:', {
+        clearBackground, hideStages, bracketMode, scale,
+    });
+
+    setBracketFlags({
+        transparent: !!clearBackground,
+        hideRounds:  !!hideStages,
+        bracketMode: bracketMode || 'all',
+        scale:       typeof scale === 'number' && scale > 0 ? scale : 1.0,
+    });
+
+    bracketFlagsInitializedRef.current = true;
+}, [tourneyCfg]);
+
+// 2. Сохранение в конфиг — только после инициализации
+useEffect(() => {
+    if (!bracketFlagsInitializedRef.current) {
+        console.log('[App] skip saving flags — config not initialized yet');
+        return;
+    }
+
+    console.log('[App] save bracketFlags to config:', bracketFlags);
+
+    updateConfig("tournament", {
+        widgetBracket: {
+            ...tourneyCfg?.widgetBracket,
+            clearBackground: bracketFlags.transparent,
+            hideStages:      bracketFlags.hideRounds,
+            bracketMode:     bracketFlags.bracketMode,
+            scale:           bracketFlags.scale,
+        },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [bracketFlags]);
+
+// 3. Сохранение в localStorage + BroadcastChannel + backend (с debounce)
+useEffect(() => {
+    if (!bracketFlagsInitializedRef.current) return;
+
+    const timer = setTimeout(() => {
+        // localStorage
+        try {
+            localStorage.setItem('bracket:flags', JSON.stringify(bracketFlags));
+        } catch (e) {}
+
+        // BroadcastChannel
+        let channel = null;
+        try {
+            channel = new BroadcastChannel('bracket:flags');
+            channel.postMessage({
+                type: 'bracket:flags-changed',
+                flags: bracketFlags,
+            });
+            channel.close();
+        } catch (e) {}
+
+        // Backend
+        fetch('http://localhost:8080/widget/bracket/flags', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(bracketFlags),
+        }).catch(err => {
+            console.warn('[App] POST bracket flags failed:', err);
+        });
+    }, 300);
+
+    return () => clearTimeout(timer);
+}, [bracketFlags]);
 
   useEffect(() => {
       const timer = setTimeout(() => {

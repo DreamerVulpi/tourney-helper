@@ -15,14 +15,21 @@ var listRegionsEn = ListRegions{
 
 var En = Ui{
 	WidgetBracketPanel: WidgetBracketPanel{
-		UrlToBracketLabel: "Bracket of link",
-		ListOfThemes:      "Theme",
-		Start:             "Start",
-		Stop:              "Stop",
-		HideTheStages:     "Hide the stages",
-		LinkOfWidget:      "Link of widget",
-		ClearBackground:   "Clear background",
-		LosersBracket:     "Only losers bracket",
+		UrlToBracketLabel:     "Bracket of link",
+		ListOfThemes:          "Theme",
+		Start:                 "Start",
+		Stop:                  "Stop",
+		HideTheStages:         "Hide the stages",
+		LinkOfWidget:          "Link of widget",
+		ClearBackground:       "Clear background",
+		BracketDisplayMode:    "Bracket display mode",
+		AllMode:               "All",
+		WinnersMode:           "Winners",
+		LosersMode:            "Losers",
+		WidgetNotRunning:      "Widget isn't running",
+		ClickStartDescription: "Click start to launch the bracket widget",
+		LoadBracket:           "Loading tournament bracket",
+		FetchData:             "Fetching tournament data...",
 	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Error filling in parameters",
@@ -142,7 +149,7 @@ var En = Ui{
 		},
 		Authorization: AuthorizationModal{
 			Title: "Platform Authorization",
-			Label: "Authorization",
+			Label: "Integrations",
 			Platform: Platform{
 				AuthorizeStatePlatform: AuthorizeStatePlatform{
 					Authorized:   "Authorized",

@@ -11,7 +11,7 @@ import (
 type BracketFlags struct {
 	Transparent bool    `json:"transparent"`
 	HideRounds  bool    `json:"hideRounds"`
-	LosersOnly  bool    `json:"losersOnly"`
+	BracketMode string  `json:"bracketMode"`
 	Scale       float64 `json:"scale"`
 }
 
@@ -61,6 +61,12 @@ func (h *Handler) SetBracketFlags(c *gin.Context) {
 	if err := c.ShouldBindJSON(&f); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	switch f.BracketMode {
+	case "all", "winners", "losers":
+	default:
+		f.BracketMode = "all"
 	}
 
 	h.flagsMu.Lock()

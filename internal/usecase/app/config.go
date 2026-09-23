@@ -100,7 +100,7 @@ func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
 				UrlToTournament: "",
 				Theme:           "StartGG",
 				HideStages:      false,
-				LosersBracket:   false,
+				BracketMode:     "all",
 				ClearBackground: false,
 			},
 			Startgg: config.TournamentPlatform{

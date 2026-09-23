@@ -3,6 +3,10 @@
  *
  * Structure & sizes come from system.css.
  * Visuals & colors come from this theme.
+ *
+ * Scrollbar colors are defined in system.css with defaults
+ * (transparent track + semi-transparent thumb). Override them here
+ * only if you want a different look.
  */
 
 :root {
@@ -120,10 +124,12 @@
     --player-radius: 0;
     --score-radius: 0;
 
-    --scrollbar-track: #1b1b1b;         /* дорожка — тёмный */
-    --scrollbar-thumb: #4a4a4a;         /* ползунок */
-    --scrollbar-thumb-hover: #6a6a6a;   /* ползунок при наведении */
-
+    /* ============================================================
+     * Scrollbar (переопределение дефолтов из system.css)
+     * ============================================================ */
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: rgba(160, 160, 160, 0.35);
+    --scrollbar-thumb-hover: rgba(200, 200, 200, 0.55);
 }
 
 /* ================================================================
@@ -153,7 +159,6 @@ html.transparent-bg .bracket-content {
 
 .bracket-content {
     padding: var(--content-padding);
-    gap: var(--content-gap);
 }
 
 /* ================================================================
@@ -167,10 +172,6 @@ html.transparent-bg .bracket-content {
     text-transform: var(--section-title-transform);
     letter-spacing: var(--section-title-spacing);
     color: var(--section-title-color);
-}
-
-.bracket-section {
-    gap: var(--section-gap);
 }
 
 .winners-final-row {

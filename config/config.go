@@ -96,7 +96,7 @@ type WidgetBracket struct {
 	Theme           string  `toml:"theme" json:"theme"`
 	ClearBackground bool    `toml:"clearBackground" json:"clearBackground"`
 	HideStages      bool    `toml:"hideStages" json:"hideStages"`
-	LosersBracket   bool    `toml:"losersBracket" json:"losersBracket"`
+	BracketMode     string  `toml:"bracketMode" json:"bracketMode"`
 	Scale           float64 `toml:"scale" json:"scale"`
 }
 
@@ -225,7 +225,7 @@ func Init(configDir string) error {
 				Theme:           "Default",
 				ClearBackground: false,
 				HideStages:      false,
-				LosersBracket:   false,
+				BracketMode:     "all",
 				Scale:           1.0,
 			},
 			Startgg: TournamentPlatform{

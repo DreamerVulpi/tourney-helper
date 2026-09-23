@@ -12,6 +12,9 @@ export function getThemeClasses(theme) {
         field: isDark
             ? "bg-white/5 border-white/10 text-white focus:border-purple-500/50"
             : "bg-slate-100 border-slate-200 text-slate-700 focus:border-blue-500/50",
+        solidField: isDark
+            ? "bg-slate-800 border-white/10 text-white focus:border-purple-500/50"
+            : "bg-slate-100 border-slate-200 text-slate-700 focus:border-blue-500/50",
         button: isDark
             ? "bg-white/5 border-white/10 text-white focus:border-purple-500/50"
             : "bg-slate-100 border-slate-200 text-slate-700 focus:border-blue-500/50",

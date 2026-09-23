@@ -60,7 +60,7 @@ export function useAppInit({
                   theme: tourney.widgetBracket?.theme || "Default",
                   hideStages: tourney.widgetBracket?.hideStages ?? false,
                   clearBackground: tourney.widgetBracket?.clearBackground ?? false,
-                  losersBracket: tourney.widgetBracket?.losersBracket ?? false,
+                  bracketMode: tourney.widgetBracket?.bracketMode ?? "all",
                   scale: tourney.widgetBracket?.scale ?? 1.0,
                 },
                 urlToTournament: tourney.urlToTournament || "",
