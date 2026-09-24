@@ -19,6 +19,7 @@ import {
   GitBranch,
   GitFork,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -30,6 +31,9 @@ import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import { useGetListThemes } from "../hooks/WidgetBracketPanel/useGetListThemes.jsx";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
 import { SectionBlock } from "../components/ui/SectionBlock.jsx";
+import { ValidateTournamentURL, ParseTournamentURLForWidget } from "../../wailsjs/go/application/App.js"
+import { debounce } from "../utils/debounce.jsx";
+import { UrlValidationMessage } from "../hooks/App/useValidationUrl.jsx";
 
 const clampScale = (s) => {
   const n = parseFloat(s);
@@ -52,12 +56,14 @@ const WidgetBracketPlate = ({
   setIsWidgetBracketRunning,
   setStatusWidgetBracket,
   iframeRef_WidgetBracket,
+  urlValidation, setURLValidation,
 
   // Флаги и сеттер из App.jsx
   bracketFlags,
   setBracketFlags, // (prev => ({...}))
 }) => {
   const urlToTournament = tourneyCfg?.widgetBracket?.urlToTournament || "";
+  const bracketId = tourneyCfg?.widgetBracket?.bracketId || "";
   const themeBracket = tourneyCfg?.widgetBracket?.theme || "StartGG";
   const themeOptions = useGetListThemes();
 
@@ -72,24 +78,104 @@ const WidgetBracketPlate = ({
   } = bracketFlags;
 
   const readyScale = clampScale(scale);
-  const isReadyToStart = urlToTournament;
+  const tourneyCfgRef = useRef(tourneyCfg);
+  useEffect(() => {
+      tourneyCfgRef.current = tourneyCfg;
+  }, [tourneyCfg]);
 
-  const [validationAlert, setValidationAlert] = useState({
-    isOpen: false,
-    message: "",
-  });
+  const debouncedParseGridId = useMemo(
+      () => debounce(async (rawUrl) => {
+          const cfg = tourneyCfgRef.current;
 
-  // ---------- Обработчики полей туринра ----------
+          if (!rawUrl || !rawUrl.trim()) {
+              updateConfig("tournament", {
+                  widgetBracket: {
+                      ...cfg.widgetBracket,
+                      urlToTournament: rawUrl,
+                      bracketId: "",
+                  },
+              });
+              return;
+          }
+
+          try {
+              const id = await ParseTournamentURLForWidget("startgg", rawUrl);
+              updateConfig("tournament", {
+                  widgetBracket: {
+                      ...cfg.widgetBracket,
+                      urlToTournament: rawUrl,
+                      bracketId: id,
+                  },
+              });
+          } catch (err) {
+              console.warn("[WidgetBracketPlate] parse grid id failed:", err);
+              updateConfig("tournament", {
+                  widgetBracket: {
+                      ...cfg.widgetBracket,
+                      urlToTournament: rawUrl,
+                      bracketId: "",
+                  },
+              });
+          }
+      }, 300),
+      [updateConfig],   // ← updateConfig стабильный
+  );
+
+  const debouncedValidateUrl = useMemo(
+      () => debounce(async (value) => {
+          if (!value || !value.trim()) {
+              setURLValidation({ valid: null, platform: "" });
+              return;
+          }
+          try {
+              const result = await ValidateTournamentURL(value);
+              setURLValidation({
+                  valid: result.valid,
+                  platform: result.platform,
+              });
+          } catch (err) {
+              setURLValidation({ valid: false, platform: "unknown" });
+          }
+      }, 400),
+      [],
+  );
+
+  const lastValidatedUrlRef = useRef(null);
+
+  // При монтировании / смене URL в конфиге (например, при переключении вкладок) —
+  // валидируем и парсим URL один раз, если он есть.
+  useEffect(() => {
+      if (!urlToTournament || !urlToTournament.trim()) {
+          setURLValidation({ valid: null, platform: "" });
+          lastValidatedUrlRef.current = null;
+          return;
+      }
+
+      if (lastValidatedUrlRef.current === urlToTournament) {
+          return;
+      }
+
+      lastValidatedUrlRef.current = urlToTournament;
+
+      debouncedValidateUrl(urlToTournament);
+
+      if (!bracketId) {
+          debouncedParseGridId(urlToTournament);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlToTournament, bracketId]);
+
   const handleTournamentUrlChange = useCallback(
     (value) => {
-      updateConfig("tournament", {
-        widgetBracket: {
-          ...tourneyCfg.widgetBracket,
-          urlToTournament: value,
-        },
-      });
-    },
-    [tourneyCfg.widgetBracket, updateConfig],
+          // 1. Сохраняем сырую ссылку в конфиг (UI покажет её)
+          updateConfig("tournament", {
+              widgetBracket: {
+                  ...tourneyCfg.widgetBracket,
+                  urlToTournament: value,
+              },
+          });
+      },
+      [tourneyCfg.widgetBracket, updateConfig, debouncedParseGridId, debouncedValidateUrl],
   );
 
   const handleThemeBracketChange = useCallback(
@@ -154,143 +240,223 @@ const WidgetBracketPlate = ({
     { activePlatform, tourneyCfg },
   );
 
-  // ---------- URL с флагами ----------
+  // Полный URL с флагами — нужен только для отображения в UI (LinkOfWidget)
   const bracketUrl = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("theme", themeBracket);
+      if (!bracketId) return "";
 
-    if (clearBackground) params.set("transparent", "1");
-    if (hideStages) params.set("hideRounds", "1");
-    if (bracketMode !== "all") params.set("bracketMode", bracketMode);
-    if (scale !== 1.0) params.set("scale", String(scale));
+      const params = new URLSearchParams();
+      params.set("theme", themeBracket);
 
-    return `http://localhost:8080/widget/bracket/${urlToTournament}?${params.toString()}`;
-  }, [
-    urlToTournament,
-    themeBracket,
-    clearBackground,
-    hideStages,
-    bracketMode,
-    scale,
-  ]);
+      if (clearBackground) params.set("transparent", "1");
+      if (hideStages) params.set("hideRounds", "1");
+      if (bracketMode !== "all") params.set("bracketMode", bracketMode);
+      if (scale !== 1.0) params.set("scale", String(scale));
+
+      return `http://localhost:8080/widget/bracket/${bracketId}?${params.toString()}`;
+  }, [bracketId, themeBracket, clearBackground, hideStages, bracketMode, scale]);
+
+  // Базовый URL — только турнир + тема. НЕ зависит от флагов.
+  // Используется для начального src iframe.
+  const baseIframeUrl = useMemo(() => {
+      if (!bracketId) return "";
+      return `http://localhost:8080/widget/bracket/${bracketId}?theme=${themeBracket}`;
+  }, [bracketId, themeBracket]);
 
   // ---------- Фиксируем начальный URL при старте виджета ----------
   const initialSrcRef = useRef(null);
+
+  // Сбрасываем фиксацию при смене турнира/темы
+  useEffect(() => {
+      initialSrcRef.current = null;
+  }, [bracketId, themeBracket]);
+
+  // Фиксируем начальный URL при старте (один раз)
+  useEffect(() => {
+      if (!isWidgetBracketRunning) {
+          initialSrcRef.current = null;
+          setIframeLoaded(false);
+          return;
+      }
+
+      if (!bracketId) return;
+
+      if (!initialSrcRef.current) {
+          const params = new URLSearchParams();
+          params.set("theme", themeBracket);
+          if (clearBackground) params.set("transparent", "1");
+          if (hideStages) params.set("hideRounds", "1");
+          if (bracketMode !== "all") params.set("bracketMode", bracketMode);
+          if (scale !== 1.0) params.set("scale", String(scale));
+          initialSrcRef.current = `http://localhost:8080/widget/bracket/${bracketId}?${params.toString()}`;
+      }
+
+      setIframeLoaded(false);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWidgetBracketRunning, bracketId, themeBracket]);
 
   // Обновляем src iframe при старте виджета, смене турнира или темы.
   // Смена флагов (bracketMode, hideRounds, transparent, scale) НЕ триггерит
   // перезагрузку — они уходят через postMessage.
   useEffect(() => {
-      if (isWidgetBracketRunning) {
-          initialSrcRef.current = bracketUrl;
+      if (isWidgetBracketRunning && baseIframeUrl) {
+          initialSrcRef.current = baseIframeUrl;
           setIframeLoaded(false);
       } else {
           initialSrcRef.current = null;
           setIframeLoaded(false);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isWidgetBracketRunning, urlToTournament, themeBracket]);
+  }, [isWidgetBracketRunning, baseIframeUrl]);
 
  
 
   // ---------- Отправка postMessage в iframe ----------
   useEffect(() => {
-    if (!isWidgetBracketRunning) return;
+      if (!isWidgetBracketRunning) return;
+      const iframe = iframeRef_WidgetBracket?.current;
+      if (!iframe) return;
 
-    const iframe = iframeRef_WidgetBracket?.current;
-    if (!iframe) return;
+      const sendFlags = () => {
+          if (!iframe.contentWindow) return;
+          iframe.contentWindow.postMessage(
+              {
+                  type: "bracket:flags-changed",
+                  flags: {
+                      transparent: clearBackground,
+                      hideRounds: hideStages,
+                      bracketMode: bracketMode,
+                      scale: readyScale,
+                  },
+              },
+              "*",
+          );
+      };
 
-    const sendFlags = () => {
-      if (!iframe.contentWindow) return;
-      iframe.contentWindow.postMessage(
-        {
-          type: "bracket:flags-changed",
-          flags: {
-            transparent: clearBackground,
-            hideRounds: hideStages,
-            bracketMode: bracketMode,
-          },
-        },
-        "*",
-      );
-    };
-
-    // 1. Отправляем сразу
-    sendFlags();
-
-    // 2. Повторяем при загрузке iframe (если он ещё грузился)
-    iframe.addEventListener("load", sendFlags);
-
-    return () => {
-      iframe.removeEventListener("load", sendFlags);
-    };
+      sendFlags();
+      iframe.addEventListener("load", sendFlags);
+      return () => iframe.removeEventListener("load", sendFlags);
   }, [
-    clearBackground,
-    hideStages,
-    bracketMode,
-    isWidgetBracketRunning,
-    iframeRef_WidgetBracket,
+      clearBackground,
+      hideStages,
+      bracketMode,
+      readyScale,
+      isWidgetBracketRunning,
+      iframeRef_WidgetBracket,
   ]);
+    // Start доступен, только если:
+  //  - виджет ещё не запущен
+  //  - URL валиден
+  //  - не идёт обработка
+  const isStartDisabled =
+      isProcessing ||
+      isWidgetBracketRunning ||
+      urlValidation.valid !== true;
+
+  // Stop доступен всегда, пока виджет запущен,
+  // даже если URL сейчас невалиден или пустой.
+  // Блокируется только во время обработки.
+  const isStopDisabled = isProcessing; 
 
   return (
     <PanelTemplate themeClasses={themeClasses}>
       <div className="grid grid-cols-16 gap-8 items-stretch flex-1 min-h-0">
         <div className="col-span-12 min-h-0">
-          <div
-            className={`relative w-full h-full rounded-[0.5rem] ${themeClasses.button}`}
-          >
-            {isWidgetBracketRunning && (
-              <>
-                <iframe
-                  src={initialSrcRef.current || bracketUrl}
-                  ref={iframeRef_WidgetBracket}
-                  className="absolute inset-0 w-full h-full border-0 rounded-[0.5rem]"
-                  title="Tournament Bracket"
-                  allowtransparency="true"
-                  onLoad={()=> setIframeLoaded(true)}
-                  style={{ background: "transparent" }}
-                />
-
-                {/* Плавающая панель поверх iframe в правом верхнем углу */}
-                <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 w-80">
-                  <ToggleSwitch
-                    solid={true}
-                    label={locale.BracketDisplayMode}
-                    value={bracketMode}
-                    options={[
-                      { value: "all", label: locale.AllMode, icon: Layers },
-                      {
-                        value: "winners",
-                        label: locale.WinnersMode,
-                        icon: GitBranch,
-                      },
-                      {
-                        value: "losers",
-                        label: locale.LosersMode,
-                        icon: GitGraph,
-                      },
-                    ]}
-                    color="amber"
-                    themeClasses={themeClasses}
-                    onChange={handleBracketModeChange}
-                  />
+          <div className={`relative w-full h-full rounded-[0.5rem] ${themeClasses.button}`}>
+            {/* ============================================================
+            * 1. Ошибка валидации — приоритет №1
+            * ============================================================ */}
+            {urlValidation.valid === false && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-[0.5rem] z-30 bg-slate-900/80 backdrop-blur-sm">
+                    <EmptyState
+                        icon={AlertCircle}
+                        title={locale.ValidationUrlBracket.InvalidUrlTitle}
+                        description={
+                            urlValidation.platform === "unknown"
+                                ? (locale.ValidationUrlBracket.UnsupportedPlatform)
+                                : (locale.ValidationUrlBracket.InvalidUrlDescription)
+                        }
+                    />
                 </div>
-                <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2 w-80">
-                  <Field
-                    solid={true}
-                    variant="range"
-                    icon={ZoomIn}
-                    min={0.5}
-                    max={2.0}
-                    step={0.05}
-                    onChange={handleScaleChange}
-                    value={readyScale}
-                    themeClasses={themeClasses}
-                  />
-                </div>
-              </>
             )}
-            {!iframeLoaded && isWidgetBracketRunning && (
+
+            {/* ============================================================
+            * 2. Пустой URL (и валидации не было) — приоритет №2
+            * ============================================================ */}
+            {urlValidation.valid !== false && !urlToTournament && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-[0.5rem]">
+                    <EmptyState
+                        icon={Globe}
+                        title={locale.ValidationUrlBracket.EnterUrlTitle}
+                        description={locale.ValidationUrlBracket.EnterUrlDescription}
+                    />
+                </div>
+            )}
+
+            {/* ============================================================
+            * 3. Виджет не запущен (но URL введён и валиден) — приоритет №3
+            * ============================================================ */}
+            {urlValidation.valid !== false && !!urlToTournament && !isWidgetBracketRunning && (
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 w-80">
+                    <EmptyState
+                        icon={GitFork}
+                        title={locale.WidgetNotRunning}
+                        description={locale.ClickStartDescription}
+                    />
+                </div>
+            )}
+
+            {/* ============================================================
+            * 4. Iframe — когда виджет запущен, URL валиден, есть bracketUrl
+            * ============================================================ */}
+            {urlValidation.valid !== false && isWidgetBracketRunning && bracketUrl && (
+                <>
+                    <iframe
+                        src={initialSrcRef.current || bracketUrl}
+                        ref={iframeRef_WidgetBracket}
+                        className="absolute inset-0 w-full h-full border-0 rounded-[0.5rem]"
+                        title="Tournament Bracket"
+                        allowtransparency="true"
+                        onLoad={() => setIframeLoaded(true)}
+                        style={{ background: "transparent" }}
+                    />
+
+                    {/* Плавающая панель сверху */}
+                    <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 w-80">
+                        <ToggleSwitch
+                            solid={true}
+                            label={locale.BracketDisplayMode}
+                            value={bracketMode}
+                            options={[
+                                { value: "all", label: locale.AllMode, icon: Layers },
+                                { value: "winners", label: locale.WinnersMode, icon: GitBranch },
+                                { value: "losers", label: locale.LosersMode, icon: GitGraph },
+                            ]}
+                            color="amber"
+                            themeClasses={themeClasses}
+                            onChange={handleBracketModeChange}
+                        />
+                    </div>
+
+                    {/* Плавающая панель снизу */}
+                    <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2 w-80">
+                        <Field
+                            solid={true}
+                            variant="range"
+                            icon={ZoomIn}
+                            min={0.5}
+                            max={2.0}
+                            step={0.05}
+                            onChange={handleScaleChange}
+                            value={readyScale}
+                            themeClasses={themeClasses}
+                        />
+                    </div>
+                </>
+            )}
+
+            {/* ============================================================
+            * 5. Заглушка загрузки iframe — только поверх iframe
+            * ============================================================ */}
+            {!iframeLoaded && isWidgetBracketRunning && bracketUrl && urlValidation.valid !== false && (
                 <div className="absolute inset-0 flex items-center rounded-[0.5rem] justify-center z-20 bg-slate-900/80 backdrop-blur-sm">
                     <EmptyState
                         icon={Loader2}
@@ -299,29 +465,27 @@ const WidgetBracketPlate = ({
                     />
                 </div>
             )}
-            {!isWidgetBracketRunning && (
-                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 w-80`}>
-                  <EmptyState
-                      icon={GitFork}
-                      title={locale.WidgetNotRunning}
-                      description={locale.ClickStartDescription}
-                  />
-                </div>
-            )}
-          </div>
+            </div>
         </div>
 
         {/* Правая часть */}
         <div className="col-span-4 flex flex-col h-full">
           <div className="space-y-4">
-            <Field
-              label={locale.UrlToBracketLabel + "*"}
-              witdh="320"
-              icon={Globe}
-              onChange={handleTournamentUrlChange}
-              value={urlToTournament}
-              themeClasses={themeClasses}
-            />
+            <div className="space-y-2">
+                <Field
+                    label={locale.UrlToBracketLabel + "*"}
+                    witdh="320"
+                    icon={Globe}
+                    onChange={handleTournamentUrlChange}
+                    value={urlToTournament}
+                    themeClasses={themeClasses}
+                />
+                <UrlValidationMessage
+                    validation={urlValidation}
+                    theme={theme}
+                    locale={locale.ValidationUrlBracket}
+                />
+            </div>
             <Field
               variant="select"
               label={locale.ListOfThemes}
@@ -348,9 +512,7 @@ const WidgetBracketPlate = ({
               onChange={handleHideStagesChange}
             />
             
-              
-            
-            {isWidgetBracketRunning && (
+            {isWidgetBracketRunning && bracketUrl && (
               <SectionBlock
                 title={locale.LinkOfWidget}
                 titleAlign="center"
@@ -368,15 +530,15 @@ const WidgetBracketPlate = ({
             className="mt-auto flex justify-center w-full"
           >
             <ActionButton
-              icon={isWidgetBracketRunning ? Square : Play}
-              loading={isProcessing}
-              disabled={!isReadyToStart}
-              expandOnHover={isWidgetBracketRunning && !isProcessing}
-              className={getButtonStyle}
-              iconClassName="fill-white"
-              onClick={handleWidgetBracketToggle}
+                icon={isWidgetBracketRunning ? Square : Play}
+                loading={isProcessing}
+                disabled={isWidgetBracketRunning ? isStopDisabled : isStartDisabled}
+                expandOnHover={isWidgetBracketRunning && !isProcessing}
+                className={getButtonStyle}
+                iconClassName="fill-white"
+                onClick={handleWidgetBracketToggle}
             >
-              {isWidgetBracketRunning ? locale.Stop : locale.Start}
+                {isWidgetBracketRunning ? locale.Stop : locale.Start}
             </ActionButton>
           </ButtonFooter>
         </div>

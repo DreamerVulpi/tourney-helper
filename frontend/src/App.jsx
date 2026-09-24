@@ -151,6 +151,11 @@ const App = () => {
     }
   };
 
+  const [urlValidationWidgetBracket, setURLValidationWidgetBracket] = useState({
+      valid: null,
+      platform: '',
+  });
+
   // Дефолтные флаги
 const DEFAULT_BRACKET_FLAGS = {
     transparent: false,
@@ -467,8 +472,10 @@ useEffect(() => {
                     setIsProcessingWB={setIsProcessingWB}        
                     iframeRef_WidgetBracket={iframeRef_WidgetBracket}
                     bracketFlags={bracketFlags}
-                    setBracketFlags={setBracketFlags}    
-                  />
+                    setBracketFlags={setBracketFlags} 
+                    urlValidation={urlValidationWidgetBracket}
+                    setURLValidation={setURLValidationWidgetBracket}
+                />
                 )}
                 {/* In future updates */}
                 {/*

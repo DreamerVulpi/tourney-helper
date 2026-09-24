@@ -2,6 +2,15 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type ValidationUrlBracket struct {
+	UrlValid              string
+	InvalidUrlTitle       string
+	InvalidUrlDescription string
+	UnsupportedPlatform   string
+	EnterUrlTitle         string
+	EnterUrlDescription   string
+}
+
 type ProgressModal struct {
 	Title    string
 	Download string

@@ -16,6 +16,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
 	"github.com/dreamervulpi/tourney-helper/internal/version"
 	"github.com/dreamervulpi/tourney-helper/internal/widget"
 	"github.com/wailsapp/wails/v2"
@@ -61,6 +62,7 @@ func main() {
 	)
 
 	app := application.NewApp()
+	app.UrlValidator = validator.NewValidator()
 	app.UpdateService = updateService
 	app.UpdateManager = updateManager
 	widget.InitDirectories()

@@ -56,6 +56,7 @@ export function useAppInit({
                 ...prev,
                 widgetBracket: {
                   urlToTournament: tourney.widgetBracket?.urlToTournament || "",
+                  bracketId: tourney.widgetBracket?.bracketId || "",
                   bracket: tourney.widgetBracket?.bracket || "",
                   theme: tourney.widgetBracket?.theme || "Default",
                   hideStages: tourney.widgetBracket?.hideStages ?? false,

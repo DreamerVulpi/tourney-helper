@@ -7,8 +7,6 @@ import (
 
 	"strings"
 
-	"net/url"
-
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
@@ -145,85 +143,85 @@ func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessen
 	return &dh, nil
 }
 
-func (a *App) ParseTournamentURL(platform string, rawURL string) (string, error) {
-	if len(rawURL) == 0 {
-		return "", fmt.Errorf("No URL provided")
-	}
+// func (a *App) ParseTournamentURL(platform string, rawURL string) (string, error) {
+// 	if len(rawURL) == 0 {
+// 		return "", fmt.Errorf("No URL provided")
+// 	}
 
-	rawURL = strings.TrimSpace(rawURL)
+// 	rawURL = strings.TrimSpace(rawURL)
 
-	if !strings.HasPrefix(rawURL, "http://") && !strings.HasPrefix(rawURL, "https://") {
-		rawURL = "https://" + rawURL
-	}
+// 	if !strings.HasPrefix(rawURL, "http://") && !strings.HasPrefix(rawURL, "https://") {
+// 		rawURL = "https://" + rawURL
+// 	}
 
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return "", fmt.Errorf("Error parsing the URL: %v", err)
-	}
+// 	u, err := url.Parse(rawURL)
+// 	if err != nil {
+// 		return "", fmt.Errorf("Error parsing the URL: %v", err)
+// 	}
 
-	parts := strings.Split(u.Path, "/")
+// 	parts := strings.Split(u.Path, "/")
 
-	switch strings.ToLower(platform) {
-	case "startgg":
-		if !strings.Contains(u.Host, "start.gg") {
-			return "", fmt.Errorf("Url not supported for the platform start.gg")
-		}
+// 	switch strings.ToLower(platform) {
+// 	case "startgg":
+// 		if !strings.Contains(u.Host, "start.gg") {
+// 			return "", fmt.Errorf("Url not supported for the platform start.gg")
+// 		}
 
-		tournamentIdx := -1
-		eventIdx := -1
+// 		tournamentIdx := -1
+// 		eventIdx := -1
 
-		for i, part := range parts {
-			if part == "tournament" {
-				tournamentIdx = i
-			}
-			if part == "event" {
-				eventIdx = i
-			}
-		}
+// 		for i, part := range parts {
+// 			if part == "tournament" {
+// 				tournamentIdx = i
+// 			}
+// 			if part == "event" {
+// 				eventIdx = i
+// 			}
+// 		}
 
-		if tournamentIdx != -1 && eventIdx != -1 && tournamentIdx+1 < len(parts) && eventIdx+1 < len(parts) {
-			slug := fmt.Sprintf("tournament/%s/event/%s", parts[tournamentIdx+1], parts[eventIdx+1])
-			return slug, nil
-		}
+// 		if tournamentIdx != -1 && eventIdx != -1 && tournamentIdx+1 < len(parts) && eventIdx+1 < len(parts) {
+// 			slug := fmt.Sprintf("tournament/%s/event/%s", parts[tournamentIdx+1], parts[eventIdx+1])
+// 			return slug, nil
+// 		}
 
-		return "", fmt.Errorf("Invalid URL for start.gg. Expected format: .../tournament/NAME/event/NAME")
+// 		return "", fmt.Errorf("Invalid URL for start.gg. Expected format: .../tournament/NAME/event/NAME")
 
-	case "challonge":
-		if !strings.Contains(u.Host, "challonge.com") {
-			return "", fmt.Errorf("URL not supported for the platform challonge.com")
-		}
+// 	case "challonge":
+// 		if !strings.Contains(u.Host, "challonge.com") {
+// 			return "", fmt.Errorf("URL not supported for the platform challonge.com")
+// 		}
 
-		if len(parts) == 0 {
-			return "", fmt.Errorf("No URL provided")
-		}
+// 		if len(parts) == 0 {
+// 			return "", fmt.Errorf("No URL provided")
+// 		}
 
-		knownLocales := map[string]bool{
-			"ru": true, "en": true, "es": true, "fr": true, "de": true,
-			"ja": true, "ko": true, "zh": true, "pt": true, "it": true,
-		}
+// 		knownLocales := map[string]bool{
+// 			"ru": true, "en": true, "es": true, "fr": true, "de": true,
+// 			"ja": true, "ko": true, "zh": true, "pt": true, "it": true,
+// 		}
 
-		var tourneySlug string
-		if len(parts) >= 2 && knownLocales[strings.ToLower(parts[0])] {
-			tourneySlug = parts[1]
-		} else {
-			tourneySlug = parts[0]
-		}
+// 		var tourneySlug string
+// 		if len(parts) >= 2 && knownLocales[strings.ToLower(parts[0])] {
+// 			tourneySlug = parts[1]
+// 		} else {
+// 			tourneySlug = parts[0]
+// 		}
 
-		if len(tourneySlug) == 0 {
-			return "", fmt.Errorf("Unable to extract the slug")
-		}
+// 		if len(tourneySlug) == 0 {
+// 			return "", fmt.Errorf("Unable to extract the slug")
+// 		}
 
-		hostParts := strings.Split(u.Host, ".")
-		if len(hostParts) > 2 && hostParts[0] != "www" {
-			return fmt.Sprintf("%s-%s", hostParts[0], tourneySlug), nil
-		}
+// 		hostParts := strings.Split(u.Host, ".")
+// 		if len(hostParts) > 2 && hostParts[0] != "www" {
+// 			return fmt.Sprintf("%s-%s", hostParts[0], tourneySlug), nil
+// 		}
 
-		return tourneySlug, nil
+// 		return tourneySlug, nil
 
-	default:
-		return "", fmt.Errorf("Unsupported tournament platform: %s", platform)
-	}
-}
+// 	default:
+// 		return "", fmt.Errorf("Unsupported tournament platform: %s", platform)
+// 	}
+// }
 
 func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament, language string) error {
 	a.mu.Lock()
@@ -285,7 +283,7 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed", a.TournamentClient.NamePlatform))
 	}
 
-	slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.UrlToTournament)
+	slug, err := a.ParseTournamentURLForNotification(tournamentPlatform, cfgTournament.UrlToTournament)
 	if err != nil {
 		logger.Log(entityLogger.Error, err.Error())
 		return err

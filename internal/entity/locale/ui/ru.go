@@ -13,9 +13,18 @@ var listRegions = ListRegions{
 	ND:           "Нет данных",
 }
 
+var validationUrlBracketRu = ValidationUrlBracket{
+	UrlValid:              "Верная ссылка",
+	InvalidUrlTitle:       "Неверная ссылка",
+	InvalidUrlDescription: "Пожалуйста, проверьте ссылку и попробуйте еще раз",
+	UnsupportedPlatform:   "Неподдерживаемая платформа",
+	EnterUrlTitle:         "Введите ссылку на турнирную сетку",
+	EnterUrlDescription:   "Вставьте ссылку на вашу турнирную сетку платформы",
+}
+
 var Ru = Ui{
 	WidgetBracketPanel: WidgetBracketPanel{
-		UrlToBracketLabel:     "Ссылка на сетку",
+		UrlToBracketLabel:     "Ссылка на турнирную сетку",
 		ListOfBracketsLabel:   "Cетка",
 		ListOfThemes:          "Тема оформления",
 		Start:                 "Запустить",
@@ -31,6 +40,7 @@ var Ru = Ui{
 		ClickStartDescription: "Нажмите \"Старт\" для запуска виджета турнирной сетки",
 		LoadBracket:           "Загрузка турнирной сетки",
 		FetchData:             "Получение данных...",
+		ValidationUrlBracket:  validationUrlBracketRu,
 	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Ошибка заполнения параметров",

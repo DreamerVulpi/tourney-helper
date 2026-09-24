@@ -84,15 +84,12 @@ func (a *App) LaunchWidgetBracket(tournamentPlatform string, cfgTournament confi
 		renderer = startggRenderer.NewStartGGRendererWithThemeProvider(a.ThemeProvider)
 	}
 
-	// slug, err := a.ParseTournamentURL(tournamentPlatform, cfgTournament.WidgetBracket.UrlToTournament)
-	// if err != nil {
-	// 	logger.Log(entityLogger.Error, err.Error())
-	// 	return err
-	// }
-	// cfgTournament.WidgetBracket.UrlToTournament = slug
-	// if a.ConfigTournament != nil {
-	// 	a.ConfigTournament.WidgetBracket.UrlToTournament = slug
-	// }
+	if cfgTournament.WidgetBracket.BracketId == "" {
+		err := fmt.Errorf("No bracket ID for widget — enter a valid tournament URL")
+		logger.Log(entityLogger.Error, err.Error())
+		return err
+	}
+	logger.Log(entityLogger.Info, fmt.Sprintf("Widget will open bracket ID: %s", cfgTournament.WidgetBracket.BracketId))
 
 	_, cancel := context.WithCancel(context.Background())
 	a.mu.Lock()

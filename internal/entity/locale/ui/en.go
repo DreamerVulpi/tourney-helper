@@ -13,9 +13,18 @@ var listRegionsEn = ListRegions{
 	ND:           "No data",
 }
 
+var validationUrlBracketEn = ValidationUrlBracket{
+	UrlValid:              "Valid URL",
+	InvalidUrlTitle:       "Invalid URL",
+	InvalidUrlDescription: "Please check the URL and try again",
+	UnsupportedPlatform:   "Unsupported platform",
+	EnterUrlTitle:         "Enter tournament bracket URL",
+	EnterUrlDescription:   "Paste the link to your bracket on platform",
+}
+
 var En = Ui{
 	WidgetBracketPanel: WidgetBracketPanel{
-		UrlToBracketLabel:     "Bracket of link",
+		UrlToBracketLabel:     "Tournament bracket URL",
 		ListOfThemes:          "Theme",
 		Start:                 "Start",
 		Stop:                  "Stop",
@@ -30,6 +39,7 @@ var En = Ui{
 		ClickStartDescription: "Click start to launch the bracket widget",
 		LoadBracket:           "Loading tournament bracket",
 		FetchData:             "Fetching tournament data...",
+		ValidationUrlBracket:  validationUrlBracketEn,
 	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Error filling in parameters",

@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -10,10 +11,12 @@ import (
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/app"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/bot"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
 	"github.com/dreamervulpi/tourney-helper/internal/widget"
 	"github.com/dreamervulpi/tourney-helper/internal/widget/renderer"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -40,6 +43,7 @@ type App struct {
 	WidgetServer  *widget.Server
 	RenderBracket renderer.BracketRenderer
 	ThemeProvider *widget.ThemeProvider
+	UrlValidator  *validator.Validator
 }
 
 func NewApp() *App {
@@ -120,4 +124,20 @@ func (a *App) InstallUpdate() error {
 			)
 		},
 	)
+}
+
+func (a *App) ValidateTournamentURL(rawURL string) (app.ValidationResult, error) {
+	r := a.UrlValidator.ValidateURL(rawURL)
+
+	if !r.Valid && r.Platform == "unknown" {
+		return app.ValidationResult{
+			Valid:    false,
+			Platform: r.Platform,
+		}, fmt.Errorf("unsupported tournament platform")
+	}
+
+	return app.ValidationResult{
+		Valid:    r.Valid,
+		Platform: r.Platform,
+	}, nil
 }
