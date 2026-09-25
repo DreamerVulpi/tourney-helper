@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import { useRef, useMemo } from "react";
 import {
   ArrowLeftFromLine,
   ArrowRightFromLine,
@@ -6,26 +6,28 @@ import {
   Send,
   Users
 } from "lucide-react";
-import { getThemeClasses } from "../utils/theme/SidePanel/themes";
+import { getThemeClasses } from "../utils/themeClasses";
 import { NavItem } from "../components/SidePanel/navItem";
 import { ProgramLogo } from "../components/ui/Logo";
+import { useAppStore } from "../store/useAppStore"
 
 
-const SidePanel = ({
-  theme,
-  activeTab,
-  setActiveTab,
-  locale,
-  collapsed,
-  setIsHovered,
-  statusNotificationSystem,
-  statusDatabase,
-  statusWidgetBracket,
-  updateConfig,
-  settings,
-  sidePanelCollapsed,
-  setSidePanelCollapsed,
-}) => {
+const SidePanel = ({ locale, updateConfig }) => {
+    // ---- store ----
+  const theme       = useAppStore((s) => s.theme);
+  const activeTab   = useAppStore((s) => s.activeTab);
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+
+  const sidePanelCollapsed = useAppStore((s) => s.sidePanelCollapsed);
+  const setSidePanelCollapsed = useAppStore((s) => s.setSidePanelCollapsed);
+  const setIsHovered          = useAppStore((s) => s.setIsSidePanelHovered);
+
+  const statusNotificationSystem = useAppStore((s) => s.statusNotificationSystem);
+  const statusDatabase           = useAppStore((s) => s.statusDatabase);
+  const statusWidgetBracket      = useAppStore((s) => s.statusWidgetBracket);
+
+  const settings = useAppStore((s) => s.settings);
+
   const hoverTimeout = useRef(null);
 
   const handleMouseEnter = () => {
@@ -48,52 +50,25 @@ const SidePanel = ({
       setIsHovered(false);
     }, 1500);
   };
-  const themeClasses = getThemeClasses(theme);
+  const themeClasses = useMemo(() => getThemeClasses(theme), [theme]);
   const handleSidePanelCollapse = () => {
     const next = !sidePanelCollapsed;
 
     setSidePanelCollapsed(next);
 
     updateConfig("settings", {
-      ...settings,
+      ...(settings ?? {}),
       SidePanelCollapsed: next,
     });
   };
-
-  function SidePanelToggle({
-    collapsed,
-    onClick,
-  }) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="
-          w-6 h-6
-          flex items-center justify-center
-          rounded-lg
-          transition-colors duration-200
-          hover:bg-black/10
-          dark:hover:bg-white/10
-        "
-        aria-label={collapsed ? "Expand side panel" : "Collapse side panel"}
-      >
-        {collapsed ? (
-          <ArrowRightFromLine size={20} />
-        ) : (
-          <ArrowLeftFromLine size={20} />
-        )}
-      </button>
-    );
-  }
 
   return (
     <nav
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={`relative ${
-        collapsed
-          ? "w-[clamp(72px,6.5vw,96px)]"
+        sidePanelCollapsed
+          ? "w-[clamp(72px,5vw,96px)]"
           : "w-[clamp(255px,15vw,320px)]"
       } border-r flex flex-col p-4 h-full transition-[width] duration-300 ${
         themeClasses.navPanel
@@ -102,20 +77,20 @@ const SidePanel = ({
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <NavItem
-            icon={collapsed ? (
+            icon={sidePanelCollapsed ? (
               <ArrowRightFromLine size={20} />
             ) : (
               <ArrowLeftFromLine size={20} />
             )}
-            collapsed={collapsed}
+            collapsed={sidePanelCollapsed}
             themeClasses={themeClasses}
             showStatus={false}
             onClick={handleSidePanelCollapse}
             content={
             <> 
               <ProgramLogo
-                theme={getThemeClasses(theme)}
-                collapsed={collapsed}
+                theme={themeClasses}
+                collapsed={sidePanelCollapsed}
               />
             </>}
           />
@@ -124,7 +99,7 @@ const SidePanel = ({
         <NavItem
           icon={<Send size={20} />}
           label={locale.NotificationSystemLabel}
-          collapsed={collapsed}
+          collapsed={sidePanelCollapsed}
           active={activeTab === "notifications"}
           onClick={() => setActiveTab("notifications")}
           themeClasses={themeClasses}
@@ -134,7 +109,7 @@ const SidePanel = ({
         <NavItem
           icon={<Users size={20} />}
           label={locale.DatabaseLabel}
-          collapsed={collapsed}
+          collapsed={sidePanelCollapsed}
           active={activeTab === "database"}
           onClick={() => setActiveTab("database")}
           themeClasses={themeClasses}
@@ -143,7 +118,7 @@ const SidePanel = ({
         <NavItem
           icon={<GitFork size={20} />}
           label={locale.WidgetOfBracketLabel}
-          collapsed={collapsed}
+          collapsed={sidePanelCollapsed}
           active={activeTab === "widgetBracket"}
           onClick={() => setActiveTab("widgetBracket")}
           themeClasses={themeClasses}

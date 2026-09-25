@@ -1,23 +1,15 @@
-import React, { useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   Bug,
-  Square,
-  Play,
-  Upload,
   Plus,
   Search,
   FileSignature,
-  UserCheck,
   Image as ImageIcon,
-  AlertCircle,
   Key,
   ImagePlus,
-  Copy,
-  Check,
   Settings2,
   Trophy,
   Timer,
-  Clock,
   Monitor,
   Languages,
   Zap,
@@ -45,36 +37,42 @@ import { listGames } from "../utils/listGames.js";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { NotificationButton } from "../hooks/NotificationSystemPanel/useButtonFooter.jsx";
 import { locales } from "../utils/listLocales.js";
+import { useThemeClasses } from "../hooks/App/useThemeClasses"
+import { getThemeClasses } from "../utils/themeClasses";
+import { useAppStore } from "../store/useAppStore"
 
 const NotificationSystemPlate = ({
-  theme,
-  authStatus,
-  setAuthStatus,
-  systemCfg,
-  tourneyCfg,
-  updateConfig,
   locale,
-  themeClasses,
   localeValidation,
+  updateConfig,
   isStartedSending,
   setIsStartedSending,
-  lang,
-  activePlatform,
-  setActivePlatform,
-  activeMessenger: activeDeliveryMethod,
-  setActiveMessenger,
   isProcessing,
   setIsProcessing,
-  activeModal,
   report,
   setReport,
-  setStatusNotificationSystem,
 }) => {
+  const theme        = useAppStore((s) => s.theme);
+  const lang         = useAppStore((s) => s.lang);
+  const systemCfg    = useAppStore((s) => s.systemCfg);
+  const tourneyCfg   = useAppStore((s) => s.tourneyCfg);
+  const authStatus   = useAppStore((s) => s.authStatus);
+  const setAuthStatus = useAppStore((s) => s.setAuthStatus);
+  const activeModal  = useAppStore((s) => s.activeModal);
+
+  const activePlatform    = useAppStore((s) => s.activeTournamentPlatform);
+  const setActivePlatform = useAppStore((s) => s.setActiveTournamentPlatform);
+  const activeDeliveryMethod    = useAppStore((s) => s.activeDeliveryMethod);
+  const setActiveDeliveryMethod = useAppStore((s) => s.setActiveDeliveryMethod);
+
+  const setStatusNotificationSystem = useAppStore((s) => s.setStatusNotificationSystem);
+  const themeClasses = useThemeClasses(getThemeClasses);
+
   // Get data from configs
   const debugMode = systemCfg?.debug?.mode || false;
   const urlToTournament = tourneyCfg?.urlToTournament;
-  const gameName = tourneyCfg?.game.name || "tekken";
-  const stage = tourneyCfg?.rules.stage || "Random";
+  const gameName = tourneyCfg?.game?.name || "tekken";
+  const stage = tourneyCfg?.rules?.stage || "Random";
   const rules = tourneyCfg?.rules || {
     standardFormat: 2,
     finalsFormat: 3,
@@ -82,8 +80,8 @@ const NotificationSystemPlate = ({
     duration: 60,
     stage: stage,
   };
-  const passcode = tourneyCfg?.stream.passcode || "0000";
-  const linkToLobby = tourneyCfg?.stream.linkToLobby || "";
+  const passcode = tourneyCfg?.stream?.passcode || "0000";
+  const linkToLobby = tourneyCfg?.stream?.linkToLobby || "";
   const streamLobby = tourneyCfg?.stream || {
     area: "Any",
     language: "Any",
@@ -137,7 +135,7 @@ const NotificationSystemPlate = ({
     setIsProcessing,
     setReport,
     setStatusNotificationSystem,
-    { activeMessenger: activeDeliveryMethod, activePlatform, systemCfg, tourneyCfg, lang },
+    { activeDeliveryMethod: activeDeliveryMethod, activePlatform, systemCfg, tourneyCfg, lang },
   );
 
   const handleTournamentUrlChange = useCallback((value) => {
@@ -149,11 +147,11 @@ const NotificationSystemPlate = ({
   const handleDebugModeChange = useCallback((value) => {
     updateConfig("system", {
       debug: {
-        ...systemCfg.debug,
+        ...systemCfg?.debug,
         mode: value,
       },
     });
-  }, [systemCfg.debug, updateConfig]);
+  }, [systemCfg?.debug, updateConfig]);
 
   // Button style for handler which start proccess
   const getButtonStyle = getLaunchButtonStyle(isStartedSending, debugMode);
@@ -161,8 +159,8 @@ const NotificationSystemPlate = ({
   const { handleMessengerClick } = useMessengerAuth({
     systemCfg,
     locale,
-    activeMessenger: activeDeliveryMethod,
-    setActiveMessenger,
+    activeDeliveryMethod,
+    setActiveDeliveryMethod,
     setAuthStatus,
     setValidationAlert,
   });
@@ -225,7 +223,7 @@ const NotificationSystemPlate = ({
       },
     });
   }, [updateConfig])
-  
+  console.log('authStatus:', authStatus, 'type:', typeof authStatus);
   return (
     <PanelTemplate
       themeClasses={themeClasses}
@@ -241,7 +239,7 @@ const NotificationSystemPlate = ({
               debugMode={debugMode}
               theme={theme}
               locale={locale}
-              activeMessenger={activeDeliveryMethod}
+              activeDeliveryMethod={activeDeliveryMethod}
               isReadyToStart={isReadyToStart}
               isProcessing={isProcessing}
               handleStartedSendingToggle={handleStartedSendingToggle}
@@ -266,7 +264,7 @@ const NotificationSystemPlate = ({
             <ToggleSwitch
                 label={locale.DebugModeSwitchLabel}
                 icon={Bug}
-                checked={systemCfg.debug.mode}
+                checked={systemCfg?.debug?.mode}
                 color="amber"
                 themeClasses={themeClasses}
                 onChange={handleDebugModeChange}

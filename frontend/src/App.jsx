@@ -1,35 +1,6 @@
 import "./App.css";
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import {
-  Send,
-  Users,
-  Trophy,
-  Monitor,
-  Globe,
-  Search,
-  Plus,
-  Minus,
-  Trash2,
-  Edit2,
-  Upload,
-  RefreshCw,
-  Copy,
-  Bug,
-  ShieldCheck,
-  Image as ImageIcon,
-  Database,
-  ExternalLink,
-  Play,
-  Square,
-  Save,
-  RotateCcw,
-  FileCode,
-  Link as LinkIcon,
-  Eye,
-  UserPlus,
-  Palette,
-} from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
 
 import HeaderPlate from "./pages/HeaderPlate.jsx";
 import SidePanel from "./pages/SidePanel.jsx";
@@ -39,7 +10,6 @@ import WidgetBracketPanel from "./pages/WidgetBracketPanel.jsx";
 import WidgetScoreboardPanel from "./pages/WidgetScoreboardPanel.jsx";
 import LoggerPlate from "./pages/LoggerPlate.jsx";
 
-import { useSystemConfig, useTourneyConfig } from "./hooks/App/useConfig.jsx";
 
 import { useScale } from "./hooks/App/useScale.jsx";
 import { useLocale } from "./hooks/App/useLocale.jsx";
@@ -47,33 +17,61 @@ import { useAppInit } from "./hooks/App/useAppInit.jsx"
 import { useAutoSave } from "./hooks/App/useAutoSave.jsx";
 import { useConfigUpdater } from "./hooks/App/useConfigUpdater.jsx";
 import { getThemeClasses } from "./utils/themeClasses.jsx";
+import { useThemeClasses } from "./hooks/App/useThemeClasses";
 import { useCheckUpdate } from "./hooks/App/useCheckUpdate.jsx";
 import { InstallUpdate } from "../wailsjs/go/application/App.js";
 import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
-import { SERVICE_STATUS } from "./utils/listStatus.js";
+import { useAppStore } from "./store/useAppStore"
 
 const App = () => {
+  // ---- UI ----
+  const theme          = useAppStore((s) => s.theme);
+  const setTheme       = useAppStore((s) => s.setTheme);
+  const lang           = useAppStore((s) => s.lang);
+  const setLang        = useAppStore((s) => s.setLang);
+  const { locale }     = useLocale();
+  const activeTab      = useAppStore((s) => s.activeTab);
+  const setActiveTab   = useAppStore((s) => s.setActiveTab);
+  const activeModal    = useAppStore((s) => s.activeModal);
+  const setActiveModal = useAppStore((s) => s.setActiveModal);
+  const activeAuthorizationSettings    = useAppStore((s) => s.activeAuthorizationSettings);
+  const setActiveAuthorizationSettings = useAppStore((s) => s.setActiveAuthorizationSettings);
+
+  // ---- Side panel ----
+  const sidePanelCollapsed    = useAppStore((s) => s.sidePanelCollapsed);
+  const setSidePanelCollapsed = useAppStore((s) => s.setSidePanelCollapsed);
+  const isSidePanelHovered    = useAppStore((s) => s.isSidePanelHovered);
+  const setIsSidePanelHovered = useAppStore((s) => s.setIsSidePanelHovered);
+
+  // ---- Statuses ----
+  const statusNotificationSystem    = useAppStore((s) => s.statusNotificationSystem);
+  const setStatusNotificationSystem = useAppStore((s) => s.setStatusNotificationSystem);
+  const statusDatabase              = useAppStore((s) => s.statusDatabase);
+  const setStatusDatabase           = useAppStore((s) => s.setStatusDatabase);
+  const statusWidgetBracket         = useAppStore((s) => s.statusWidgetBracket);
+  const setStatusWidgetBracket      = useAppStore((s) => s.setStatusWidgetBracket);
+
+  // ---- Selection ----
+  const activeTournamentPlatform    = useAppStore((s) => s.activeTournamentPlatform);
+  const setActiveTournamentPlatform = useAppStore((s) => s.setActiveTournamentPlatform);
+  const activeDeliveryMethod        = useAppStore((s) => s.activeDeliveryMethod);
+  const setActiveDeliveryMethod     = useAppStore((s) => s.setActiveDeliveryMethod);
+  const selectedGame                = useAppStore((s) => s.selectedGame);
+  const setSelectedGame             = useAppStore((s) => s.setSelectedGame);
+
+  // ---- Configs ----
+  const settings      = useAppStore((s) => s.settings);
+  const setSettings   = useAppStore((s) => s.setSettings);
+  const systemCfg     = useAppStore((s) => s.systemCfg);
+  const setSystemCfg  = useAppStore((s) => s.setSystemCfg);
+  const tourneyCfg    = useAppStore((s) => s.tourneyCfg);
+  const setTourneyCfg = useAppStore((s) => s.setTourneyCfg);
+  const authStatus    = useAppStore((s) => s.authStatus);
+  const setAuthStatus = useAppStore((s) => s.setAuthStatus);
+
   // Scale UI
   const scale = useScale();
-
-  // Variables for configs 
-  const [settings, setSettings] = useState(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [theme, setTheme] = useState("dark");
-  
-  // Load configs
-  const { systemCfg, setSystemCfg } = useSystemConfig();
-  const { tourneyCfg, setTourneyCfg } = useTourneyConfig();
-
-  // Load locale
-  const {lang, locale, setLang } = useLocale("EN")
-
-  // Side panel
-  const [isSidePanelHovered, setIsSidePanelHovered] = useState(false);
-  const [sidePanelCollapsed, setSidePanelCollapsed] = useState(null);
-  const [statusNotificationSystem, setStatusNotificationSystem] = useState(SERVICE_STATUS.OFF);
-  const [statusDatabase, setStatusDatabase] = useState(SERVICE_STATUS.RUNNING);
-  const [statusWidgetBracket, setStatusWidgetBracket] = useState(SERVICE_STATUS.OFF);
 
   // Initialization application
   useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed});
@@ -94,28 +92,12 @@ const App = () => {
   // Status of the messaging system
   const [isProcessingNS, setIsProcessing] = useState(false);
   const [isProcessingWB, setIsProcessingWB] = useState(false);
-  // Selected panel
-  const [activeTab, setActiveTab] = useState("notifications");
-  // Selected tournament platform
-  const [activeTournamentPlatform, setActiveTournamentPlatform] = useState("");
-  // Selected messenger
-  const [activeDeliveryMethod, setActiveDeliveryMethod] = useState("");
-  // Selected game in DatabasePanel.jsx
-  const [selectedGame, setSelectedGame] = useState("Tekken8");
-  // State authorization for tournament platforms and messengers
-  const [authStatus, setAuthStatus] = useState({
-    startgg: false,
-    discord: false,
-    telegram: false,
-  });
+  
   // Detail description components for Light/Dark themes 
-  const themeClasses = useMemo(() => getThemeClasses(theme), [theme]);
-  // State for modals "About" and "Help"
-  const [activeModal, setActiveModal] = useState(null);
+  const themeClasses = useThemeClasses(getThemeClasses);
   // State for modal "Monitoring"
   const [report, setReport] = useState({isOpen: false});
-  // Variables for settings authorizations
-  const [activeAuthorizationSettings, setActiveAuthorizationSettings] = useState(null);
+
 
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
@@ -359,59 +341,23 @@ useEffect(() => {
         <>
           <div className="row-span-2 min-h-0">
             <SidePanel
-              theme={theme}
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
               locale={locale.SidePanel}
-              collapsed={sidePanelCollapsed}
-              setCollapsed={setSidePanelCollapsed}
-              setIsHovered={setIsSidePanelHovered}
-              statusNotificationSystem={statusNotificationSystem}
-              statusDatabase={statusDatabase}
-              statusWidgetBracket={statusWidgetBracket}
-              isSidePanelHovered={isSidePanelHovered}
-              sidePanelCollapsed={sidePanelCollapsed}
-              setSidePanelCollapsed={setSidePanelCollapsed}
               updateConfig={updateConfig}
-              settings={settings}
             />
           </div>
           <HeaderPlate
-            authStatus={authStatus}
-            setAuthStatus={setAuthStatus}
-            theme={theme}
-            setTheme={setTheme}
-            lang={lang}
-            setLang={setLang}
-            activeTab={activeTab}
+            locale={locale.HeaderPanel}
             updateConfig={updateConfig}
             updateInfo={updateInfo}
             check={check}
-            locale={locale.HeaderPanel}
-            themeClasses={themeClasses}
-            activeModal={activeModal}
-            setActiveModal={setActiveModal}
-            settings={settings}
-            setSettings={setSettings}
             handleInstallUpdate={handleInstallUpdate}
             updateProgressOpen={updateProgressOpen}
             updateStatus={updateStatus}
             updateMessage={updateMessage}
             updateProgress={updateProgress}
             setUpdateProgressOpen={setUpdateProgressOpen}
-            setUpdateStatus={setUpdateStatus}
             setUpdateMessage={setUpdateMessage}
             setUpdateProgress={setUpdateProgress}
-
-            systemCfg={systemCfg}
-            tourneyCfg={tourneyCfg}
-
-            activeTournamentPlatform={activeTournamentPlatform}
-            setActiveTournamentPlatform={setActiveTournamentPlatform}
-            activeDeliveryMethod={activeDeliveryMethod}
-            setActiveDeliveryMethod={setActiveDeliveryMethod}
-            activeAuthorizationSettings={activeAuthorizationSettings}
-            setActiveAuthorizationSettings={setActiveAuthorizationSettings}
           />
 
           {/* MainWindow */}
@@ -419,63 +365,36 @@ useEffect(() => {
               <main className="flex-1 overflow-y-auto p-8 relative">
                 {activeTab === "notifications" && (
                   <NotificationSystemPanel
-                    theme={theme}
-                    systemCfg={systemCfg}
-                    tourneyCfg={tourneyCfg}
-                    authStatus={authStatus}
-                    setAuthStatus={setAuthStatus}
-                    updateConfig={updateConfig}
                     locale={locale.NotificationSystemPanel}
                     localeValidation={locale.ValidationAlertModal}
-                    themeClasses={themeClasses}
-                    lang={lang}
+                    updateConfig={updateConfig}
                     isStartedSending={isMailingRunning}
                     setIsStartedSending={setIsMailingRunning}
-                    activePlatform={activeTournamentPlatform}
-                    setActivePlatform={setActiveTournamentPlatform}
-                    activeMessenger={activeDeliveryMethod}
-                    setActiveMessenger={setActiveDeliveryMethod}
                     isProcessing={isProcessingNS}
                     setIsProcessing={setIsProcessing}
-                    activeModal={activeModal}
                     report={report}
                     setReport={setReport}
-                    setStatusNotificationSystem={setStatusNotificationSystem}
                   />
                 )}
 
                 {activeTab === "database" && (
                   <DatabasePanel
-                    theme={theme}
                     locale={locale.DatabasePanel}
-                    lang={lang}
-                    themeClasses={themeClasses}
-                    selectedGame={selectedGame}
-                    setSelectedGame={setSelectedGame}
-                    setStatusDatabase={setStatusDatabase}
-                    sidePanelCollapsed={sidePanelCollapsed}
                   />
                 )}
                 {activeTab === "widgetBracket" && (
-                  <WidgetBracketPanel 
-                    theme={theme}
+                  <WidgetBracketPanel
                     locale={locale.WidgetBracketPanel}
-                    themeClasses={themeClasses}
-                    activeModal={activeModal}
-                    activePlatform={activeTournamentPlatform}
-                    tourneyCfg={tourneyCfg}
                     updateConfig={updateConfig}
                     isProcessing={isProcessingWB}
+                    setIsProcessingWB={setIsProcessingWB}
                     isWidgetBracketRunning={isWidgetBracketRunning}
                     setIsWidgetBracketRunning={setIsWidgetBracketRunning}
-                    setStatusWidgetBracket={setStatusWidgetBracket}
-                    setIsProcessingWB={setIsProcessingWB}        
-                    iframeRef_WidgetBracket={iframeRef_WidgetBracket}
                     bracketFlags={bracketFlags}
-                    setBracketFlags={setBracketFlags} 
+                    setBracketFlags={setBracketFlags}
                     urlValidation={urlValidationWidgetBracket}
                     setURLValidation={setURLValidationWidgetBracket}
-                />
+                  />
                 )}
                 {/* In future updates */}
                 {/*
@@ -485,7 +404,6 @@ useEffect(() => {
               </main>
 
               <LoggerPlate
-                theme={theme}
                 locale={locale.LogPanel}
               />
             </div>

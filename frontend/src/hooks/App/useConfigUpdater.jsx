@@ -10,6 +10,7 @@ export function useConfigUpdater({
     debouncedSaveTourney,
 }) {
     const updateConfig = useCallback((type, data) => {
+    console.log("[updateConfig] called", type, data);
     if (!isLoaded) return;
 
     if (type === "system") {
@@ -57,7 +58,15 @@ export function useConfigUpdater({
         return newCfg;
       });
     }
-  });
+  }, [
+    isLoaded,
+    setSystemCfg,
+    setTourneyCfg,
+    setSettings,
+    debouncedSaveSystem,
+    debouncedSaveSettings,
+    debouncedSaveTourney,
+  ]);
   return {
     updateConfig,
   };

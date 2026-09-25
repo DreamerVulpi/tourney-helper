@@ -21,9 +21,9 @@ export function useAppInit({
             const sys = await LoadSystemConfig();
             if (sys) {
               setSystemCfg((prev) => ({
-                ...prev,
+                ...(prev ?? {}),
                 discord: {
-                  ...prev.discord,
+                  ...(prev?.discord ?? {}),
                   ...(sys.discord || {}),
                   token: sys.discord?.token || "",
                   roles: {
@@ -33,10 +33,10 @@ export function useAppInit({
                   },
                 },
                 telegram: {
-                  ...prev.telegram,
+                  ...(prev?.telegram ?? {}),
                   ...(sys.telegram || {}),
                   roles: {
-                    default: sys.discord?.roles?.default || "en",
+                    default: sys.telegram?.roles?.default || "en",
                     ru: sys.telegram?.roles?.ru || "",
                     en: sys.telegram?.roles?.en || "",
                   },
@@ -53,7 +53,7 @@ export function useAppInit({
             const tourney = await LoadTournamentConfig();
             if (tourney) {
               setTourneyCfg((prev) => ({
-                ...prev,
+                ...(prev ?? {}),
                 widgetBracket: {
                   urlToTournament: tourney.widgetBracket?.urlToTournament || "",
                   bracketId: tourney.widgetBracket?.bracketId || "",
@@ -94,20 +94,19 @@ export function useAppInit({
             const settings = await LoadSettingsApp();
             if (settings) {
               const lang = settings.Language || settings.language || "EN";
-              const theme = settings.Theme || settings.theme || "Dark";
+              const theme = (settings.Theme || settings.theme || "dark").toLowerCase();
               const checkUpdatesOnStartUp = settings.CheckUpdatesOnStartUp ?? settings.checkUpdatesOnStartUp ?? false;
               const ignoredVersion = settings.IgnoredVersion || settings.ignoredVersion || "";
               const sidePanelCollapsed = settings.SidePanelCollapsed ?? settings.sidePanelCollapsed  ?? false;
               
               setSettings((prev) => ({
-                ...prev,
+                ...(prev ?? {}),
                 Language: lang,
                 Theme: theme,
                 CheckUpdatesOnStartUp: checkUpdatesOnStartUp,
                 IgnoredVersion: ignoredVersion,
                 SidePanelCollapsed: sidePanelCollapsed,
               }));
-              // TODO: Add ability to wait load all params for correct reveal UI
               setLang(lang);
               setTheme(theme);
               setSidePanelCollapsed(sidePanelCollapsed);

@@ -12,7 +12,7 @@ export function useStartSendingToggle(
   setIsProcessing,
   setReport,
   setStatusNotificationSystem,
-  { activeMessenger, activePlatform, systemCfg, tourneyCfg, lang },
+  { activeDeliveryMethod, activePlatform, systemCfg, tourneyCfg, lang },
 ) {
   const toggleSending = async () => {
     if (isProcessing) return;
@@ -36,7 +36,7 @@ export function useStartSendingToggle(
       try {
         setStatusNotificationSystem(SERVICE_STATUS.STARTING);
         await StartSendNotifications(
-          activeMessenger,
+          activeDeliveryMethod,
           activePlatform,
           systemCfg,
           tourneyCfg,

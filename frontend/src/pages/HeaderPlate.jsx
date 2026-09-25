@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import { useAppStore } from "../store/useAppStore";
+import { getThemeClasses as getAppThemeClasses } from "../utils/themeClasses.jsx";
+import { getThemeClasses  as getHeaderThemeClasses } from "../utils/theme/HeaderPlate/themes";
+import { useThemeClasses } from "../hooks/App/useThemeClasses"
 
 import {
   LanguagesIcon,
@@ -7,10 +10,8 @@ import {
   HelpCircle,
   Info,
   UserCog,
-  Trophy,
-  Mail,
 } from "lucide-react";
-import { getThemeClasses } from "../utils/theme/HeaderPlate/themes.jsx";
+
 import { createThemeChanger } from "../utils/changeTheme";
 import { Field } from "../components/ui/Field.jsx";
 import AboutModal from "../components/modals/AboutModal.jsx"
@@ -20,25 +21,10 @@ import ProgressModal from "../components/modals/ProgressModal.jsx";
 import AuthorizationModal from "../components/modals/AuthorizationModal.jsx";
 
 const HeaderPlate = ({
-  theme,
-  setTheme,
-  lang,
-  setLang,
   locale,
+  updateConfig,
   updateInfo,
   check,
-  themeClasses,
-  activeModal,
-  activeTab,
-  authStatus,
-  setAuthStatus,
-  activeAuthorizationSettings,
-  activeTournamentPlatform,
-  setActiveAuthorizationSettings,
-  setActiveModal,
-  activeDeliveryMethod,
-  setActiveDeliveryMethod,
-  settings,
   handleInstallUpdate,
   updateProgressOpen,
   updateStatus,
@@ -48,16 +34,37 @@ const HeaderPlate = ({
   setUpdateStatus,
   setUpdateMessage,
   setUpdateProgress,
-  updateConfig,
-  tourneyCfg,
-  systemCfg,
 }) => {
+  // ---- store ----
+  const theme        = useAppStore((s) => s.theme);
+  const setTheme     = useAppStore((s) => s.setTheme);
+  const lang         = useAppStore((s) => s.lang);
+  const setLang      = useAppStore((s) => s.setLang);
+  const activeTab    = useAppStore((s) => s.activeTab);
+  const activeModal  = useAppStore((s) => s.activeModal);
+  const setActiveModal = useAppStore((s) => s.setActiveModal);
+
+  const authStatus    = useAppStore((s) => s.authStatus);
+  const setAuthStatus = useAppStore((s) => s.setAuthStatus);
+
+  const settings      = useAppStore((s) => s.settings);
+  const systemCfg     = useAppStore((s) => s.systemCfg);
+  const tourneyCfg    = useAppStore((s) => s.tourneyCfg);
+
+  const activeTournamentPlatform    = useAppStore((s) => s.activeTournamentPlatform);
+  const setActiveTournamentPlatform = useAppStore((s) => s.setActiveTournamentPlatform);
+  const activeDeliveryMethod        = useAppStore((s) => s.activeDeliveryMethod);
+  const setActiveDeliveryMethod     = useAppStore((s) => s.setActiveDeliveryMethod);
+
+  const activeAuthorizationSettings    = useAppStore((s) => s.activeAuthorizationSettings);
+  const setActiveAuthorizationSettings = useAppStore((s) => s.setActiveAuthorizationSettings);
+
+  const themeClasses = useThemeClasses(getAppThemeClasses)
+  const headerThemeClasses = useThemeClasses(getHeaderThemeClasses);
+
   // Function for change theme & save to configuration of programm
   const changeTheme = createThemeChanger(theme, setTheme, updateConfig);
-  // Details of theme for this page
-  const headerThemeClasses = getThemeClasses(theme);
 
- 
   return (
     <header
       className={`h-[4rem] flex items-center justify-between px-[1.5rem] shrink-0 border-b z-50 transition-colors duration-300 ${

@@ -34,6 +34,9 @@ import { SectionBlock } from "../components/ui/SectionBlock.jsx";
 import { ValidateTournamentURL, ParseTournamentURLForWidget } from "../../wailsjs/go/application/App.js"
 import { debounce } from "../utils/debounce.jsx";
 import { UrlValidationMessage } from "../hooks/App/useValidationUrl.jsx";
+import { useThemeClasses } from "../hooks/App/useThemeClasses"
+import { getThemeClasses } from "../utils/themeClasses";
+import { useAppStore } from "../store/useAppStore";
 
 const clampScale = (s) => {
   const n = parseFloat(s);
@@ -42,26 +45,28 @@ const clampScale = (s) => {
 };
 
 const WidgetBracketPlate = ({
-  theme,
   locale,
-  themeClasses,
-  activeModal,
-  statusWidgetBracket,
-  tourneyCfg,
-  activePlatform,
   updateConfig,
   isProcessing,
   setIsProcessingWB,
   isWidgetBracketRunning,
   setIsWidgetBracketRunning,
-  setStatusWidgetBracket,
   iframeRef_WidgetBracket,
-  urlValidation, setURLValidation,
-
-  // Флаги и сеттер из App.jsx
   bracketFlags,
-  setBracketFlags, // (prev => ({...}))
+  setBracketFlags,
+  urlValidation,
+  setURLValidation,
 }) => {
+     // ---- store ----
+  const theme          = useAppStore((s) => s.theme);
+  const activeModal    = useAppStore((s) => s.activeModal);
+  const activePlatform = useAppStore((s) => s.activeTournamentPlatform);
+  const tourneyCfg     = useAppStore((s) => s.tourneyCfg);
+  const setStatusWidgetBracket = useAppStore((s) => s.setStatusWidgetBracket);
+
+  // ---- производные ----
+  const themeClasses = useThemeClasses(getThemeClasses);
+
   const urlToTournament = tourneyCfg?.widgetBracket?.urlToTournament || "";
   const bracketId = tourneyCfg?.widgetBracket?.bracketId || "";
   const themeBracket = tourneyCfg?.widgetBracket?.theme || "StartGG";
@@ -84,42 +89,41 @@ const WidgetBracketPlate = ({
   }, [tourneyCfg]);
 
   const debouncedParseGridId = useMemo(
-      () => debounce(async (rawUrl) => {
-          const cfg = tourneyCfgRef.current;
+  () => debounce(async (rawUrl) => {
+    const cfg = tourneyCfgRef.current;
+  
+    if (!rawUrl || !rawUrl.trim()) {
+      updateConfig("tournament", {
+        widgetBracket: {
+          ...cfg.widgetBracket,
+          urlToTournament: rawUrl,
+          bracketId: "",
+        },
+      });
+      return;
+    }
 
-          if (!rawUrl || !rawUrl.trim()) {
-              updateConfig("tournament", {
-                  widgetBracket: {
-                      ...cfg.widgetBracket,
-                      urlToTournament: rawUrl,
-                      bracketId: "",
-                  },
-              });
-              return;
-          }
-
-          try {
-              const id = await ParseTournamentURLForWidget("startgg", rawUrl);
-              updateConfig("tournament", {
-                  widgetBracket: {
-                      ...cfg.widgetBracket,
-                      urlToTournament: rawUrl,
-                      bracketId: id,
-                  },
-              });
-          } catch (err) {
-              console.warn("[WidgetBracketPlate] parse grid id failed:", err);
-              updateConfig("tournament", {
-                  widgetBracket: {
-                      ...cfg.widgetBracket,
-                      urlToTournament: rawUrl,
-                      bracketId: "",
-                  },
-              });
-          }
-      }, 300),
-      [updateConfig],   // ← updateConfig стабильный
-  );
+    try {
+      const id = await ParseTournamentURLForWidget("startgg", rawUrl);
+      updateConfig("tournament", {
+        widgetBracket: {
+          ...cfg.widgetBracket,
+          urlToTournament: rawUrl,
+          bracketId: id,
+        },
+      });
+    } catch (err) {
+      updateConfig("tournament", {
+        widgetBracket: {
+          ...cfg.widgetBracket,
+          urlToTournament: rawUrl,
+          bracketId: "",
+        },
+      });
+    }
+  }, 300),
+  [updateConfig],
+);
 
   const debouncedValidateUrl = useMemo(
       () => debounce(async (value) => {
@@ -146,10 +150,16 @@ const WidgetBracketPlate = ({
   // валидируем и парсим URL один раз, если он есть.
   useEffect(() => {
       if (!urlToTournament || !urlToTournament.trim()) {
-          setURLValidation({ valid: null, platform: "" });
-          lastValidatedUrlRef.current = null;
-          return;
-      }
+            setURLValidation({ valid: null, platform: "" });
+            lastValidatedUrlRef.current = null;
+       
+            if (bracketId) {
+            updateConfig("tournament", {
+                widgetBracket: { ...tourneyCfg.widgetBracket, urlToTournament: "", bracketId: "" },
+            });
+            }
+            return;
+        }
 
       if (lastValidatedUrlRef.current === urlToTournament) {
           return;
@@ -158,12 +168,9 @@ const WidgetBracketPlate = ({
       lastValidatedUrlRef.current = urlToTournament;
 
       debouncedValidateUrl(urlToTournament);
-
-      if (!bracketId) {
-          debouncedParseGridId(urlToTournament);
-      }
+      debouncedParseGridId(urlToTournament);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlToTournament, bracketId]);
+  }, [urlToTournament]);
 
   const handleTournamentUrlChange = useCallback(
     (value) => {
@@ -175,7 +182,7 @@ const WidgetBracketPlate = ({
               },
           });
       },
-      [tourneyCfg.widgetBracket, updateConfig, debouncedParseGridId, debouncedValidateUrl],
+      [tourneyCfg.widgetBracket, updateConfig],
   );
 
   const handleThemeBracketChange = useCallback(
@@ -194,11 +201,8 @@ const WidgetBracketPlate = ({
   // Обновляем флаги в App через setBracketFlags (functional update)
   const handleClearBackgroundChange = useCallback(
     (value) => {
-      console.log("[WidgetBracketPlate] clearBackground change:", value);
       setBracketFlags((prev) => {
-        console.log("[WidgetBracketPlate] prev:", prev);
         const next = { ...prev, transparent: value };
-        console.log("[WidgetBracketPlate] next:", next);
         return next;
       });
     },
@@ -221,9 +225,7 @@ const WidgetBracketPlate = ({
 
   const handleScaleChange = useCallback(
     (value) => {
-      console.log("[WidgetBracketPlate] scale input:", value, typeof value);
       const num = clampScale(value);
-      console.log("[WidgetBracketPlate] scale normalized:", num);
       setBracketFlags((prev) => ({ ...prev, scale: num }));
     },
     [setBracketFlags],

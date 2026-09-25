@@ -6,7 +6,7 @@ export const useMessengerAuth = ({
   systemCfg,
   locale,
   activeMessenger,
-  setActiveMessenger,
+  setActiveDeliveryMethod,
   setAuthStatus,
   setValidationAlert,
 }) => {
@@ -17,7 +17,7 @@ export const useMessengerAuth = ({
           ? ""
           : messengerName;
 
-      setActiveMessenger(nextMessenger);
+      setActiveDeliveryMethod(nextMessenger);
 
       if (!nextMessenger) return;
 
@@ -29,7 +29,7 @@ export const useMessengerAuth = ({
       } = systemCfg[nextMessenger] ?? {};
 
       if (!token || !clientID || !secretClient || !guildID) {
-        setActiveMessenger("");
+        setActiveDeliveryMethod("");
 
         setValidationAlert({
           isOpen: true,
@@ -63,7 +63,7 @@ export const useMessengerAuth = ({
       activeMessenger,
       systemCfg,
       locale,
-      setActiveMessenger,
+      setActiveDeliveryMethod,
       setAuthStatus,
       setValidationAlert,
     ]
