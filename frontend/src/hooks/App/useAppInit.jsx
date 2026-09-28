@@ -63,6 +63,7 @@ export function useAppInit({
                   clearBackground: tourney.widgetBracket?.clearBackground ?? false,
                   bracketMode: tourney.widgetBracket?.bracketMode ?? "all",
                   scale: tourney.widgetBracket?.scale ?? 1.0,
+                  autoRefresh: tourney.widgetBracket?.autoRefresh ?? false,
                 },
                 urlToTournament: tourney.urlToTournament || "",
                 startgg: {

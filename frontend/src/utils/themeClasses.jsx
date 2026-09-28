@@ -33,6 +33,11 @@ export function getThemeClasses(theme) {
         tempSection: isDark
             ? "bg-blue-600/5 border-blue-600/10"
             : "bg-blue-50 border-blue-100",
+        copyButton: isDark
+            ? "bg-[#1d293d] hover:bg-[#2a3a55] text-slate-300 hover:text-white"
+            : "bg-[#c1c4c7] hover:bg-[#d1d4d7] text-slate-700 hover:text-slate-900",
+
+        copyButtonCopied: "bg-green-600 text-white",
         logoTitle: isDark
             ? "text-white"
             : "text-slate-900",

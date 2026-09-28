@@ -32,23 +32,25 @@
     <title>Bracket</title>
     <style> {{ .SystemCSS }}</style>
     <style> {{ .ThemeCSS }}</style>
+    <style>
+        /* Секции теперь позиционируются абсолютно внутри .bracket-content */
+        .bracket-content { position: relative; }
+        .bracket-section { position: absolute; }
+    </style>
 </head>
 <body>
 <div class="bracket-wrapper">
     <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="bracket-viewport" id="bracket-viewport">
         <div class="bracket-content" id="bracket-content">
-            <div class="winners-final-row">
-                <div class="bracket-section" id="winners-section">
-                    <div class="round-headers" id="winners-headers"></div>
-                    <div class="section-nodes" id="winners-nodes"></div>
-                </div>
-                <div class="bracket-section" id="final-section"> 
-                    <div class="round-headers" id="final-headers"></div>
-                    <div class="section-nodes" id="final-nodes"></div>
-                </div>
+            <div class="bracket-section" id="winners-section">
+                <div class="round-headers" id="winners-headers"></div>
+                <div class="section-nodes" id="winners-nodes"></div>
             </div>
-
+            <div class="bracket-section" id="final-section">
+                <div class="round-headers" id="final-headers"></div>
+                <div class="section-nodes" id="final-nodes"></div>
+            </div>
             <div class="bracket-section" id="losers-section">
                 <div class="round-headers" id="losers-headers"></div>
                 <div class="section-nodes" id="losers-nodes"></div>
@@ -76,15 +78,46 @@
         return isNaN(parsed) ? fallback : parsed;
     }
 
-    let NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP;
+    let NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP, COLUMN_STEP, TOTAL_COLUMNS;
 
     function readConfig() {
-        NODE_WIDTH = getCSSPx('--node-width', 220);
+        NODE_WIDTH  = getCSSPx('--node-width', 220);
         NODE_HEIGHT = getCSSPx('--node-height', 76);
-        LINK_WIDTH = getCSSPx('--link-width', 60);
-        NODE_GAP = getCSSPx('--node-gap', 40);
+        LINK_WIDTH  = getCSSPx('--link-width', 60);
+        NODE_GAP    = getCSSPx('--node-gap', 40);
 
-        console.log('Bracket config:', { NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP });
+        COLUMN_STEP = NODE_WIDTH + LINK_WIDTH;
+
+        console.log('Bracket config:', {
+            NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP, COLUMN_STEP,
+        });
+    }
+
+    // Максимум колонок среди всех секций — общая ширина сетки.
+    function computeTotalColumns() {
+        const roundsBySection = new Map();
+
+        allSets.forEach(s => {
+            if (!roundsBySection.has(s.section)) {
+                roundsBySection.set(s.section, new Set());
+            }
+            roundsBySection.get(s.section).add(s.round);
+        });
+
+        let max = 1;
+        roundsBySection.forEach(set => {
+            if (set.size > max) max = set.size;
+        });
+
+        return max;
+    }
+
+    function computeSectionColumns(sectionName) {
+        const rounds = new Set();
+        allSets.forEach(s => {
+            if (s.section === sectionName) rounds.add(s.round);
+        });
+        return rounds.size || 1;
     }
 
     // ============================================================
@@ -205,8 +238,6 @@
             setsMap.set(setData.id, { ...setData, children: [], parents: [] });
         });
 
-        console.log(`[buildTree:${sectionName}] setsMap size: ${setsMap.size}`);
-
         let matched = 0, notFoundFrom = 0, notFoundTo = 0;
 
         connections.forEach(conn => {
@@ -226,8 +257,6 @@
             from.parents.push({ node: to, slot: toSlot, fromSlot: fromSlot });
         });
 
-        console.log(`[buildTree:${sectionName}] matched: ${matched}, notFoundFrom: ${notFoundFrom}, notFoundTo: ${notFoundTo}`);
-
         const allSetsArray = Array.from(setsMap.values());
         let rootRound;
         if (sectionName === 'losers') {
@@ -241,10 +270,6 @@
             const maxRound = Math.max(...allSetsArray.map(s => s.round));
             roots.push(...allSetsArray.filter(s => s.round === maxRound));
         }
-
-        console.log(`Roots for ${sectionName}:`, roots.map(r => ({
-            id: r.id, round: r.round, children: r.children.length
-        })));
 
         return { setsMap, roots };
     }
@@ -339,7 +364,8 @@
         });
     }
 
-    function renderRoundHeaders(headersContainerId, setsMap) {
+    // xOffset — на сколько колонок сдвинуть заголовки внутри секции.
+    function renderRoundHeaders(headersContainerId, setsMap, xOffset = 0) {
         const container = document.getElementById(headersContainerId);
         if (!container) return;
         container.innerHTML = '';
@@ -365,7 +391,7 @@
                 header.className = 'round-header';
                 header.textContent = round.fullRoundText;
                 header.title = round.fullRoundText;
-                header.style.left = `${round.x * (NODE_WIDTH + LINK_WIDTH)}px`;
+                header.style.left = `${(round.x + xOffset) * COLUMN_STEP}px`;
                 container.appendChild(header);
             });
     }
@@ -374,19 +400,21 @@
     // Render sections
     // ============================================================
 
-    function renderSection(sectionName, containerId, headersContainerId) {
+    // Рендерит секцию в контейнер. Позиционирует саму секцию
+    // (position:absolute) по X/Y в координатах .bracket-content.
+    function renderSection(sectionName, containerId, headersContainerId, xOffset = 0, yOffset = 0) {
         const container = document.getElementById(containerId);
         if (!container) return null;
 
+        const section = container.closest('.bracket-section');
+
         const { setsMap, roots } = buildTree(sectionName);
         if (setsMap.size === 0) {
-            const section = container.closest('.bracket-section');
             if (section) section.classList.add('hidden');
-            return { setsMap, roots, maxDepth: 0 };
+            return { setsMap, roots, maxDepth: 0, xOffset, yOffset, width: 0, height: 0 };
         }
 
         if (roots.length === 0) {
-            const section = container.closest('.bracket-section');
             if (section) {
                 section.classList.add('hidden');
                 section.style.display = 'none';
@@ -409,7 +437,7 @@
 
         setsMap.forEach(setData => {
             const element = createSetElement(setData);
-            const left = (setData.x || 0) * (NODE_WIDTH + LINK_WIDTH);
+            const left = (setData.x || 0) * COLUMN_STEP;   // внутри секции — от 0
             const top  = (setData.y || 0) * (NODE_HEIGHT + NODE_GAP);
             element.style.left = `${left}px`;
             element.style.top  = `${top}px`;
@@ -423,28 +451,37 @@
             }
         });
 
-        const width  = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
+        const width  = (maxDepth + 1) * COLUMN_STEP - LINK_WIDTH;
         const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
 
         container.style.width  = `${width}px`;
         container.style.height = `${height}px`;
 
-        renderRoundHeaders(`${sectionName}-headers`, setsMap);
-        return { setsMap, roots, maxDepth };
+        // позиционируем саму секцию в координатах .bracket-content
+        if (section) {
+            section.style.left = `${xOffset * COLUMN_STEP}px`;
+            section.style.top  = `${yOffset}px`;
+        }
+
+        renderRoundHeaders(headersContainerId, setsMap, 0);  // внутри секции offset 0
+        return { setsMap, roots, maxDepth, xOffset, yOffset, width, height };
     }
 
-    function renderFinalSection(winnersRootY) {
+    // final-секция рендерится отдельно: сдвиг по X = winnersColumns,
+    // по Y — подгоняем так, чтобы roots[0].y совпал с winnersRootY.
+    function renderFinalSection(winnersRootY, xOffset, yOffset) {
         const container = document.getElementById('final-nodes');
-        if (!container) return;
+        if (!container) return null;
+
+        const section = container.closest('.bracket-section');
 
         const { setsMap, roots } = buildTree('final');
         if (roots.length === 0) {
-            const section = container.closest('.bracket-section');
             if (section) {
                 section.classList.add('hidden');
                 section.style.display = 'none';
             }
-            return;
+            return null;
         }
 
         const orderCounter = { value: 0 };
@@ -463,7 +500,8 @@
         setsMap.forEach(setData => {
             const finalY = (setData.y || 0) + offsetY;
             const element = createSetElement(setData);
-            element.style.left = `${(setData.x || 0) * (NODE_WIDTH + LINK_WIDTH)}px`;
+            const left = (setData.x || 0) * COLUMN_STEP;
+            element.style.left = `${left}px`;
             element.style.top  = `${finalY * (NODE_HEIGHT + NODE_GAP)}px`;
             container.appendChild(element);
             setData.y = finalY;
@@ -476,13 +514,19 @@
             }
         });
 
-        const width  = (maxDepth + 1) * (NODE_WIDTH + LINK_WIDTH) - LINK_WIDTH;
+        const width  = (maxDepth + 1) * COLUMN_STEP - LINK_WIDTH;
         const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
 
         container.style.width  = `${width}px`;
         container.style.height = `${height}px`;
 
-        renderRoundHeaders('final-headers', setsMap);
+        if (section) {
+            section.style.left = `${xOffset * COLUMN_STEP}px`;
+            section.style.top  = `${yOffset}px`;
+        }
+
+        renderRoundHeaders('final-headers', setsMap, 0);
+        return { setsMap, roots, maxDepth, xOffset, yOffset, width, height };
     }
 
     function renderConnections() {
@@ -511,14 +555,17 @@
             const fromSection = fromEl.closest('.bracket-section');
             const toSection   = toEl.closest('.bracket-section');
 
-            if (fromSection?.id === 'winners-section' && toSection?.id === 'losers-section') {
-                return;
-            }
+            const fromSectionId = fromSection?.id;
+            const toSectionId   = toSection?.id;
+
+            const involvesLosers =
+                fromSectionId === 'losers-section' || toSectionId === 'losers-section';
+
+            if (involvesLosers && fromSectionId !== toSectionId) return;
 
             const fromRect = fromEl.getBoundingClientRect();
             const toRect   = toEl.getBoundingClientRect();
 
-            // Координаты относительно .bracket-wrapper
             const x1 = fromRect.right - wrapperRect.left;
             const y1 = fromRect.top + fromRect.height / 2 - wrapperRect.top;
             const x2 = toRect.left - wrapperRect.left;
@@ -544,16 +591,55 @@
 
     function init() {
         readConfig();
+        TOTAL_COLUMNS = computeTotalColumns();
 
-        const winnersResult = renderSection('winners', 'winners-nodes', 'winners-headers');
+        const winnersColumns = computeSectionColumns('winners');
+        const finalColumns   = computeSectionColumns('final');
+        const losersColumns  = computeSectionColumns('losers');
 
-        let winnersRootY = 0;
-        if (winnersResult && winnersResult.roots.length > 0) {
-            winnersRootY = winnersResult.roots[0].y || 0;
+        // X-сдвиги (в колонках):
+        //   winners — 0
+        //   final   — сразу после winners
+        //   losers  — выравниваем по ПРАВОМУ краю с final
+        const winnersXOffset = 0;
+        const finalXOffset   = winnersColumns;
+        const losersXOffset  = Math.max(0, (finalXOffset + finalColumns) - losersColumns);
+
+        // Сначала рендерим winners, чтобы узнать высоту и root Y.
+        const winnersResult = renderSection(
+            'winners', 'winners-nodes', 'winners-headers',
+            winnersXOffset, 0
+        );
+
+        const winnersHeight = winnersResult?.height ?? 0;
+        const winnersRootY  = winnersResult?.roots?.[0]?.y ?? 0;
+
+        // Final: X — сразу после winners, Y — выравниваем по winnersRootY.
+        // Но секция final абсолютная, внутри неё offsetY уже применён
+        // к нодам, так что top секции = 0 (выравнивание ушло в ноды).
+        const finalYOffset = 0;
+        renderFinalSection(winnersRootY, finalXOffset, finalYOffset);
+
+        // Losers: Y — под winners + отступ между рядами.
+        const ROWS_GAP = NODE_GAP * 4;
+        const losersYOffset = winnersHeight + ROWS_GAP;
+
+        renderSection(
+            'losers', 'losers-nodes', 'losers-headers',
+            losersXOffset, losersYOffset
+        );
+
+        // Общая ширина/высота .bracket-content — чтобы скролл знал размеры.
+        const content = document.getElementById('bracket-content');
+        if (content) {
+            const totalWidth  = (finalXOffset + finalColumns) * COLUMN_STEP - LINK_WIDTH;
+            const losersResult = document.getElementById('losers-nodes')?.style?.height;
+            const losersHeight = parseFloat(losersResult || '0') || 0;
+            const totalHeight  = losersYOffset + losersHeight;
+
+            content.style.width  = `${totalWidth}px`;
+            content.style.height = `${totalHeight}px`;
         }
-
-        renderFinalSection(winnersRootY);
-        renderSection('losers', 'losers-nodes', 'losers-headers');
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
@@ -661,6 +747,91 @@
     }
 
     // ============================================================
+    // Auto-refresh
+    // ============================================================
+
+    const AUTO_REFRESH_INTERVAL_MS = 60_000;
+    let autoRefreshTimerId = null;
+
+    function startAutoRefresh() {
+        if (autoRefreshTimerId != null) return;
+        console.log('[bracket] auto-refresh enabled, interval:', AUTO_REFRESH_INTERVAL_MS);
+
+        autoRefreshTimerId = setInterval(() => {
+            console.log('[bracket] auto-refresh tick');
+            refreshBracketData();
+        }, AUTO_REFRESH_INTERVAL_MS);
+    }
+
+    function stopAutoRefresh() {
+        if (autoRefreshTimerId == null) return;
+        clearInterval(autoRefreshTimerId);
+        autoRefreshTimerId = null;
+        console.log('[bracket] auto-refresh disabled');
+    }
+
+    async function refreshBracketData() {
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const bracketId = pathParts[pathParts.length - 1];
+        const theme = new URLSearchParams(window.location.search).get('theme') || '';
+
+        if (!bracketId) {
+            console.warn('[bracket] cannot refresh: bracketId not found in URL');
+            return;
+        }
+
+        const url = `/widget/bracket/${bracketId}/data?theme=${encodeURIComponent(theme)}`;
+
+        try {
+            const res = await fetch(url, { cache: 'no-store' });
+            if (!res.ok) {
+                console.warn('[bracket] refresh failed:', res.status);
+                return;
+            }
+
+            const data = await res.json();
+            console.log('[bracket] new data received');
+
+            applyNewData(data);
+        } catch (err) {
+            console.warn('[bracket] refresh error:', err);
+        }
+    }
+
+    function applyNewData(data) {
+        if (!data) return;
+
+        if (Array.isArray(data.sets)) {
+            allSets.length = 0;
+            allSets.push(...data.sets);
+        }
+        if (Array.isArray(data.connections)) {
+            connections.length = 0;
+            connections.push(...data.connections);
+        }
+
+        document.getElementById('winners-nodes').innerHTML = '';
+        document.getElementById('final-nodes').innerHTML = '';
+        document.getElementById('losers-nodes').innerHTML = '';
+
+        document.getElementById('winners-headers').innerHTML = '';
+        document.getElementById('final-headers').innerHTML = '';
+        document.getElementById('losers-headers').innerHTML = '';
+
+        document.getElementById('connections-svg').innerHTML = '';
+
+        ['winners-section', 'final-section', 'losers-section'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('hidden');
+                el.style.display = '';
+            }
+        });
+
+        init();
+    }
+
+    // ============================================================
     // Flags
     // ============================================================
 
@@ -668,9 +839,16 @@
         const root = document.documentElement;
         root.classList.toggle('transparent-bg', !!flags.transparent);
         root.classList.toggle('hide-rounds',    !!flags.hideRounds);
-        applyBracketMode(flags.bracketMode || 'all');
 
+        applyBracketMode(flags.bracketMode || 'all');
         applyScale(flags.scale);
+
+        if (flags.autoRefresh) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+
         console.log('[bracket] flags applied:', flags);
     }
 
@@ -700,14 +878,17 @@
         const params = new URLSearchParams(location.search);
 
         const bracketMode = params.get('bracketMode') || 'all';
+        const autoRefresh = params.has('autoRefresh');
 
         if (params.has('transparent') || params.has('hideRounds') ||
-            params.has('bracketMode') || params.has('scale')) {
+            params.has('bracketMode') || params.has('scale') ||
+            params.has('autoRefresh')) {
             applyFlags({
-                transparent: params.has('transparent'),
-                hideRounds:  params.has('hideRounds'),
+                transparent:  params.has('transparent'),
+                hideRounds:   params.has('hideRounds'),
                 bracketMode,
-                scale:       params.get('scale') ? parseFloat(params.get('scale')) : 1.0,
+                scale:        params.get('scale') ? parseFloat(params.get('scale')) : 1.0,
+                autoRefresh,
             });
             return;
         }
@@ -716,14 +897,12 @@
             const stored = localStorage.getItem('bracket:flags');
             if (stored) {
                 const flags = JSON.parse(stored);
-                // Убедимся, что bracketMode есть
                 if (!flags.bracketMode) flags.bracketMode = 'all';
                 applyFlags(flags);
             }
         } catch (e) {}
     })();
 
-    // 2. BroadcastChannel — синхронизация между вкладками/iframe одного origin
     try {
         const channel = new BroadcastChannel('bracket:flags');
         channel.onmessage = (event) => {
@@ -736,7 +915,6 @@
         console.warn('[bracket] BroadcastChannel not available:', e);
     }
 
-    // 3. localStorage event — fallback
     window.addEventListener('storage', (event) => {
         if (event.key !== 'bracket:flags' || !event.newValue) return;
         try {
@@ -748,14 +926,12 @@
         }
     });
 
-    // 4. postMessage от React-панели (iframe внутри Wails)
     window.addEventListener('message', (event) => {
         if (!event.data || event.data.type !== 'bracket:flags-changed') return;
         console.log('[bracket] postMessage:', event.data.flags);
         applyFlagsAndRedraw(event.data.flags);
     });
 
-    // 5. Backend polling — для внешних браузеров (BroadcastChannel не работает между разными браузерами)
     const BRACKET_FLAGS_URL = '/widget/bracket/flags';
     let lastFlagsJson = null;
 
@@ -782,7 +958,7 @@
     }
 
     pollFlags();
-    setInterval(pollFlags, 200);
+    setInterval(pollFlags, 1000);
 
     // ============================================================
     // Resize + start
@@ -796,6 +972,7 @@
     window.addEventListener('load', () => {
         init();
         setupPlayerHighlight();
+        refreshBracketData();
     });
 </script>
 

@@ -118,6 +118,16 @@ type fakeStartggClient struct {
 	getSetsCalls int
 	lastStates   []int
 	Finals       entitySender.StartggFinalConfig
+
+	withScore      map[int64]map[int][]startgg.WidgetSetNode
+	withScoreTotal map[int64]int
+
+	withScoreErr error
+
+	withScoreCalls       int
+	lastWithScoreGroup   int64
+	lastWithScorePage    int
+	lastWithScorePerPage int
 }
 
 var _ entitySender.StartggClient = (*fakeStartggClient)(nil)
@@ -144,25 +154,33 @@ func (f *fakeStartggClient) GetTournament(slug string) (startgg.Tournament, erro
 }
 
 func (f *fakeStartggClient) GetSetsWithScore(
-	phaseGroupID int64,
-	page int,
+	groupID int64,
 	perPage int,
-) ([]startgg.Nodes, error) {
-	f.lastGroupID = phaseGroupID
-	f.lastPage = page
-	f.lastPerPage = perPage
-	f.getSetsCalls++
+) ([]startgg.WidgetSetNode, error) {
+	f.withScoreCalls++
+	f.lastWithScoreGroup = groupID
+	f.lastWithScorePerPage = perPage
 
-	if f.setsErr != nil {
-		return nil, f.setsErr
+	if f.withScoreErr != nil {
+		return nil, f.withScoreErr
 	}
 
-	pages, ok := f.sets[phaseGroupID]
-	if !ok {
-		return nil, nil
+	var result []startgg.WidgetSetNode
+	pages := f.withScore[groupID]
+	total := f.withScoreTotal[groupID]
+
+	for page := 1; ; page++ {
+		nodes := pages[page]
+		if len(nodes) == 0 {
+			break
+		}
+		result = append(result, nodes...)
+		if len(result) >= total {
+			break
+		}
 	}
 
-	return pages[page], nil
+	return result, nil
 }
 
 func (f *fakeStartggClient) GetListGroups(slug string, states []int) ([]startgg.PhaseGroupInfo, error) {

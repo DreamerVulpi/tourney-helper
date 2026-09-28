@@ -1,7 +1,13 @@
 import { Copy, Check } from "lucide-react";
 import { useClipboard } from "../../hooks/useClipboard.jsx";
 
-export function CopyButton({ text, timeout = 2000, className = "", iconSize = 12 }) {
+export function CopyButton({
+  text,
+  timeout = 2000,
+  className = "",
+  iconSize = 12,
+  themeClasses,
+}) {
   const { copied, copy } = useClipboard(timeout);
 
   return (
@@ -10,12 +16,12 @@ export function CopyButton({ text, timeout = 2000, className = "", iconSize = 12
       className={`
         p-1.5
         rounded-md
-        
         shrink-0
+        transition-colors
         ${
           copied
-            ? "bg-green-500/20 text-green-500"
-            : "hover:bg-blue-500/10 text-slate-500 hover:text-blue-500"
+            ? themeClasses?.copyButtonCopied ?? "bg-green-600 text-white"
+            : themeClasses?.copyButton ?? "bg-white hover:bg-slate-100 text-slate-500"
         }
         ${className}
       `}

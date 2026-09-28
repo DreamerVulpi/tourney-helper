@@ -20,6 +20,7 @@ import {
   GitFork,
   Loader2,
   AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -80,6 +81,7 @@ const WidgetBracketPlate = ({
     hideRounds: hideStages,
     bracketMode: bracketMode,
     scale: scale,
+    autoRefresh: autoRefresh,
   } = bracketFlags;
 
   const readyScale = clampScale(scale);
@@ -231,6 +233,13 @@ const WidgetBracketPlate = ({
     [setBracketFlags],
   );
 
+  const handleAutoRefreshChange = useCallback(
+    (value) => {
+      setBracketFlags((prev) => ({...prev, autoRefresh: value}));
+    },
+    [setBracketFlags],
+  )
+
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
 
   const handleWidgetBracketToggle = useStartToggle(
@@ -253,9 +262,10 @@ const WidgetBracketPlate = ({
       if (hideStages) params.set("hideRounds", "1");
       if (bracketMode !== "all") params.set("bracketMode", bracketMode);
       if (scale !== 1.0) params.set("scale", String(scale));
+      if (autoRefresh) params.set("autoRefresh", "1");
 
       return `http://localhost:8080/widget/bracket/${bracketId}?${params.toString()}`;
-  }, [bracketId, themeBracket, clearBackground, hideStages, bracketMode, scale]);
+  }, [bracketId, themeBracket, clearBackground, hideStages, bracketMode, scale, autoRefresh]);
 
   // Базовый URL — только турнир + тема. НЕ зависит от флагов.
   // Используется для начального src iframe.
@@ -289,6 +299,7 @@ const WidgetBracketPlate = ({
           if (hideStages) params.set("hideRounds", "1");
           if (bracketMode !== "all") params.set("bracketMode", bracketMode);
           if (scale !== 1.0) params.set("scale", String(scale));
+          if (autoRefresh) params.set("autoRefresh", "1");
           initialSrcRef.current = `http://localhost:8080/widget/bracket/${bracketId}?${params.toString()}`;
       }
 
@@ -327,6 +338,7 @@ const WidgetBracketPlate = ({
                       hideRounds: hideStages,
                       bracketMode: bracketMode,
                       scale: readyScale,
+                      autoRefresh: autoRefresh,
                   },
               },
               "*",
@@ -341,6 +353,7 @@ const WidgetBracketPlate = ({
       hideStages,
       bracketMode,
       readyScale,
+      autoRefresh,
       isWidgetBracketRunning,
       iframeRef_WidgetBracket,
   ]);
@@ -438,6 +451,23 @@ const WidgetBracketPlate = ({
                         />
                     </div>
 
+                    <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 w-80">
+                      {isWidgetBracketRunning && bracketUrl && (
+                        <SectionBlock
+                          solid={true}
+                          title={locale.LinkOfWidget}
+                          titleAlign="center"
+                          theme={theme}
+                        >
+                          <Field
+                            variant="copy"
+                            value={bracketUrl}
+                            themeClasses={themeClasses}
+                          />
+                        </SectionBlock>
+                      )}
+                    </div>
+
                     {/* Плавающая панель снизу */}
                     <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2 w-80">
                         <Field
@@ -513,19 +543,14 @@ const WidgetBracketPlate = ({
               themeClasses={themeClasses}
               onChange={handleHideStagesChange}
             />
-            
-            {isWidgetBracketRunning && bracketUrl && (
-              <SectionBlock
-                title={locale.LinkOfWidget}
-                titleAlign="center"
-                theme={theme}>
-                <Field
-                  variant="copy"
-                  value={bracketUrl}
-                  themeClasses={themeClasses}
-                />
-              </SectionBlock>
-            )}
+            <ToggleSwitch
+              label={locale.AutoRefresh}
+              icon={RefreshCw}
+              checked={bracketFlags.autoRefresh}
+              color="amber"
+              themeClasses={themeClasses}
+              onChange={handleAutoRefreshChange}
+            />
           </div>
           <ButtonFooter
             absolute={false}

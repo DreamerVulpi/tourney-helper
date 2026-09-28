@@ -39,6 +39,20 @@ func (s *BracketService) Render(ctx context.Context, id string) (string, error) 
 	return s.RenderWithTheme(ctx, id, "")
 }
 
+func (s *BracketService) GetBracketView(ctx context.Context, id string, theme string) (*entity.BracketView, error) {
+	bracket, err := s.provider.GetBracket(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("get bracket: %w", err)
+	}
+
+	view, err := s.renderer.BuildView(bracket, theme)
+	if err != nil {
+		return nil, fmt.Errorf("build view: %w", err)
+	}
+
+	return view, nil
+}
+
 // RenderWithTheme рендерит сетку с указанной темой.
 // Если рендерер поддерживает ThemeAware — используется указанная тема.
 // Иначе тема игнорируется и используется обычный Render.

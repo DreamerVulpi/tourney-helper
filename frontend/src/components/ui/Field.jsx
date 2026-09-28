@@ -93,6 +93,7 @@ function FieldBase({
           <CopyButton
             text={value}
             className="absolute right-2"
+            themeClasses={themeClasses}
           />
         </div>
       ) : variant === "button" ? (

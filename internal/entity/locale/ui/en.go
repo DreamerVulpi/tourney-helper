@@ -39,6 +39,7 @@ var En = Ui{
 		ClickStartDescription: "Click start to launch the bracket widget",
 		LoadBracket:           "Loading tournament bracket",
 		FetchData:             "Fetching tournament data...",
+		AutoRefresh:           "Automatic update",
 		ValidationUrlBracket:  validationUrlBracketEn,
 	},
 	ValidationAlertModal: ValidationAlertModal{

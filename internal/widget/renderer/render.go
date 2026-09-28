@@ -9,6 +9,7 @@ import (
 
 type BracketRenderer interface {
 	Render(bracket *entity.Bracket) (string, error)
+	BuildView(bracket *entity.Bracket, themeName string) (*entity.BracketView, error)
 }
 
 type ThemeAware interface {

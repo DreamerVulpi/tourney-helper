@@ -13,6 +13,7 @@ type BracketFlags struct {
 	HideRounds  bool    `json:"hideRounds"`
 	BracketMode string  `json:"bracketMode"`
 	Scale       float64 `json:"scale"`
+	AutoRefresh bool    `json:"autoRefresh"`
 }
 
 type Handler struct {
@@ -32,7 +33,21 @@ func (h *Handler) SetBracketService(bracketService *service.BracketService) {
 func (h *Handler) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/bracket/flags", h.GetBracketFlags)
 	r.POST("/bracket/flags", h.SetBracketFlags)
+	r.GET("/bracket/:id/data", h.GetBracketData)
 	r.GET("/bracket/:id", h.GetBracket)
+}
+
+func (h *Handler) GetBracketData(c *gin.Context) {
+	id := c.Param("id")
+	theme := c.Query("theme")
+
+	view, err := h.bracketService.GetBracketView(c.Request.Context(), id, theme)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, view)
 }
 
 func (h *Handler) GetBracket(c *gin.Context) {

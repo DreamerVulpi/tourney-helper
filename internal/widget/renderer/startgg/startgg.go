@@ -51,6 +51,31 @@ func (r *StartGGRenderer) Render(bracket *entity.Bracket) (string, error) {
 	return r.RenderWithTheme(bracket, widget.DefaultThemeName)
 }
 
+// ============================================================
+// BuildView — публичный метод, возвращает BracketView без HTML.
+//
+// Используется:
+//   - RenderWithTheme — для рендера HTML
+//   - BracketService.GetBracketView — для JSON-ответа
+//     (endpoint /widget/bracket/:id/data, auto-refresh)
+//
+// ============================================================
+func (r *StartGGRenderer) BuildView(bracket *entity.Bracket, themeName string) (*entity.BracketView, error) {
+	themeCSS, err := r.themeProvider.GetThemeCSS(themeName)
+	if err != nil {
+		themeCSS, err = r.themeProvider.GetThemeCSS(widget.DefaultThemeName)
+		if err != nil {
+			return nil, fmt.Errorf("load default theme: %w", err)
+		}
+	}
+
+	view := r.buildView(bracket)
+	view.SystemCSS = template.CSS(widget.SystemCSS)
+	view.ThemeCSS = template.CSS(themeCSS)
+
+	return &view, nil
+}
+
 // RenderWithTheme рендерит с указанной темой.
 func (r *StartGGRenderer) RenderWithTheme(bracket *entity.Bracket, themeName string) (string, error) {
 	themeCSS, err := r.themeProvider.GetThemeCSS(themeName)

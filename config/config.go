@@ -99,6 +99,7 @@ type WidgetBracket struct {
 	HideStages      bool    `toml:"hideStages" json:"hideStages"`
 	BracketMode     string  `toml:"bracketMode" json:"bracketMode"`
 	Scale           float64 `toml:"scale" json:"scale"`
+	AutoRefresh     bool    `toml:"autoRefresh" json:"autoRefresh"`
 }
 
 type SettingsApplication struct {
@@ -107,6 +108,7 @@ type SettingsApplication struct {
 	CheckUpdatesOnStartUp bool   `toml:"checkUpdatesOnStartUp"`
 	IgnoredVersion        string `toml:"ignoredVersion"`
 	SidePanelCollapsed    bool   `toml:"sidePanelCollapsed"`
+	AutoRefresh           bool   `toml:"autoRefresh"`
 }
 
 func GetAbsPath(fileName string) string {
@@ -229,6 +231,7 @@ func Init(configDir string) error {
 				HideStages:      false,
 				BracketMode:     "all",
 				Scale:           1.0,
+				AutoRefresh:     false,
 			},
 			Startgg: TournamentPlatform{
 				Name:         "",
@@ -272,6 +275,7 @@ func Init(configDir string) error {
 			CheckUpdatesOnStartUp: true,
 			IgnoredVersion:        "",
 			SidePanelCollapsed:    false,
+			AutoRefresh:           false,
 		},
 	}
 

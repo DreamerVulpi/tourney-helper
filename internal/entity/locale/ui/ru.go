@@ -40,6 +40,7 @@ var Ru = Ui{
 		ClickStartDescription: "Нажмите \"Старт\" для запуска виджета турнирной сетки",
 		LoadBracket:           "Загрузка турнирной сетки",
 		FetchData:             "Получение данных...",
+		AutoRefresh:           "Автообновление",
 		ValidationUrlBracket:  validationUrlBracketRu,
 	},
 	ValidationAlertModal: ValidationAlertModal{

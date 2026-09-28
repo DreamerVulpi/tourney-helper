@@ -144,6 +144,7 @@ const DEFAULT_BRACKET_FLAGS = {
     hideRounds:  false,
     bracketMode: 'all',
     scale:       1.0,
+    autoRefresh: false,
 };
 
 const [bracketFlags, setBracketFlags] = useState(DEFAULT_BRACKET_FLAGS);
@@ -156,9 +157,9 @@ useEffect(() => {
     if (bracketFlagsInitializedRef.current) return;
     if (!tourneyCfg?.widgetBracket) return;
 
-    const { clearBackground, hideStages, bracketMode, scale } = tourneyCfg.widgetBracket;
+    const { clearBackground, hideStages, bracketMode, scale, autoRefresh } = tourneyCfg.widgetBracket;
     console.log('[App] init bracketFlags from config:', {
-        clearBackground, hideStages, bracketMode, scale,
+        clearBackground, hideStages, bracketMode, scale, autoRefresh,
     });
 
     setBracketFlags({
@@ -166,6 +167,7 @@ useEffect(() => {
         hideRounds:  !!hideStages,
         bracketMode: bracketMode || 'all',
         scale:       typeof scale === 'number' && scale > 0 ? scale : 1.0,
+        autoRefresh: !!autoRefresh,
     });
 
     bracketFlagsInitializedRef.current = true;
@@ -187,6 +189,7 @@ useEffect(() => {
             hideStages:      bracketFlags.hideRounds,
             bracketMode:     bracketFlags.bracketMode,
             scale:           bracketFlags.scale,
+            autoRefresh: bracketFlags.autoRefresh,
         },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

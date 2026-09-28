@@ -83,6 +83,7 @@ type WidgetBracketPanel struct {
 	ClickStartDescription string
 	LoadBracket           string
 	FetchData             string
+	AutoRefresh           string
 	ValidationUrlBracket  ValidationUrlBracket
 }
 

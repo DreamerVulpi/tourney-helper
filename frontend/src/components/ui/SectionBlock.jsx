@@ -4,6 +4,7 @@ import { getThemeClasses } from "../../utils/themeClasses.jsx";
 function SectionBlockBase({
   title,
   icon: Icon,
+  solid = false,
 
   titleAlign = "left",     // "left" | "center"
   iconColor = "text-blue-500",
@@ -15,23 +16,28 @@ function SectionBlockBase({
   className = "",
   headerClassName = "",
 
-  theme,                    // "dark" | "light" — приходит снаружи
+  theme,                    // "dark" | "light"
 }) {
   const themeClasses = getThemeClasses(theme);
   const isCentered = titleAlign === "center";
 
+  // ── Поверхность секции ─────────────────────────────────────
+  // solid  → 1-в-1 как Field (solidField), без tempSection/field
+  // обычный → прежний вид секции
+  const surfaceClasses = solid
+    ? `${themeClasses.solidField} rounded-xl px-3 py-2`
+    : `${themeClasses.tempSection} ${themeClasses.field} rounded-2xl p-4`;
+
   return (
     <section
       className={`
-        p-4
-        rounded-2xl
         border
-        space-y-3
         duration-300
+        w-full
         max-h-[40vh]
         custom-scrollbar
         overflow-y-auto
-        ${themeClasses.tempSection}
+        ${surfaceClasses}
         ${className}
       `}
     >
@@ -41,8 +47,8 @@ function SectionBlockBase({
             flex
             items-center
             border-b
-            pb-2
             border-current/5
+            ${solid ? "pb-1.5 mb-2" : "pb-2 mb-3"}
             ${isCentered ? "justify-center" : "justify-between"}
             ${headerClassName}
           `}
@@ -69,7 +75,10 @@ function SectionBlockBase({
         </div>
       )}
 
-      {children}
+      {/* Контент: в solid меньше вертикальный отступ, как у Field */}
+      <div className={solid ? "space-y-2" : "space-y-3"}>
+        {children}
+      </div>
     </section>
   );
 }
