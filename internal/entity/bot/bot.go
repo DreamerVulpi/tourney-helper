@@ -9,6 +9,14 @@ import (
 )
 
 type BotHandler interface {
-	Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.ConfigMessenger, tournament config.ConfigTournament) error
+	Start(
+		ctx context.Context,
+		tourneyAuth *auth.AuthClient,
+		conn *sql.DB,
+		botCred config.ClientCredentials,
+		tourneyCred config.ClientCredentials,
+		tournament config.ConfigTournament,
+		settings config.SettingsApplication,
+	) error
 	Stop() error
 }

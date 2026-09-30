@@ -69,7 +69,12 @@ func (h *Handler) commands() []*discordgo.ApplicationCommand {
 	}
 }
 
-func (h *Handler) InitCommands(appID string, session *discordgo.Session, tournament *config.ConfigTournament, cfg *config.ConfigMessenger) ([]*discordgo.ApplicationCommand, error) {
+func (h *Handler) InitCommands(
+	appID string,
+	session *discordgo.Session,
+	tournament *config.ConfigTournament,
+	botCred *config.ClientCredentials,
+) ([]*discordgo.ApplicationCommand, error) {
 	commandHandlers := make(map[string]func(i *discordgo.InteractionCreate))
 	commandHandlers["contact"] = h.viewContact
 
@@ -90,11 +95,13 @@ func (h *Handler) InitCommands(appID string, session *discordgo.Session, tournam
 	commands := h.commands()
 	registeredCommands := make([]*discordgo.ApplicationCommand, len(commands))
 	for i, command := range commands {
-		cmd, err := session.ApplicationCommandCreate(appID, cfg.Discord.GuildID, command)
+		cmd, err := session.ApplicationCommandCreate(appID, botCred.GuildID, command)
 		if err != nil {
-			logger.Log(entityLogger.Error, fmt.Sprintf("can't create '%v' command: %v\n", command.Name, err))
+			logger.Log(entityLogger.Error,
+				fmt.Sprintf("can't create '%v' command: %v\n", command.Name, err))
 		}
-		logger.Log(entityLogger.Info, fmt.Sprintf("Discord: Success added command - %v\n", command.Name))
+		logger.Log(entityLogger.Info,
+			fmt.Sprintf("Discord: Success added command - %v\n", command.Name))
 		registeredCommands[i] = cmd
 	}
 

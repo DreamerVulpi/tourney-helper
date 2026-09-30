@@ -39,7 +39,8 @@ import { NotificationButton } from "../hooks/NotificationSystemPanel/useButtonFo
 import { locales } from "../utils/listLocales.js";
 import { useThemeClasses } from "../hooks/App/useThemeClasses"
 import { getThemeClasses } from "../utils/themeClasses";
-import { useAppStore } from "../store/useAppStore"
+import { useAppStore } from "../store/useAppStore";
+import { updatePlatformSlot } from "../utils/authorizations"
 
 const NotificationSystemPlate = ({
   locale,
@@ -55,10 +56,13 @@ const NotificationSystemPlate = ({
   const theme        = useAppStore((s) => s.theme);
   const lang         = useAppStore((s) => s.lang);
   const systemCfg    = useAppStore((s) => s.systemCfg);
-  const tourneyCfg   = useAppStore((s) => s.tourneyCfg);
+  const tournament   = useAppStore((s) => s.tournament);
   const authStatus   = useAppStore((s) => s.authStatus);
   const setAuthStatus = useAppStore((s) => s.setAuthStatus);
   const activeModal  = useAppStore((s) => s.activeModal);
+
+  const authorizations    = useAppStore((s) => s.authorizations);
+  const activeSlotIndex   = useAppStore((s) => s.activeSlotIndex);
 
   const activePlatform    = useAppStore((s) => s.activeTournamentPlatform);
   const setActivePlatform = useAppStore((s) => s.setActiveTournamentPlatform);
@@ -70,19 +74,19 @@ const NotificationSystemPlate = ({
 
   // Get data from configs
   const debugMode = systemCfg?.debug?.mode || false;
-  const urlToTournament = tourneyCfg?.urlToTournament;
-  const gameName = tourneyCfg?.game?.name || "tekken";
-  const stage = tourneyCfg?.rules?.stage || "Random";
-  const rules = tourneyCfg?.rules || {
+  const urlToTournament = tournament?.urlToTournament;
+  const gameName = tournament?.game?.name || "tekken";
+  const stage = tournament?.rules?.stage || "Random";
+  const rules = tournament?.rules || {
     standardFormat: 2,
     finalsFormat: 3,
     rounds: 3,
     duration: 60,
     stage: stage,
   };
-  const passcode = tourneyCfg?.stream?.passcode || "0000";
-  const linkToLobby = tourneyCfg?.stream?.linkToLobby || "";
-  const streamLobby = tourneyCfg?.stream || {
+  const passcode = tournament?.stream?.passcode || "0000";
+  const linkToLobby = tournament?.stream?.linkToLobby || "";
+  const streamLobby = tournament?.stream || {
     area: "Any",
     language: "Any",
     connection: "Any",
@@ -90,7 +94,7 @@ const NotificationSystemPlate = ({
     passcode: passcode,
     linkToLobby: linkToLobby,
   };
-  const urlLogoTournament = tourneyCfg?.logo?.img || ""
+  const urlLogoTournament = tournament?.logo?.img || ""
   const previewLogo = urlLogoTournament || "https://raw.githubusercontent.com/DreamerVulpi/tourney-helper/main/branding/icons/256.png"
 
   // Field was edited
@@ -135,23 +139,20 @@ const NotificationSystemPlate = ({
     setIsProcessing,
     setReport,
     setStatusNotificationSystem,
-    { activeDeliveryMethod: activeDeliveryMethod, activePlatform, systemCfg, tourneyCfg, lang },
+    { activeDeliveryMethod: activeDeliveryMethod, activePlatform, systemCfg, tourneyCfg: tournament, lang },
   );
 
   const handleTournamentUrlChange = useCallback((value) => {
     updateConfig("tournament", {
-      ...tourneyCfg,
+      ...tournament,
       urlToTournament: value,
     });
-  }, [tourneyCfg, updateConfig]);
+  }, [tournament, updateConfig]);
   const handleDebugModeChange = useCallback((value) => {
-    updateConfig("system", {
-      debug: {
-        ...systemCfg?.debug,
-        mode: value,
-      },
+    updateConfig("settings", {
+      DebugMode: value,
     });
-  }, [systemCfg?.debug, updateConfig]);
+  }, [updateConfig]);
 
   // Button style for handler which start proccess
   const getButtonStyle = getLaunchButtonStyle(isStartedSending, debugMode);
@@ -175,7 +176,7 @@ const NotificationSystemPlate = ({
   // Handler for tournament platform auth button
   const { handleTournamentPlatformClick } =
   useTournamentPlatform({
-    tourneyCfg,
+    tourneyCfg: tournament,
     locale,
     activePlatform,
     setActivePlatform,
@@ -212,17 +213,19 @@ const NotificationSystemPlate = ({
   }, [updateConfig]);
 
   const handleDefaultLocaleChange = useCallback((value) => {
-    updateConfig("system", {
-      ...systemCfg,
-      [activeSettings]: {
-        ...systemCfg[activeSettings],
-        roles: {
-          ...systemCfg[activeSettings]?.roles,
-          default: value,
-        },
-      },
+    updateConfig("authorizations", {
+      [activeSettings]: updatePlatformSlot(
+        authorizations?.[activeSettings],
+        activeSlotIndex,
+        {
+          roles: {
+            ...(authorizations?.[activeSettings]?.slots?.[activeSlotIndex]?.roles || {}),
+            default: value,
+          },
+        }
+      ),
     });
-  }, [updateConfig])
+  }, [authorizations, activeSettings, activeSlotIndex, updateConfig]);
   console.log('authStatus:', authStatus, 'type:', typeof authStatus);
   return (
     <PanelTemplate
@@ -352,13 +355,13 @@ const NotificationSystemPlate = ({
                 <Field
                   label={"CLIENT ID*"}
                   icon={TextAlignStart}
-                  value={tourneyCfg[activeSettings]?.clientID || ""}
+                  value={tournament[activeSettings]?.clientID || ""}
                   onChange={(value) => {
                       invalidateAuth();
                       updateConfig("tournament", {
-                        ...tourneyCfg,
+                        ...tournament,
                         [activeSettings]: {
-                          ...tourneyCfg[activeSettings],
+                          ...tournament[activeSettings],
                           clientID: value,
                         },
                       });
@@ -371,14 +374,14 @@ const NotificationSystemPlate = ({
                   variant="password"
                   icon={Key}
                   isSecret
-                  value={tourneyCfg[activeSettings]?.secretClient || ""}
+                  value={tournament[activeSettings]?.secretClient || ""}
                   themeClasses={themeClasses}
                   onChange={(value) => {
                       invalidateAuth();
                       updateConfig("tournament", {
-                        ...tourneyCfg,
+                        ...tournament,
                         [activeSettings]: {
-                          ...tourneyCfg[activeSettings],
+                          ...tournament[activeSettings],
                           secretClient: value,
                         },
                       });
@@ -420,18 +423,18 @@ const NotificationSystemPlate = ({
                   label={locale.Platform.TokenBot+"*"}
                   icon={Key}
                   variant="password"
-                  value={systemCfg[activeSettings]?.token}
+                  value={authorizations[activeSettings]?.token}
                   themeClasses={themeClasses}
                   onChange={(value) => {
-                      invalidateAuth();
-                      updateConfig("system", {
-                        ...systemCfg,
-                        [activeSettings]: {
-                          ...systemCfg[activeSettings],
-                          token: value,
-                        },
-                      });
-                    }}
+                    invalidateAuth();
+                    updateConfig("authorizations", {
+                      [activeSettings]: updatePlatformSlot(
+                        authorizations?.[activeSettings],
+                        activeSlotIndex,
+                        { token: value }
+                      ),
+                    });
+                  }}
                 />
               <Field
                 label={locale.Platform.DefaultLocale}
@@ -590,7 +593,7 @@ const NotificationSystemPlate = ({
                   onChange={(value) =>
                     updateConfig("tournament", {
                       game: {
-                        ...tourneyCfg.game,
+                        ...tournament.game,
                         name: value,
                       },
                     })
@@ -875,7 +878,7 @@ const NotificationSystemPlate = ({
                       value={urlLogoTournament}
                         onChange={(value) =>
                           updateConfig("tournament", {
-                            ...tourneyCfg,
+                            ...tournament,
                             logo: { img: value },
                           })
                         }

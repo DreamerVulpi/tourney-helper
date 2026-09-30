@@ -53,6 +53,12 @@ var Ru = Ui{
 		WidgetOfBracketLabel:    "Виджет сетки",
 		WidgetOfScoreboardLabel: "Виджет счета",
 		VersionLabel:            "Версия: ",
+		Profile: Profile{
+			Title:  "Профиль",
+			Add:    "Добавить",
+			Delete: "Удалить выбранный",
+			Share:  "Поделиться выбранным",
+		},
 	},
 	LogPanel: LogPanel{
 		Label:                            "Логи",

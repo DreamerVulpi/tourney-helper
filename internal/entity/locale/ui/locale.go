@@ -2,6 +2,13 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type Profile struct {
+	Title  string
+	Add    string
+	Delete string
+	Share  string
+}
+
 type ValidationUrlBracket struct {
 	UrlValid              string
 	InvalidUrlTitle       string

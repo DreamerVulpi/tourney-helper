@@ -1,125 +1,183 @@
 import { useEffect, useRef } from "react";
 
 import {
-  LoadSystemConfig,
+  LoadSettingsApp,
   LoadTournamentConfig,
-  LoadSettingsApp
+  LoadWidgetsConfig,
+  LoadAuthorizations,
+  GetActiveProfileName,
 } from "../../../wailsjs/go/application/App.js";
+import { useAppStore } from "../../store/useAppStore";
 
 export function useAppInit({
-    locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed,
+  locale,
+  setTournament,
+  setWidgets,    
+  setAuthorizations,
+  setActiveProfile, 
+  setSettings,
+  setLang,
+  setTheme,
+  setSidePanelCollapsed,
 }) {
-    const isConfigLoadedRef = useRef(false);
-    useEffect(() => {
-        if (!locale) return;
-  
+  const isConfigLoadedRef = useRef(false);
+  const setIsLoaded = useAppStore((s) => s.setIsLoaded);
+
+  useEffect(() => {
+    if (!locale) return;
+    if (isConfigLoadedRef.current) return;
+
+    const initApp = async () => {
+      try {
+        // ============================================================
+        // 1. Активный профиль
+        // ============================================================
+        const activeProfile = await GetActiveProfileName();
+        if (setActiveProfile) setActiveProfile(activeProfile || "");
+
+        // ============================================================
+        // 2. Настройки (settings.toml)
+        // ============================================================
+        const settings = await LoadSettingsApp();
+        if (settings) {
+          const lang  = settings.Language || settings.language || "EN";
+          const theme = (settings.Theme || settings.theme || "dark").toLowerCase();
+          const checkUpdatesOnStartUp =
+            settings.CheckUpdatesOnStartUp ?? settings.checkUpdatesOnStartUp ?? false;
+          const ignoredVersion =
+            settings.IgnoredVersion || settings.ignoredVersion || "";
+          const sidePanelCollapsed =
+            settings.SidePanelCollapsed ?? settings.sidePanelCollapsed ?? false;
+          const debugMode =
+            settings.DebugMode ?? settings.debugMode ?? false;
+
+          setSettings((prev) => ({
+            ...(prev ?? {}),
+            Language: lang,
+            Theme: theme,
+            CheckUpdatesOnStartUp: checkUpdatesOnStartUp,
+            IgnoredVersion: ignoredVersion,
+            SidePanelCollapsed: sidePanelCollapsed,
+            DebugMode: debugMode,
+          }));
+
+          setLang(lang);
+          setTheme(theme);
+          setSidePanelCollapsed(sidePanelCollapsed);
+        }
+
+        // ============================================================
+        // 3. Tournament (tournament.toml) — без widgetBracket и startgg/challonge
+        // ============================================================
+        const tourney = await LoadTournamentConfig();
+        if (tourney) {
+          setTournament((prev) => ({
+            ...(prev ?? {}),
+            urlToTournament: tourney.urlToTournament || "",
+            logo: {
+              img: tourney.logo?.img || "",
+            },
+            rules: {
+              standardFormat: tourney.rules?.standardFormat ?? 2,
+              finalsFormat:   tourney.rules?.finalsFormat   ?? 3,
+              rounds:         tourney.rules?.rounds         ?? 3,
+              duration:       tourney.rules?.duration       ?? 60,
+              stage:          tourney.rules?.stage          || "Any",
+            },
+            stream: {
+              area:          tourney.stream?.area          || "Any",
+              language:      tourney.stream?.language      || "EN",
+              connection:    tourney.stream?.connection    || "Wired",
+              crossplatform: tourney.stream?.crossplatform ?? false,
+              passcode:      tourney.stream?.passcode      || "0000",
+              linkToLobby:   tourney.stream?.linkToLobby   || "",
+            },
+            csv:  tourney.csv  || { nameFile: "" },
+            game: tourney.game || { name: "" },
+          }));
+        }
+
+        // ============================================================
+        // 4. Widgets (widgets.toml)
+        // ============================================================
+        const widgets = await LoadWidgetsConfig();
+        if (widgets && setWidgets) {
+          setWidgets({
+            bracket: {
+              urlToTournament: widgets.bracket?.urlToTournament || "",
+              bracketId:       widgets.bracket?.bracketId       || "",
+              theme:           widgets.bracket?.theme           || "Default",
+              clearBackground: widgets.bracket?.clearBackground ?? false,
+              hideStages:      widgets.bracket?.hideStages      ?? false,
+              bracketMode:     widgets.bracket?.bracketMode     || "all",
+              scale:           widgets.bracket?.scale           ?? 1.0,
+              autoRefresh:     widgets.bracket?.autoRefresh     ?? false,
+            },
+          });
+        }
+
+        // ============================================================
+        // 5. Authorizations (authorizations.toml)
+        // ============================================================
+        const auths = await LoadAuthorizations();
+        if (auths && setAuthorizations) {
+          setAuthorizations({
+            startgg:   normalizePlatform(auths.startgg),
+            challonge: normalizePlatform(auths.challonge),
+            discord:   normalizePlatform(auths.discord),
+            telegram:  normalizePlatform(auths.telegram),
+          });
+        }
+
+        isConfigLoadedRef.current = true;
+        setIsLoaded(true);
+      } catch (err) {
+        console.error(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
+      }
+    };
     
-        if (isConfigLoadedRef.current) return;
-    
-        const initApp = async () => {
-          try {
-            const sys = await LoadSystemConfig();
-            if (sys) {
-              setSystemCfg((prev) => ({
-                ...(prev ?? {}),
-                discord: {
-                  ...(prev?.discord ?? {}),
-                  ...(sys.discord || {}),
-                  token: sys.discord?.token || "",
-                  roles: {
-                    default: sys.discord?.roles?.default || "en",
-                    ru: sys.discord?.roles?.ru || "",
-                    en: sys.discord?.roles?.en || "",
-                  },
-                },
-                telegram: {
-                  ...(prev?.telegram ?? {}),
-                  ...(sys.telegram || {}),
-                  roles: {
-                    default: sys.telegram?.roles?.default || "en",
-                    ru: sys.telegram?.roles?.ru || "",
-                    en: sys.telegram?.roles?.en || "",
-                  },
-                },
-                debug: {
-                  mode: sys.debug?.mode ?? sys.Debug?.mode ?? false,
-                },
-                database: {
-                  dsn: sys.database?.dsn || sys.db?.dsn || "",
-                },
-              }));
-            }
-    
-            const tourney = await LoadTournamentConfig();
-            if (tourney) {
-              setTourneyCfg((prev) => ({
-                ...(prev ?? {}),
-                widgetBracket: {
-                  urlToTournament: tourney.widgetBracket?.urlToTournament || "",
-                  bracketId: tourney.widgetBracket?.bracketId || "",
-                  bracket: tourney.widgetBracket?.bracket || "",
-                  theme: tourney.widgetBracket?.theme || "Default",
-                  hideStages: tourney.widgetBracket?.hideStages ?? false,
-                  clearBackground: tourney.widgetBracket?.clearBackground ?? false,
-                  bracketMode: tourney.widgetBracket?.bracketMode ?? "all",
-                  scale: tourney.widgetBracket?.scale ?? 1.0,
-                  autoRefresh: tourney.widgetBracket?.autoRefresh ?? false,
-                },
-                urlToTournament: tourney.urlToTournament || "",
-                startgg: {
-                  clientID: tourney.startgg?.clientID || "",
-                  secretClient: tourney.startgg?.secretClient || "",
-                  name: tourney.startgg?.name || "startgg",
-                },
-                challonge: {
-                  clientID: tourney.challonge?.clientID || "",
-                  secretClient: tourney.challonge?.secretClient || "",
-                  name: tourney.challonge?.name || "challonge",
-                },
-                logo: {
-                  img: tourney.logo?.img || "",
-                },
-                rules: {
-                  standardFormat: tourney.rules?.standardFormat ?? 2,
-                  finalsFormat: tourney.rules?.finalsFormat ?? 3,
-                  rounds: tourney.rules?.rounds ?? 3,
-                  duration: tourney.rules?.duration ?? 60,
-                  stage: tourney.rules?.stage || "Any",
-                  crossplatform: tourney.rules?.crossplatform ?? true,
-                },
-                stream: tourney.stream || {},
-                game: tourney.game || { name: "" },
-              }));
-            }
-    
-            const settings = await LoadSettingsApp();
-            if (settings) {
-              const lang = settings.Language || settings.language || "EN";
-              const theme = (settings.Theme || settings.theme || "dark").toLowerCase();
-              const checkUpdatesOnStartUp = settings.CheckUpdatesOnStartUp ?? settings.checkUpdatesOnStartUp ?? false;
-              const ignoredVersion = settings.IgnoredVersion || settings.ignoredVersion || "";
-              const sidePanelCollapsed = settings.SidePanelCollapsed ?? settings.sidePanelCollapsed  ?? false;
-              
-              setSettings((prev) => ({
-                ...(prev ?? {}),
-                Language: lang,
-                Theme: theme,
-                CheckUpdatesOnStartUp: checkUpdatesOnStartUp,
-                IgnoredVersion: ignoredVersion,
-                SidePanelCollapsed: sidePanelCollapsed,
-              }));
-              setLang(lang);
-              setTheme(theme);
-              setSidePanelCollapsed(sidePanelCollapsed);
-            }
-    
-            isConfigLoadedRef.current = true;
-            setIsLoaded(true);
-          } catch (err) {
-            console.error(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
-          }
-        };
-    
-        initApp();
-      }, [locale]);
+    initApp();
+  }, [locale]);
+}
+
+// Приводит структуру PlatformAuthorizations к стабильному виду.
+// Гарантирует, что slots — всегда массив из 5 элементов.
+function normalizePlatform(platform) {
+  const emptySlot = () => ({
+    name: "",
+    clientID: "",
+    secretClient: "",
+    token: "",
+    guildID: "",
+    debugChannelID: "",
+    roles: { default: "en", ru: "", en: "" },
+    status: "unknown",
+    statusReason: "",
+  });
+
+  const slots = Array.from({ length: 5 }, (_, i) => {
+    const s = platform?.slots?.[i];
+    if (!s) return emptySlot();
+    const normalized = {
+      ...emptySlot(),
+      ...s,
+      roles: { ...emptySlot().roles, ...(s.roles || {}) },
+      status: s.status || "unknown",
+      statusReason: s.statusReason || "",
+      created: !!s.created,
+    };
+
+    if (s.lastAuthAt) {
+      normalized.lastAuthAt = s.lastAuthAt;
+    } else {
+      delete normalized.lastAuthAt;
+    }
+
+    return normalized;
+  });
+
+  return {
+    activeSlot: platform?.activeSlot ?? -1,
+    slots,
+  };
 }

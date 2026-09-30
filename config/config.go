@@ -6,9 +6,9 @@ import (
 
 	"path/filepath"
 
-	"strings"
-
 	"fmt"
+
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/ilyakaznacheev/cleanenv"
@@ -21,12 +21,6 @@ type MessengerPlatform struct {
 	GuildID        string  `toml:"guildID" json:"guildID"` // ID server/chat
 	DebugChannelID string  `toml:"debugChannelID" json:"debugChannelID"`
 	Roles          RolesID `toml:"roles" json:"roles"`
-}
-
-type RolesID struct {
-	Default string `toml:"default" json:"default"`
-	En      string `toml:"en" json:"en"`
-	Ru      string `toml:"ru" json:"ru"`
 }
 
 type DebugMode struct {
@@ -44,86 +38,10 @@ type ConfigMessenger struct {
 	Db        Database          `toml:"database" json:"database"`
 }
 
-type RulesMatches struct {
-	StandardFormat int    `toml:"standardFormat" json:"standardFormat"`
-	FinalsFormat   int    `toml:"finalsFormat" json:"finalsFormat"`
-	Stage          string `toml:"stage" json:"stage"`
-	Rounds         int    `toml:"rounds" json:"rounds"`
-	Duration       int    `toml:"duration" json:"duration"`
-}
-
-type StreamLobby struct {
-	Area          string `toml:"area" json:"area"`
-	Language      string `toml:"language" json:"language"`
-	Conn          string `toml:"connection" json:"connection"`
-	Crossplatform bool   `toml:"crossplatform" json:"crossplatform"`
-	Passcode      string `toml:"passcode" json:"passcode"`
-	LinkToLobby   string `toml:"linkToLobby" json:"linkToLobby"`
-}
-
-type Logo struct {
-	Img string `toml:"img" json:"img"`
-}
-
-type Csv struct {
-	NameFile string `toml:"nameFile" json:"nameFile"`
-}
-
-type ConfigGame struct {
-	Name string `toml:"name" json:"name"`
-}
-
 type TournamentPlatform struct {
 	Name         string `toml:"name" json:"name"`
 	ClientID     string `toml:"clientID" json:"clientID"`
 	SecretClient string `toml:"secretClient" json:"secretClient,omitempty"`
-}
-
-type ConfigTournament struct {
-	WidgetBracket   WidgetBracket      `toml:"widgetBracket" json:"widgetBracket"`
-	Startgg         TournamentPlatform `toml:"startgg" json:"startgg"`
-	Challonge       TournamentPlatform `toml:"challonge" json:"challonge"`
-	UrlToTournament string             `toml:"urlToTournament" json:"urlToTournament"`
-	Rules           RulesMatches       `toml:"rules" json:"rules"`
-	Stream          StreamLobby        `toml:"stream" json:"stream"`
-	Logo            Logo               `toml:"logo" json:"logo"`
-	Csv             Csv                `toml:"csv" json:"csv"`
-	Game            ConfigGame         `toml:"game" json:"game"`
-}
-
-type WidgetBracket struct {
-	UrlToTournament string  `toml:"urlToTournament" json:"urlToTournament"`
-	BracketId       string  `toml:"bracketId" json:"bracketId"`
-	Theme           string  `toml:"theme" json:"theme"`
-	ClearBackground bool    `toml:"clearBackground" json:"clearBackground"`
-	HideStages      bool    `toml:"hideStages" json:"hideStages"`
-	BracketMode     string  `toml:"bracketMode" json:"bracketMode"`
-	Scale           float64 `toml:"scale" json:"scale"`
-	AutoRefresh     bool    `toml:"autoRefresh" json:"autoRefresh"`
-}
-
-type SettingsApplication struct {
-	Language              string `toml:"language"`
-	Theme                 string `toml:"theme"`
-	CheckUpdatesOnStartUp bool   `toml:"checkUpdatesOnStartUp"`
-	IgnoredVersion        string `toml:"ignoredVersion"`
-	SidePanelCollapsed    bool   `toml:"sidePanelCollapsed"`
-	AutoRefresh           bool   `toml:"autoRefresh"`
-}
-
-func GetAbsPath(fileName string) string {
-	ex, err := os.Executable()
-	if err != nil {
-		return fileName
-	}
-
-	exPath := filepath.Dir(ex)
-
-	if strings.Contains(exPath, "go-build") {
-		return fileName
-	}
-
-	return filepath.Join(exPath, fileName)
 }
 
 func LoadConfig(file string) (ConfigMessenger, error) {
@@ -146,151 +64,259 @@ func SaveConfig(file string, cfg ConfigMessenger) error {
 	return toml.NewEncoder(f).Encode(cfg)
 }
 
-func LoadSettings(file string) (SettingsApplication, error) {
-	var l SettingsApplication
-	err := cleanenv.ReadConfig(file, &l)
-	if err != nil {
-		return SettingsApplication{}, err
-	}
-	return l, nil
+// ============================================================
+// ПУТИ
+// ============================================================
+
+// GetConfigRoot возвращает корневую папку конфигов (config/).
+func GetConfigRoot() string {
+	return GetAbsPath("config")
 }
 
-func SaveSettings(file string, cfg SettingsApplication) error {
-	f, err := os.Create(file)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return toml.NewEncoder(f).Encode(cfg)
+// GetProfilesRoot возвращает корневую папку профилей (profiles/).
+func GetProfilesRoot() string {
+	return GetAbsPath("profiles")
 }
 
-func LoadTournament(file string) (ConfigTournament, error) {
-	var l ConfigTournament
-
-	err := cleanenv.ReadConfig(file, &l)
-	if err != nil {
-		return ConfigTournament{}, err
-	}
-
-	return l, nil
+// GetRegistryPath возвращает путь к реестру профилей.
+func GetRegistryPath() string {
+	return filepath.Join(GetConfigRoot(), ProfilesRegistryFile)
 }
 
-func SaveTournament(file string, cfg ConfigTournament) error {
-	f, err := os.Create(file)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	return toml.NewEncoder(f).Encode(cfg)
+// GetProfileDir возвращает папку конкретного профиля.
+func GetProfileDir(name string) string {
+	return filepath.Join(GetProfilesRoot(), name)
 }
 
-func Init(configDir string) error {
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return fmt.Errorf("could not create config directory: %w", err)
+// GetProfileConfigsDir возвращает папку configs внутри профиля.
+func GetProfileConfigsDir(name string) string {
+	return filepath.Join(GetProfileDir(name), ProfileConfigsDir)
+}
+
+// GetProfileClientsDir возвращает папку clients внутри профиля.
+func GetProfileClientsDir(name string) string {
+	return filepath.Join(GetProfileDir(name), ProfileClientsDir)
+}
+
+// ============================================================
+// INIT
+// ============================================================
+
+// Init — точка входа: создаёт структуру config/ + profiles/,
+// если её ещё нет. Идемпотентна — повторный вызов ничего не ломает.
+func Init() error {
+	if err := os.MkdirAll(GetConfigRoot(), 0755); err != nil {
+		return fmt.Errorf("could not create config dir: %w", err)
+	}
+	if err := os.MkdirAll(GetProfilesRoot(), 0755); err != nil {
+		return fmt.Errorf("could not create profiles dir: %w", err)
 	}
 
+	// Реестр профилей
+	if !FileExists(GetRegistryPath()) {
+		if err := SaveRegistry(ProfilesRegistry{
+			Active:   "",
+			Profiles: []ProfileMeta{},
+		}); err != nil {
+			return fmt.Errorf("could not create registry: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// InitProfile создаёт файловую структуру для нового профиля.
+// Если папка профиля уже существует — ничего не делает.
+func InitProfile(name string) error {
+	dir := GetProfileDir(name)
+
+	if FileExists(dir) {
+		return nil // уже есть
+	}
+
+	// Создаём подпапки
+	if err := os.MkdirAll(GetProfileConfigsDir(name), 0755); err != nil {
+		return fmt.Errorf("could not create configs dir: %w", err)
+	}
+	if err := os.MkdirAll(GetProfileClientsDir(name), 0755); err != nil {
+		return fmt.Errorf("could not create clients dir: %w", err)
+	}
+
+	// Файлы профиля со значениями по умолчанию
 	files := map[string]any{
-		"config.toml": ConfigMessenger{
-			Discord: MessengerPlatform{
-				Token:          "",
-				ClientID:       "",
-				SecretClient:   "",
-				GuildID:        "",
-				DebugChannelID: "",
-				Roles: RolesID{
-					Default: "en",
-					Ru:      "",
-					En:      "",
-				},
-			},
-			Telegram: MessengerPlatform{
-				Token:          "",
-				ClientID:       "",
-				SecretClient:   "",
-				GuildID:        "",
-				DebugChannelID: "",
-				Roles: RolesID{
-					Default: "en",
-					Ru:      "",
-					En:      "",
-				},
-			},
-			DebugMode: DebugMode{
-				Mode: false,
-			},
-			Db: Database{
-				Dsn: "",
-			},
-		},
-		"tournament.toml": ConfigTournament{
-			WidgetBracket: WidgetBracket{
-				UrlToTournament: "",
-				BracketId:       "",
-				Theme:           "Default",
-				ClearBackground: false,
-				HideStages:      false,
-				BracketMode:     "all",
-				Scale:           1.0,
-				AutoRefresh:     false,
-			},
-			Startgg: TournamentPlatform{
-				Name:         "",
-				ClientID:     "",
-				SecretClient: "",
-			},
-			Challonge: TournamentPlatform{
-				Name:         "",
-				ClientID:     "",
-				SecretClient: "",
-			},
-			UrlToTournament: "",
-			Rules: RulesMatches{
-				StandardFormat: 2,
-				FinalsFormat:   3,
-				Stage:          "Any",
-				Rounds:         3,
-				Duration:       60,
-			},
-			Stream: StreamLobby{
-				Area:          "Any",
-				Language:      "EN",
-				Conn:          "Wired",
-				Crossplatform: false,
-				Passcode:      "0000",
-				LinkToLobby:   "",
-			},
-			Logo: Logo{
-				Img: "",
-			},
-			Csv: Csv{
-				NameFile: "",
-			},
-			Game: ConfigGame{
-				Name: "",
-			},
-		},
-		"settings.toml": SettingsApplication{
-			Language:              "EN",
-			Theme:                 "Dark",
-			CheckUpdatesOnStartUp: true,
-			IgnoredVersion:        "",
-			SidePanelCollapsed:    false,
-			AutoRefresh:           false,
-		},
+		SettingsFile:       NewDefaultSettings(),
+		WidgetsFile:        NewDefaultWidgets(),
+		TournamentFile:     NewDefaultTournament(),
+		AuthorizationsFile: NewEmptyAuthorizations(),
 	}
 
 	for fileName, cfg := range files {
-		path := filepath.Join(configDir, fileName)
-		if _, err := os.Stat(path); os.IsNotExist(err) {
-			var buf bytes.Buffer
-
-			if err := toml.NewEncoder(&buf).Encode(cfg); err != nil {
-				return fmt.Errorf("could not encode %s: %w", fileName, err)
-			}
-			if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
-				return fmt.Errorf("could not create %s: %w", fileName, err)
-			}
+		path := filepath.Join(GetProfileConfigsDir(name), fileName)
+		if err := writeTOML(path, cfg); err != nil {
+			return fmt.Errorf("could not write %s: %w", fileName, err)
 		}
 	}
+
 	return nil
+}
+
+// ============================================================
+// ВСПОМОГАТЕЛЬНОЕ
+// ============================================================
+
+// writeTOML — атомарно пишет структуру в TOML-файл.
+func writeTOML(path string, cfg any) error {
+	var buf bytes.Buffer
+	if err := toml.NewEncoder(&buf).Encode(cfg); err != nil {
+		return err
+	}
+	return os.WriteFile(path, buf.Bytes(), 0644)
+}
+
+// ============================================================
+// РЕЕСТР ПРОФИЛЕЙ
+// ============================================================
+
+// LoadRegistry читает config/profiles.toml.
+func LoadRegistry() (ProfilesRegistry, error) {
+	var reg ProfilesRegistry
+	path := GetRegistryPath()
+	if !FileExists(path) {
+		return ProfilesRegistry{Active: "", Profiles: []ProfileMeta{}}, nil
+	}
+	if _, err := toml.DecodeFile(path, &reg); err != nil {
+		return ProfilesRegistry{}, err
+	}
+	return reg, nil
+}
+
+// SaveRegistry пишет config/profiles.toml.
+func SaveRegistry(reg ProfilesRegistry) error {
+	path := GetRegistryPath()
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+	return writeTOML(path, reg)
+}
+
+// CreateProfile — создаёт профиль (папки + дефолтные конфиги) и
+// регистрирует его в реестре. Активным делает его же, если не было активного.
+func CreateProfile(name string) error {
+	if name == "" {
+		return fmt.Errorf("profile name cannot be empty")
+	}
+
+	// 1. Файловая структура
+	if err := InitProfile(name); err != nil {
+		return err
+	}
+
+	// 2. Реестр
+	reg, err := LoadRegistry()
+	if err != nil {
+		return err
+	}
+
+	// Если профиль уже в реестре — обновляем только lastOpenedAt
+	found := false
+	for i, p := range reg.Profiles {
+		if p.Name == name {
+			reg.Profiles[i].LastOpenedAt = time.Now()
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		now := time.Now()
+		reg.Profiles = append(reg.Profiles, ProfileMeta{
+			Name:         name,
+			CreatedAt:    now,
+			LastOpenedAt: now,
+		})
+	}
+
+	if reg.Active == "" {
+		reg.Active = name
+	}
+
+	return SaveRegistry(reg)
+}
+
+// DeleteProfile — удаляет профиль полностью (папку + запись в реестре).
+func DeleteProfile(name string) error {
+	// 1. Удаляем папку
+	dir := GetProfileDir(name)
+	if FileExists(dir) {
+		if err := os.RemoveAll(dir); err != nil {
+			return fmt.Errorf("could not remove profile dir: %w", err)
+		}
+	}
+
+	// 2. Обновляем реестр
+	reg, err := LoadRegistry()
+	if err != nil {
+		return err
+	}
+
+	filtered := reg.Profiles[:0]
+	for _, p := range reg.Profiles {
+		if p.Name != name {
+			filtered = append(filtered, p)
+		}
+	}
+	reg.Profiles = filtered
+
+	// Если удалили активный — переключаемся на первый доступный
+	if reg.Active == name {
+		if len(reg.Profiles) > 0 {
+			reg.Active = reg.Profiles[0].Name
+		} else {
+			reg.Active = ""
+		}
+	}
+
+	return SaveRegistry(reg)
+}
+
+// SetActiveProfile — переключает активный профиль.
+func SetActiveProfile(name string) error {
+	reg, err := LoadRegistry()
+	if err != nil {
+		return err
+	}
+
+	// Проверяем, что профиль существует в реестре
+	found := false
+	for i, p := range reg.Profiles {
+		if p.Name == name {
+			reg.Profiles[i].LastOpenedAt = time.Now()
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("profile %q not found in registry", name)
+	}
+
+	reg.Active = name
+	return SaveRegistry(reg)
+}
+
+// ListProfiles — возвращает список метаданных профилей.
+func ListProfiles() ([]ProfileMeta, error) {
+	reg, err := LoadRegistry()
+	if err != nil {
+		return nil, err
+	}
+	return reg.Profiles, nil
+}
+
+// GetActiveProfileName — возвращает имя активного профиля (или "").
+func GetActiveProfileName() (string, error) {
+	reg, err := LoadRegistry()
+	if err != nil {
+		return "", err
+	}
+	return reg.Active, nil
 }

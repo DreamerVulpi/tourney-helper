@@ -1,94 +1,36 @@
 export interface Settings {
-    Language?: string;
-    Theme?: string;
-    CheckUpdatesOnStartUp?: boolean;
-    IgnoredVersion?: string;
-    SidePanelCollapsed?: boolean;
+  Language: string;
+  Theme: string;
+  CheckUpdatesOnStartUp: boolean;
+  IgnoredVersion: string;
+  SidePanelCollapsed: boolean;
+  DebugMode: boolean;
 }
 
-export interface DiscordRoles {
-    default: string;
-    ru: string;
-    en: string;
-}
-
-export interface DiscordCfg {
-    token?: string;
-    roles?: Partial<DiscordRoles>;
-    clientID?: string;
-    secretClient?: string;
-    guildID?: string;
-    debugChannelID?: string;
-}
-
-export interface TelegramRoles {
-    default: string;
-    ru: string;
-    en: string;
-}
-
-export interface TelegramCfg {
-    token?: string;
-    roles?: Partial<DiscordRoles>;
-    clientID?: string;
-    secretClient?: string;
-    guildID?: string;
-    debugChannelID?: string;
-}
-
-export interface DebugCfg {
-    mode: boolean;
-}
-
-export interface DatabaseCfg {
-    dsn: string;
-}
-
-export interface SystemCfg {
-    discord?: DiscordCfg;
-    telegram?: TelegramCfg;
-
-    debug?: DebugCfg;
-    database?: DatabaseCfg;
-}
-
-export interface WidgetBracketCfg {
+export interface WidgetBracket {
   urlToTournament: string;
   bracketId: string;
-  bracket: string;
-  theme: string;              // "Default"
-  hideStages: boolean;
+  theme: string;
   clearBackground: boolean;
-  bracketMode: string;        // "all" | ... (см. ниже)
-  scale: number;              // 1.0
+  hideStages: boolean;
+  bracketMode: string;
+  scale: number;
+  autoRefresh: boolean;
 }
 
-export interface StartggCfg {
-  clientID: string;
-  secretClient: string;
-  name: string;               // "startgg"
+export interface WidgetsCfg {
+  bracket: WidgetBracket;
 }
 
-export interface ChallongeCfg {
-  clientID: string;
-  secretClient: string;
-  name: string;               // "challonge"
+export interface RulesMatches {
+  standardFormat: number;
+  finalsFormat: number;
+  stage: string;
+  rounds: number;
+  duration: number;
 }
 
-export interface LogoCfg {
-  img: string;
-}
-
-export interface RulesCfg {
-  standardFormat: number;     // 2
-  finalsFormat: number;       // 3
-  rounds: number;             // 3
-  duration: number;           // 60 (минут)
-  stage: string;              // "Any"
-  crossplatform: boolean;
-}
-
-export interface StreamCfg {
+export interface StreamLobby {
   area: string;
   language: string;
   connection: string;
@@ -97,25 +39,59 @@ export interface StreamCfg {
   linkToLobby: string;
 }
 
-export interface GameCfg {
-  name: string;
-}
-
-export interface TourneyCfg {
-  widgetBracket: WidgetBracketCfg;
-
+export interface TournamentCfg {
   urlToTournament: string;
-
-  startgg: StartggCfg;
-  challonge: ChallongeCfg;
-  logo: LogoCfg;
-  rules: RulesCfg;
-  stream: StreamCfg;
-  game: GameCfg;
+  rules: RulesMatches;
+  stream: StreamLobby;
+  logo: { img: string };
+  csv: { nameFile: string };
+  game: { name: string };
 }
 
-export interface AuthStatus {
-    startgg: boolean;
-    discord: boolean;
-    telegram: boolean;
+export interface ClientCredentials {
+  name: string;
+  clientID: string;
+  secretClient: string;
+  token: string;
+  guildID: string;
+  debugChannelID: string;
+  roles: {
+    default: string;
+    ru: string;
+    en: string;
+  };
+}
+
+export interface PlatformAuthorizations {
+  activeSlot: number;
+  slots: ClientCredentials[]; // всегда длина 5
+}
+
+export interface Authorizations {
+  startgg: PlatformAuthorizations;
+  challonge: PlatformAuthorizations;
+  discord: PlatformAuthorizations;
+  telegram: PlatformAuthorizations;
+}
+
+export type AuthStatus =
+  | "unknown"
+  | "pending"
+  | "authorized"
+  | "unauthorized"
+  | "expired"
+  | "error"
+  | "invalid";
+
+export interface ClientCredentials {
+  name: string;
+  clientID: string;
+  secretClient: string;
+  token: string;
+  guildID: string;
+  debugChannelID: string;
+  roles: { default: string; ru: string; en: string };
+  status: AuthStatus;
+  statusReason: string;
+  lastAuthAt?: string;
 }

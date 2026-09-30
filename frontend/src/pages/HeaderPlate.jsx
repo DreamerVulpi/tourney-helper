@@ -49,15 +49,16 @@ const HeaderPlate = ({
 
   const settings      = useAppStore((s) => s.settings);
   const systemCfg     = useAppStore((s) => s.systemCfg);
-  const tourneyCfg    = useAppStore((s) => s.tourneyCfg);
+  const tournament    = useAppStore((s) => s.tournament);
 
   const activeTournamentPlatform    = useAppStore((s) => s.activeTournamentPlatform);
   const setActiveTournamentPlatform = useAppStore((s) => s.setActiveTournamentPlatform);
   const activeDeliveryMethod        = useAppStore((s) => s.activeDeliveryMethod);
   const setActiveDeliveryMethod     = useAppStore((s) => s.setActiveDeliveryMethod);
 
-  const activeAuthorizationSettings    = useAppStore((s) => s.activeAuthorizationSettings);
+  const activeAuthorizationSettings = useAppStore((s) => s.activeAuthorizationSettings);
   const setActiveAuthorizationSettings = useAppStore((s) => s.setActiveAuthorizationSettings);
+  const toggleAuthorizationSettings = useAppStore((s) => s.toggleAuthorizationSettings);
 
   const themeClasses = useThemeClasses(getAppThemeClasses)
   const headerThemeClasses = useThemeClasses(getHeaderThemeClasses);
@@ -197,24 +198,8 @@ const HeaderPlate = ({
         setActiveModal(null);
       }}
       locale={locale.Authorization}
-      themeClasses={themeClasses}
-
-      systemCfg={systemCfg}
-      tourneyCfg={tourneyCfg}
       updateConfig={updateConfig}
-
-      activeAuthorizationSettings={activeAuthorizationSettings}
-      setActiveAuthorizationSettings={setActiveAuthorizationSettings}
-      
-      activeDeliveryMethod={activeDeliveryMethod}
-      setActiveDeliveryMethod={setActiveDeliveryMethod}
-
-      activeTournamentPlatform={activeTournamentPlatform}
-      setActiveTournamentPlatform={setActiveAuthorizationSettings}
-
-      authStatus={authStatus}
-      setAuthStatus={setAuthStatus}
-      
+      themeClasses={themeClasses}
     />
     <AboutModal
       isOpen={activeModal === "about"}

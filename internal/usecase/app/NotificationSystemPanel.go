@@ -111,11 +111,24 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
 	return nil
 }
 
-func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament) (*discord.Handler, error) {
+func (a *App) InitSystemNotification(
+	settings config.SettingsApplication,
+	botCred config.ClientCredentials,
+	tourneyCred config.ClientCredentials,
+	cfgTournament config.ConfigTournament,
+) (*discord.Handler, error) {
 	collectorStartgg := metrics.NewCollector()
 	limiterStartgg := rateLimiter.NewStartggLimiter(collectorStartgg)
 
-	adapter, err := sender.GetTournamentAdapter(collectorStartgg, a.TournamentClient, "Discord", cfgTournament.UrlToTournament, cfgBot.DebugMode.Mode, cfgTournament.Game.Name, nil)
+	adapter, err := sender.GetTournamentAdapter(
+		collectorStartgg,
+		a.TournamentClient,
+		"Discord",
+		cfgTournament.UrlToTournament,
+		settings.DebugMode, // ← было cfgBot.DebugMode.Mode
+		cfgTournament.Game.Name,
+		nil,
+	)
 	if err != nil {
 		return &discord.Handler{}, err
 	}
@@ -124,20 +137,35 @@ func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessen
 	limiterDiscord := rateLimiter.NewDiscordLimiter(collectorDiscord)
 
 	dh := discord.Handler{Auth: a.MessengerClient, Metrics: collectorDiscord}
+
 	meDiscordPlatform, err := dh.Auth.GetDiscordMe(a.ctx)
 	if err != nil {
 		return &discord.Handler{}, fmt.Errorf("InitDiscordHandler | Failed to get debug user: %v", err)
 	}
 
-	ns := sender.NewNotificationSystem(nil, adapter, a.Db, cfgBot.DebugMode.Mode, entitySender.Participant{
-		MessengerID:    meDiscordPlatform.ID,
-		MessengerLogin: meDiscordPlatform.Username,
-		Locale:         strings.ToLower(language),
-		GameName:       a.ConfigTournament.Game.Name,
-	}, limiterDiscord, limiterStartgg, collectorDiscord, collectorStartgg, 5*time.Minute)
+	ns := sender.NewNotificationSystem(
+		nil,
+		adapter,
+		a.Db,
+		settings.DebugMode, // ← было cfgBot.DebugMode.Mode
+		entitySender.Participant{
+			MessengerID:    meDiscordPlatform.ID,
+			MessengerLogin: meDiscordPlatform.Username,
+			Locale:         strings.ToLower(settings.Language), // ← было language
+			GameName:       a.ConfigTournament.Game.Name,
+		},
+		limiterDiscord,
+		limiterStartgg,
+		collectorDiscord,
+		collectorStartgg,
+		5*time.Minute,
+	)
 	dh.Ns = ns
-	if a.ConfigMessenger.DebugMode.Mode {
-		logger.Log(entityLogger.Warning, fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v", meDiscordPlatform.Username, "Discord"))
+
+	if settings.DebugMode { // ← было a.ConfigMessenger.DebugMode.Mode
+		logger.Log(entityLogger.Warning,
+			fmt.Sprintf("DEBUG MODE ON - Test contact is %v on platform %v",
+				meDiscordPlatform.Username, "Discord"))
 	}
 
 	return &dh, nil
@@ -223,7 +251,12 @@ func (a *App) InitSystemNotification(language string, cfgBot config.ConfigMessen
 // 	}
 // }
 
-func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBot config.ConfigMessenger, cfgTournament config.ConfigTournament, language string) error {
+func (a *App) StartSendNotifications(
+	messenger, tournamentPlatform string,
+	cfgAuthorizations config.ConfigAuthorizations,
+	cfgTournament config.ConfigTournament,
+	settings config.SettingsApplication,
+) error {
 	a.mu.Lock()
 	if a.ns != nil {
 		a.mu.Unlock()
@@ -233,56 +266,143 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 	}
 	a.mu.Unlock()
 
+	// ========================================================
+	// 0. Определяем активные слоты заранее
+	// ========================================================
+	var botCred config.ClientCredentials
 	switch messenger {
 	case "discord":
-		if len(cfgBot.Discord.Token) == 0 {
-			err := fmt.Errorf("No token for discord authorization\n")
+		cred, ok := cfgAuthorizations.Discord.GetActiveSlot()
+		if !ok {
+			err := fmt.Errorf("no active discord client slot")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		if len(cfgBot.Discord.ClientID) == 0 {
-			err := fmt.Errorf("No clientID for bot authorization\n")
+		botCred = cred
+	case "telegram":
+		cred, ok := cfgAuthorizations.Telegram.GetActiveSlot()
+		if !ok {
+			err := fmt.Errorf("no active telegram client slot")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		if len(cfgBot.Discord.SecretClient) == 0 {
-			err := fmt.Errorf("No secretClient for bot authorization\n")
-			logger.Log(entityLogger.Error, err.Error())
-			return err
-		}
-		err := a.AuthorizeDiscord(cfgBot.Discord.ClientID, cfgBot.Discord.SecretClient)
-		if err != nil {
-			logger.Log(entityLogger.Error, err.Error())
-			return err
-		}
-		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed", a.TournamentClient.NamePlatform))
-	}
-
-	if len(cfgTournament.UrlToTournament) == 0 {
-		err := fmt.Errorf("No tournament url/slug for get data tournament\n")
+		botCred = cred
+	default:
+		err := fmt.Errorf("unknown messenger: %s", messenger)
 		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
+
+	var tourneyCred config.ClientCredentials
 	switch tournamentPlatform {
 	case "startgg":
-		if len(cfgTournament.Startgg.ClientID) == 0 {
-			err := fmt.Errorf("No clientID for authorization\n")
+		cred, ok := cfgAuthorizations.Startgg.GetActiveSlot()
+		if !ok {
+			err := fmt.Errorf("no active client slot for startgg")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		if len(cfgTournament.Startgg.SecretClient) == 0 {
-			err := fmt.Errorf("No secretClient for bot authorization\n")
+		tourneyCred = cred
+	case "challonge":
+		cred, ok := cfgAuthorizations.Challonge.GetActiveSlot()
+		if !ok {
+			err := fmt.Errorf("no active client slot for challonge")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		err := a.AuthorizeStartgg(cfgTournament.Startgg.ClientID, cfgTournament.Startgg.SecretClient)
-		if err != nil {
-			logger.Log(entityLogger.Error, err.Error())
-			return err
-		}
-		logger.Log(entityLogger.Success, fmt.Sprintf("The client (%v) has been successfully readed", a.TournamentClient.NamePlatform))
+		tourneyCred = cred
+	default:
+		err := fmt.Errorf("unknown tournament platform: %s", tournamentPlatform)
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 
+	// ========================================================
+	// 1. Авторизация мессенджера
+	// ========================================================
+	switch messenger {
+	case "discord":
+		if len(botCred.Token) == 0 {
+			err := fmt.Errorf("no token for discord authorization")
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		if len(botCred.ClientID) == 0 {
+			err := fmt.Errorf("no clientID for bot authorization")
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		if len(botCred.SecretClient) == 0 {
+			err := fmt.Errorf("no secretClient for bot authorization")
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+
+		if err := a.AuthorizeDiscord(botCred.ClientID, botCred.SecretClient); err != nil {
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		logger.Log(entityLogger.Success,
+			fmt.Sprintf("The client (%v) has been successfully read", a.TournamentClient.NamePlatform))
+
+	case "telegram":
+		if len(botCred.Token) == 0 {
+			err := fmt.Errorf("no token for telegram authorization")
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		// TODO: a.AuthorizeTelegram(botCred.Token), когда появится
+	}
+
+	// ========================================================
+	// 2. Проверка URL турнира
+	// ========================================================
+	if len(cfgTournament.UrlToTournament) == 0 {
+		err := fmt.Errorf("no tournament url/slug for get data tournament")
+		logger.Log(entityLogger.Error, err.Error())
+		return err
+	}
+
+	// ========================================================
+	// 3. Авторизация турнирной платформы
+	// ========================================================
+	switch tournamentPlatform {
+	case "startgg":
+		if len(tourneyCred.ClientID) == 0 {
+			err := fmt.Errorf("no clientID for authorization")
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		if len(tourneyCred.SecretClient) == 0 {
+			err := fmt.Errorf("no secretClient for bot authorization")
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+
+		if err := a.AuthorizeStartgg(tourneyCred.ClientID, tourneyCred.SecretClient); err != nil {
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		logger.Log(entityLogger.Success,
+			fmt.Sprintf("The client (%v) has been successfully read", a.TournamentClient.NamePlatform))
+
+	case "challonge":
+		if len(tourneyCred.ClientID) == 0 {
+			err := fmt.Errorf("no clientID for authorization")
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		if len(tourneyCred.SecretClient) == 0 {
+			err := fmt.Errorf("no secretClient for bot authorization")
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		// TODO: a.AuthorizeChallonge(...)
+	}
+
+	// ========================================================
+	// 4. Парсинг URL и сохранение slug
+	// ========================================================
 	slug, err := a.ParseTournamentURLForNotification(tournamentPlatform, cfgTournament.UrlToTournament)
 	if err != nil {
 		logger.Log(entityLogger.Error, err.Error())
@@ -293,7 +413,15 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 		a.ConfigTournament.UrlToTournament = slug
 	}
 
-	sn, err := a.InitSystemNotification(language, cfgBot, cfgTournament)
+	// ========================================================
+	// 5. Инициализация системы уведомлений
+	// ========================================================
+	sn, err := a.InitSystemNotification(
+		settings,
+		botCred,
+		tourneyCred,
+		cfgTournament,
+	)
 	if err != nil {
 		logger.Log(entityLogger.Error, err.Error())
 		return err
@@ -307,15 +435,28 @@ func (a *App) StartSendNotifications(messenger, tournamentPlatform string, cfgBo
 	sn.ReadyChan = make(chan struct{})
 	a.mu.Unlock()
 
+	// ========================================================
+	// 6. Запуск бота
+	// ========================================================
 	go func() {
-		if err := a.activeBot.Start(ctx, a.TournamentClient, a.Db.Conn, cfgBot, cfgTournament); err != nil {
+		if err := a.activeBot.Start(
+			ctx,
+			a.TournamentClient,
+			a.Db.Conn,
+			botCred,
+			tourneyCred,
+			cfgTournament,
+			settings,
+		); err != nil {
 			logger.Log(entityLogger.Error, err.Error())
 		}
 	}()
+
 	go func() {
 		select {
 		case <-sn.ReadyChan:
-			logger.Log(entityLogger.Info, "The bot has been launched. Starting to send out notifications...")
+			logger.Log(entityLogger.Info,
+				"The bot has been launched. Starting to send out notifications...")
 			sn.StartSendMessages()
 		case <-ctx.Done():
 			return

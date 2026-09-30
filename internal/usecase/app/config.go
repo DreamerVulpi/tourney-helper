@@ -3,6 +3,8 @@ package application
 import (
 	"strings"
 
+	"fmt"
+
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/locale/ui"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
@@ -25,17 +27,21 @@ func (a *App) GetUiLocale(lang string) ui.Ui {
 	}
 }
 
+func (a *App) GetActiveProfileName() (string, error) {
+	return config.GetActiveProfileName()
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+
 func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
-	path := config.GetAbsPath("config/settings.toml")
-	cfg, err := config.LoadSettings(path)
+	cfg, err := config.LoadSettings(a.ActiveProfile)
 	if err != nil {
-		nullCfg := config.SettingsApplication{
-			Language:              "EN",
-			Theme:                 "Dark",
-			CheckUpdatesOnStartUp: true,
-			IgnoredVersion:        "",
-			SidePanelCollapsed:    false,
-		}
+		nullCfg := config.NewDefaultSettings()
+		_ = config.SaveSettings(a.ActiveProfile, nullCfg)
+		logger.Log(entityLogger.Warning,
+			"Settings could not be loaded. Default settings recreated")
 		return nullCfg, nil
 	}
 	a.Locale = &cfg
@@ -43,110 +49,94 @@ func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
 }
 
 func (a *App) SaveSettingsApp(cfg config.SettingsApplication) error {
-	return config.SaveSettings(config.GetAbsPath("config/settings.toml"), cfg)
+	return config.SaveSettings(a.ActiveProfile, cfg)
 }
 
-func (a *App) LoadSystemConfig() (config.ConfigMessenger, error) {
-	path := config.GetAbsPath("config/config.toml")
-	cfg, err := config.LoadConfig(path)
-	if err != nil {
-		nullCfg := config.ConfigMessenger{
-			Discord: config.MessengerPlatform{
-				Token:          "",
-				ClientID:       "",
-				SecretClient:   "",
-				GuildID:        "",
-				DebugChannelID: "",
-				Roles: config.RolesID{
-					Ru: "",
-					En: "",
-				},
-			},
-			Telegram: config.MessengerPlatform{
-				Token:          "",
-				ClientID:       "",
-				SecretClient:   "",
-				GuildID:        "",
-				DebugChannelID: "",
-				Roles: config.RolesID{
-					Ru: "",
-					En: "",
-				},
-			},
-			DebugMode: config.DebugMode{
-				Mode: false,
-			},
-			Db: config.Database{
-				Dsn: "",
-			},
-		}
-		config.SaveConfig(path, nullCfg)
-		logger.Log(entityLogger.Warning, "The system configuration could not be loaded. It has been recreated")
-		return nullCfg, nil
-	}
-	logger.Log(entityLogger.Success, "The system configuration has been successfully loaded")
-	return cfg, nil
-}
-
-func (a *App) SaveSystemConfig(cfg config.ConfigMessenger) error {
-	return config.SaveConfig(config.GetAbsPath("config/config.toml"), cfg)
-}
+// ============================================================
+// TOURNAMENT
+// ============================================================
 
 func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
-	cfg, err := config.LoadTournament(config.GetAbsPath("config/tournament.toml"))
+	logger.Log(entityLogger.Info, a.ActiveProfile)
+	cfg, err := config.LoadTournament(a.ActiveProfile)
 	if err != nil {
-		nullCfg := config.ConfigTournament{
-			WidgetBracket: config.WidgetBracket{
-				UrlToTournament: "",
-				Theme:           "StartGG",
-				HideStages:      false,
-				BracketMode:     "all",
-				ClearBackground: false,
-			},
-			Startgg: config.TournamentPlatform{
-				Name:         "",
-				ClientID:     "",
-				SecretClient: "",
-			},
-			Challonge: config.TournamentPlatform{
-				Name:         "",
-				ClientID:     "",
-				SecretClient: "",
-			},
-			UrlToTournament: "",
-			Rules: config.RulesMatches{
-				StandardFormat: 2,
-				FinalsFormat:   3,
-				Stage:          "Any",
-				Rounds:         3,
-				Duration:       60,
-			},
-			Stream: config.StreamLobby{
-				Area:          "Any",
-				Language:      "EN",
-				Conn:          "Wired",
-				Crossplatform: false,
-				Passcode:      "0000",
-				LinkToLobby:   "",
-			},
-			Logo: config.Logo{
-				Img: "",
-			},
-			Csv: config.Csv{
-				NameFile: "",
-			},
-			Game: config.ConfigGame{
-				Name: "",
-			},
-		}
-		config.SaveTournament(config.GetAbsPath("config/tournament.toml"), nullCfg)
-		logger.Log(entityLogger.Warning, "The tournament configuration could not be loaded. It has been recreated")
+		nullCfg := config.NewDefaultTournament()
+		_ = config.SaveTournament(a.ActiveProfile, nullCfg)
+		logger.Log(entityLogger.Warning,
+			"The tournament configuration could not be loaded. It has been recreated")
 		return nullCfg, nil
 	}
-	logger.Log(entityLogger.Success, "The tournament configuration has been successfully loaded")
+	logger.Log(entityLogger.Success,
+		"The tournament configuration has been successfully loaded")
 	return cfg, nil
 }
 
 func (a *App) SaveTournamentConfig(cfg config.ConfigTournament) error {
-	return config.SaveTournament(config.GetAbsPath("config/tournament.toml"), cfg)
+	return config.SaveTournament(a.ActiveProfile, cfg)
+}
+
+// ============================================================
+// WIDGETS
+// ============================================================
+
+func (a *App) LoadWidgetsConfig() (config.ConfigWidgets, error) {
+	cfg, err := config.LoadWidgets(a.ActiveProfile)
+	if err != nil {
+		nullCfg := config.NewDefaultWidgets()
+		_ = config.SaveWidgets(a.ActiveProfile, nullCfg)
+		logger.Log(entityLogger.Warning,
+			"Widgets configuration could not be loaded. It has been recreated")
+		return nullCfg, nil
+	}
+	return cfg, nil
+}
+
+func (a *App) SaveWidgetsConfig(cfg config.ConfigWidgets) error {
+	return config.SaveWidgets(a.ActiveProfile, cfg)
+}
+
+// ============================================================
+// AUTHORIZATIONS
+// ============================================================
+
+func (a *App) LoadAuthorizations() (config.ConfigAuthorizations, error) {
+	cfg, err := config.LoadAuthorizations(a.ActiveProfile)
+	if err != nil {
+		nullCfg := config.NewEmptyAuthorizations()
+		_ = config.SaveAuthorizations(a.ActiveProfile, nullCfg)
+		logger.Log(entityLogger.Warning,
+			"Authorizations could not be loaded. Empty slots recreated")
+		return nullCfg, nil
+	}
+	return cfg, nil
+}
+
+func (a *App) SaveAuthorizations(cfg config.ConfigAuthorizations) error {
+	return config.SaveAuthorizations(a.ActiveProfile, cfg)
+}
+
+// SetSlotStatus — устанавливает статус слота и сохраняет конфиг.
+// platformID: "startgg" | "challonge" | "discord" | "telegram"
+func (a *App) SetSlotStatus(platformID string, slotIndex int, status config.AuthStatus, reason string) error {
+	cfg := a.ConfigAuthorizations
+
+	var platform *config.PlatformAuthorizations
+	switch platformID {
+	case "startgg":
+		platform = &cfg.Startgg
+	case "challonge":
+		platform = &cfg.Challonge
+	case "discord":
+		platform = &cfg.Discord
+	case "telegram":
+		platform = &cfg.Telegram
+	default:
+		logger.Log(entityLogger.Error, fmt.Sprintf("unknown platform: %s", platformID))
+		return fmt.Errorf("unknown platform: %s", platformID)
+	}
+
+	platform.SetSlotStatus(slotIndex, status, reason)
+
+	a.ConfigAuthorizations = cfg
+	return config.SaveAuthorizations(a.ActiveProfile, cfg)
 }

@@ -10,11 +10,18 @@ export default function ExpandableAction({
 }) {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Приводим к числу, если пришло "36px"
+  const collapsedSize =
+    typeof collapsedWidth === "number"
+      ? collapsedWidth
+      : parseInt(collapsedWidth, 10) || 56;
+
   return (
     <div
-      className={`relative h-[56px] shrink-0 transition-[width] duration-300 ${className}`}
+      className={`relative shrink-0 transition-[width] duration-300 ${className}`}
       style={{
         width: isHovered ? width : collapsedWidth,
+        height: collapsedSize,
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

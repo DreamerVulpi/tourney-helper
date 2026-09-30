@@ -42,7 +42,7 @@ func main() {
 		}
 	}()
 
-	if err := config.Init(config.GetAbsPath("config")); err != nil {
+	if err := config.Init(); err != nil {
 		logger.Log(entityLogger.Error, err.Error())
 	}
 
@@ -87,17 +87,55 @@ func main() {
 	}
 	app.Db = &db
 
-	cfgMessenger, err := config.LoadConfig(config.GetAbsPath("config/config.toml"))
-	if err != nil {
-		logger.Log(entityLogger.Error, "not loaded messenger config: "+err.Error())
+	// ============================================================
+	// 3. Загрузка активного профиля
+	// ============================================================
+	activeProfile, err := config.GetActiveProfileName()
+	if err != nil || activeProfile == "" {
+		// нет активного — создаём дефолтный
+		if err := config.CreateProfile(config.DefaultProfileName); err != nil {
+			logger.Log(entityLogger.Error, "cannot create default profile: "+err.Error())
+			return
+		}
+		activeProfile = config.DefaultProfileName
 	}
-	cfgTournament, err := config.LoadTournament(config.GetAbsPath("config/tournament.toml"))
-	if err != nil {
-		logger.Log(entityLogger.Error, "not loaded tournament config: "+err.Error())
-	}
+	app.ActiveProfile = activeProfile
+	logger.Log(entityLogger.Info, fmt.Sprintf("Active profile: %s", app.ActiveProfile))
 
-	app.ConfigMessenger = &cfgMessenger
+	// ============================================================
+	// 4. Загрузка конфигов профиля
+	// ============================================================
+	cfgSettings, err := config.LoadSettings(activeProfile)
+	if err != nil {
+		logger.Log(entityLogger.Warning, "settings not loaded, using defaults: "+err.Error())
+		cfgSettings = config.NewDefaultSettings()
+		_ = config.SaveSettings(activeProfile, cfgSettings)
+	}
+	app.ConfigSettings = cfgSettings
+
+	cfgWidgets, err := config.LoadWidgets(activeProfile)
+	if err != nil {
+		logger.Log(entityLogger.Warning, "widgets not loaded, using defaults: "+err.Error())
+		cfgWidgets = config.NewDefaultWidgets()
+		_ = config.SaveWidgets(activeProfile, cfgWidgets)
+	}
+	app.ConfigWidgets = cfgWidgets
+
+	cfgTournament, err := config.LoadTournament(activeProfile)
+	if err != nil {
+		logger.Log(entityLogger.Warning, "tournament not loaded, using defaults: "+err.Error())
+		cfgTournament = config.NewDefaultTournament()
+		_ = config.SaveTournament(activeProfile, cfgTournament)
+	}
 	app.ConfigTournament = &cfgTournament
+
+	cfgAuthorizations, err := config.LoadAuthorizations(activeProfile)
+	if err != nil {
+		logger.Log(entityLogger.Warning, "authorizations not loaded, using defaults: "+err.Error())
+		cfgAuthorizations = config.NewEmptyAuthorizations()
+		_ = config.SaveAuthorizations(activeProfile, cfgAuthorizations)
+	}
+	app.ConfigAuthorizations = cfgAuthorizations
 
 	err = wails.Run(&options.App{
 		Title:     "TourneyHelper",

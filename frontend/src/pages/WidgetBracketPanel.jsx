@@ -62,15 +62,15 @@ const WidgetBracketPlate = ({
   const theme          = useAppStore((s) => s.theme);
   const activeModal    = useAppStore((s) => s.activeModal);
   const activePlatform = useAppStore((s) => s.activeTournamentPlatform);
-  const tourneyCfg     = useAppStore((s) => s.tourneyCfg);
+  const tournament     = useAppStore((s) => s.tournament);
   const setStatusWidgetBracket = useAppStore((s) => s.setStatusWidgetBracket);
 
   // ---- производные ----
   const themeClasses = useThemeClasses(getThemeClasses);
 
-  const urlToTournament = tourneyCfg?.widgetBracket?.urlToTournament || "";
-  const bracketId = tourneyCfg?.widgetBracket?.bracketId || "";
-  const themeBracket = tourneyCfg?.widgetBracket?.theme || "StartGG";
+  const urlToTournament = tournament?.widgetBracket?.urlToTournament || "";
+  const bracketId = tournament?.widgetBracket?.bracketId || "";
+  const themeBracket = tournament?.widgetBracket?.theme || "StartGG";
   const themeOptions = useGetListThemes();
 
   const [iframeLoaded, setIframeLoaded] = useState(false);
@@ -85,10 +85,10 @@ const WidgetBracketPlate = ({
   } = bracketFlags;
 
   const readyScale = clampScale(scale);
-  const tourneyCfgRef = useRef(tourneyCfg);
+  const tourneyCfgRef = useRef(tournament);
   useEffect(() => {
-      tourneyCfgRef.current = tourneyCfg;
-  }, [tourneyCfg]);
+      tourneyCfgRef.current = tournament;
+  }, [tournament]);
 
   const debouncedParseGridId = useMemo(
   () => debounce(async (rawUrl) => {
@@ -157,7 +157,7 @@ const WidgetBracketPlate = ({
        
             if (bracketId) {
             updateConfig("tournament", {
-                widgetBracket: { ...tourneyCfg.widgetBracket, urlToTournament: "", bracketId: "" },
+                widgetBracket: { ...tournament.widgetBracket, urlToTournament: "", bracketId: "" },
             });
             }
             return;
@@ -179,24 +179,24 @@ const WidgetBracketPlate = ({
           // 1. Сохраняем сырую ссылку в конфиг (UI покажет её)
           updateConfig("tournament", {
               widgetBracket: {
-                  ...tourneyCfg.widgetBracket,
+                  ...tournament.widgetBracket,
                   urlToTournament: value,
               },
           });
       },
-      [tourneyCfg.widgetBracket, updateConfig],
+      [tournament.widgetBracket, updateConfig],
   );
 
   const handleThemeBracketChange = useCallback(
     (value) => {
       updateConfig("tournament", {
         widgetBracket: {
-          ...tourneyCfg.widgetBracket,
+          ...tournament.widgetBracket,
           theme: value,
         },
       });
     },
-    [tourneyCfg.widgetBracket, updateConfig],
+    [tournament.widgetBracket, updateConfig],
   );
 
   // ---------- Обработчики тумблеров ----------
@@ -248,7 +248,7 @@ const WidgetBracketPlate = ({
     isProcessing,
     setIsProcessingWB,
     setStatusWidgetBracket,
-    { activePlatform, tourneyCfg },
+    { activePlatform, tourneyCfg: tournament },
   );
 
   // Полный URL с флагами — нужен только для отображения в UI (LinkOfWidget)

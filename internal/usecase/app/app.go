@@ -24,8 +24,6 @@ import (
 
 type App struct {
 	ctx              context.Context
-	ConfigTournament *config.ConfigTournament
-	ConfigMessenger  *config.ConfigMessenger
 	MessengerClient  *auth.AuthClient
 	TournamentClient *auth.AuthClient
 	Db               *dbManager.Database
@@ -44,6 +42,12 @@ type App struct {
 	RenderBracket renderer.BracketRenderer
 	ThemeProvider *widget.ThemeProvider
 	UrlValidator  *validator.Validator
+
+	ActiveProfile        string
+	ConfigSettings       config.SettingsApplication
+	ConfigWidgets        config.ConfigWidgets
+	ConfigTournament     *config.ConfigTournament
+	ConfigAuthorizations config.ConfigAuthorizations
 }
 
 func NewApp() *App {

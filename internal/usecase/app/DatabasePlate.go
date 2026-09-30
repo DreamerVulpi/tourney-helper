@@ -24,7 +24,7 @@ func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, ga
 		if a.TournamentClient == nil || a.TournamentClient.HTTPClient == nil {
 			logger.Log(entityLogger.Error, "app | tournament client or http client isn't inittialized (nil)")
 			logger.Log(entityLogger.Info, fmt.Sprintf("StartggClient: %v", a.TournamentClient))
-			logger.Log(entityLogger.Info, fmt.Sprintf("StartggClient: %v", a.MessengerClient))
+			logger.Log(entityLogger.Info, fmt.Sprintf("MessengerClient: %v", a.MessengerClient))
 			return nil, fmt.Errorf("tournament client or http client isn't inittialized (nil)")
 		}
 

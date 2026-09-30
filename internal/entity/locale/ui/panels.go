@@ -27,6 +27,7 @@ type SidePanel struct {
 	VersionLabel            string
 	LogsLabel               string
 	ClearButtonLabel        string
+	Profile                 Profile
 }
 
 type NotificationSystemPanel struct {

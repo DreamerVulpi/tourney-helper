@@ -65,6 +65,12 @@ var En = Ui{
 		VersionLabel:            "Version:",
 		LogsLabel:               "Logs",
 		ClearButtonLabel:        "Clear",
+		Profile: Profile{
+			Title:  "Profile",
+			Add:    "Add",
+			Delete: "Delete selected",
+			Share:  "Share selected",
+		},
 	},
 	HeaderPanel: HeaderPanel{
 		Help: HelpModal{

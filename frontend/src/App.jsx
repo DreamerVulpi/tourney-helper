@@ -34,59 +34,81 @@ const App = () => {
   const setActiveTab   = useAppStore((s) => s.setActiveTab);
   const activeModal    = useAppStore((s) => s.activeModal);
   const setActiveModal = useAppStore((s) => s.setActiveModal);
-  const activeAuthorizationSettings    = useAppStore((s) => s.activeAuthorizationSettings);
-  const setActiveAuthorizationSettings = useAppStore((s) => s.setActiveAuthorizationSettings);
 
   // ---- Side panel ----
-  const sidePanelCollapsed    = useAppStore((s) => s.sidePanelCollapsed);
   const setSidePanelCollapsed = useAppStore((s) => s.setSidePanelCollapsed);
-  const isSidePanelHovered    = useAppStore((s) => s.isSidePanelHovered);
-  const setIsSidePanelHovered = useAppStore((s) => s.setIsSidePanelHovered);
-
-  // ---- Statuses ----
-  const statusNotificationSystem    = useAppStore((s) => s.statusNotificationSystem);
-  const setStatusNotificationSystem = useAppStore((s) => s.setStatusNotificationSystem);
-  const statusDatabase              = useAppStore((s) => s.statusDatabase);
-  const setStatusDatabase           = useAppStore((s) => s.setStatusDatabase);
-  const statusWidgetBracket         = useAppStore((s) => s.statusWidgetBracket);
-  const setStatusWidgetBracket      = useAppStore((s) => s.setStatusWidgetBracket);
-
-  // ---- Selection ----
-  const activeTournamentPlatform    = useAppStore((s) => s.activeTournamentPlatform);
-  const setActiveTournamentPlatform = useAppStore((s) => s.setActiveTournamentPlatform);
-  const activeDeliveryMethod        = useAppStore((s) => s.activeDeliveryMethod);
-  const setActiveDeliveryMethod     = useAppStore((s) => s.setActiveDeliveryMethod);
-  const selectedGame                = useAppStore((s) => s.selectedGame);
-  const setSelectedGame             = useAppStore((s) => s.setSelectedGame);
 
   // ---- Configs ----
   const settings      = useAppStore((s) => s.settings);
+  const widgets       = useAppStore((s) => s.widgets);
+  const tournament    = useAppStore((s) => s.tournament);
+  const authorizations = useAppStore((s) => s.authorizations);
+
   const setSettings   = useAppStore((s) => s.setSettings);
-  const systemCfg     = useAppStore((s) => s.systemCfg);
-  const setSystemCfg  = useAppStore((s) => s.setSystemCfg);
-  const tourneyCfg    = useAppStore((s) => s.tourneyCfg);
-  const setTourneyCfg = useAppStore((s) => s.setTourneyCfg);
-  const authStatus    = useAppStore((s) => s.authStatus);
-  const setAuthStatus = useAppStore((s) => s.setAuthStatus);
+  const setWidgets = useAppStore((s) => s.setWidgets);
+  const setAuthorizations = useAppStore((s) => s.setAuthorizations);
+  const setTournament = useAppStore((s) => s.setTournament);
+  const setActiveProfile = useAppStore((s) => s.setActiveProfile);
 
   // Scale UI
   const scale = useScale();
-  const [isLoaded, setIsLoaded] = useState(false);
+  const isLoaded = useAppStore((s) => s.isLoaded);
 
-  // Initialization application
-  useAppInit({locale, setSystemCfg, setTourneyCfg, setSettings, setLang, setIsLoaded, setTheme, setSidePanelCollapsed});
   // Delay before save data from fields in configs
-  const {debouncedSaveSystem, debouncedSaveTourney, debouncedSaveSettings} = useAutoSave();
-  const { updateConfig } = useConfigUpdater({
-    isLoaded,
-    setSystemCfg,
-    setTourneyCfg,
-    setSettings,
-    debouncedSaveSystem,
+  const {
     debouncedSaveTourney,
     debouncedSaveSettings,
+    debouncedSaveWidgets,
+    debouncedSaveAuthorizations,
+  } = useAutoSave();
+  
+  const { updateConfig } = useConfigUpdater({
+    isLoaded,
+    debouncedSaveSettings,
+    debouncedSaveTourney,
+    debouncedSaveWidgets,
+    debouncedSaveAuthorizations,
+  });
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!authorizations) return;
+    debouncedSaveAuthorizations(authorizations);
+  }, [authorizations, isLoaded, debouncedSaveAuthorizations]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!widgets) return;
+    debouncedSaveWidgets(widgets);
+  }, [widgets, isLoaded, debouncedSaveWidgets]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!tournament) return;
+    debouncedSaveTourney(tournament);
+  }, [tournament, isLoaded, debouncedSaveTourney]);
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!settings) return;
+    debouncedSaveSettings(settings);
+  }, [settings, isLoaded, debouncedSaveSettings]);
+  const setIsLoaded = useAppStore((s) => s.setIsLoaded);
+
+  // Initialization application
+  useAppInit({
+    locale,
+    setTournament,    
+    setWidgets,       
+    setAuthorizations,
+    setActiveProfile, 
+    setSettings,
+    setLang,
+    setTheme,
+    setSidePanelCollapsed,
   });
   
+
   // System variables
 
   // Status of the messaging system
@@ -155,9 +177,9 @@ const bracketFlagsInitializedRef = useRef(false);
 // 1. Инициализация из конфига — как только он загрузился
 useEffect(() => {
     if (bracketFlagsInitializedRef.current) return;
-    if (!tourneyCfg?.widgetBracket) return;
+    if (!tournament?.widgetBracket) return;
 
-    const { clearBackground, hideStages, bracketMode, scale, autoRefresh } = tourneyCfg.widgetBracket;
+    const { clearBackground, hideStages, bracketMode, scale, autoRefresh } = tournament.widgetBracket;
     console.log('[App] init bracketFlags from config:', {
         clearBackground, hideStages, bracketMode, scale, autoRefresh,
     });
@@ -171,7 +193,7 @@ useEffect(() => {
     });
 
     bracketFlagsInitializedRef.current = true;
-}, [tourneyCfg]);
+}, [tournament]);
 
 // 2. Сохранение в конфиг — только после инициализации
 useEffect(() => {
@@ -184,7 +206,7 @@ useEffect(() => {
 
     updateConfig("tournament", {
         widgetBracket: {
-            ...tourneyCfg?.widgetBracket,
+            ...tournament?.widgetBracket,
             clearBackground: bracketFlags.transparent,
             hideStages:      bracketFlags.hideRounds,
             bracketMode:     bracketFlags.bracketMode,
