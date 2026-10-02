@@ -24,6 +24,7 @@ export function getThemeClasses(theme) {
         label: isDark
             ? "text-slate-500"
             : "text-slate-400",
+        btnActive: "bg-blue-600 hover:bg-blue-500 text-white",
         btnCopy: isDark
             ? "bg-black/20 border-white/10"
             : "bg-white border-slate-200",

@@ -11,6 +11,8 @@ import {
   HardDriveDownload,
   X,
   Crown,
+  SquareMousePointer,
+  Blocks,
 } from "lucide-react";
 import { Modal } from "../modals/Modal.jsx";
 import { PlatformBtn } from "../../components/ui/PlatformButton.jsx";
@@ -20,7 +22,8 @@ import { locales } from "../../utils/listLocales.js";
 import { useAppStore } from "../../store/useAppStore";
 import { updatePlatformSlot, isSlotOccupied } from "../../utils/authorizations";
 import { AUTH_STATUS, AUTH_STATUS_META, authStatusLocaleKey, isAuthorized, needsReauth } from "../../utils/authStatus";
-import { SlotStatusBadge } from "../ui/SlotStatusBadge.jsx";
+import { EmptyState } from "../ui/EmptyState.jsx";
+import { DeleteClientToken } from "../../../wailsjs/go/application/App";
 
 const SlotCard = ({
   index,
@@ -34,7 +37,7 @@ const SlotCard = ({
   const isOccupied = isSlotOccupied(client);
   const status = client?.status || AUTH_STATUS.UNKNOWN;
   const meta = AUTH_STATUS_META[status] || AUTH_STATUS_META[AUTH_STATUS.UNKNOWN];
-  const statusText = locale?.Platform?.[authStatusLocaleKey(status)] || status;
+  const statusText = locale?.[authStatusLocaleKey(status)] || status;
 
   const COLOR_CLASSES = {
     slate:   "text-slate-400",
@@ -67,10 +70,12 @@ const SlotCard = ({
         #{index + 1}
       </span>
 
-      {isOccupied && (
+      {(isOccupied || isActive) && (
         <button
           onClick={(e) => { e.stopPropagation(); onRemove(); }}
-          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500/80 text-white flex items-center justify-center opacity-0 group-hover/slot:opacity-100 transition-opacity z-10"
+          className={`absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center transition-opacity z-10 ${
+            isActive ? "opacity-100" : "opacity-0 group-hover/slot:opacity-100"
+          }`}
         >
           <X size={10} />
         </button>
@@ -78,7 +83,6 @@ const SlotCard = ({
 
       {isOccupied ? (
         <>
-          {/* Имя: input только в активном слоте, иначе — span */}
           {isActive ? (
             <input
               type="text"
@@ -227,12 +231,25 @@ const AuthorizationModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeAuthorizationSettings, activeSlotIndex, authorizations]);
 
-  // Открытие/закрытие панели настроек платформы
+  const TOURNAMENT_IDS = ["startgg", "challonge"];
+  const MESSENGER_IDS  = ["discord", "telegram"];
+
+  const closeSettings = useCallback(() => {
+    setActiveAuthorizationSettings(null);
+    setActiveSlotIndex(null);
+    setActiveTournamentPlatform(null);
+    setActiveDeliveryMethod(null);
+  }, [
+    setActiveAuthorizationSettings,
+    setActiveSlotIndex,
+    setActiveTournamentPlatform,
+    setActiveDeliveryMethod,
+  ]);
+
   const toggleSettings = useCallback((id) => {
     toggleAuthorizationSettings(id);
   }, [toggleAuthorizationSettings]);
 
-  // Клик по слоту: пустой — создаём клиента, занятый — редактируем
   const handleSlotSelect = (index) => {
     if (activeSlotIndex === index) {
       setActiveSlotIndex(null);
@@ -254,8 +271,14 @@ const AuthorizationModal = ({
     setActiveSlotIndex(index);
   };
 
-  const handleSlotRemove = (index) => {
-  // Удаляем слот → заменяем на blank (Created: false)
+  const handleSlotRemove = async (index) => {
+    try {
+      await DeleteClientToken(activeAuthorizationSettings, index);
+    } catch (err) {
+      console.warn("[handleSlotRemove] failed to delete token file:", err);
+    }
+    
+    // Удаляем слот → заменяем на blank (Created: false)
     updateConfig("authorizations", {
       [activeAuthorizationSettings]: updatePlatformSlot(
         getPlatform(activeAuthorizationSettings),
@@ -285,14 +308,6 @@ const AuthorizationModal = ({
     updatePlatformSlot,
   });
 
-  const handleDiscordClick = useCallback(() => {
-    handleMessengerClick("discord");
-  }, [handleMessengerClick]);
-
-  const handleDiscordSettingsClick = useCallback(() => {
-    toggleSettings("discord");
-  }, [toggleSettings]);
-
   const { handleTournamentPlatformClick, authorizeTournamentSlot } =
   useTournamentPlatform({
     locale,
@@ -305,14 +320,6 @@ const AuthorizationModal = ({
     updateConfig,
     updatePlatformSlot,
   });
-
-  const handleStartggClick = useCallback(() => {
-    handleTournamentPlatformClick("startgg");
-  }, [handleTournamentPlatformClick]);
-
-  const handleStartggSettingsClick = useCallback(() => {
-    toggleSettings("startgg");
-  }, [toggleSettings]);
 
   const getAuthorizedCount = (id) =>
     getSlots(id).filter((s) => s.status === AUTH_STATUS.AUTHORIZED).length;
@@ -333,6 +340,47 @@ const AuthorizationModal = ({
     });
   };
 
+  const handlePlatformClick = useCallback((id) => {
+    // повторный клик по активной — закрыть всё
+    if (activeAuthorizationSettings === id) {
+      closeSettings();
+      return;
+    }
+
+    // опциональная предварительная логика хуков (валидация и т.п.)
+    if (TOURNAMENT_IDS.includes(id)) {
+      handleTournamentPlatformClick(id);   // внутри может выставить activeTournamentPlatform
+    } else if (MESSENGER_IDS.includes(id)) {
+      handleMessengerClick(id);            // внутри может выставить activeDeliveryMethod
+    }
+
+    // финально фиксируем выбор — стор и UI совпадают
+    setActiveAuthorizationSettings(id);
+    setActiveSlotIndex(null);
+
+    // на всякий случай синхронизируем оба поля (если хук не выставил)
+    if (TOURNAMENT_IDS.includes(id)) {
+      setActiveTournamentPlatform(id);
+      setActiveDeliveryMethod(null);
+    } else if (MESSENGER_IDS.includes(id)) {
+      setActiveDeliveryMethod(id);
+      setActiveTournamentPlatform(null);
+    }
+  }, [
+    activeAuthorizationSettings,
+    closeSettings,
+    handleTournamentPlatformClick,
+    handleMessengerClick,
+    setActiveAuthorizationSettings,
+    setActiveSlotIndex,
+    setActiveTournamentPlatform,
+    setActiveDeliveryMethod,
+  ]);
+
+  const currentStatus = getCurrentSlot()?.status;
+  const isAuthorizeDisabled =
+    currentStatus === AUTH_STATUS.PENDING ||
+    currentStatus === AUTH_STATUS.AUTHORIZED;
   // ============================================================
   // RENDER
   // ============================================================
@@ -347,19 +395,25 @@ const AuthorizationModal = ({
         <span className="text-[9px] font-black uppercase text-blue-500 italic px-1">
           {locale.Platform.Tourney}
         </span>
+        {console.log("startgg active prop:", activeTournamentPlatform === "startgg", activeTournamentPlatform)}
         <PlatformBtn
           label="Start.gg"
           authorizedCount={getAuthorizedCount("startgg")}
           reauthCount={getReauthCount("startgg")}
           slotsCount={getOccupiedCount("startgg")}
-          active={activeTournamentPlatform === "startgg"}
-          onClick={handleStartggClick}
-          onSettingsClick={handleStartggSettingsClick}
+          active={activeAuthorizationSettings  === "startgg"}
+          onClick={() => handlePlatformClick("startgg")}
           themeClasses={themeClasses}
         />
         <PlatformBtn
           label="Challonge (WIP)"
           themeClasses={themeClasses}
+          locked={true}
+        />
+        <PlatformBtn
+          label="Toornament (WIP)"
+          themeClasses={themeClasses}
+          locked={true}
         />
       </div>
 
@@ -370,9 +424,8 @@ const AuthorizationModal = ({
         </span>
         <PlatformBtn
           label="Discord"
-          active={activeDeliveryMethod === "discord"}
-          onClick={handleDiscordClick}
-          onSettingsClick={handleDiscordSettingsClick}
+          active={activeAuthorizationSettings  === "discord"}
+          onClick={() => handlePlatformClick("discord")}
           themeClasses={themeClasses}
           slotsCount={getOccupiedCount("discord")}
           authorizedCount={getAuthorizedCount("discord")}
@@ -381,10 +434,12 @@ const AuthorizationModal = ({
         <PlatformBtn
           label="Telegram (WIP)"
           themeClasses={themeClasses}
+          locked={true}
         />
         <PlatformBtn
           label="E-mail (WIP)"
           themeClasses={themeClasses}
+          locked={true}
         />
       </div>
     </div>
@@ -395,15 +450,19 @@ const AuthorizationModal = ({
     <div className="col-span-6 overflow-y-auto pr-1">
       {!activeAuthorizationSettings ? (
         <div className="h-full flex items-center justify-center text-slate-600 text-xs italic">
-          {locale.Platform.SelectPlatformHint || "Выберите платформу слева"}
+          <EmptyState
+              icon={SquareMousePointer}
+              title={locale.EmptyFieldHeader}
+              description={locale.EmptyFieldHint}
+          />
         </div>
       ) : (
         <section className={`p-4 rounded-2xl border space-y-4 ${themeClasses.tempSection}`}>
           {/* Заголовок */}
           <div className="flex items-center justify-between border-b pb-2 border-current/5">
             <h4 className="text-[0.625rem] font-black uppercase text-amber-500 italic flex items-center gap-2">
-              <Crown size={12} />
-              {activeAuthorizationSettings} — Клиенты (
+              <Blocks size={12} />
+              {activeAuthorizationSettings} — {locale.ClientsLabel} (
               {getOccupiedCount(activeAuthorizationSettings)}/5)
             </h4>
             <button
@@ -428,8 +487,7 @@ const AuthorizationModal = ({
                 onSelect={() => handleSlotSelect(index)}
                 onRemove={() => handleSlotRemove(index)}
                 onNameChange={(value) => handleSlotNameChange(index, value)}
-                // TODO: Add locale
-                locale={locale}
+                locale={locale.Platform.AuthorizationStatuses}
               />
             ))}
           </div>
@@ -439,7 +497,7 @@ const AuthorizationModal = ({
             <div className="pt-3 border-slate-700/50 space-y-3 animate-fadeIn">
               <div className="flex items-center gap-2">
                 <span className="text-[9px] font-black uppercase text-blue-400 italic">
-                  {locale.Platform.SlotSettings || "Настройки слота"} #{activeSlotIndex + 1}
+                  {locale.ClientSettings} #{activeSlotIndex + 1}
                 </span>
                 <div className="flex-1 h-px bg-slate-700/50" />
               </div>
@@ -486,16 +544,16 @@ const AuthorizationModal = ({
                       onClick={() =>
                         authorizeTournamentSlot(activeAuthorizationSettings, activeSlotIndex)
                       }
-                      disabled={getCurrentSlot()?.status === AUTH_STATUS.PENDING}
+                      disabled={isAuthorizeDisabled}
                       className={`px-4 py-2 rounded-lg text-xs font-black uppercase italic transition-colors ${
-                        getCurrentSlot()?.status === AUTH_STATUS.PENDING
+                        isAuthorizeDisabled
                           ? "bg-slate-700 text-slate-500 cursor-not-allowed"
                           : "bg-blue-600 hover:bg-blue-500 text-white"
                       }`}
                     >
                       {getCurrentSlot()?.status === AUTH_STATUS.PENDING
-                        ? locale.Platform.Authorizing || "Authorizing..."
-                        : locale.Platform.Authorize || "Authorize"}
+                        ? locale.AuthorizeButtonLabel
+                        : locale.SignInButtonLabel}
                     </button>
                   </div>
                 </>

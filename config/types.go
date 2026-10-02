@@ -5,13 +5,13 @@ import "time"
 type AuthStatus string
 
 const (
-	AuthStatusUnknown      AuthStatus = "unknown"
 	AuthStatusAuthorized   AuthStatus = "authorized"
 	AuthStatusUnauthorized AuthStatus = "unauthorized"
 	AuthStatusExpired      AuthStatus = "expired"
 	AuthStatusError        AuthStatus = "error"
 	AuthStatusInvalid      AuthStatus = "invalid"
 	AuthStatusPending      AuthStatus = "pending"
+	AuthStatusUnknown      AuthStatus = "unknown"
 )
 
 // ============================================================

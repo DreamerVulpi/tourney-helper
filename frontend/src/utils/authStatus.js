@@ -76,12 +76,12 @@ export const needsReauth  = (status) =>
 
 export const authStatusLocaleKey = (status) => {
   switch (status) {
-    case AUTH_STATUS.AUTHORIZED:   return "StatusAuthorized";
-    case AUTH_STATUS.UNAUTHORIZED: return "StatusUnauthorized";
-    case AUTH_STATUS.EXPIRED:      return "StatusExpired";
-    case AUTH_STATUS.ERROR:        return "StatusError";
-    case AUTH_STATUS.INVALID:      return "StatusInvalid";
-    case AUTH_STATUS.PENDING:      return "StatusPending";
-    default:                       return "StatusUnknown";
+    case AUTH_STATUS.AUTHORIZED:   return "Authorized";
+    case AUTH_STATUS.UNAUTHORIZED: return "Unauthorized";
+    case AUTH_STATUS.EXPIRED:      return "Expired";
+    case AUTH_STATUS.ERROR:        return "Error";
+    case AUTH_STATUS.INVALID:      return "Invalid";
+    case AUTH_STATUS.PENDING:      return "Pending";
+    default:                       return "Unknown";
   }
 };

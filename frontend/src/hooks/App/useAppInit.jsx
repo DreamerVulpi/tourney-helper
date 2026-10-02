@@ -8,6 +8,7 @@ import {
   GetActiveProfileName,
 } from "../../../wailsjs/go/application/App.js";
 import { useAppStore } from "../../store/useAppStore";
+import { RestoreClientStatuses } from "../../../wailsjs/go/application/App";
 
 export function useAppInit({
   locale,
@@ -127,10 +128,41 @@ export function useAppInit({
             discord:   normalizePlatform(auths.discord),
             telegram:  normalizePlatform(auths.telegram),
           });
+            setAuthorizations((prev) => {
+              const markPending = (platform) => ({
+                ...platform,
+                slots: (platform?.slots || []).map((s) =>
+                  s && (s.clientID || s.token || s.created)
+                    ? { ...s, status: "pending" }
+                    : s
+                ),
+              });
+
+              return {
+                startgg:   markPending(prev.startgg),
+                challonge: markPending(prev.challonge),
+                discord:   markPending(prev.discord),
+                telegram:  markPending(prev.telegram),
+              };
+            });
         }
 
         isConfigLoadedRef.current = true;
         setIsLoaded(true);
+        RestoreClientStatuses()
+          .then((restored) => {
+            if (restored && setAuthorizations) {
+              setAuthorizations({
+                startgg:   normalizePlatform(restored.startgg),
+                challonge: normalizePlatform(restored.challonge),
+                discord:   normalizePlatform(restored.discord),
+                telegram:  normalizePlatform(restored.telegram),
+              });
+            }
+          })
+          .catch((err) => {
+            console.warn("Failed to restore client statuses:", err);
+          });
       } catch (err) {
         console.error(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
       }

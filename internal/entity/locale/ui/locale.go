@@ -2,6 +2,16 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type AuthorizationStatuses struct {
+	Authorized   string
+	Unauthorized string
+	Expired      string
+	Error        string
+	Invalid      string
+	Pending      string
+	Unknown      string
+}
+
 type Profile struct {
 	Title  string
 	Add    string
@@ -274,7 +284,7 @@ type ConfigurationLogo struct {
 }
 
 type Platform struct {
-	AuthorizeStatePlatform       AuthorizeStatePlatform
+	AuthorizationStatuses        AuthorizationStatuses
 	RequireMsgMessengerPlatform  string
 	RequireMsgTournamentPlatform string
 	LaunchMsg                    string

@@ -3,17 +3,16 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"io"
+	"errors"
 	"os"
+	"path/filepath"
+	"time"
 
-	"log"
 	"net/http"
 
 	"fmt"
 
 	"os/exec"
-
-	"bytes"
 
 	loggerEntity "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
@@ -32,6 +31,9 @@ const (
 	challongeUserURL  = "https://api.challonge.com/v2/me.json"
 )
 
+var ErrTokenNotFound = errors.New("token file not found")
+var ErrTokenMissing = errors.New("token file missing")
+
 type Identity struct {
 	ID          string
 	Username    string
@@ -43,6 +45,7 @@ type AuthClient struct {
 	NamePlatform   string
 	Config         *oauth2.Config
 	HTTPClient     *http.Client
+	Token          *oauth2.Token
 	TokenFile      string
 	CallbackPath   string
 	CallbackServer *OAuthCallbackServer
@@ -96,6 +99,10 @@ func GetChallongeOauth2() *oauth2.Config {
 }
 
 func saveTokenToFile(filename string, token *oauth2.Token) error {
+	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
+		return err
+	}
+
 	bytes, err := json.Marshal(token)
 	if err != nil {
 		return err
@@ -106,10 +113,17 @@ func saveTokenToFile(filename string, token *oauth2.Token) error {
 func GetTokenFromFile(filename string) (*oauth2.Token, error) {
 	bytes, err := os.ReadFile(filename)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrTokenNotFound
+		}
 		return nil, err
 	}
+
 	token := &oauth2.Token{}
-	return token, json.Unmarshal(bytes, token)
+	if err := json.Unmarshal(bytes, token); err != nil {
+		return nil, err
+	}
+	return token, nil
 }
 
 func (ac *AuthClient) Init(ctx context.Context) error {
@@ -121,7 +135,26 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 	}
 
 	token, err := GetTokenFromFile(ac.TokenFile)
-	if err != nil || !token.Valid() {
+	if err != nil && !errors.Is(err, ErrTokenNotFound) {
+		logger.Log(loggerEntity.Warning, fmt.Sprintf("Token file is corrupted: %v", err))
+		err = nil
+	}
+
+	tokenMissing := err != nil && errors.Is(err, ErrTokenNotFound)
+	tokenCorrupted := err != nil && !errors.Is(err, ErrTokenNotFound)
+
+	if tokenCorrupted {
+		logger.Log(loggerEntity.Warning, fmt.Sprintf("Token file corrupted: %v, restarting OAuth", err))
+	}
+
+	needOAuth := tokenMissing || tokenCorrupted || token == nil
+
+	if !needOAuth && tokenExpired(token) && token.RefreshToken == "" {
+		logger.Log(loggerEntity.Warning, fmt.Sprintf("Token expired and no refresh_token in %s. Starting OAuth flow...", ac.TokenFile))
+		needOAuth = true
+	}
+
+	if needOAuth {
 		logger.Log(loggerEntity.Warning,
 			fmt.Sprintf("Token invalid or missing is %s, starting web flow...\n", ac.TokenFile))
 
@@ -160,6 +193,7 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 		}
 	}
 
+	ac.Token = token
 	ac.HTTPClient = ac.Config.Client(ctx, token)
 
 	return nil
@@ -172,142 +206,48 @@ func (ac *AuthClient) ensureClient(ctx context.Context) error {
 	return nil
 }
 
-func (ac *AuthClient) GetDiscordMe(ctx context.Context) (*Identity, error) {
-	if err := ac.ensureClient(ctx); err != nil {
-		return nil, err
+func tokenExpired(t *oauth2.Token) bool {
+	if t == nil {
+		return true
 	}
-
-	req, err := http.NewRequestWithContext(ctx, "GET", "https://discord.com/api/users/@me", nil)
-	if err != nil {
-		return nil, err
+	if t.Expiry.IsZero() {
+		return false
 	}
-	resp, err := ac.HTTPClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("Discord API returned %s: %s", resp.Status, string(body))
-	}
-
-	var data struct {
-		ID       string `json:"id"`
-		Username string `json:"username"`
-	}
-	err = json.NewDecoder(resp.Body).Decode(&data)
-	if err != nil {
-		return nil, err
-	}
-	return &Identity{ID: data.ID, Username: data.Username, Platform: "discord"}, nil
+	return time.Now().After(t.Expiry)
 }
 
-func (ac *AuthClient) GetChallongeMe(ctx context.Context) (*Identity, error) {
-	if err := ac.ensureClient(ctx); err != nil {
-		return nil, err
+func (ac *AuthClient) TryRestore(ctx context.Context) error {
+	if ac.Config == nil {
+		return fmt.Errorf("config is nil")
+	}
+	if ac.TokenFile == "" {
+		return fmt.Errorf("token file path is empty")
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", challongeUserURL, nil)
+	token, err := GetTokenFromFile(ac.TokenFile)
+	if errors.Is(err, ErrTokenNotFound) {
+		return ErrTokenMissing
+	}
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("read token: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/vnd.api+json")
-	req.Header.Set("Accept", "application/json")
-
-	req.Header.Set("Authorization", "Bearer OauthTokenGoesInPlaceOfThis")
-	req.Header.Set("Authorization-Type", "v2")
-
-	resp, err := ac.HTTPClient.Do(req)
+	// Токен есть. Пробуем refresh через oauth2.
+	ts := ac.Config.TokenSource(ctx, token)
+	newToken, err := ts.Token()
 	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("getChallongeMe | challonge API error: status %d", resp.StatusCode)
+		return fmt.Errorf("refresh token: %w", err)
 	}
 
-	var response struct {
-		Data struct {
-			ID         string `json:"id"`
-			Attributes struct {
-				Username string `json:"username"`
-			} `json:"attributes"`
-		} `json:"data"`
+	// Если токен обновился — сохраняем
+	if newToken.AccessToken != token.AccessToken {
+		if err := saveTokenToFile(ac.TokenFile, newToken); err != nil {
+			logger.Log(loggerEntity.Warning,
+				fmt.Sprintf("failed to save refreshed token: %v", err))
+		}
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, err
-	}
-
-	return &Identity{
-		ID:       response.Data.ID,
-		Username: response.Data.Attributes.Username,
-		Platform: "challonge",
-	}, nil
-}
-
-func (ac *AuthClient) GetStartGGMe(ctx context.Context) (*Identity, error) {
-	if err := ac.ensureClient(ctx); err != nil {
-		return nil, err
-	}
-
-	query := `{"query": "query { currentUser { id name } }"}`
-
-	req, err := http.NewRequestWithContext(ctx, "POST", "https://api.start.gg/gql/alpha", bytes.NewBufferString(query))
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := ac.HTTPClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var response struct {
-		Data struct {
-			CurrentUser struct {
-				ID   json.Number `json:"id"`
-				Name string      `json:"name"`
-			} `json:"currentUser"`
-		} `json:"data"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return nil, err
-	}
-
-	return &Identity{
-		ID:       response.Data.CurrentUser.ID.String(),
-		Username: response.Data.CurrentUser.Name,
-		Platform: "startgg",
-	}, nil
-}
-
-func TestStartGGCall(ac *AuthClient) {
-	ctx := context.Background()
-
-	me, err := ac.GetStartGGMe(ctx)
-	if err != nil {
-		log.Fatalf("Failed check user on Start.gg: %v", err)
-	}
-
-	fmt.Printf("Success! User: %s (ID: %s) on platform %s\n",
-		me.Username, me.ID, me.Platform)
-}
-
-func TestChallongeCall(ac *AuthClient) {
-	ctx := context.Background()
-
-	me, err := ac.GetChallongeMe(ctx)
-	if err != nil {
-		log.Fatalf("Failed check user on Challonge: %v", err)
-	}
-
-	fmt.Printf("Success! User: %s (ID: %s) on platform %s\n",
-		me.Username, me.ID, me.Platform)
+	ac.Token = newToken
+	ac.HTTPClient = ac.Config.Client(ctx, newToken)
+	return nil
 }

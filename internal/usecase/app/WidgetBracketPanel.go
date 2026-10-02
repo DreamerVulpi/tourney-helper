@@ -71,26 +71,37 @@ func (a *App) LaunchWidgetBracket(
 		renderer renderer.BracketRenderer
 	)
 
+	var tourneyCred config.ClientCredentials
+	var tourneySlotIndex int
+
 	switch tournamentPlatform {
 	case "startgg":
-		cred, ok := cfgAuthorizations.Startgg.GetActiveSlot()
+		cred, idx, ok := cfgAuthorizations.Startgg.GetActiveSlotWithIndex()
 		if !ok {
-			err := fmt.Errorf("No active client slot for startgg")
+			err := fmt.Errorf("no active client slot for startgg")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		if len(cred.ClientID) == 0 {
-			err := fmt.Errorf("No clientID for authorization\n")
+		tourneyCred, tourneySlotIndex = cred, idx
+
+		if tourneyCred.ClientID == "" {
+			err := fmt.Errorf("no clientID in startgg slot #%d", tourneySlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		if len(cred.SecretClient) == 0 {
-			err := fmt.Errorf("No secretClient for bot authorization\n")
+		if tourneyCred.SecretClient == "" {
+			err := fmt.Errorf("no secretClient in startgg slot #%d", tourneySlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
 
-		if err := a.AuthorizeStartgg(cred.ClientID, cred.SecretClient); err != nil {
+		if err := a.AuthorizeStartgg(tourneyCred.ClientID, tourneyCred.SecretClient, tourneySlotIndex); err != nil {
+			logger.Log(entityLogger.Error, err.Error())
+			return err
+		}
+		logger.Log(entityLogger.Success, fmt.Sprintf("Start.gg slot #%d authorized", tourneySlotIndex+1))
+
+		if err := a.AuthorizeStartgg(cred.ClientID, cred.SecretClient, tourneySlotIndex); err != nil {
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}

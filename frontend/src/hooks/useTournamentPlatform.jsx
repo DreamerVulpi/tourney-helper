@@ -57,6 +57,7 @@ export const useTournamentPlatform = ({
         await authorizeTournamentPlatform(platformName, {
           clientID,
           secretClient,
+          slotIndex,
         });
 
         await markSlotStatus(

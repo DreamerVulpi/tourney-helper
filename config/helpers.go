@@ -1,6 +1,9 @@
 package config
 
-import "time"
+import (
+	"os"
+	"time"
+)
 
 // SetSlotStatus устанавливает статус слота.
 func (p *PlatformAuthorizations) SetSlotStatus(index int, status AuthStatus, reason string) {
@@ -142,4 +145,37 @@ func NewDefaultTournament() ConfigTournament {
 
 func IsSlotOccupied(c ClientCredentials) bool {
 	return c.ClientID != "" || c.Name != "" || c.SecretClient != "" || c.Token != ""
+}
+
+func EnsureClientDir(profileName string) error {
+	dir := GetProfileClientsDir(profileName)
+	return os.MkdirAll(dir, 0755)
+}
+
+// GetActiveSlotWithIndex возвращает активный слот и его индекс.
+// Если активный слот не задан или пуст — ok=false.
+func (p PlatformAuthorizations) GetActiveSlotWithIndex() (ClientCredentials, int, bool) {
+	if p.ActiveSlot < 0 || p.ActiveSlot >= len(p.Slots) {
+		return ClientCredentials{}, -1, false
+	}
+	c := p.Slots[p.ActiveSlot]
+	if !IsSlotOccupied(c) {
+		return ClientCredentials{}, -1, false
+	}
+	return c, p.ActiveSlot, true
+}
+
+// GetActiveClientCredentialsWithIndex — удобный хелпер для ConfigAuthorizations.
+func (c ConfigAuthorizations) GetActiveClientCredentialsWithIndex(platformID string) (ClientCredentials, int, bool) {
+	switch platformID {
+	case "startgg":
+		return c.Startgg.GetActiveSlotWithIndex()
+	case "challonge":
+		return c.Challonge.GetActiveSlotWithIndex()
+	case "discord":
+		return c.Discord.GetActiveSlotWithIndex()
+	case "telegram":
+		return c.Telegram.GetActiveSlotWithIndex()
+	}
+	return ClientCredentials{}, -1, false
 }

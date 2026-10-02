@@ -177,7 +177,7 @@ func writeTOML(path string, cfg any) error {
 // РЕЕСТР ПРОФИЛЕЙ
 // ============================================================
 
-// LoadRegistry читает config/profiles.toml.
+// Load from config/profiles.toml
 func LoadRegistry() (ProfilesRegistry, error) {
 	var reg ProfilesRegistry
 	path := GetRegistryPath()
@@ -190,7 +190,7 @@ func LoadRegistry() (ProfilesRegistry, error) {
 	return reg, nil
 }
 
-// SaveRegistry пишет config/profiles.toml.
+// Save in config/profiles.toml
 func SaveRegistry(reg ProfilesRegistry) error {
 	path := GetRegistryPath()
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
@@ -199,8 +199,6 @@ func SaveRegistry(reg ProfilesRegistry) error {
 	return writeTOML(path, reg)
 }
 
-// CreateProfile — создаёт профиль (папки + дефолтные конфиги) и
-// регистрирует его в реестре. Активным делает его же, если не было активного.
 func CreateProfile(name string) error {
 	if name == "" {
 		return fmt.Errorf("profile name cannot be empty")
@@ -243,9 +241,7 @@ func CreateProfile(name string) error {
 	return SaveRegistry(reg)
 }
 
-// DeleteProfile — удаляет профиль полностью (папку + запись в реестре).
 func DeleteProfile(name string) error {
-	// 1. Удаляем папку
 	dir := GetProfileDir(name)
 	if FileExists(dir) {
 		if err := os.RemoveAll(dir); err != nil {
@@ -253,7 +249,6 @@ func DeleteProfile(name string) error {
 		}
 	}
 
-	// 2. Обновляем реестр
 	reg, err := LoadRegistry()
 	if err != nil {
 		return err
@@ -279,7 +274,6 @@ func DeleteProfile(name string) error {
 	return SaveRegistry(reg)
 }
 
-// SetActiveProfile — переключает активный профиль.
 func SetActiveProfile(name string) error {
 	reg, err := LoadRegistry()
 	if err != nil {
@@ -303,7 +297,6 @@ func SetActiveProfile(name string) error {
 	return SaveRegistry(reg)
 }
 
-// ListProfiles — возвращает список метаданных профилей.
 func ListProfiles() ([]ProfileMeta, error) {
 	reg, err := LoadRegistry()
 	if err != nil {
@@ -312,11 +305,25 @@ func ListProfiles() ([]ProfileMeta, error) {
 	return reg.Profiles, nil
 }
 
-// GetActiveProfileName — возвращает имя активного профиля (или "").
 func GetActiveProfileName() (string, error) {
 	reg, err := LoadRegistry()
 	if err != nil {
 		return "", err
 	}
 	return reg.Active, nil
+}
+
+// Format: profiles/<profile>/clients/<profile>_<platform>_client_<N>.json
+func GetClientTokenPath(profileName, platformID string, slotIndex int) string {
+	fileName := fmt.Sprintf("%s_%s_client_%d.json", profileName, platformID, slotIndex+1)
+	return filepath.Join(GetProfileClientsDir(profileName), fileName)
+}
+
+func DeleteClientToken(profileName, platformID string, slotIndex int) error {
+	path := GetClientTokenPath(profileName, platformID, slotIndex)
+	if !FileExists(path) {
+		return nil
+	}
+
+	return os.Remove(path)
 }

@@ -67,10 +67,23 @@ func (a *App) GetTournamentPlatformLimits() entityPlatformRules.Limits {
 	return a.ns.GetTournamentPlatformLimits()
 }
 
-func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
+func (a *App) AuthorizeDiscord(clientID, clientSecret string, slotIndex int) error {
+	if a.ActiveProfile == "" {
+		return fmt.Errorf("no active profile")
+	}
+	if slotIndex < 0 || slotIndex >= config.SlotsPerPlatform {
+		return fmt.Errorf("invalid slot index: %d", slotIndex)
+	}
+
+	if err := config.EnsureClientDir(a.ActiveProfile); err != nil {
+		return fmt.Errorf("failed to ensure client dir: %w", err)
+	}
+
+	tokenPath := config.GetClientTokenPath(a.ActiveProfile, "discord", slotIndex)
+
 	client := &auth.AuthClient{
 		Config:         auth.GetDiscordOauth2(clientID, clientSecret),
-		TokenFile:      "token_discord.json",
+		TokenFile:      tokenPath, // ← абсолютный путь в профиле
 		CallbackPath:   "/discord/callback",
 		CallbackServer: a.OAuthServer,
 	}
@@ -79,31 +92,34 @@ func (a *App) AuthorizeDiscord(clientID, clientSecret string) error {
 		return fmt.Errorf("failed to initialize discord client: %w", err)
 	}
 
-	_, err := client.GetAccessToken(client.TokenFile)
-	if err != nil {
-		return err
-	}
-
 	client.NamePlatform = "Discord"
 	a.MessengerClient = client
 	return nil
 }
 
-func (a *App) AuthorizeStartgg(clientID, clientSecret string) error {
+func (a *App) AuthorizeStartgg(clientID, clientSecret string, slotIndex int) error {
+	if a.ActiveProfile == "" {
+		return fmt.Errorf("no active profile")
+	}
+	if slotIndex < 0 || slotIndex >= config.SlotsPerPlatform {
+		return fmt.Errorf("invalid slot index: %d", slotIndex)
+	}
+
+	if err := config.EnsureClientDir(a.ActiveProfile); err != nil {
+		return fmt.Errorf("failed to ensure client dir: %w", err)
+	}
+
+	tokenPath := config.GetClientTokenPath(a.ActiveProfile, "startgg", slotIndex)
+
 	client := &auth.AuthClient{
 		Config:         auth.GetStartggOauth2(clientID, clientSecret),
-		TokenFile:      "token_startgg.json",
+		TokenFile:      tokenPath,
 		CallbackPath:   "/startgg/callback",
 		CallbackServer: a.OAuthServer,
 	}
 
 	if err := client.Init(a.ctx); err != nil {
 		return fmt.Errorf("failed to initialize startgg client: %w", err)
-	}
-
-	_, err := client.GetAccessToken(client.TokenFile)
-	if err != nil {
-		return err
 	}
 
 	client.NamePlatform = "Startgg"
@@ -125,7 +141,7 @@ func (a *App) InitSystemNotification(
 		a.TournamentClient,
 		"Discord",
 		cfgTournament.UrlToTournament,
-		settings.DebugMode, // ← было cfgBot.DebugMode.Mode
+		settings.DebugMode,
 		cfgTournament.Game.Name,
 		nil,
 	)
@@ -171,86 +187,6 @@ func (a *App) InitSystemNotification(
 	return &dh, nil
 }
 
-// func (a *App) ParseTournamentURL(platform string, rawURL string) (string, error) {
-// 	if len(rawURL) == 0 {
-// 		return "", fmt.Errorf("No URL provided")
-// 	}
-
-// 	rawURL = strings.TrimSpace(rawURL)
-
-// 	if !strings.HasPrefix(rawURL, "http://") && !strings.HasPrefix(rawURL, "https://") {
-// 		rawURL = "https://" + rawURL
-// 	}
-
-// 	u, err := url.Parse(rawURL)
-// 	if err != nil {
-// 		return "", fmt.Errorf("Error parsing the URL: %v", err)
-// 	}
-
-// 	parts := strings.Split(u.Path, "/")
-
-// 	switch strings.ToLower(platform) {
-// 	case "startgg":
-// 		if !strings.Contains(u.Host, "start.gg") {
-// 			return "", fmt.Errorf("Url not supported for the platform start.gg")
-// 		}
-
-// 		tournamentIdx := -1
-// 		eventIdx := -1
-
-// 		for i, part := range parts {
-// 			if part == "tournament" {
-// 				tournamentIdx = i
-// 			}
-// 			if part == "event" {
-// 				eventIdx = i
-// 			}
-// 		}
-
-// 		if tournamentIdx != -1 && eventIdx != -1 && tournamentIdx+1 < len(parts) && eventIdx+1 < len(parts) {
-// 			slug := fmt.Sprintf("tournament/%s/event/%s", parts[tournamentIdx+1], parts[eventIdx+1])
-// 			return slug, nil
-// 		}
-
-// 		return "", fmt.Errorf("Invalid URL for start.gg. Expected format: .../tournament/NAME/event/NAME")
-
-// 	case "challonge":
-// 		if !strings.Contains(u.Host, "challonge.com") {
-// 			return "", fmt.Errorf("URL not supported for the platform challonge.com")
-// 		}
-
-// 		if len(parts) == 0 {
-// 			return "", fmt.Errorf("No URL provided")
-// 		}
-
-// 		knownLocales := map[string]bool{
-// 			"ru": true, "en": true, "es": true, "fr": true, "de": true,
-// 			"ja": true, "ko": true, "zh": true, "pt": true, "it": true,
-// 		}
-
-// 		var tourneySlug string
-// 		if len(parts) >= 2 && knownLocales[strings.ToLower(parts[0])] {
-// 			tourneySlug = parts[1]
-// 		} else {
-// 			tourneySlug = parts[0]
-// 		}
-
-// 		if len(tourneySlug) == 0 {
-// 			return "", fmt.Errorf("Unable to extract the slug")
-// 		}
-
-// 		hostParts := strings.Split(u.Host, ".")
-// 		if len(hostParts) > 2 && hostParts[0] != "www" {
-// 			return fmt.Sprintf("%s-%s", hostParts[0], tourneySlug), nil
-// 		}
-
-// 		return tourneySlug, nil
-
-// 	default:
-// 		return "", fmt.Errorf("Unsupported tournament platform: %s", platform)
-// 	}
-// }
-
 func (a *App) StartSendNotifications(
 	messenger, tournamentPlatform string,
 	cfgAuthorizations config.ConfigAuthorizations,
@@ -270,23 +206,24 @@ func (a *App) StartSendNotifications(
 	// 0. Определяем активные слоты заранее
 	// ========================================================
 	var botCred config.ClientCredentials
+	var botSlotIndex int
 	switch messenger {
 	case "discord":
-		cred, ok := cfgAuthorizations.Discord.GetActiveSlot()
+		cred, idx, ok := cfgAuthorizations.Discord.GetActiveSlotWithIndex()
 		if !ok {
 			err := fmt.Errorf("no active discord client slot")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		botCred = cred
+		botCred, botSlotIndex = cred, idx
 	case "telegram":
-		cred, ok := cfgAuthorizations.Telegram.GetActiveSlot()
+		cred, idx, ok := cfgAuthorizations.Telegram.GetActiveSlotWithIndex()
 		if !ok {
 			err := fmt.Errorf("no active telegram client slot")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		botCred = cred
+		botCred, botSlotIndex = cred, idx
 	default:
 		err := fmt.Errorf("unknown messenger: %s", messenger)
 		logger.Log(entityLogger.Error, err.Error())
@@ -294,23 +231,24 @@ func (a *App) StartSendNotifications(
 	}
 
 	var tourneyCred config.ClientCredentials
+	var tourneySlotIndex int
 	switch tournamentPlatform {
 	case "startgg":
-		cred, ok := cfgAuthorizations.Startgg.GetActiveSlot()
+		cred, idx, ok := cfgAuthorizations.Startgg.GetActiveSlotWithIndex()
 		if !ok {
 			err := fmt.Errorf("no active client slot for startgg")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		tourneyCred = cred
+		tourneyCred, tourneySlotIndex = cred, idx
 	case "challonge":
-		cred, ok := cfgAuthorizations.Challonge.GetActiveSlot()
+		cred, idx, ok := cfgAuthorizations.Challonge.GetActiveSlotWithIndex()
 		if !ok {
 			err := fmt.Errorf("no active client slot for challonge")
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		tourneyCred = cred
+		tourneyCred, tourneySlotIndex = cred, idx
 	default:
 		err := fmt.Errorf("unknown tournament platform: %s", tournamentPlatform)
 		logger.Log(entityLogger.Error, err.Error())
@@ -322,36 +260,35 @@ func (a *App) StartSendNotifications(
 	// ========================================================
 	switch messenger {
 	case "discord":
-		if len(botCred.Token) == 0 {
-			err := fmt.Errorf("no token for discord authorization")
+		if botCred.Token == "" {
+			err := fmt.Errorf("no token in discord slot #%d", botSlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		if len(botCred.ClientID) == 0 {
-			err := fmt.Errorf("no clientID for bot authorization")
+		if botCred.ClientID == "" {
+			err := fmt.Errorf("no clientID in discord slot #%d", botSlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		if len(botCred.SecretClient) == 0 {
-			err := fmt.Errorf("no secretClient for bot authorization")
+		if botCred.SecretClient == "" {
+			err := fmt.Errorf("no secretClient in discord slot #%d", botSlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
 
-		if err := a.AuthorizeDiscord(botCred.ClientID, botCred.SecretClient); err != nil {
+		if err := a.AuthorizeDiscord(botCred.ClientID, botCred.SecretClient, botSlotIndex); err != nil {
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		logger.Log(entityLogger.Success,
-			fmt.Sprintf("The client (%v) has been successfully read", a.TournamentClient.NamePlatform))
+		logger.Log(entityLogger.Success, fmt.Sprintf("Discord slot #%d authorized", botSlotIndex+1))
 
 	case "telegram":
-		if len(botCred.Token) == 0 {
-			err := fmt.Errorf("no token for telegram authorization")
+		if botCred.Token == "" {
+			err := fmt.Errorf("no token in telegram slot #%d", botSlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		// TODO: a.AuthorizeTelegram(botCred.Token), когда появится
+		// TODO: a.AuthorizeTelegram(...)
 	}
 
 	// ========================================================
@@ -368,32 +305,26 @@ func (a *App) StartSendNotifications(
 	// ========================================================
 	switch tournamentPlatform {
 	case "startgg":
-		if len(tourneyCred.ClientID) == 0 {
-			err := fmt.Errorf("no clientID for authorization")
+		if tourneyCred.ClientID == "" {
+			err := fmt.Errorf("no clientID in startgg slot #%d", tourneySlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		if len(tourneyCred.SecretClient) == 0 {
-			err := fmt.Errorf("no secretClient for bot authorization")
+		if tourneyCred.SecretClient == "" {
+			err := fmt.Errorf("no secretClient in startgg slot #%d", tourneySlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
 
-		if err := a.AuthorizeStartgg(tourneyCred.ClientID, tourneyCred.SecretClient); err != nil {
+		if err := a.AuthorizeStartgg(tourneyCred.ClientID, tourneyCred.SecretClient, tourneySlotIndex); err != nil {
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		logger.Log(entityLogger.Success,
-			fmt.Sprintf("The client (%v) has been successfully read", a.TournamentClient.NamePlatform))
+		logger.Log(entityLogger.Success, fmt.Sprintf("Start.gg slot #%d authorized", tourneySlotIndex+1))
 
 	case "challonge":
-		if len(tourneyCred.ClientID) == 0 {
-			err := fmt.Errorf("no clientID for authorization")
-			logger.Log(entityLogger.Error, err.Error())
-			return err
-		}
-		if len(tourneyCred.SecretClient) == 0 {
-			err := fmt.Errorf("no secretClient for bot authorization")
+		if tourneyCred.ClientID == "" || tourneyCred.SecretClient == "" {
+			err := fmt.Errorf("challonge slot #%d has empty credentials", tourneySlotIndex+1)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}

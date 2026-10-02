@@ -58,6 +58,7 @@ export const useMessengerAuth = ({
           token,
           clientID,
           secretClient,
+          slotIndex,
         });
 
         await markSlotStatus(

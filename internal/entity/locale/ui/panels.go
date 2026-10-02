@@ -89,7 +89,14 @@ type WidgetBracketPanel struct {
 }
 
 type AuthorizationModal struct {
-	Title    string
-	Label    string
-	Platform Platform
+	Title                 string
+	Label                 string
+	Platform              Platform
+	SignInButtonLabel     string
+	AuthorizeButtonLabel  string
+	AuthorizationStatuses AuthorizationStatuses
+	ClientsLabel          string
+	EmptyFieldHeader      string
+	EmptyFieldHint        string
+	ClientSettings        string
 }

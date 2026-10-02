@@ -145,3 +145,62 @@ func (a *App) ValidateTournamentURL(rawURL string) (app.ValidationResult, error)
 		Platform: r.Platform,
 	}, nil
 }
+
+func (a *App) RestoreClientStatuses() (config.ConfigAuthorizations, error) {
+	if a.ActiveProfile == "" {
+		return config.ConfigAuthorizations{}, fmt.Errorf("no active profile")
+	}
+
+	cfg, err := config.LoadAuthorizations(a.ActiveProfile)
+	if err != nil {
+		return config.ConfigAuthorizations{}, fmt.Errorf("load authorizations: %w", err)
+	}
+
+	ctx := a.ctx
+
+	// ---------- STARTGG ----------
+	for i := range cfg.Startgg.Slots {
+		slot := &cfg.Startgg.Slots[i]
+		if !config.IsSlotOccupied(*slot) {
+			continue
+		}
+		slot.Status = a.checkStartggSlot(ctx, *slot, i)
+		if slot.Status == config.AuthStatusAuthorized {
+			now := time.Now()
+			slot.LastAuthAt = &now
+		}
+	}
+
+	// ---------- CHALLONGE ----------
+	for i := range cfg.Challonge.Slots {
+		slot := &cfg.Challonge.Slots[i]
+		if !config.IsSlotOccupied(*slot) {
+			continue
+		}
+		slot.Status = a.checkChallongeSlot(ctx, *slot, i)
+	}
+
+	// ---------- DISCORD ----------
+	for i := range cfg.Discord.Slots {
+		slot := &cfg.Discord.Slots[i]
+		if !config.IsSlotOccupied(*slot) {
+			continue
+		}
+		slot.Status = a.checkDiscordSlot(ctx, *slot, i)
+	}
+
+	// ---------- TELEGRAM ----------
+	for i := range cfg.Telegram.Slots {
+		slot := &cfg.Telegram.Slots[i]
+		if !config.IsSlotOccupied(*slot) {
+			continue
+		}
+		slot.Status = a.checkTelegramSlot(ctx, *slot, i)
+	}
+
+	a.ConfigAuthorizations = cfg
+	if err := config.SaveAuthorizations(a.ActiveProfile, cfg); err != nil {
+		return cfg, fmt.Errorf("save authorizations: %w", err)
+	}
+	return cfg, nil
+}
