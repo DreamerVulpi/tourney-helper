@@ -10,6 +10,7 @@ type AuthorizationStatuses struct {
 	Invalid      string
 	Pending      string
 	Unknown      string
+	Empty        string
 }
 
 type Profile struct {

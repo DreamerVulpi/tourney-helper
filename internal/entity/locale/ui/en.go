@@ -182,6 +182,7 @@ var En = Ui{
 					Pending:      "Pending",
 					Invalid:      "Invalid data",
 					Unknown:      "Unknown",
+					Empty:        "Empty",
 				},
 				DownloadSettings:             "Download settings",
 				RedirectURL:                  "Redirect URL",

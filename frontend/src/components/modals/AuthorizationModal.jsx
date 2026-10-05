@@ -33,6 +33,7 @@ const SlotCard = ({
   onRemove,
   onNameChange,
   locale,
+  themeClasses,
 }) => {
   const isOccupied = isSlotOccupied(client);
   const status = client?.status || AUTH_STATUS.UNKNOWN;
@@ -42,12 +43,19 @@ const SlotCard = ({
   const COLOR_CLASSES = {
     slate:   "text-slate-400",
     blue:    "text-blue-400",
-    emerald: "text-emerald-400",
-    amber:   "text-amber-400",
-    orange:  "text-orange-400",
-    red:     "text-red-400",
+    emerald: "text-emerald-500",
+    amber:   "text-amber-500",
+    orange:  "text-orange-500",
+    red:     "text-red-500",
   };
   const statusColor = COLOR_CLASSES[meta.color] || "text-slate-400";
+
+  // Внешний вид контейнера
+  const containerClass = isActive
+    ? "border-blue-500 bg-blue-500/10 shadow-[0_0_10px_rgba(37,99,235,0.2)]"
+    : isOccupied
+      ? `${meta.borderClass} ${meta.bgClass} ${meta.hoverClass}`
+      : themeClasses.field;   // ← пустой слот — как поле
 
   return (
     <div
@@ -55,17 +63,14 @@ const SlotCard = ({
       className={`
         relative flex flex-col items-center justify-center p-2 h-[4.5rem]
         rounded-xl border cursor-pointer transition-all duration-200 group/slot
-        ${isActive
-          ? "border-blue-500 bg-blue-500/10 shadow-[0_0_10px_rgba(37,99,235,0.2)]"
-          : `${meta.borderClass} ${meta.bgClass} ${meta.hoverClass}`
-        }
+        ${containerClass}
       `}
       title={client?.statusReason || statusText}
     >
       <span className={`absolute top-1 left-1.5 text-[8px] font-black ${
-        isAuthorized(status) ? "text-emerald-400"
-        : needsReauth(status) ? "text-orange-400"
-        : isOccupied ? "text-amber-400" : "text-slate-500"
+        isAuthorized(status) ? "text-emerald-500"
+        : needsReauth(status) ? "text-orange-500"
+        : isOccupied ? "text-amber-500" : "text-slate-400"
       }`}>
         #{index + 1}
       </span>
@@ -102,14 +107,13 @@ const SlotCard = ({
             />
           ) : (
             <span
-              className="text-[9px] font-bold text-slate-200 text-center leading-tight px-1 w-full truncate"
+              className="text-[9px] font-bold text-center leading-tight px-1 w-full truncate"
               title={client.name}
             >
               {client.name || `Client #${index + 1}`}
             </span>
           )}
 
-          {/* Статус */}
           <div className="flex items-center gap-1 mt-1">
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${meta.dotClass}`} />
             <span className={`text-[7px] font-black uppercase italic whitespace-nowrap ${statusColor}`}>
@@ -118,9 +122,9 @@ const SlotCard = ({
           </div>
         </>
       ) : (
-        <div className="flex items-center gap-1 text-slate-500 group-hover/slot:text-blue-500 transition-colors">
+        <div className="flex items-center gap-1 opacity-70 group-hover/slot:opacity-100 transition-opacity">
           <Plus size={12} />
-          <span className="text-[9px] italic">Пусто</span>
+          <span className="text-[9px] italic">{locale.Empty}</span>
         </div>
       )}
     </div>
@@ -488,6 +492,7 @@ const AuthorizationModal = ({
                 onRemove={() => handleSlotRemove(index)}
                 onNameChange={(value) => handleSlotNameChange(index, value)}
                 locale={locale.Platform.AuthorizationStatuses}
+                themeClasses={themeClasses}
               />
             ))}
           </div>
