@@ -62,6 +62,7 @@ const WidgetBracketPlate = ({
   const theme          = useAppStore((s) => s.theme);
   const activeModal    = useAppStore((s) => s.activeModal);
   const activePlatform = useAppStore((s) => s.activeTournamentPlatform);
+  // TODO: Fix to widgets.bracket
   const tournament     = useAppStore((s) => s.tournament);
   const setStatusWidgetBracket = useAppStore((s) => s.setStatusWidgetBracket);
 

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Eye, EyeOff, ZoomOut, ZoomIn, RotateCcw } from "lucide-react";
+import { Eye, EyeOff, ZoomOut, ZoomIn, RotateCcw, Check, ChevronDown } from "lucide-react";
 
+import { MultiSelectList } from "./MultiSelectList.jsx";
 import { DropdownList } from "./DropdownList.jsx";
 import { CopyButton } from "./CopyButton.jsx";
 
@@ -33,6 +34,11 @@ function FieldBase({
   placeholder = "",
 
   height = "2.1rem",
+  searchable = false,
+  single = false,
+  maxVisible = 3,
+  locale,
+  renderItem,
 
   themeClasses,
 }) {
@@ -62,6 +68,23 @@ function FieldBase({
           themeClasses={themeClasses}
           className="px-4 text-xs font-bold"
           style={{ height }}
+        />
+      ) : variant === "multiselect" ? (
+        <MultiSelectList
+          selectedValues={Array.isArray(value) ? value : []}
+          items={items}
+          onChange={onChange}
+          icon={Icon}
+          iconSize={iconSize}
+          themeClasses={themeClasses}
+          className="px-4 text-xs font-bold"
+          style={{ height }}
+          maxVisible={maxVisible}
+          placeholder={placeholder}
+          searchable={searchable}
+          single={single}
+          locale={locale}
+          renderItem={renderItem}
         />
       ) : variant === "copy" ? (
         <div

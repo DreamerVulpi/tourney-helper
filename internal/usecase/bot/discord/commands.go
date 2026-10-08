@@ -72,7 +72,7 @@ func (h *Handler) commands() []*discordgo.ApplicationCommand {
 func (h *Handler) InitCommands(
 	appID string,
 	session *discordgo.Session,
-	tournament *config.ConfigTournament,
+	tournament *config.NotificationSystem,
 	botCred *config.ClientCredentials,
 ) ([]*discordgo.ApplicationCommand, error) {
 	commandHandlers := make(map[string]func(i *discordgo.InteractionCreate))

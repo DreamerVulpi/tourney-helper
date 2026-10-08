@@ -7,6 +7,7 @@ export const AUTH_STATUS = {
   REVOKED:      "revoked",
   ERROR:        "error",
   INVALID:      "invalid",
+  INPROGRESS:   "inprogress",
 };
 
 export const AUTH_STATUS_META = {
@@ -23,6 +24,13 @@ export const AUTH_STATUS_META = {
     borderClass: "border-blue-500/60",
     bgClass: "bg-blue-500/5",
     hoverClass: "hover:border-blue-500",
+  },
+  [AUTH_STATUS.INPROGRESS]: {
+    color: "indigo",
+    dotClass: "bg-indigo-500 animate-pulse",
+    borderClass: "border-indigo-500/60",
+    bgClass: "bg-indigo-500/5",
+    hoverClass: "hover:border-indigo-500",
   },
   [AUTH_STATUS.AUTHORIZED]: {
     color: "emerald",
@@ -82,6 +90,7 @@ export const authStatusLocaleKey = (status) => {
     case AUTH_STATUS.ERROR:        return "Error";
     case AUTH_STATUS.INVALID:      return "Invalid";
     case AUTH_STATUS.PENDING:      return "Pending";
+    case AUTH_STATUS.INPROGRESS:   return "InProgress";
     default:                       return "Unknown";
   }
 };

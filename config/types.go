@@ -12,19 +12,27 @@ const (
 	AuthStatusInvalid      AuthStatus = "invalid"
 	AuthStatusPending      AuthStatus = "pending"
 	AuthStatusUnknown      AuthStatus = "unknown"
+	AuthStatusInProgress   AuthStatus = "inprogress"
 )
 
 // ============================================================
 // SETTINGS
 // ============================================================
 
-type SettingsApplication struct {
-	Language              string `toml:"language" json:"language"`
-	Theme                 string `toml:"theme" json:"theme"`
-	CheckUpdatesOnStartUp bool   `toml:"checkUpdatesOnStartUp" json:"checkUpdatesOnStartUp"`
-	IgnoredVersion        string `toml:"ignoredVersion" json:"ignoredVersion"`
-	SidePanelCollapsed    bool   `toml:"sidePanelCollapsed" json:"sidePanelCollapsed"`
-	DebugMode             bool   `toml:"debugMode" json:"debugMode"`
+type IntegrationsSelections struct {
+	Notifications map[string][]string `toml:"notifications" json:"notifications"`
+	DbPlayers     map[string][]string `toml:"dbPlayers" json:"dbPlayers"`
+	WidgetBracket map[string][]string `toml:"widgetBracket" json:"widgetBracket"`
+}
+
+type SettingsApplicationCfg struct {
+	Language               string                 `toml:"language" json:"language"`
+	Theme                  string                 `toml:"theme" json:"theme"`
+	CheckUpdatesOnStartUp  bool                   `toml:"checkUpdatesOnStartUp" json:"checkUpdatesOnStartUp"`
+	IgnoredVersion         string                 `toml:"ignoredVersion" json:"ignoredVersion"`
+	SidePanelCollapsed     bool                   `toml:"sidePanelCollapsed" json:"sidePanelCollapsed"`
+	DebugMode              bool                   `toml:"debugMode" json:"debugMode"`
+	IntegrationsSelections IntegrationsSelections `toml:"integrationsSelections" json:"integrationsSelections"`
 }
 
 // ============================================================
@@ -42,7 +50,7 @@ type WidgetBracket struct {
 	AutoRefresh     bool    `toml:"autoRefresh" json:"autoRefresh"`
 }
 
-type ConfigWidgets struct {
+type WidgetsCfg struct {
 	Bracket WidgetBracket `toml:"bracket" json:"bracket"`
 }
 
@@ -61,7 +69,7 @@ type RulesMatches struct {
 type StreamLobby struct {
 	Area          string `toml:"area" json:"area"`
 	Language      string `toml:"language" json:"language"`
-	Conn          string `toml:"connection" json:"connection"`
+	Conn          string `toml:"conn" json:"conn"`
 	Crossplatform bool   `toml:"crossplatform" json:"crossplatform"`
 	Passcode      string `toml:"passcode" json:"passcode"`
 	LinkToLobby   string `toml:"linkToLobby" json:"linkToLobby"`
@@ -75,18 +83,32 @@ type Csv struct {
 	NameFile string `toml:"nameFile" json:"nameFile"`
 }
 
-type ConfigGame struct {
+type GameConfig struct {
 	Name string `toml:"name" json:"name"`
 }
 
-// ConfigTournament — все настройки турнира, кроме авторизаций и виджетов.
-type ConfigTournament struct {
-	UrlToTournament string       `toml:"urlToTournament" json:"urlToTournament"`
-	Rules           RulesMatches `toml:"rules" json:"rules"`
-	Stream          StreamLobby  `toml:"stream" json:"stream"`
-	Logo            Logo         `toml:"logo" json:"logo"`
-	Csv             Csv          `toml:"csv" json:"csv"`
-	Game            ConfigGame   `toml:"game" json:"game"`
+type DeliveryClientRef struct {
+	Platform string `toml:"platform" json:"platform"`
+	ClientId string `toml:"clientId" json:"clientId"`
+}
+
+// ============================================================
+// Tools (tools.toml)
+// ============================================================
+
+type NotificationSystem struct {
+	TournamentClientId string              `toml:"tournamentClientId" json:"tournamentClientId"`
+	DeliveryClients    []DeliveryClientRef `toml:"deliveryClients" json:"deliveryClients"`
+	UrlToTournament    string              `toml:"urlToTournament" json:"urlToTournament"`
+	Rules              RulesMatches        `toml:"rules" json:"rules"`
+	Stream             StreamLobby         `toml:"stream" json:"stream"`
+	Logo               Logo                `toml:"logo" json:"logo"`
+	Csv                Csv                 `toml:"csv" json:"csv"`
+	Game               GameConfig          `toml:"game" json:"game"`
+}
+
+type ToolsCfg struct {
+	NotificationSystem NotificationSystem `toml:"notificationSystem" json:"notificationSystem"`
 }
 
 // ============================================================
@@ -125,7 +147,7 @@ type PlatformAuthorizations struct {
 	Slots      []ClientCredentials `toml:"slots" json:"slots"`
 }
 
-type ConfigAuthorizations struct {
+type AuthorizationsCfg struct {
 	Startgg   PlatformAuthorizations `toml:"startgg" json:"startgg"`
 	Challonge PlatformAuthorizations `toml:"challonge" json:"challonge"`
 	Discord   PlatformAuthorizations `toml:"discord" json:"discord"`
@@ -150,8 +172,8 @@ type ProfilesRegistry struct {
 type Profile struct {
 	Meta           ProfileMeta
 	Path           string
-	Settings       SettingsApplication
-	Widgets        ConfigWidgets
-	Tournament     ConfigTournament
-	Authorizations ConfigAuthorizations
+	Settings       SettingsApplicationCfg
+	Widgets        WidgetsCfg
+	Tools          ToolsCfg
+	Authorizations AuthorizationsCfg
 }

@@ -7,7 +7,7 @@ export const useTournamentPlatform = ({
   locale,
   activeTournamentPlatform,
   setActiveTournamentPlatform,
-  setAuthStatus,
+  setAuthFlags,
   setValidationAlert,
   authorizations,
   updateConfig,
@@ -67,7 +67,7 @@ export const useTournamentPlatform = ({
           ""
         );
 
-        setAuthStatus((prev) => ({ ...prev, [platformName]: true }));
+        setAuthFlags((prev) => ({ ...prev, [platformName]: true }));
       } catch (err) {
         console.error(err);
 
@@ -79,10 +79,10 @@ export const useTournamentPlatform = ({
           reason
         );
 
-        setAuthStatus((prev) => ({ ...prev, [platformName]: false }));
+        setAuthFlags((prev) => ({ ...prev, [platformName]: false }));
       }
     },
-    [authorizations, locale, markSlotStatus, setAuthStatus, setValidationAlert]
+    [authorizations, locale, markSlotStatus, setAuthFlags, setValidationAlert]
   );
 
   return { handleTournamentPlatformClick, authorizeTournamentSlot };

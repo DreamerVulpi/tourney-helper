@@ -7,17 +7,69 @@ export function useConfigUpdater({
   debouncedSaveTourney,
   debouncedSaveWidgets,
   debouncedSaveAuthorizations,
+  debouncedSaveTools,
 }) {
   // Достаём сеттеры из стора — не тащим через пропсы
   const setSettings       = useAppStore((s) => s.setSettings);
-  const setTournament     = useAppStore((s) => s.setTournament);
   const setWidgets        = useAppStore((s) => s.setWidgets);
   const setAuthorizations = useAppStore((s) => s.setAuthorizations);
+  const setTools          = useAppStore((s) => s.setTools);
 
   const updateConfig = useCallback(
     (type, data) => {
-      console.log("[updateConfig] called", type, data);
       if (!isLoaded) return;
+
+      // ============================================================
+      // TOOLS (tools.toml)
+      // ============================================================
+
+      if (type === "tools") {
+        setTools((prev) => {
+          const prevNS = prev?.notificationSystem ?? {};
+          const dataNS = data.notificationSystem ?? {};
+
+          // Мерж deliveryClients по platform:
+          // - новые/изменённые элементы из dataNS перезаписывают свои platform
+          // - элементы, которых нет в dataNS, сохраняются как были
+          const prevDelivery = Array.isArray(prevNS.deliveryClients)
+            ? prevNS.deliveryClients
+            : [];
+          const dataDelivery = Array.isArray(dataNS.deliveryClients)
+            ? dataNS.deliveryClients
+            : null;
+
+          let mergedDelivery = prevDelivery;
+          if (dataDelivery) {
+            // удаляем из prev те платформы, которые пришли в data,
+            // затем добавляем всё из data
+            const incomingPlatforms = new Set(dataDelivery.map((d) => d.platform));
+            const kept = prevDelivery.filter((c) => !incomingPlatforms.has(c.platform));
+            mergedDelivery = [...kept, ...dataDelivery];
+          }
+
+          const newNS = {
+            ...prevNS,
+            ...dataNS,
+            deliveryClients: mergedDelivery,
+
+            rules:  dataNS.rules  ? { ...prevNS.rules,  ...dataNS.rules  } : prevNS.rules,
+            stream: dataNS.stream ? { ...prevNS.stream, ...dataNS.stream } : prevNS.stream,
+            logo:   dataNS.logo   ? { ...prevNS.logo,   ...dataNS.logo   } : prevNS.logo,
+            csv:    dataNS.csv    ? { ...prevNS.csv,    ...dataNS.csv    } : prevNS.csv,
+            game:   dataNS.game   ? { ...prevNS.game,   ...dataNS.game   } : prevNS.game,
+          };
+
+          const newCfg = {
+            ...prev,
+            ...data,
+            notificationSystem: newNS,
+            // сюда добавляй мерж других будущих инструментов
+          };
+          debouncedSaveTools(newCfg);
+          return newCfg;
+        });
+        return;
+      }
 
       // ============================================================
       // SETTINGS (settings.toml)
@@ -26,36 +78,6 @@ export function useConfigUpdater({
         setSettings((prev) => {
           const newCfg = { ...prev, ...data };
           debouncedSaveSettings(newCfg);
-          return newCfg;
-        });
-        return;
-      }
-
-      // ============================================================
-      // TOURNAMENT (tournament.toml)
-      // ============================================================
-      if (type === "tourney") {
-        setTournament((prev) => {
-          const newCfg = {
-            ...prev,
-            ...data,
-            stream: data.stream
-              ? { ...prev?.stream, ...data.stream }
-              : prev?.stream,
-            rules: data.rules
-              ? { ...prev?.rules, ...data.rules }
-              : prev?.rules,
-            logo: data.logo
-              ? { ...prev?.logo, ...data.logo }
-              : prev?.logo,
-            csv: data.csv
-              ? { ...prev?.csv, ...data.csv }
-              : prev?.csv,
-            game: data.game
-              ? { ...prev?.game, ...data.game }
-              : prev?.game,
-          };
-          debouncedSaveTourney(newCfg);
           return newCfg;
         });
         return;
@@ -96,13 +118,14 @@ export function useConfigUpdater({
     [
       isLoaded,
       setSettings,
-      setTournament,
       setWidgets,
       setAuthorizations,
+      setTools,
       debouncedSaveSettings,
       debouncedSaveTourney,
       debouncedSaveWidgets,
       debouncedSaveAuthorizations,
+      debouncedSaveTools,
     ]
   );
 

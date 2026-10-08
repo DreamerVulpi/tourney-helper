@@ -7,15 +7,17 @@ type Ui struct {
 	NotificationSystemPanel NotificationSystemPanel
 	DatabasePanel           DatabasePanel
 	WidgetBracketPanel      WidgetBracketPanel
+	IntegrationsPanel       IntegrationsPanel
 	ValidationAlertModal    ValidationAlertModal
 	ProgressModal           ProgressModal
 }
 
 type HeaderPanel struct {
-	Help          HelpModal
-	About         AboutModal
-	Update        UpdateModal
-	Authorization AuthorizationModal
+	Help              HelpModal
+	About             AboutModal
+	Update            UpdateModal
+	Authorization     IntegrationsPanel
+	MultiSelectClient MultiSelectClient
 }
 
 type SidePanel struct {
@@ -27,6 +29,7 @@ type SidePanel struct {
 	VersionLabel            string
 	LogsLabel               string
 	ClearButtonLabel        string
+	IntegrationsLabel       string
 	Profile                 Profile
 }
 
@@ -88,9 +91,7 @@ type WidgetBracketPanel struct {
 	ValidationUrlBracket  ValidationUrlBracket
 }
 
-type AuthorizationModal struct {
-	Title                 string
-	Label                 string
+type IntegrationsPanel struct {
 	Platform              Platform
 	SignInButtonLabel     string
 	AuthorizeButtonLabel  string
@@ -99,4 +100,6 @@ type AuthorizationModal struct {
 	EmptyFieldHeader      string
 	EmptyFieldHint        string
 	ClientSettings        string
+	DeliveryMethodLabel   string
+	TourneyLabel          string
 }

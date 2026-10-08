@@ -13,6 +13,19 @@ var listRegionsEn = ListRegions{
 	ND:           "No data",
 }
 
+var multiSelectClientEN = MultiSelectClient{
+	SearchLabel:         "Search...",
+	NoClients:           "No clients",
+	ChooseClient:        "Select an OAuth client",
+	DeliveryMethodLabel: DeliveryMethodLabelEN,
+	TourneyLabel:        TourneyLabelEN,
+}
+
+var (
+	DeliveryMethodLabelEN = "Delivery method"
+	TourneyLabelEN        = "Tournament Platform"
+)
+
 var validationUrlBracketEn = ValidationUrlBracket{
 	UrlValid:              "Valid URL",
 	InvalidUrlTitle:       "Invalid URL",
@@ -62,6 +75,7 @@ var En = Ui{
 		DatabaseLabel:           "Player Database",
 		WidgetOfBracketLabel:    "Bracket Widget",
 		WidgetOfScoreboardLabel: "Scoreboard Widget",
+		IntegrationsLabel:       "Integrations",
 		VersionLabel:            "Version:",
 		LogsLabel:               "Logs",
 		ClearButtonLabel:        "Clear",
@@ -70,6 +84,39 @@ var En = Ui{
 			Add:    "Add",
 			Delete: "Delete selected",
 			Share:  "Share selected",
+		},
+	},
+	IntegrationsPanel: IntegrationsPanel{
+		DeliveryMethodLabel:  DeliveryMethodLabelEN,
+		TourneyLabel:         TourneyLabelEN,
+		SignInButtonLabel:    "Sign In",
+		AuthorizeButtonLabel: "Authorization...",
+		ClientsLabel:         "OAuth clients",
+		EmptyFieldHeader:     "Select an integration on the left side of the window",
+		EmptyFieldHint:       "Click the left mouse button to select",
+		ClientSettings:       "Client Settings",
+		Platform: Platform{
+			AuthorizationStatuses: AuthorizationStatuses{
+				Authorized:   "Authorized",
+				Unauthorized: "Unauthorized",
+				Expired:      "Expired",
+				Error:        "Error",
+				Pending:      "Pending",
+				Invalid:      "Invalid data",
+				Unknown:      "Unknown",
+				InProcess:    "In process",
+				Empty:        "Empty",
+			},
+			DownloadSettings:             "Download settings",
+			RedirectURL:                  "Redirect URL",
+			ParamsBot:                    "Params %v bot",
+			TokenBot:                     "Bot Token",
+			DefaultLocale:                "Default locale",
+			RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",
+			RequireMsgTournamentPlatform: "To authorize, you must enter: Client ID and Client Secret",
+			LaunchMsg:                    "Authorisation initiated on",
+			SuccessMsg:                   "Authorisation successful on",
+			ErrMsg:                       "Authorisation error. Please check that the details you entered are correct",
 		},
 	},
 	HeaderPanel: HeaderPanel{
@@ -164,40 +211,7 @@ var En = Ui{
 			GetUpdateButtonLabel:            "Get an update",
 			SkipUpdateButtonLabel:           "Skip the update",
 		},
-		Authorization: AuthorizationModal{
-			Title:                "Integration Authorization",
-			Label:                "Integrations",
-			SignInButtonLabel:    "Sign In",
-			AuthorizeButtonLabel: "Authorization...",
-			ClientsLabel:         "Clients",
-			EmptyFieldHeader:     "Select an integration on the left side of the window",
-			EmptyFieldHint:       "Click the left mouse button to select",
-			ClientSettings:       "Client Settings",
-			Platform: Platform{
-				AuthorizationStatuses: AuthorizationStatuses{
-					Authorized:   "Authorized",
-					Unauthorized: "Unauthorized",
-					Expired:      "Expired",
-					Error:        "Error",
-					Pending:      "Pending",
-					Invalid:      "Invalid data",
-					Unknown:      "Unknown",
-					Empty:        "Empty",
-				},
-				DownloadSettings:             "Download settings",
-				RedirectURL:                  "Redirect URL",
-				ParamsBot:                    "Params %v bot",
-				TokenBot:                     "Bot Token",
-				DefaultLocale:                "Default locale",
-				DeliveryMethod:               "Delivery method",
-				Tourney:                      "Tournament Platform",
-				RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",
-				RequireMsgTournamentPlatform: "To authorize, you must enter: Client ID and Client Secret",
-				LaunchMsg:                    "Authorisation initiated on",
-				SuccessMsg:                   "Authorisation successful on",
-				ErrMsg:                       "Authorisation error. Please check that the details you entered are correct",
-			},
-		},
+		MultiSelectClient: multiSelectClientEN,
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
 		MonitoringSystem: MonitoringSystem{

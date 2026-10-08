@@ -22,6 +22,8 @@ import { useCheckUpdate } from "./hooks/App/useCheckUpdate.jsx";
 import { InstallUpdate } from "../wailsjs/go/application/App.js";
 import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
 import { useAppStore } from "./store/useAppStore"
+import IntegrationsPlate from "./pages/IntegrationsPanel.jsx";
+import { pruneSelections } from "./utils/integrations";
 
 const App = () => {
   // ---- UI ----
@@ -41,33 +43,35 @@ const App = () => {
   // ---- Configs ----
   const settings      = useAppStore((s) => s.settings);
   const widgets       = useAppStore((s) => s.widgets);
-  const tournament    = useAppStore((s) => s.tournament);
+  const tools    = useAppStore((s) => s.tools);
   const authorizations = useAppStore((s) => s.authorizations);
+  const selections = useAppStore((s) => s.integrationsSelections);
+  const selectionsHydrated = useAppStore((s) => s.selectionsHydrated);
 
   const setSettings   = useAppStore((s) => s.setSettings);
   const setWidgets = useAppStore((s) => s.setWidgets);
   const setAuthorizations = useAppStore((s) => s.setAuthorizations);
-  const setTournament = useAppStore((s) => s.setTournament);
   const setActiveProfile = useAppStore((s) => s.setActiveProfile);
+  const setTools = useAppStore((s) => s.setTools);
+  const setIntegrationsSelections = useAppStore((s) => s.setIntegrationsSelections);
 
   // Scale UI
   const scale = useScale();
   const isLoaded = useAppStore((s) => s.isLoaded);
 
-  // Delay before save data from fields in configs
   const {
-    debouncedSaveTourney,
     debouncedSaveSettings,
     debouncedSaveWidgets,
     debouncedSaveAuthorizations,
+    debouncedSaveTools,
   } = useAutoSave();
-  
+
   const { updateConfig } = useConfigUpdater({
     isLoaded,
     debouncedSaveSettings,
-    debouncedSaveTourney,
     debouncedSaveWidgets,
     debouncedSaveAuthorizations,
+    debouncedSaveTools,
   });
 
   useEffect(() => {
@@ -82,11 +86,6 @@ const App = () => {
     debouncedSaveWidgets(widgets);
   }, [widgets, isLoaded, debouncedSaveWidgets]);
 
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!tournament) return;
-    debouncedSaveTourney(tournament);
-  }, [tournament, isLoaded, debouncedSaveTourney]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -95,10 +94,17 @@ const App = () => {
   }, [settings, isLoaded, debouncedSaveSettings]);
   const setIsLoaded = useAppStore((s) => s.setIsLoaded);
 
+  // Сохраняем выбор клиентов при каждом изменении
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!selectionsHydrated) return;
+    updateConfig("settings", { integrationsSelections: selections });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selections, isLoaded, selectionsHydrated]);
+
   // Initialization application
   useAppInit({
-    locale,
-    setTournament,    
+    locale, 
     setWidgets,       
     setAuthorizations,
     setActiveProfile, 
@@ -106,6 +112,8 @@ const App = () => {
     setLang,
     setTheme,
     setSidePanelCollapsed,
+    setTools,
+    setIntegrationsSelections,
   });
   
 
@@ -177,9 +185,9 @@ const bracketFlagsInitializedRef = useRef(false);
 // 1. Инициализация из конфига — как только он загрузился
 useEffect(() => {
     if (bracketFlagsInitializedRef.current) return;
-    if (!tournament?.widgetBracket) return;
+    if (!tools?.widgetBracket) return;
 
-    const { clearBackground, hideStages, bracketMode, scale, autoRefresh } = tournament.widgetBracket;
+    const { clearBackground, hideStages, bracketMode, scale, autoRefresh } = tools.widgetBracket;
     console.log('[App] init bracketFlags from config:', {
         clearBackground, hideStages, bracketMode, scale, autoRefresh,
     });
@@ -193,7 +201,7 @@ useEffect(() => {
     });
 
     bracketFlagsInitializedRef.current = true;
-}, [tournament]);
+}, [tools]);
 
 // 2. Сохранение в конфиг — только после инициализации
 useEffect(() => {
@@ -204,9 +212,10 @@ useEffect(() => {
 
     console.log('[App] save bracketFlags to config:', bracketFlags);
 
+    // TODO: Change to widgets config
     updateConfig("tournament", {
         widgetBracket: {
-            ...tournament?.widgetBracket,
+            ...tools?.widgetBracket,
             clearBackground: bracketFlags.transparent,
             hideStages:      bracketFlags.hideRounds,
             bracketMode:     bracketFlags.bracketMode,
@@ -402,7 +411,7 @@ useEffect(() => {
                   />
                 )}
 
-                {activeTab === "database" && (
+                {activeTab === "dbPlayers" && (
                   <DatabasePanel
                     locale={locale.DatabasePanel}
                   />
@@ -421,6 +430,14 @@ useEffect(() => {
                     setURLValidation={setURLValidationWidgetBracket}
                   />
                 )}
+
+                {activeTab === "integrations" && (
+                  <IntegrationsPlate
+                    locale={locale.IntegrationsPanel}
+                    updateConfig={updateConfig}
+                  />
+                )}
+
                 {/* In future updates */}
                 {/*
                   {activeTab === "scoreboard" && (

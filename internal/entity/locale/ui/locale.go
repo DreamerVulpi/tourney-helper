@@ -10,6 +10,7 @@ type AuthorizationStatuses struct {
 	Invalid      string
 	Pending      string
 	Unknown      string
+	InProcess    string
 	Empty        string
 }
 
@@ -293,11 +294,19 @@ type Platform struct {
 	ErrMsg                       string
 	TokenBot                     string
 	DefaultLocale                string
-	DeliveryMethod               string
-	Tourney                      string
 	DownloadSettings             string
 	RedirectURL                  string
 	ParamsBot                    string
+	ChooseClient                 string
+	MultiSelectClient            MultiSelectClient
+}
+
+type MultiSelectClient struct {
+	SearchLabel         string
+	NoClients           string
+	ChooseClient        string
+	DeliveryMethodLabel string
+	TourneyLabel        string
 }
 
 type AuthorizeStatePlatform struct {

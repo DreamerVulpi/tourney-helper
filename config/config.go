@@ -146,7 +146,7 @@ func InitProfile(name string) error {
 	files := map[string]any{
 		SettingsFile:       NewDefaultSettings(),
 		WidgetsFile:        NewDefaultWidgets(),
-		TournamentFile:     NewDefaultTournament(),
+		ToolsFile:          NewDefaultTools(),
 		AuthorizationsFile: NewEmptyAuthorizations(),
 	}
 

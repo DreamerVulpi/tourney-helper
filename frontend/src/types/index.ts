@@ -16,10 +16,15 @@ export interface WidgetBracket {
   bracketMode: string;
   scale: number;
   autoRefresh: boolean;
+  clientId: string | null;
 }
 
 export interface WidgetsCfg {
   bracket: WidgetBracket;
+}
+
+export interface ToolsCfg {
+  notificationSystem: NotificationSystemCfg;
 }
 
 export interface RulesMatches {
@@ -33,13 +38,20 @@ export interface RulesMatches {
 export interface StreamLobby {
   area: string;
   language: string;
-  connection: string;
+  conn: string;
   crossplatform: boolean;
   passcode: string;
   linkToLobby: string;
 }
 
-export interface TournamentCfg {
+export interface DeliveryClientRef {
+  platform: string;
+  clientId: string;
+}
+
+export interface NotificationSystemCfg {
+  tournamentClientId: string | null;
+  deliveryClients: DeliveryClientRef[];
   urlToTournament: string;
   rules: RulesMatches;
   stream: StreamLobby;
@@ -48,33 +60,8 @@ export interface TournamentCfg {
   game: { name: string };
 }
 
-export interface ClientCredentials {
-  name: string;
-  clientID: string;
-  secretClient: string;
-  token: string;
-  guildID: string;
-  debugChannelID: string;
-  roles: {
-    default: string;
-    ru: string;
-    en: string;
-  };
-}
-
-export interface PlatformAuthorizations {
-  activeSlot: number;
-  slots: ClientCredentials[]; // всегда длина 5
-}
-
-export interface Authorizations {
-  startgg: PlatformAuthorizations;
-  challonge: PlatformAuthorizations;
-  discord: PlatformAuthorizations;
-  telegram: PlatformAuthorizations;
-}
-
-export type AuthStatus =
+/** Статус одного клиента/слота */
+export type AuthSlotStatus =
   | "unknown"
   | "pending"
   | "authorized"
@@ -84,6 +71,7 @@ export type AuthStatus =
   | "invalid";
 
 export interface ClientCredentials {
+  id: string;
   name: string;
   clientID: string;
   secretClient: string;
@@ -91,7 +79,26 @@ export interface ClientCredentials {
   guildID: string;
   debugChannelID: string;
   roles: { default: string; ru: string; en: string };
-  status: AuthStatus;
+  status: AuthSlotStatus;
   statusReason: string;
   lastAuthAt?: string;
+}
+
+export interface PlatformAuthorizations {
+  activeSlot: number;
+  slots: ClientCredentials[];
+}
+
+export interface Authorizations {
+  startgg: PlatformAuthorizations;
+  challonge: PlatformAuthorizations;
+  discord: PlatformAuthorizations;
+  telegram: PlatformAuthorizations;
+}
+
+/** Флаги «есть ли хотя бы один авторизованный слот» по платформам */
+export interface AuthFlags {
+  startgg: boolean;
+  discord: boolean;
+  telegram: boolean;
 }

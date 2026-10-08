@@ -105,37 +105,37 @@ func main() {
 	// ============================================================
 	// 4. Загрузка конфигов профиля
 	// ============================================================
-	cfgSettings, err := config.LoadSettings(activeProfile)
+	settingsCfg, err := config.LoadSettings(activeProfile)
 	if err != nil {
 		logger.Log(entityLogger.Warning, "settings not loaded, using defaults: "+err.Error())
-		cfgSettings = config.NewDefaultSettings()
-		_ = config.SaveSettings(activeProfile, cfgSettings)
+		settingsCfg = config.NewDefaultSettings()
+		_ = config.SaveSettings(activeProfile, settingsCfg)
 	}
-	app.ConfigSettings = cfgSettings
+	app.SettingsCfg = settingsCfg
 
-	cfgWidgets, err := config.LoadWidgets(activeProfile)
+	widgetsCfg, err := config.LoadWidgets(activeProfile)
 	if err != nil {
-		logger.Log(entityLogger.Warning, "widgets not loaded, using defaults: "+err.Error())
-		cfgWidgets = config.NewDefaultWidgets()
-		_ = config.SaveWidgets(activeProfile, cfgWidgets)
+		logger.Log(entityLogger.Warning, "widgets configs not loaded, using defaults values: "+err.Error())
+		widgetsCfg = config.NewDefaultWidgets()
+		_ = config.SaveWidgets(activeProfile, widgetsCfg)
 	}
-	app.ConfigWidgets = cfgWidgets
+	app.WidgetsCfg = widgetsCfg
 
-	cfgTournament, err := config.LoadTournament(activeProfile)
+	toolsCfg, err := config.LoadTools(activeProfile)
 	if err != nil {
-		logger.Log(entityLogger.Warning, "tournament not loaded, using defaults: "+err.Error())
-		cfgTournament = config.NewDefaultTournament()
-		_ = config.SaveTournament(activeProfile, cfgTournament)
+		logger.Log(entityLogger.Warning, "tools configs not loaded, using defaults values: "+err.Error())
+		toolsCfg = config.NewDefaultTools()
+		_ = config.SaveTools(activeProfile, toolsCfg)
 	}
-	app.ConfigTournament = &cfgTournament
+	app.NotificationSystemCfg = &toolsCfg.NotificationSystem
 
-	cfgAuthorizations, err := config.LoadAuthorizations(activeProfile)
+	authorizationsCfg, err := config.LoadAuthorizations(activeProfile)
 	if err != nil {
-		logger.Log(entityLogger.Warning, "authorizations not loaded, using defaults: "+err.Error())
-		cfgAuthorizations = config.NewEmptyAuthorizations()
-		_ = config.SaveAuthorizations(activeProfile, cfgAuthorizations)
+		logger.Log(entityLogger.Warning, "authorizations not loaded, using defaults values: "+err.Error())
+		authorizationsCfg = config.NewEmptyAuthorizations()
+		_ = config.SaveAuthorizations(activeProfile, authorizationsCfg)
 	}
-	app.ConfigAuthorizations = cfgAuthorizations
+	app.AuthorizationsCfg = authorizationsCfg
 
 	err = wails.Run(&options.App{
 		Title:     "TourneyHelper",

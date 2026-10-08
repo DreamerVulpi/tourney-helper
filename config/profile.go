@@ -12,16 +12,16 @@ import (
 // SETTINGS
 // ============================================================
 
-func LoadSettings(profileName string) (SettingsApplication, error) {
-	var cfg SettingsApplication
+func LoadSettings(profileName string) (SettingsApplicationCfg, error) {
+	var cfg SettingsApplicationCfg
 	path := filepath.Join(GetProfileConfigsDir(profileName), SettingsFile)
 	if _, err := toml.DecodeFile(path, &cfg); err != nil {
-		return SettingsApplication{}, err
+		return SettingsApplicationCfg{}, err
 	}
 	return cfg, nil
 }
 
-func SaveSettings(profileName string, cfg SettingsApplication) error {
+func SaveSettings(profileName string, cfg SettingsApplicationCfg) error {
 	path := filepath.Join(GetProfileConfigsDir(profileName), SettingsFile)
 	return writeTOML(path, cfg)
 }
@@ -30,35 +30,40 @@ func SaveSettings(profileName string, cfg SettingsApplication) error {
 // WIDGETS
 // ============================================================
 
-func LoadWidgets(profileName string) (ConfigWidgets, error) {
-	var cfg ConfigWidgets
+func LoadWidgets(profileName string) (WidgetsCfg, error) {
+	var cfg WidgetsCfg
 	path := filepath.Join(GetProfileConfigsDir(profileName), WidgetsFile)
 	if _, err := toml.DecodeFile(path, &cfg); err != nil {
-		return ConfigWidgets{}, err
+		return WidgetsCfg{}, err
 	}
 	return cfg, nil
 }
 
-func SaveWidgets(profileName string, cfg ConfigWidgets) error {
+func SaveWidgets(profileName string, cfg WidgetsCfg) error {
 	path := filepath.Join(GetProfileConfigsDir(profileName), WidgetsFile)
 	return writeTOML(path, cfg)
 }
 
 // ============================================================
-// TOURNAMENT
+// TOOLS
 // ============================================================
 
-func LoadTournament(profileName string) (ConfigTournament, error) {
-	var cfg ConfigTournament
-	path := filepath.Join(GetProfileConfigsDir(profileName), TournamentFile)
+func LoadTools(profileName string) (ToolsCfg, error) {
+	var cfg ToolsCfg
+	path := filepath.Join(GetProfileConfigsDir(profileName), ToolsFile)
+	fmt.Printf("[LoadTools] reading from: %s\n", path)
+
 	if _, err := toml.DecodeFile(path, &cfg); err != nil {
-		return ConfigTournament{}, err
+		fmt.Printf("[LoadTools] ERROR: %v\n", err)
+		return ToolsCfg{}, err
 	}
+
+	fmt.Printf("[LoadTools] loaded: %+v\n", cfg)
 	return cfg, nil
 }
 
-func SaveTournament(profileName string, cfg ConfigTournament) error {
-	path := filepath.Join(GetProfileConfigsDir(profileName), TournamentFile)
+func SaveTools(profileName string, cfg ToolsCfg) error {
+	path := filepath.Join(GetProfileConfigsDir(profileName), ToolsFile)
 	return writeTOML(path, cfg)
 }
 
@@ -66,24 +71,24 @@ func SaveTournament(profileName string, cfg ConfigTournament) error {
 // AUTHORIZATIONS
 // ============================================================
 
-func LoadAuthorizations(profileName string) (ConfigAuthorizations, error) {
-	var cfg ConfigAuthorizations
+func LoadAuthorizations(profileName string) (AuthorizationsCfg, error) {
+	var cfg AuthorizationsCfg
 	path := filepath.Join(GetProfileConfigsDir(profileName), AuthorizationsFile)
 	if _, err := toml.DecodeFile(path, &cfg); err != nil {
-		return ConfigAuthorizations{}, err
+		return AuthorizationsCfg{}, err
 	}
 	ensureSlots(&cfg)
 	return cfg, nil
 }
 
-func SaveAuthorizations(profileName string, cfg ConfigAuthorizations) error {
+func SaveAuthorizations(profileName string, cfg AuthorizationsCfg) error {
 	path := filepath.Join(GetProfileConfigsDir(profileName), AuthorizationsFile)
 	return writeTOML(path, cfg)
 }
 
 // ensureSlots — на всякий случай выравнивает длину Slots до SlotsPerPlatform,
 // если TOML был отредактирован вручную и в нём оказалось меньше элементов.
-func ensureSlots(cfg *ConfigAuthorizations) {
+func ensureSlots(cfg *AuthorizationsCfg) {
 	fix := func(p *PlatformAuthorizations) {
 		// 1. Длина массива = SlotsPerPlatform (5)
 		for len(p.Slots) < SlotsPerPlatform {
@@ -163,14 +168,16 @@ func LoadProfile(name string) (Profile, error) {
 	if err != nil {
 		return Profile{}, fmt.Errorf("widgets: %w", err)
 	}
-	tournament, err := LoadTournament(name)
+	tools, err := LoadTools(name)
 	if err != nil {
-		return Profile{}, fmt.Errorf("tournament: %w", err)
+		return Profile{}, fmt.Errorf("tools: %w", err)
 	}
 	auths, err := LoadAuthorizations(name)
 	if err != nil {
 		return Profile{}, fmt.Errorf("authorizations: %w", err)
 	}
+
+	// Add load database
 
 	// Метаданные из реестра
 	reg, _ := LoadRegistry()
@@ -187,7 +194,7 @@ func LoadProfile(name string) (Profile, error) {
 		Path:           GetProfileDir(name),
 		Settings:       settings,
 		Widgets:        widgets,
-		Tournament:     tournament,
+		Tools:          tools,
 		Authorizations: auths,
 	}, nil
 }

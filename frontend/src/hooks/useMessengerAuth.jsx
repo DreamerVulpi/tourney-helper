@@ -7,7 +7,7 @@ export const useMessengerAuth = ({
   locale,
   activeDeliveryMethod,
   setActiveDeliveryMethod,
-  setAuthStatus,
+  setAuthFlags,
   setValidationAlert,
   authorizations,
   updateConfig,
@@ -68,7 +68,7 @@ export const useMessengerAuth = ({
           ""
         );
 
-        setAuthStatus((prev) => ({ ...prev, [messengerName]: true }));
+        setAuthFlags((prev) => ({ ...prev, [messengerName]: true }));
       } catch (err) {
         console.error(err);
 
@@ -80,10 +80,10 @@ export const useMessengerAuth = ({
           reason
         );
 
-        setAuthStatus((prev) => ({ ...prev, [messengerName]: false }));
+        setAuthFlags((prev) => ({ ...prev, [messengerName]: false }));
       }
     },
-    [authorizations, locale, markSlotStatus, setAuthStatus, setValidationAlert]
+    [authorizations, locale, markSlotStatus, setAuthFlags, setValidationAlert]
   );
 
   return { handleMessengerClick, authorizeMessengerSlot };

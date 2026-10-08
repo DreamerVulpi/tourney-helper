@@ -13,6 +13,19 @@ var listRegions = ListRegions{
 	ND:           "Нет данных",
 }
 
+var multiSelectClientRU = MultiSelectClient{
+	SearchLabel:         "Поиск...",
+	NoClients:           "Нет клиентов",
+	ChooseClient:        "Выберите OAuth клиент",
+	DeliveryMethodLabel: DeliveryMethodLabelRU,
+	TourneyLabel:        TourneyLabelRU,
+}
+
+var (
+	DeliveryMethodLabelRU = "Метод отправки"
+	TourneyLabelRU        = "Турнирная платформа"
+)
+
 var validationUrlBracketRu = ValidationUrlBracket{
 	UrlValid:              "Верная ссылка",
 	InvalidUrlTitle:       "Неверная ссылка",
@@ -23,6 +36,39 @@ var validationUrlBracketRu = ValidationUrlBracket{
 }
 
 var Ru = Ui{
+	IntegrationsPanel: IntegrationsPanel{
+		DeliveryMethodLabel:  DeliveryMethodLabelRU,
+		TourneyLabel:         TourneyLabelRU,
+		SignInButtonLabel:    "Авторизоваться",
+		AuthorizeButtonLabel: "Авторизация...",
+		ClientsLabel:         "OAuth клиенты",
+		ClientSettings:       "Настройки клиента",
+		EmptyFieldHeader:     "Выберите интеграцию в левой части окна",
+		EmptyFieldHint:       "Кликните левой кнопкой мыши для выбора",
+		Platform: Platform{
+			AuthorizationStatuses: AuthorizationStatuses{
+				Authorized:   "Авторизован",
+				Unauthorized: "Не авторизован",
+				Expired:      "Истек срок",
+				Error:        "Ошибка",
+				Pending:      "В ожидании",
+				Invalid:      "Неверные данные",
+				Unknown:      "Неизвестно",
+				InProcess:    "В работе",
+				Empty:        "Пусто",
+			},
+			LaunchMsg:                    "Запуск авторизации в",
+			SuccessMsg:                   "Успешная авторизация на",
+			ErrMsg:                       "Ошибка авторизации. Проверьте правильность введенных данных",
+			DownloadSettings:             "Параметры получения",
+			RedirectURL:                  "Ссылка на перенаправление (Redirect URL)",
+			ParamsBot:                    "Параметры %v бота",
+			TokenBot:                     "Токен бота",
+			DefaultLocale:                "Стандартная локаль",
+			RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
+			RequireMsgTournamentPlatform: "Для авторизации требуется заполнить: Client ID и Client Secret",
+		},
+	},
 	WidgetBracketPanel: WidgetBracketPanel{
 		UrlToBracketLabel:     "Ссылка на турнирную сетку",
 		ListOfBracketsLabel:   "Cетка",
@@ -52,6 +98,7 @@ var Ru = Ui{
 		DatabaseLabel:           "База данных игроков",
 		WidgetOfBracketLabel:    "Виджет сетки",
 		WidgetOfScoreboardLabel: "Виджет счета",
+		IntegrationsLabel:       "Интеграции",
 		VersionLabel:            "Версия: ",
 		Profile: Profile{
 			Title:  "Профиль",
@@ -163,40 +210,7 @@ var Ru = Ui{
 			GetUpdateButtonLabel:            "Получить обновление",
 			SkipUpdateButtonLabel:           "Пропустить обновление",
 		},
-		Authorization: AuthorizationModal{
-			Title:                "Авторизация интеграций",
-			Label:                "Интеграции",
-			SignInButtonLabel:    "Авторизоваться",
-			AuthorizeButtonLabel: "Авторизация...",
-			ClientsLabel:         "Клиенты",
-			ClientSettings:       "Настройки клиента",
-			EmptyFieldHeader:     "Выберите интеграцию в левой части окна",
-			EmptyFieldHint:       "Кликните левой кнопкой мыши для выбора",
-			Platform: Platform{
-				AuthorizationStatuses: AuthorizationStatuses{
-					Authorized:   "Авторизован",
-					Unauthorized: "Не авторизован",
-					Expired:      "Истек срок",
-					Error:        "Ошибка",
-					Pending:      "В ожидании",
-					Invalid:      "Неверные данные",
-					Unknown:      "Неизвестно",
-					Empty:        "Пусто",
-				},
-				LaunchMsg:                    "Запуск авторизации в",
-				SuccessMsg:                   "Успешная авторизация на",
-				ErrMsg:                       "Ошибка авторизации. Проверьте правильность введенных данных",
-				DownloadSettings:             "Параметры получения",
-				RedirectURL:                  "Ссылка на перенаправление (Redirect URL)",
-				ParamsBot:                    "Параметры %v бота",
-				TokenBot:                     "Токен бота",
-				DefaultLocale:                "Стандартная локаль",
-				DeliveryMethod:               "Метод отправки",
-				Tourney:                      "Турнирная платформа",
-				RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
-				RequireMsgTournamentPlatform: "Для авторизации требуется заполнить: Client ID и Client Secret",
-			},
-		},
+		MultiSelectClient: multiSelectClientRU,
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
 		MonitoringSystem: MonitoringSystem{

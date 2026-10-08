@@ -2,10 +2,12 @@ import { useRef, useState, useMemo } from "react";
 import {
   ArrowLeftFromLine,
   ArrowRightFromLine,
+  CopyPlus,
   GitFork,
   Send,
   Share,
   SquareUser,
+  UserCog,
   UserMinus,
   UserPlus,
   Users
@@ -24,6 +26,9 @@ const SidePanel = ({ locale, updateConfig }) => {
   const theme       = useAppStore((s) => s.theme);
   const activeTab   = useAppStore((s) => s.activeTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
+  const setTheme     = useAppStore((s) => s.setTheme);
+  const lang         = useAppStore((s) => s.lang);
+  const setLang      = useAppStore((s) => s.setLang);
 
   const sidePanelCollapsed = useAppStore((s) => s.sidePanelCollapsed);
   const setSidePanelCollapsed = useAppStore((s) => s.setSidePanelCollapsed);
@@ -136,8 +141,8 @@ const SidePanel = ({ locale, updateConfig }) => {
             icon={<Users size={20} />}
             label={locale.DatabaseLabel}
             collapsed={sidePanelCollapsed}
-            active={activeTab === "database"}
-            onClick={() => setActiveTab("database")}
+            active={activeTab === "dbPlayers"}
+            onClick={() => setActiveTab("dbPlayers")}
             themeClasses={themeClasses}
             status={statusDatabase}
           />
@@ -154,6 +159,15 @@ const SidePanel = ({ locale, updateConfig }) => {
         </div>
 
         <div ref={profileBtnRef} className="mt-auto space-y-1">
+          <NavItem
+            icon={<UserCog size={20} />}
+            label={locale.IntegrationsLabel}
+            collapsed={sidePanelCollapsed}
+            active={activeTab === "integrations"}
+            onClick={() => setActiveTab("integrations")}
+            themeClasses={themeClasses}
+            showStatus={false}
+          />
           <NavItem
             icon={<SquareUser size={20} />}
             label={locale.Profile.Title}
@@ -204,6 +218,20 @@ const SidePanel = ({ locale, updateConfig }) => {
                     label: locale.Profile.Delete,
                     flex: 1,
                     className: `text-white ${"bg-red-700 hover:bg-red-600"}`,
+                  },
+                ]}
+              />
+              <ExpandableAction
+                icon={<CopyPlus size={20} />}
+                collapsedClassName={"bg-amber-600 text-white border border-amber-500/30"}
+                collapsedWidth={"36px"}
+                width={"80px"}
+                items={[
+                  {
+                    id: "delete",
+                    label: "Dublicate",
+                    flex: 1,
+                    className: `text-white ${"bg-amber-700 hover:bg-amber-600"}`,
                   },
                 ]}
               />

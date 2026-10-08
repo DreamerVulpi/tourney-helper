@@ -2,6 +2,8 @@ package config
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -63,7 +65,7 @@ func (p PlatformAuthorizations) GetActiveSlot() (ClientCredentials, bool) {
 
 // GetActiveClientCredentials — удобный хелпер для ConfigAuthorizations.
 // platformID: "startgg" | "challonge" | "discord" | "telegram"
-func (c ConfigAuthorizations) GetActiveClientCredentials(platformID string) (ClientCredentials, bool) {
+func (c AuthorizationsCfg) GetActiveClientCredentials(platformID string) (ClientCredentials, bool) {
 	switch platformID {
 	case "startgg":
 		return c.Startgg.GetActiveSlot()
@@ -84,8 +86,8 @@ func NewEmptyPlatformAuthorizations() PlatformAuthorizations {
 	}
 }
 
-func NewEmptyAuthorizations() ConfigAuthorizations {
-	return ConfigAuthorizations{
+func NewEmptyAuthorizations() AuthorizationsCfg {
+	return AuthorizationsCfg{
 		Startgg:   NewEmptyPlatformAuthorizations(),
 		Challonge: NewEmptyPlatformAuthorizations(),
 		Discord:   NewEmptyPlatformAuthorizations(),
@@ -93,19 +95,24 @@ func NewEmptyAuthorizations() ConfigAuthorizations {
 	}
 }
 
-func NewDefaultSettings() SettingsApplication {
-	return SettingsApplication{
+func NewDefaultSettings() SettingsApplicationCfg {
+	return SettingsApplicationCfg{
 		Language:              "EN",
 		Theme:                 "Dark",
 		CheckUpdatesOnStartUp: true,
 		IgnoredVersion:        "",
 		SidePanelCollapsed:    false,
 		DebugMode:             false,
+		IntegrationsSelections: IntegrationsSelections{
+			Notifications: map[string][]string{},
+			DbPlayers:     map[string][]string{},
+			WidgetBracket: map[string][]string{},
+		},
 	}
 }
 
-func NewDefaultWidgets() ConfigWidgets {
-	return ConfigWidgets{
+func NewDefaultWidgets() WidgetsCfg {
+	return WidgetsCfg{
 		Bracket: WidgetBracket{
 			UrlToTournament: "",
 			BracketId:       "",
@@ -119,27 +126,31 @@ func NewDefaultWidgets() ConfigWidgets {
 	}
 }
 
-func NewDefaultTournament() ConfigTournament {
-	return ConfigTournament{
-		UrlToTournament: "",
-		Rules: RulesMatches{
-			StandardFormat: 2,
-			FinalsFormat:   3,
-			Stage:          "Any",
-			Rounds:         3,
-			Duration:       60,
+func NewDefaultTools() ToolsCfg {
+	return ToolsCfg{
+		NotificationSystem: NotificationSystem{
+			TournamentClientId: "",
+			DeliveryClients:    nil,
+			UrlToTournament:    "",
+			Rules: RulesMatches{
+				StandardFormat: 2,
+				FinalsFormat:   3,
+				Stage:          "Any",
+				Rounds:         3,
+				Duration:       60,
+			},
+			Stream: StreamLobby{
+				Area:          "Any",
+				Language:      "EN",
+				Conn:          "Wired",
+				Crossplatform: false,
+				Passcode:      "0000",
+				LinkToLobby:   "",
+			},
+			Logo: Logo{Img: ""},
+			Csv:  Csv{NameFile: ""},
+			Game: GameConfig{Name: "tekken"},
 		},
-		Stream: StreamLobby{
-			Area:          "Any",
-			Language:      "EN",
-			Conn:          "Wired",
-			Crossplatform: false,
-			Passcode:      "0000",
-			LinkToLobby:   "",
-		},
-		Logo: Logo{Img: ""},
-		Csv:  Csv{NameFile: ""},
-		Game: ConfigGame{Name: ""},
 	}
 }
 
@@ -166,7 +177,7 @@ func (p PlatformAuthorizations) GetActiveSlotWithIndex() (ClientCredentials, int
 }
 
 // GetActiveClientCredentialsWithIndex — удобный хелпер для ConfigAuthorizations.
-func (c ConfigAuthorizations) GetActiveClientCredentialsWithIndex(platformID string) (ClientCredentials, int, bool) {
+func (c AuthorizationsCfg) GetActiveClientCredentialsWithIndex(platformID string) (ClientCredentials, int, bool) {
 	switch platformID {
 	case "startgg":
 		return c.Startgg.GetActiveSlotWithIndex()
@@ -178,4 +189,25 @@ func (c ConfigAuthorizations) GetActiveClientCredentialsWithIndex(platformID str
 		return c.Telegram.GetActiveSlotWithIndex()
 	}
 	return ClientCredentials{}, -1, false
+}
+
+// ============================================================
+// PATH HELPERS
+// ============================================================
+
+func GetAbsPath(fileName string) string {
+	ex, err := os.Executable()
+	if err != nil {
+		return fileName
+	}
+	exPath := filepath.Dir(ex)
+	if strings.Contains(exPath, "go-build") {
+		return fileName
+	}
+	return filepath.Join(exPath, fileName)
+}
+
+func FileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

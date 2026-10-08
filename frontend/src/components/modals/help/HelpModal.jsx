@@ -19,7 +19,7 @@ const HelpModal = ({
     <div className={`p-6 max-h-[70vh] overflow-y-auto space-y-6`}>
         {
             activeTab === "notifications" ? NotificatonSystemHelpPage(locale.HelpPageNotificationSystem, themeClasses)
-            : activeTab === "database" ? DatabaseHelpPage(locale.HelpPageDatabase, themeClasses) : ""
+            : activeTab === "dbPlayers" ? DatabaseHelpPage(locale.HelpPageDatabase, themeClasses) : ""
         }
     </div>
   )

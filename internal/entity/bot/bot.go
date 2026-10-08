@@ -15,8 +15,8 @@ type BotHandler interface {
 		conn *sql.DB,
 		botCred config.ClientCredentials,
 		tourneyCred config.ClientCredentials,
-		tournament config.ConfigTournament,
-		settings config.SettingsApplication,
+		tournament config.NotificationSystem,
+		settings config.SettingsApplicationCfg,
 	) error
 	Stop() error
 }

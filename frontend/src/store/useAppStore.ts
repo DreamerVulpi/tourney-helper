@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import type {
   Settings,
-  TournamentCfg,
   WidgetsCfg,
   Authorizations,
-  AuthStatus,
+  AuthFlags,
+  ToolsCfg,
+  NotificationSystemCfg,
 } from "../types/index.ts";
 import { SERVICE_STATUS } from '../utils/listStatus.js';
 
@@ -41,10 +42,12 @@ interface AppState {
 
   // Configs
   settings: Settings | null;
-  tournament: TournamentCfg | null;
   widgets: WidgetsCfg | null;
+  tools: ToolsCfg | null;
   authorizations: Authorizations | null;
-  authStatus: AuthStatus;
+  authFlags: AuthFlags;
+  integrationsSelections: Record<string, Record<string, string[]>>;
+  selectionsHydrated: boolean;
 
   // Actions
   setIsLoaded: (v: boolean) => void;
@@ -69,15 +72,24 @@ interface AppState {
   setSelectedGame: (g: string) => void;
 
   setSettings: (v: Updater<Settings>) => void;
-  setTournament: (v: Updater<TournamentCfg>) => void;
   setWidgets: (v: Updater<WidgetsCfg>) => void;
   setAuthorizations: (v: Updater<Authorizations>) => void;
-  setAuthStatus: (v: AuthStatus | ((prev: AuthStatus) => AuthStatus)) => void;
+  setAuthFlags: (v: AuthFlags | ((prev: AuthFlags) => AuthFlags)) => void;
 
   toggleAuthorizationSettings: (s: string | null) => void;
+  setTools: (v: Updater<ToolsCfg>) => void;
+
+  
+  // Integrations selections
+  setSelection: (tab: string, fieldKey: string, ids: string[]) => void;
+  setIntegrationsSelections: (
+    selections: Record<string, Record<string, string[]>>
+  ) => void;
+  clearSelectionsForSlot: (platform: string, slotIndex: number) => void;
+  setSelectionsHydrated: (v: boolean) => void;
 }
 
-const defaultAuthStatus: AuthStatus = {
+const defaultAuthFlags: AuthFlags = {
   startgg: false,
   discord: false,
   telegram: false,
@@ -113,11 +125,25 @@ export const useAppStore = create<AppState>((set) => ({
   selectedGame: 'Tekken8',
 
   // Configs
+  // TODO: Add settings && widgets
   settings:       {} as Settings,
-  tournament:     {} as TournamentCfg,
   widgets:        {} as WidgetsCfg,
+  tools: {
+    notificationSystem: {
+      tournamentClientId: "",
+      deliveryClients: [],
+      urlToTournament: "",
+      rules: { standardFormat: 2, finalsFormat: 3, rounds: 3, duration: 60, stage: "Random" },
+      stream: { area: "Any", language: "EN", conn: "Wired", crossplatform: false, passcode: "0000", linkToLobby: "" },
+      logo: { img: "" },
+      csv: { nameFile: "" },
+      game: { name: "tekken" },
+    },
+  },
   authorizations: {} as Authorizations,
-  authStatus:     defaultAuthStatus,
+  authFlags:      defaultAuthFlags,
+  integrationsSelections: {},
+  selectionsHydrated: false,
 
   // Actions
   setIsLoaded: (isLoaded) => set({ isLoaded }),
@@ -135,7 +161,7 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       activeAuthorizationSettings:
         state.activeAuthorizationSettings === id ? null : id,
-      activeSlotIndex: null, // сбрасываем выбранный слот при смене платформы
+      activeSlotIndex: null,
     })),
 
   setActiveProfile: (activeProfile) => set({ activeProfile }),
@@ -155,14 +181,9 @@ export const useAppStore = create<AppState>((set) => ({
     set({ activeDeliveryMethod }),
   setSelectedGame: (selectedGame) => set({ selectedGame }),
 
-  // ---- Config setters (универсальные) ----
   setSettings: (v) =>
     set((state) => ({
       settings: typeof v === 'function' ? v(state.settings) : v,
-    })),
-  setTournament: (v) =>
-    set((state) => ({
-      tournament: typeof v === 'function' ? v(state.tournament) : v,
     })),
   setWidgets: (v) =>
     set((state) => ({
@@ -172,8 +193,44 @@ export const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       authorizations: typeof v === 'function' ? v(state.authorizations) : v,
     })),
-  setAuthStatus: (v) =>
+  setAuthFlags: (v) =>
     set((state) => ({
-      authStatus: typeof v === 'function' ? v(state.authStatus) : v,
+      authFlags: typeof v === 'function' ? v(state.authFlags) : v,
     })),
+  setTools: (v) =>
+    set((state) => ({
+      tools: typeof v === 'function' ? v(state.tools) : v,
+    })),
+
+    // ============================================================
+  // Integrations selections
+  // ============================================================
+  setSelection: (tab, fieldKey, ids) =>
+    set((state) => ({
+      integrationsSelections: {
+        ...state.integrationsSelections,
+        [tab]: {
+          ...(state.integrationsSelections[tab] || {}),
+          [fieldKey]: ids,
+        },
+      },
+    })),
+
+  clearSelectionsForSlot: (platform, slotIndex) => {
+    const deadId = `${platform}:${slotIndex}`;
+    set((state) => {
+      const next: Record<string, Record<string, string[]>> = {};
+      for (const [tab, fields] of Object.entries(state.integrationsSelections || {})) {
+        next[tab] = {};
+        for (const [key, ids] of Object.entries(fields || {})) {
+          next[tab][key] = (ids || []).filter((id) => id !== deadId);
+        }
+      }
+      return { integrationsSelections: next };
+    });
+  },
+
+  setIntegrationsSelections: (selections) =>
+    set({ integrationsSelections: selections }),
+  setSelectionsHydrated: (selectionsHydrated) => set({selectionsHydrated}),
 }));

@@ -41,9 +41,8 @@ func (a *App) GetListThemes() ([]string, error) {
 
 func (a *App) LaunchWidgetBracket(
 	tournamentPlatform string,
-	cfgAuthorizations config.ConfigAuthorizations,
-	cfgWidgets config.ConfigWidgets,
-	cfgTournament config.ConfigTournament,
+	cfgAuthorizations config.AuthorizationsCfg,
+	cfgWidgets config.WidgetsCfg,
 ) error {
 	a.mu.Lock()
 	if a.wCancel != nil {

@@ -2,6 +2,7 @@ import { useAppStore } from "../store/useAppStore";
 import { getThemeClasses as getAppThemeClasses } from "../utils/themeClasses.jsx";
 import { getThemeClasses  as getHeaderThemeClasses } from "../utils/theme/HeaderPlate/themes";
 import { useThemeClasses } from "../hooks/App/useThemeClasses"
+import { useState, useEffect, useMemo } from "react";
 
 import {
   LanguagesIcon,
@@ -10,6 +11,10 @@ import {
   HelpCircle,
   Info,
   UserCog,
+  Mail,
+  Trophy,
+  Tag,
+  Link2,
 } from "lucide-react";
 
 import { createThemeChanger } from "../utils/changeTheme";
@@ -18,7 +23,9 @@ import AboutModal from "../components/modals/AboutModal.jsx"
 import HelpModal from "../components/modals/help/HelpModal.jsx"
 import UpdateModal from "../components/modals/UpdateModal.jsx"
 import ProgressModal from "../components/modals/ProgressModal.jsx";
-import AuthorizationModal from "../components/modals/AuthorizationModal.jsx";
+import { useAuthorizedIntegrations } from "../hooks/App/useAuthorizedIntegrations.jsx";
+import { filterValidSelection, getAllBusyIds } from "../utils/integrations";
+import IntegrationItem from "../components/ui/IntegrationItem"
 
 const HeaderPlate = ({
   locale,
@@ -44,87 +51,146 @@ const HeaderPlate = ({
   const activeModal  = useAppStore((s) => s.activeModal);
   const setActiveModal = useAppStore((s) => s.setActiveModal);
 
-  const authStatus    = useAppStore((s) => s.authStatus);
-  const setAuthStatus = useAppStore((s) => s.setAuthStatus);
-
   const settings      = useAppStore((s) => s.settings);
-  const systemCfg     = useAppStore((s) => s.systemCfg);
-  const tournament    = useAppStore((s) => s.tournament);
-
-  const activeTournamentPlatform    = useAppStore((s) => s.activeTournamentPlatform);
-  const setActiveTournamentPlatform = useAppStore((s) => s.setActiveTournamentPlatform);
-  const activeDeliveryMethod        = useAppStore((s) => s.activeDeliveryMethod);
-  const setActiveDeliveryMethod     = useAppStore((s) => s.setActiveDeliveryMethod);
-
-  const activeAuthorizationSettings = useAppStore((s) => s.activeAuthorizationSettings);
-  const setActiveAuthorizationSettings = useAppStore((s) => s.setActiveAuthorizationSettings);
-  const toggleAuthorizationSettings = useAppStore((s) => s.toggleAuthorizationSettings);
+  const selections = useAppStore((s) => s.integrationsSelections);
+  const setSelection = useAppStore((s) => s.setSelection);
 
   const themeClasses = useThemeClasses(getAppThemeClasses)
   const headerThemeClasses = useThemeClasses(getHeaderThemeClasses);
 
+  const tournamentItems = useAuthorizedIntegrations({ category: "tournament" });
+  const deliveryItems  = useAuthorizedIntegrations({ category: "delivery"  });
+
   // Function for change theme & save to configuration of programm
   const changeTheme = createThemeChanger(theme, setTheme, updateConfig);
 
+  // все ID, занятые другими полями/табами, кроме текущего
+ const itemsByField = useMemo(() => {
+  const buildFor = (fieldKey, baseItems) => {
+    const busy = getAllBusyIds(selections, activeTab, fieldKey);
+    const current = selections?.[activeTab]?.[fieldKey] || [];
+    const filtered = baseItems.filter(
+      (it) => !busy.has(it.id) || current.includes(it.id)
+    );
+
+    console.log(
+      "[HP] buildFor | activeTab:", activeTab,
+      "| fieldKey:", fieldKey,
+      "| busy:", [...busy],
+      "| current:", current,
+      "| allItems:", baseItems.map((it) => it.id),
+      "| filtered:", filtered.map((it) => it.id)
+    );
+
+    return filtered;
+  };
+
+  return {
+    tourney:  buildFor("tourney",  tournamentItems),
+    delivery: buildFor("delivery", deliveryItems),
+  };
+}, [selections, activeTab, tournamentItems, deliveryItems]);
+
+  const TAB_CLIENT_CONFIG = useMemo(() => ({
+    notifications: [
+      {
+        fieldKey: "tourney",
+        label: locale.MultiSelectClient.TourneyLabel,
+        labelWidth: "6rem",
+        items: itemsByField.tourney,
+        icon: Trophy,
+        maxVisible: 2,
+        single: true,
+      },
+      {
+        fieldKey: "delivery",
+        label: locale.MultiSelectClient.DeliveryMethodLabel,
+        labelWidth: "5rem",
+        items: itemsByField.delivery,
+        icon: Mail,
+        maxVisible: 2,
+        single: false,
+      },
+    ],
+
+    dbPlayers: [
+      {
+        fieldKey: "tourney",
+        label: locale.MultiSelectClient.TourneyLabel,
+        labelWidth: "6rem",
+        items: itemsByField.tourney,
+        icon: Trophy,
+        maxVisible: 2,
+        single: false,
+      },
+    ],
+
+    widgetBracket: [
+      {
+        fieldKey: "tourney",
+        label: locale.MultiSelectClient.TourneyLabel,
+        labelWidth: "6rem",
+        items: itemsByField.tourney,
+        icon: Trophy,
+        maxVisible: 2,
+        single: false,
+      },
+    ],
+  }), [locale, itemsByField]);
+
+  console.log(
+  "[HP] render | activeTab:", activeTab,
+  "| selections:", JSON.stringify(selections)
+);
+
   return (
     <header
-      className={`h-[4rem] flex items-center justify-between px-[1.5rem] shrink-0 border-b z-50 transition-colors duration-300 ${
+      className={`h-[4rem] flex items-center justify-between px-[1rem] shrink-0 border-b z-50 transition-colors duration-300 ${
         headerThemeClasses.header
       }`}
     >
-      <div className="flex items-center gap-[1.5rem]">
-        <Field
-            variant="button"
-            width="10rem"
-            icon={UserCog}
-            labelButton={locale.Authorization.Label}
-            themeClasses={themeClasses}
-            onClick={()=> setActiveModal("authorization")}
-          />
-        {/* { activeTab === "notifications" && (
-          <>
-            <Field
-              variant="select"
-              labelPosition="left"
-              labelWidth={"11rem"}
-              value={"startgg"}
-              items={[
-                  {
-                    label: "Start.gg",
-                    value: "startgg",
-                  },
-                ]}
-              width={"22rem"}
-              icon={Trophy}
-              label={"Tournament platform"}
-              themeClasses={headerThemeClasses}
-            />
-            <Field
-                variant="select"
+      <div className="flex items-center gap-[0.5rem]">
+        {activeTab &&
+          TAB_CLIENT_CONFIG[activeTab] &&
+          TAB_CLIENT_CONFIG[activeTab].map((cfg) => {
+            const currentValue = selections?.[activeTab]?.[cfg.fieldKey] || [];
+            return (
+              <Field
+                key={cfg.fieldKey}
+                variant="multiselect"
+                label={cfg.label}
                 labelPosition="left"
-                labelWidth={"8rem"}
-                value={"Discord"}
-                width={"18rem"}
-                items={[
-                  {
-                    label: "Discord",
-                    value: "discord",
-                  },
-                ]}
-                icon={Mail}
-                label={"Delivery method"}
-                themeClasses={headerThemeClasses}
-            />
-          </>
-        )} */}
+                labelWidth={cfg.labelWidth}
+                value={currentValue}
+                onChange={(ids) => {
+                  console.log(
+                    "[HP] onChange | activeTab:", activeTab,
+                    "| fieldKey:", cfg.fieldKey,
+                    "| ids:", ids,
+                    "| types:", Array.isArray(ids) ? ids.map((x) => typeof x) : typeof ids
+                  );
+                  setSelection(activeTab, cfg.fieldKey, ids);
+                }}
+                items={cfg.items}
+                width="21rem"
+                icon={cfg.icon}
+                placeholder={locale.MultiSelectClient.ChooseClient}
+                searchable
+                maxVisible={cfg.maxVisible}
+                single={cfg.single}
+                themeClasses={themeClasses}
+                locale={locale.MultiSelectClient}
+                renderItem={(item) => <IntegrationItem item={item} />}
+              />
+            );
+          })}
       </div>
 
-      <div className="flex items-center gap-[1rem]">
-        {/* Selector language */}
+      <div className="flex items-center gap-[0.5rem]">
         <Field
           variant="select"
           value={lang}
-          width={"6.5rem"}
+          width={"6.1rem"}
           icon = {LanguagesIcon}
           themeClasses={headerThemeClasses}
           items={[
@@ -145,7 +211,6 @@ const HeaderPlate = ({
             }}
         />
 
-        {/* Theme switcher */}
         <button
           onClick={changeTheme}
           className={`flex items-center gap-[0.25rem] p-[0.25rem] rounded-full border  duration-300 ${
@@ -166,17 +231,16 @@ const HeaderPlate = ({
           >
             <Moon style={{ width: "0.875rem", height: "0.875rem" }} />
           </div>
-        </button>
+        </button> 
 
-        {/* Extra buttons */}
         <div
-          className={`flex items-center gap-[1rem] pl-[1rem] border-l h-[1.5rem] text-slate-500 ${
+          className={`flex items-center gap-[0.5rem] pl-[0.5rem] border-l h-[1.5rem] text-slate-500 ${
             headerThemeClasses.divider
           }`}
         >
           <Field
             variant="button"
-            width="100px"
+            width="6.2rem"
             icon={HelpCircle}
             labelButton={locale.Help.Label}
             themeClasses={themeClasses}
@@ -185,22 +249,13 @@ const HeaderPlate = ({
           <Field
             variant="button"
             icon={Info}
-            width="100px"
+            width="6.2rem"
             labelButton={locale.About.Label}
             themeClasses={themeClasses}
             onClick={()=> setActiveModal("about")}
           />
         </div>
       </div>
-    <AuthorizationModal
-      isOpen={activeModal === "authorization"}
-      onClose={() => {
-        setActiveModal(null);
-      }}
-      locale={locale.Authorization}
-      updateConfig={updateConfig}
-      themeClasses={themeClasses}
-    />
     <AboutModal
       isOpen={activeModal === "about"}
       locale={locale.About}

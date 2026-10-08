@@ -27,7 +27,7 @@ type App struct {
 	MessengerClient  *auth.AuthClient
 	TournamentClient *auth.AuthClient
 	Db               *dbManager.Database
-	Locale           *config.SettingsApplication
+	Locale           *config.SettingsApplicationCfg
 	logUpdateTimer   *time.Timer
 	OAuthServer      *auth.OAuthCallbackServer
 	UpdateService    *update.Service
@@ -43,11 +43,11 @@ type App struct {
 	ThemeProvider *widget.ThemeProvider
 	UrlValidator  *validator.Validator
 
-	ActiveProfile        string
-	ConfigSettings       config.SettingsApplication
-	ConfigWidgets        config.ConfigWidgets
-	ConfigTournament     *config.ConfigTournament
-	ConfigAuthorizations config.ConfigAuthorizations
+	ActiveProfile         string
+	SettingsCfg           config.SettingsApplicationCfg
+	WidgetsCfg            config.WidgetsCfg
+	NotificationSystemCfg *config.NotificationSystem
+	AuthorizationsCfg     config.AuthorizationsCfg
 }
 
 func NewApp() *App {
@@ -146,14 +146,14 @@ func (a *App) ValidateTournamentURL(rawURL string) (app.ValidationResult, error)
 	}, nil
 }
 
-func (a *App) RestoreClientStatuses() (config.ConfigAuthorizations, error) {
+func (a *App) RestoreClientStatuses() (config.AuthorizationsCfg, error) {
 	if a.ActiveProfile == "" {
-		return config.ConfigAuthorizations{}, fmt.Errorf("no active profile")
+		return config.AuthorizationsCfg{}, fmt.Errorf("no active profile")
 	}
 
 	cfg, err := config.LoadAuthorizations(a.ActiveProfile)
 	if err != nil {
-		return config.ConfigAuthorizations{}, fmt.Errorf("load authorizations: %w", err)
+		return config.AuthorizationsCfg{}, fmt.Errorf("load authorizations: %w", err)
 	}
 
 	ctx := a.ctx
@@ -198,7 +198,7 @@ func (a *App) RestoreClientStatuses() (config.ConfigAuthorizations, error) {
 		slot.Status = a.checkTelegramSlot(ctx, *slot, i)
 	}
 
-	a.ConfigAuthorizations = cfg
+	a.AuthorizationsCfg = cfg
 	if err := config.SaveAuthorizations(a.ActiveProfile, cfg); err != nil {
 		return cfg, fmt.Errorf("save authorizations: %w", err)
 	}

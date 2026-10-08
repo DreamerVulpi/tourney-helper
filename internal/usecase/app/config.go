@@ -35,7 +35,7 @@ func (a *App) GetActiveProfileName() (string, error) {
 // SETTINGS
 // ============================================================
 
-func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
+func (a *App) LoadSettingsApp() (config.SettingsApplicationCfg, error) {
 	cfg, err := config.LoadSettings(a.ActiveProfile)
 	if err != nil {
 		nullCfg := config.NewDefaultSettings()
@@ -48,38 +48,38 @@ func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
 	return cfg, nil
 }
 
-func (a *App) SaveSettingsApp(cfg config.SettingsApplication) error {
+func (a *App) SaveSettingsApp(cfg config.SettingsApplicationCfg) error {
 	return config.SaveSettings(a.ActiveProfile, cfg)
 }
 
 // ============================================================
-// TOURNAMENT
+// TOOLS
 // ============================================================
 
-func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
+func (a *App) LoadToolsCfg() (config.ToolsCfg, error) {
 	logger.Log(entityLogger.Info, a.ActiveProfile)
-	cfg, err := config.LoadTournament(a.ActiveProfile)
+	cfg, err := config.LoadTools(a.ActiveProfile)
 	if err != nil {
-		nullCfg := config.NewDefaultTournament()
-		_ = config.SaveTournament(a.ActiveProfile, nullCfg)
+		nullCfg := config.NewDefaultTools()
+		_ = config.SaveTools(a.ActiveProfile, nullCfg)
 		logger.Log(entityLogger.Warning,
-			"The tournament configuration could not be loaded. It has been recreated")
+			"The tools configuration could not be loaded. It has been recreated")
 		return nullCfg, nil
 	}
 	logger.Log(entityLogger.Success,
-		"The tournament configuration has been successfully loaded")
+		"The tools configuration has been successfully loaded")
 	return cfg, nil
 }
 
-func (a *App) SaveTournamentConfig(cfg config.ConfigTournament) error {
-	return config.SaveTournament(a.ActiveProfile, cfg)
+func (a *App) SaveToolsCfg(cfg config.ToolsCfg) error {
+	return config.SaveTools(a.ActiveProfile, cfg)
 }
 
 // ============================================================
 // WIDGETS
 // ============================================================
 
-func (a *App) LoadWidgetsConfig() (config.ConfigWidgets, error) {
+func (a *App) LoadWidgetsCfg() (config.WidgetsCfg, error) {
 	cfg, err := config.LoadWidgets(a.ActiveProfile)
 	if err != nil {
 		nullCfg := config.NewDefaultWidgets()
@@ -91,7 +91,7 @@ func (a *App) LoadWidgetsConfig() (config.ConfigWidgets, error) {
 	return cfg, nil
 }
 
-func (a *App) SaveWidgetsConfig(cfg config.ConfigWidgets) error {
+func (a *App) SaveWidgetsCfg(cfg config.WidgetsCfg) error {
 	return config.SaveWidgets(a.ActiveProfile, cfg)
 }
 
@@ -99,7 +99,7 @@ func (a *App) SaveWidgetsConfig(cfg config.ConfigWidgets) error {
 // AUTHORIZATIONS
 // ============================================================
 
-func (a *App) LoadAuthorizations() (config.ConfigAuthorizations, error) {
+func (a *App) LoadAuthorizations() (config.AuthorizationsCfg, error) {
 	cfg, err := config.LoadAuthorizations(a.ActiveProfile)
 	if err != nil {
 		nullCfg := config.NewEmptyAuthorizations()
@@ -111,14 +111,14 @@ func (a *App) LoadAuthorizations() (config.ConfigAuthorizations, error) {
 	return cfg, nil
 }
 
-func (a *App) SaveAuthorizations(cfg config.ConfigAuthorizations) error {
+func (a *App) SaveAuthorizations(cfg config.AuthorizationsCfg) error {
 	return config.SaveAuthorizations(a.ActiveProfile, cfg)
 }
 
 // SetSlotStatus — устанавливает статус слота и сохраняет конфиг.
 // platformID: "startgg" | "challonge" | "discord" | "telegram"
 func (a *App) SetSlotStatus(platformID string, slotIndex int, status config.AuthStatus, reason string) error {
-	cfg := a.ConfigAuthorizations
+	cfg := a.AuthorizationsCfg
 
 	var platform *config.PlatformAuthorizations
 	switch platformID {
@@ -137,6 +137,6 @@ func (a *App) SetSlotStatus(platformID string, slotIndex int, status config.Auth
 
 	platform.SetSlotStatus(slotIndex, status, reason)
 
-	a.ConfigAuthorizations = cfg
+	a.AuthorizationsCfg = cfg
 	return config.SaveAuthorizations(a.ActiveProfile, cfg)
 }

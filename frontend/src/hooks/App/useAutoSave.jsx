@@ -2,44 +2,13 @@ import { useMemo } from "react";
 import { debounce } from "../../utils/debounce";
 
 import {
-  SaveTournamentConfig,
+  SaveToolsCfg,
   SaveSettingsApp,
-  SaveWidgetsConfig,
+  SaveWidgetsCfg,
   SaveAuthorizations,
 } from "../../../wailsjs/go/application/App.js";
 
 export function useAutoSave() {
-  // ============================================================
-  // Tournament (tournament.toml)
-  // ============================================================
-  const debouncedSaveTourney = useMemo(
-    () =>
-      debounce((cfg) => {
-        const dataToSend = {
-          urlToTournament: cfg.urlToTournament || "",
-          rules: {
-            standardFormat: parseInt(cfg.rules?.standardFormat) || 2,
-            finalsFormat:   parseInt(cfg.rules?.finalsFormat)   || 3,
-            rounds:         parseInt(cfg.rules?.rounds)         || 3,
-            duration:       parseInt(cfg.rules?.duration)       || 60,
-            stage:          cfg.rules?.stage ?? "Random",
-          },
-          stream: {
-            area:          cfg.stream?.area          ?? "Any",
-            language:      cfg.stream?.language      ?? "EN",
-            connection:    cfg.stream?.connection    ?? "Wired",
-            crossplatform: cfg.stream?.crossplatform ?? false,
-            passcode:      cfg.stream?.passcode      ?? "0000",
-            linkToLobby:   cfg.stream?.linkToLobby   ?? "",
-          },
-          logo: cfg.logo || { img: "" },
-          csv:  cfg.csv  || { nameFile: "" },
-          game: cfg.game || { name: "" },
-        };
-        SaveTournamentConfig(dataToSend);
-      }, 1000),
-    [],
-  );
 
   // ============================================================
   // Settings (settings.toml)
@@ -76,7 +45,7 @@ export function useAutoSave() {
               autoRefresh:     cfg.bracket?.autoRefresh     ?? false,
             },
           };
-          await SaveWidgetsConfig(dataToSend);
+          await SaveWidgetsCfg(dataToSend);
           console.log("Widgets config saved on backend");
         } catch (err) {
           console.error("Could not save widgets config:", err);
@@ -101,10 +70,17 @@ export function useAutoSave() {
     [],
   );
 
+  // ============================================================
+  // Tools (tools.toml)
+  // ============================================================
+  const debouncedSaveTools = useMemo(
+    () => debounce((cfg) => SaveToolsCfg(cfg), 1000), [],
+  );
+
   return {
-    debouncedSaveTourney,
     debouncedSaveSettings,
     debouncedSaveWidgets,
     debouncedSaveAuthorizations,
+    debouncedSaveTools,
   };
 }

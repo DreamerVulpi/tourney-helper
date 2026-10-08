@@ -20,7 +20,7 @@ import (
 )
 
 type params struct {
-	tournament   config.ConfigTournament
+	tournament   config.NotificationSystem
 	rulesMatches config.RulesMatches
 	streamLobby  config.StreamLobby
 
@@ -54,7 +54,7 @@ type Handler struct {
 func (h *Handler) InitBot(
 	botCred config.ClientCredentials,
 	activeTournamentPlatform string,
-	tournament config.ConfigTournament,
+	tournament config.NotificationSystem,
 	debugMode bool,
 ) {
 	h.tournamentPlatform = activeTournamentPlatform
@@ -88,8 +88,8 @@ func (h *Handler) Start(
 	conn *sql.DB,
 	botCred config.ClientCredentials,
 	tourneyCred config.ClientCredentials,
-	tournament config.ConfigTournament,
-	settings config.SettingsApplication,
+	tournament config.NotificationSystem,
+	settings config.SettingsApplicationCfg,
 ) error {
 	h.mtx.Lock()
 	if h.session != nil {

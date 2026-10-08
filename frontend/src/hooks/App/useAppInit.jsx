@@ -2,17 +2,17 @@ import { useEffect, useRef } from "react";
 
 import {
   LoadSettingsApp,
-  LoadTournamentConfig,
-  LoadWidgetsConfig,
+  LoadToolsCfg,
+  LoadWidgetsCfg,
   LoadAuthorizations,
   GetActiveProfileName,
 } from "../../../wailsjs/go/application/App.js";
 import { useAppStore } from "../../store/useAppStore";
 import { RestoreClientStatuses } from "../../../wailsjs/go/application/App";
+import { pruneSelections } from "../../utils/integrations.js";
 
 export function useAppInit({
   locale,
-  setTournament,
   setWidgets,    
   setAuthorizations,
   setActiveProfile, 
@@ -20,6 +20,8 @@ export function useAppInit({
   setLang,
   setTheme,
   setSidePanelCollapsed,
+  setTools,
+  setIntegrationsSelections,
 }) {
   const isConfigLoadedRef = useRef(false);
   const setIsLoaded = useAppStore((s) => s.setIsLoaded);
@@ -40,6 +42,7 @@ export function useAppInit({
         // 2. Настройки (settings.toml)
         // ============================================================
         const settings = await LoadSettingsApp();
+        let integrationsSelections = {};
         if (settings) {
           const lang  = settings.Language || settings.language || "EN";
           const theme = (settings.Theme || settings.theme || "dark").toLowerCase();
@@ -51,6 +54,8 @@ export function useAppInit({
             settings.SidePanelCollapsed ?? settings.sidePanelCollapsed ?? false;
           const debugMode =
             settings.DebugMode ?? settings.debugMode ?? false;
+          integrationsSelections = 
+            settings.IntegrationsSelections ?? settings.integrationsSelections ?? {};
 
           setSettings((prev) => ({
             ...(prev ?? {}),
@@ -67,41 +72,47 @@ export function useAppInit({
           setSidePanelCollapsed(sidePanelCollapsed);
         }
 
-        // ============================================================
-        // 3. Tournament (tournament.toml) — без widgetBracket и startgg/challonge
-        // ============================================================
-        const tourney = await LoadTournamentConfig();
-        if (tourney) {
-          setTournament((prev) => ({
-            ...(prev ?? {}),
-            urlToTournament: tourney.urlToTournament || "",
-            logo: {
-              img: tourney.logo?.img || "",
-            },
+      const tools = await LoadToolsCfg();
+      console.log("[useAppInit] tools from backend:", tools);
+      if (tools) {
+        const ns = tools?.notificationSystem ?? {};
+        console.log("[useAppInit] tools.notificationSystem:", tools.notificationSystem);
+        setTools((prev) => ({
+          ...(prev ?? {}),
+          notificationSystem: {
+            tournamentClientId: ns.tournamentClientId ?? "",
+            deliveryClients:    ns.deliveryClients    ?? [],
+
+            urlToTournament: ns.urlToTournament ?? "",
+
             rules: {
-              standardFormat: tourney.rules?.standardFormat ?? 2,
-              finalsFormat:   tourney.rules?.finalsFormat   ?? 3,
-              rounds:         tourney.rules?.rounds         ?? 3,
-              duration:       tourney.rules?.duration       ?? 60,
-              stage:          tourney.rules?.stage          || "Any",
+              standardFormat: Number(ns.rules?.standardFormat) || 2,
+              finalsFormat:   Number(ns.rules?.finalsFormat)   || 3,
+              rounds:         Number(ns.rules?.rounds)         || 3,
+              duration:       Number(ns.rules?.duration)       || 60,
+              stage:          ns.rules?.stage ?? "Random",
             },
+
             stream: {
-              area:          tourney.stream?.area          || "Any",
-              language:      tourney.stream?.language      || "EN",
-              connection:    tourney.stream?.connection    || "Wired",
-              crossplatform: tourney.stream?.crossplatform ?? false,
-              passcode:      tourney.stream?.passcode      || "0000",
-              linkToLobby:   tourney.stream?.linkToLobby   || "",
+              area:          ns.stream?.area          ?? "Any",
+              language:      ns.stream?.language      ?? "EN",
+              conn:          ns.stream?.conn          ?? "Wired",
+              crossplatform: ns.stream?.crossplatform ?? false,
+              passcode:      ns.stream?.passcode      ?? "0000",
+              linkToLobby:   ns.stream?.linkToLobby   ?? "",
             },
-            csv:  tourney.csv  || { nameFile: "" },
-            game: tourney.game || { name: "" },
-          }));
-        }
+
+            logo: { img: ns.logo?.img ?? "" },
+            csv:  { nameFile: ns.csv?.nameFile ?? "" },
+            game: { name: ns.game?.name ?? "tekken" },
+          },
+        }));
+      }
 
         // ============================================================
         // 4. Widgets (widgets.toml)
         // ============================================================
-        const widgets = await LoadWidgetsConfig();
+        const widgets = await LoadWidgetsCfg();
         if (widgets && setWidgets) {
           setWidgets({
             bracket: {
@@ -147,27 +158,49 @@ export function useAppInit({
             });
         }
 
-        isConfigLoadedRef.current = true;
-        setIsLoaded(true);
-        RestoreClientStatuses()
-          .then((restored) => {
-            if (restored && setAuthorizations) {
-              setAuthorizations({
-                startgg:   normalizePlatform(restored.startgg),
-                challonge: normalizePlatform(restored.challonge),
-                discord:   normalizePlatform(restored.discord),
-                telegram:  normalizePlatform(restored.telegram),
-              });
-            }
-          })
-          .catch((err) => {
-            console.warn("Failed to restore client statuses:", err);
-          });
+                 isConfigLoadedRef.current = true;
+         setIsLoaded(true);
+         RestoreClientStatuses()
+           .then((restored) => {
+             if (restored && setAuthorizations) {
+               setAuthorizations({
+                 startgg:   normalizePlatform(restored.startgg),
+                 challonge: normalizePlatform(restored.challonge),
+                 discord:   normalizePlatform(restored.discord),
+                 telegram:  normalizePlatform(restored.telegram),
+               });
+             }
+
+           // Гидрация selections — ПОСЛЕ восстановления статусов
+           if (setIntegrationsSelections) {
+             const pruned = pruneSelections(
+               integrationsSelections,
+               useAppStore.getState().authorizations
+             );
+             setIntegrationsSelections(pruned);
+             useAppStore.getState().setSelectionsHydrated(true);
+           }
+           })
+           .catch((err) => {
+             console.warn("Failed to restore client statuses:", err);
+
+           // Даже при ошибке — гидратируем, иначе потеряем сохранённый выбор
+           if (setIntegrationsSelections) {
+             const pruned = pruneSelections(
+               integrationsSelections,
+               useAppStore.getState().authorizations
+             );
+             setIntegrationsSelections(pruned);
+             useAppStore.getState().setSelectionsHydrated(true);
+           }
+           });
       } catch (err) {
         console.error(`${locale.LogPanel.ErrorLoadingConfig}:${err}`, "error");
       }
     };
     
+    
+
     initApp();
   }, [locale]);
 }

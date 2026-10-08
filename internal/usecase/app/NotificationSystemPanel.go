@@ -128,10 +128,10 @@ func (a *App) AuthorizeStartgg(clientID, clientSecret string, slotIndex int) err
 }
 
 func (a *App) InitSystemNotification(
-	settings config.SettingsApplication,
+	settings config.SettingsApplicationCfg,
 	botCred config.ClientCredentials,
 	tourneyCred config.ClientCredentials,
-	cfgTournament config.ConfigTournament,
+	cfgTournament config.NotificationSystem,
 ) (*discord.Handler, error) {
 	collectorStartgg := metrics.NewCollector()
 	limiterStartgg := rateLimiter.NewStartggLimiter(collectorStartgg)
@@ -168,7 +168,7 @@ func (a *App) InitSystemNotification(
 			MessengerID:    meDiscordPlatform.ID,
 			MessengerLogin: meDiscordPlatform.Username,
 			Locale:         strings.ToLower(settings.Language), // ← было language
-			GameName:       a.ConfigTournament.Game.Name,
+			GameName:       a.NotificationSystemCfg.Game.Name,
 		},
 		limiterDiscord,
 		limiterStartgg,
@@ -189,9 +189,9 @@ func (a *App) InitSystemNotification(
 
 func (a *App) StartSendNotifications(
 	messenger, tournamentPlatform string,
-	cfgAuthorizations config.ConfigAuthorizations,
-	cfgTournament config.ConfigTournament,
-	settings config.SettingsApplication,
+	cfgAuthorizations config.AuthorizationsCfg,
+	cfgTournament config.NotificationSystem,
+	settings config.SettingsApplicationCfg,
 ) error {
 	a.mu.Lock()
 	if a.ns != nil {
@@ -340,8 +340,8 @@ func (a *App) StartSendNotifications(
 		return err
 	}
 	cfgTournament.UrlToTournament = slug
-	if a.ConfigTournament != nil {
-		a.ConfigTournament.UrlToTournament = slug
+	if a.NotificationSystemCfg != nil {
+		a.NotificationSystemCfg.UrlToTournament = slug
 	}
 
 	// ========================================================
