@@ -7,11 +7,10 @@ import { SERVICE_STATUS } from "../../utils/listStatus.js";
 export function useStartToggle(
   isWidgetBracketRunning,
   setIsWidgetBracketRunning,
-
   isProcessing,
   setIsProcessing,
   setStatusWidgetBracket,
-  { activePlatform, tourneyCfg},
+  { ref, authorizations, widgets },
 ) {
   const toggleStart = async () => {
     if (isProcessing) return;
@@ -30,23 +29,40 @@ export function useStartToggle(
         setIsProcessing(false);
       }
       return;
-    } else {
-      try {
-        setStatusWidgetBracket(SERVICE_STATUS.STARTING);
-        await LaunchWidgetBracket(
-          activePlatform,
-          tourneyCfg,
-        );
-        setIsWidgetBracketRunning(true);
-        setStatusWidgetBracket(SERVICE_STATUS.RUNNING);
-      } catch (err) {
-        console.error(err);
-        setIsWidgetBracketRunning(false);
-        setStatusWidgetBracket(SERVICE_STATUS.ERROR);
-      } finally {
-        setIsProcessing(false);
-      }
+    }
+
+    if (!ref) {
+      console.error("[useStartToggle] no client ref selected");
+      setIsProcessing(false);
+      setStatusWidgetBracket(SERVICE_STATUS.ERROR);
+      return;
+    }
+
+    const [platform, slotStr] = ref.split(":");
+    const slotIndex = Number(slotStr);
+
+    if (!platform || Number.isNaN(slotIndex)) {
+      console.error("[useStartToggle] invalid ref:", ref);
+      setIsProcessing(false);
+      setStatusWidgetBracket(SERVICE_STATUS.ERROR);
+      return;
+    }
+
+    try {
+      setStatusWidgetBracket(SERVICE_STATUS.STARTING);
+
+      await LaunchWidgetBracket(platform, slotIndex, authorizations, widgets);
+
+      setIsWidgetBracketRunning(true);
+      setStatusWidgetBracket(SERVICE_STATUS.RUNNING);
+    } catch (err) {
+      console.error(err);
+      setIsWidgetBracketRunning(false);
+      setStatusWidgetBracket(SERVICE_STATUS.ERROR);
+    } finally {
+      setIsProcessing(false);
     }
   };
+
   return toggleStart;
 }

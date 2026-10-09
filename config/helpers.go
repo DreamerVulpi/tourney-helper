@@ -129,9 +129,8 @@ func NewDefaultWidgets() WidgetsCfg {
 func NewDefaultTools() ToolsCfg {
 	return ToolsCfg{
 		NotificationSystem: NotificationSystem{
-			TournamentClientId: "",
-			DeliveryClients:    nil,
-			UrlToTournament:    "",
+			DeliveryClients: nil,
+			UrlToTournament: "",
 			Rules: RulesMatches{
 				StandardFormat: 2,
 				FinalsFormat:   3,

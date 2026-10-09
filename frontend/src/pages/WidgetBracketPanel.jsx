@@ -53,75 +53,67 @@ const WidgetBracketPlate = ({
   isWidgetBracketRunning,
   setIsWidgetBracketRunning,
   iframeRef_WidgetBracket,
-  bracketFlags,
-  setBracketFlags,
   urlValidation,
   setURLValidation,
 }) => {
      // ---- store ----
   const theme          = useAppStore((s) => s.theme);
-  const activeModal    = useAppStore((s) => s.activeModal);
   const activePlatform = useAppStore((s) => s.activeTournamentPlatform);
-  // TODO: Fix to widgets.bracket
-  const tournament     = useAppStore((s) => s.tournament);
   const setStatusWidgetBracket = useAppStore((s) => s.setStatusWidgetBracket);
-
+  
   // ---- производные ----
   const themeClasses = useThemeClasses(getThemeClasses);
+  
+  const widgets = useAppStore((s) => s.widgets);
+  const bracket = widgets?.bracket;
 
-  const urlToTournament = tournament?.widgetBracket?.urlToTournament || "";
-  const bracketId = tournament?.widgetBracket?.bracketId || "";
-  const themeBracket = tournament?.widgetBracket?.theme || "StartGG";
+  const urlToTournament = bracket?.urlToTournament ?? "";
+  const bracketId       = bracket?.bracketId       ?? "";
+  const themeBracket    = bracket?.theme           ?? "StartGG";
+
   const themeOptions = useGetListThemes();
 
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
-  // Значения флагов из общего состояния
-  const {
-    transparent: clearBackground,
-    hideRounds: hideStages,
-    bracketMode: bracketMode,
-    scale: scale,
-    autoRefresh: autoRefresh,
-  } = bracketFlags;
+  const clearBackground = bracket?.clearBackground ?? false;
+  const hideStages      = bracket?.hideStages      ?? false;
+  const bracketMode     = bracket?.bracketMode     ?? "all";
+  const scale           = bracket?.scale           ?? 1.0;
+  const autoRefresh     = bracket?.autoRefresh     ?? false;
+
+  const selections = useAppStore((s) => s.integrationsSelections);
+  const authorizations = useAppStore((s) => s.authorizations);
+
+  const bracketRef = selections?.widgetBracket?.tourney?.[0] ?? null;
+
+  const handleWidgetBracketToggle = useStartToggle(
+    isWidgetBracketRunning,
+    setIsWidgetBracketRunning,
+    isProcessing,
+    setIsProcessingWB,
+    setStatusWidgetBracket,
+    { ref: bracketRef, authorizations, widgets },
+  );
 
   const readyScale = clampScale(scale);
-  const tourneyCfgRef = useRef(tournament);
-  useEffect(() => {
-      tourneyCfgRef.current = tournament;
-  }, [tournament]);
 
   const debouncedParseGridId = useMemo(
   () => debounce(async (rawUrl) => {
-    const cfg = tourneyCfgRef.current;
-  
     if (!rawUrl || !rawUrl.trim()) {
-      updateConfig("tournament", {
-        widgetBracket: {
-          ...cfg.widgetBracket,
-          urlToTournament: rawUrl,
-          bracketId: "",
-        },
+      updateConfig("widgets", {
+        bracket: { urlToTournament: rawUrl, bracketId: "" },
       });
       return;
     }
 
     try {
       const id = await ParseTournamentURLForWidget("startgg", rawUrl);
-      updateConfig("tournament", {
-        widgetBracket: {
-          ...cfg.widgetBracket,
-          urlToTournament: rawUrl,
-          bracketId: id,
-        },
+      updateConfig("widgets", {
+        bracket: { urlToTournament: rawUrl, bracketId: id },
       });
     } catch (err) {
-      updateConfig("tournament", {
-        widgetBracket: {
-          ...cfg.widgetBracket,
-          urlToTournament: rawUrl,
-          bracketId: "",
-        },
+      updateConfig("widgets", {
+        bracket: { urlToTournament: rawUrl, bracketId: "" },
       });
     }
   }, 300),
@@ -152,105 +144,77 @@ const WidgetBracketPlate = ({
   // При монтировании / смене URL в конфиге (например, при переключении вкладок) —
   // валидируем и парсим URL один раз, если он есть.
   useEffect(() => {
-      if (!urlToTournament || !urlToTournament.trim()) {
-            setURLValidation({ valid: null, platform: "" });
-            lastValidatedUrlRef.current = null;
-       
-            if (bracketId) {
-            updateConfig("tournament", {
-                widgetBracket: { ...tournament.widgetBracket, urlToTournament: "", bracketId: "" },
-            });
-            }
-            return;
-        }
+    if (!urlToTournament || !urlToTournament.trim()) {
+      setURLValidation({ valid: null, platform: "" });
+      lastValidatedUrlRef.current = null;
 
-      if (lastValidatedUrlRef.current === urlToTournament) {
-          return;
+      if (bracketId) {
+        updateConfig("widgets", {
+          bracket: { urlToTournament: "", bracketId: "" },
+        });
       }
+      return;
+    }
 
-      lastValidatedUrlRef.current = urlToTournament;
+    if (lastValidatedUrlRef.current === urlToTournament) return;
+    lastValidatedUrlRef.current = urlToTournament;
 
-      debouncedValidateUrl(urlToTournament);
-      debouncedParseGridId(urlToTournament);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    debouncedValidateUrl(urlToTournament);
+    debouncedParseGridId(urlToTournament);
   }, [urlToTournament]);
 
   const handleTournamentUrlChange = useCallback(
     (value) => {
-          // 1. Сохраняем сырую ссылку в конфиг (UI покажет её)
-          updateConfig("tournament", {
-              widgetBracket: {
-                  ...tournament.widgetBracket,
-                  urlToTournament: value,
-              },
-          });
-      },
-      [tournament.widgetBracket, updateConfig],
+      updateConfig("widgets", {
+        bracket: { urlToTournament: value },
+      });
+    },
+    [updateConfig],
   );
 
   const handleThemeBracketChange = useCallback(
     (value) => {
-      updateConfig("tournament", {
-        widgetBracket: {
-          ...tournament.widgetBracket,
-          theme: value,
-        },
+      updateConfig("widgets", {
+        bracket: { theme: value },
       });
     },
-    [tournament.widgetBracket, updateConfig],
+    [updateConfig],
   );
 
   // ---------- Обработчики тумблеров ----------
   // Обновляем флаги в App через setBracketFlags (functional update)
-  const handleClearBackgroundChange = useCallback(
-    (value) => {
-      setBracketFlags((prev) => {
-        const next = { ...prev, transparent: value };
-        return next;
-      });
-    },
-    [setBracketFlags],
-  );
+  const handleClearBackgroundChange = useCallback((value) => {
+    updateConfig("widgets", {
+      bracket: { clearBackground: value },
+    });
+  }, [updateConfig]);
 
-  const handleHideStagesChange = useCallback(
-    (value) => {
-      setBracketFlags((prev) => ({ ...prev, hideRounds: value }));
-    },
-    [setBracketFlags],
-  );
+  const handleHideStagesChange = useCallback((value) => {
+    updateConfig("widgets", {
+      bracket: { hideStages: value },
+    });
+  }, [updateConfig]);
 
-  const handleBracketModeChange = useCallback(
-    (value) => {
-      setBracketFlags((prev) => ({ ...prev, bracketMode: value }));
-    },
-    [setBracketFlags],
-  );
+  const handleBracketModeChange = useCallback((value) => {
+    updateConfig("widgets", {
+      bracket: { bracketMode: value },
+    });
+  }, [updateConfig]);
 
-  const handleScaleChange = useCallback(
-    (value) => {
-      const num = clampScale(value);
-      setBracketFlags((prev) => ({ ...prev, scale: num }));
-    },
-    [setBracketFlags],
-  );
+  const handleScaleChange = useCallback((value) => {
+    const num = clampScale(value);
+    updateConfig("widgets", {
+      bracket: { scale: num },
+    });
+  }, [updateConfig]);
 
-  const handleAutoRefreshChange = useCallback(
-    (value) => {
-      setBracketFlags((prev) => ({...prev, autoRefresh: value}));
-    },
-    [setBracketFlags],
-  )
+  const handleAutoRefreshChange = useCallback((value) => {
+    updateConfig("widgets", {
+      bracket: { autoRefresh: value },
+    });
+  }, [updateConfig]);
 
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
-
-  const handleWidgetBracketToggle = useStartToggle(
-    isWidgetBracketRunning,
-    setIsWidgetBracketRunning,
-    isProcessing,
-    setIsProcessingWB,
-    setStatusWidgetBracket,
-    { activePlatform, tourneyCfg: tournament },
-  );
 
   // Полный URL с флагами — нужен только для отображения в UI (LinkOfWidget)
   const bracketUrl = useMemo(() => {
@@ -362,11 +326,22 @@ const WidgetBracketPlate = ({
   //  - виджет ещё не запущен
   //  - URL валиден
   //  - не идёт обработка
-  const isStartDisabled =
-      isProcessing ||
-      isWidgetBracketRunning ||
-      urlValidation.valid !== true;
+  const selectedClient = useMemo(() => {
+  if (!bracketRef) return null;
+  const [platform, slotStr] = bracketRef.split(":");
+  const slotIndex = Number(slotStr);
+  if (!platform || Number.isNaN(slotIndex)) return null;
+    return authorizations?.[platform]?.slots?.[slotIndex] ?? null;
+  }, [bracketRef, authorizations]);
 
+  const isClientAuthorized = selectedClient?.status === "authorized";
+
+  const isStartDisabled =
+    isProcessing ||
+    isWidgetBracketRunning ||
+    urlValidation.valid !== true ||
+    !bracketRef ||
+    !isClientAuthorized;
   // Stop доступен всегда, пока виджет запущен,
   // даже если URL сейчас невалиден или пустой.
   // Блокируется только во время обработки.
@@ -547,7 +522,7 @@ const WidgetBracketPlate = ({
             <ToggleSwitch
               label={locale.AutoRefresh}
               icon={RefreshCw}
-              checked={bracketFlags.autoRefresh}
+              checked={autoRefresh}
               color="amber"
               themeClasses={themeClasses}
               onChange={handleAutoRefreshChange}

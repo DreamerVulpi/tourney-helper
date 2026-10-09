@@ -1,6 +1,6 @@
 import "./App.css";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import HeaderPlate from "./pages/HeaderPlate.jsx";
 import SidePanel from "./pages/SidePanel.jsx";
@@ -21,20 +21,16 @@ import { useThemeClasses } from "./hooks/App/useThemeClasses";
 import { useCheckUpdate } from "./hooks/App/useCheckUpdate.jsx";
 import { InstallUpdate } from "../wailsjs/go/application/App.js";
 import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
+import { useBracketFlagsSync } from "./hooks/App/useBracketFlagsSync.jsx";
 import { useAppStore } from "./store/useAppStore"
 import IntegrationsPlate from "./pages/IntegrationsPanel.jsx";
-import { pruneSelections } from "./utils/integrations";
 
 const App = () => {
   // ---- UI ----
-  const theme          = useAppStore((s) => s.theme);
   const setTheme       = useAppStore((s) => s.setTheme);
-  const lang           = useAppStore((s) => s.lang);
   const setLang        = useAppStore((s) => s.setLang);
   const { locale }     = useLocale();
   const activeTab      = useAppStore((s) => s.activeTab);
-  const setActiveTab   = useAppStore((s) => s.setActiveTab);
-  const activeModal    = useAppStore((s) => s.activeModal);
   const setActiveModal = useAppStore((s) => s.setActiveModal);
 
   // ---- Side panel ----
@@ -74,25 +70,7 @@ const App = () => {
     debouncedSaveTools,
   });
 
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!authorizations) return;
-    debouncedSaveAuthorizations(authorizations);
-  }, [authorizations, isLoaded, debouncedSaveAuthorizations]);
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!widgets) return;
-    debouncedSaveWidgets(widgets);
-  }, [widgets, isLoaded, debouncedSaveWidgets]);
-
-
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!settings) return;
-    debouncedSaveSettings(settings);
-  }, [settings, isLoaded, debouncedSaveSettings]);
-  const setIsLoaded = useAppStore((s) => s.setIsLoaded);
+  useBracketFlagsSync();
 
   // Сохраняем выбор клиентов при каждом изменении
   useEffect(() => {
@@ -134,7 +112,7 @@ const App = () => {
   const [isWidgetBracketRunning, setIsWidgetBracketRunning] = useState(false);
 
   // Statement for update modal window
-  const { checking, updateInfo, error, check } = useCheckUpdate();
+  const { updateInfo, check } = useCheckUpdate();
   const [updateProgressOpen, setUpdateProgressOpen] = useState(false);
   const [updateStatus, setUpdateStatus] = useState("idle");
   const [updateMessage, setUpdateMessage] = useState("");
@@ -168,128 +146,6 @@ const App = () => {
       platform: '',
   });
 
-  // Дефолтные флаги
-const DEFAULT_BRACKET_FLAGS = {
-    transparent: false,
-    hideRounds:  false,
-    bracketMode: 'all',
-    scale:       1.0,
-    autoRefresh: false,
-};
-
-const [bracketFlags, setBracketFlags] = useState(DEFAULT_BRACKET_FLAGS);
-
-// Флаг: инициализированы ли мы из конфига
-const bracketFlagsInitializedRef = useRef(false);
-
-// 1. Инициализация из конфига — как только он загрузился
-useEffect(() => {
-    if (bracketFlagsInitializedRef.current) return;
-    if (!tools?.widgetBracket) return;
-
-    const { clearBackground, hideStages, bracketMode, scale, autoRefresh } = tools.widgetBracket;
-    console.log('[App] init bracketFlags from config:', {
-        clearBackground, hideStages, bracketMode, scale, autoRefresh,
-    });
-
-    setBracketFlags({
-        transparent: !!clearBackground,
-        hideRounds:  !!hideStages,
-        bracketMode: bracketMode || 'all',
-        scale:       typeof scale === 'number' && scale > 0 ? scale : 1.0,
-        autoRefresh: !!autoRefresh,
-    });
-
-    bracketFlagsInitializedRef.current = true;
-}, [tools]);
-
-// 2. Сохранение в конфиг — только после инициализации
-useEffect(() => {
-    if (!bracketFlagsInitializedRef.current) {
-        console.log('[App] skip saving flags — config not initialized yet');
-        return;
-    }
-
-    console.log('[App] save bracketFlags to config:', bracketFlags);
-
-    // TODO: Change to widgets config
-    updateConfig("tournament", {
-        widgetBracket: {
-            ...tools?.widgetBracket,
-            clearBackground: bracketFlags.transparent,
-            hideStages:      bracketFlags.hideRounds,
-            bracketMode:     bracketFlags.bracketMode,
-            scale:           bracketFlags.scale,
-            autoRefresh: bracketFlags.autoRefresh,
-        },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [bracketFlags]);
-
-// 3. Сохранение в localStorage + BroadcastChannel + backend (с debounce)
-useEffect(() => {
-    if (!bracketFlagsInitializedRef.current) return;
-
-    const timer = setTimeout(() => {
-        // localStorage
-        try {
-            localStorage.setItem('bracket:flags', JSON.stringify(bracketFlags));
-        } catch (e) {}
-
-        // BroadcastChannel
-        let channel = null;
-        try {
-            channel = new BroadcastChannel('bracket:flags');
-            channel.postMessage({
-                type: 'bracket:flags-changed',
-                flags: bracketFlags,
-            });
-            channel.close();
-        } catch (e) {}
-
-        // Backend
-        fetch('http://localhost:8080/widget/bracket/flags', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(bracketFlags),
-        }).catch(err => {
-            console.warn('[App] POST bracket flags failed:', err);
-        });
-    }, 300);
-
-    return () => clearTimeout(timer);
-}, [bracketFlags]);
-
-  useEffect(() => {
-      const timer = setTimeout(() => {
-          // 1. localStorage
-          try {
-              localStorage.setItem('bracket:flags', JSON.stringify(bracketFlags));
-          } catch (e) {}
-
-          // 2. BroadcastChannel
-          let channel = null;
-          try {
-              channel = new BroadcastChannel('bracket:flags');
-              channel.postMessage({
-                  type: 'bracket:flags-changed',
-                  flags: bracketFlags,
-              });
-              channel.close();
-          } catch (e) {}
-
-          // 3. Backend
-          fetch('http://localhost:8080/widget/bracket/flags', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(bracketFlags),
-          }).catch(err => {
-              console.warn('[App] POST bracket flags failed:', err);
-          });
-      }, 300);
-
-      return () => clearTimeout(timer);
-  }, [bracketFlags]);
 
   useEffect(() => {
       if (!settings) return;
@@ -424,8 +280,7 @@ useEffect(() => {
                     setIsProcessingWB={setIsProcessingWB}
                     isWidgetBracketRunning={isWidgetBracketRunning}
                     setIsWidgetBracketRunning={setIsWidgetBracketRunning}
-                    bracketFlags={bracketFlags}
-                    setBracketFlags={setBracketFlags}
+                    iframeRef_WidgetBracket={iframeRef_WidgetBracket}
                     urlValidation={urlValidationWidgetBracket}
                     setURLValidation={setURLValidationWidgetBracket}
                   />

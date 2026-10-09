@@ -80,7 +80,6 @@ export function useAppInit({
         setTools((prev) => ({
           ...(prev ?? {}),
           notificationSystem: {
-            tournamentClientId: ns.tournamentClientId ?? "",
             deliveryClients:    ns.deliveryClients    ?? [],
 
             urlToTournament: ns.urlToTournament ?? "",
@@ -113,19 +112,21 @@ export function useAppInit({
         // 4. Widgets (widgets.toml)
         // ============================================================
         const widgets = await LoadWidgetsCfg();
-        if (widgets && setWidgets) {
-          setWidgets({
+        if (widgets) {
+          const b = widgets.bracket ?? {};
+          setWidgets((prev) => ({
+            ...(prev ?? {}),
             bracket: {
-              urlToTournament: widgets.bracket?.urlToTournament || "",
-              bracketId:       widgets.bracket?.bracketId       || "",
-              theme:           widgets.bracket?.theme           || "Default",
-              clearBackground: widgets.bracket?.clearBackground ?? false,
-              hideStages:      widgets.bracket?.hideStages      ?? false,
-              bracketMode:     widgets.bracket?.bracketMode     || "all",
-              scale:           widgets.bracket?.scale           ?? 1.0,
-              autoRefresh:     widgets.bracket?.autoRefresh     ?? false,
+              urlToTournament: b.urlToTournament ?? "",
+              bracketId:       b.bracketId       ?? "",
+              theme:           b.theme           ?? "StartGG",
+              clearBackground: b.clearBackground ?? false,
+              hideStages:      b.hideStages      ?? false,
+              bracketMode:     b.bracketMode     ?? "all",
+              scale:           typeof b.scale === "number" && b.scale > 0 ? b.scale : 1.0,
+              autoRefresh:     b.autoRefresh     ?? false,
             },
-          });
+          }));
         }
 
         // ============================================================

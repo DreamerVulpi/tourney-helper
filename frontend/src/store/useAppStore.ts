@@ -130,7 +130,6 @@ export const useAppStore = create<AppState>((set) => ({
   widgets:        {} as WidgetsCfg,
   tools: {
     notificationSystem: {
-      tournamentClientId: "",
       deliveryClients: [],
       urlToTournament: "",
       rules: { standardFormat: 2, finalsFormat: 3, rounds: 3, duration: 60, stage: "Random" },

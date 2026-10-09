@@ -50,7 +50,6 @@ export interface DeliveryClientRef {
 }
 
 export interface NotificationSystemCfg {
-  tournamentClientId: string | null;
   deliveryClients: DeliveryClientRef[];
   urlToTournament: string;
   rules: RulesMatches;

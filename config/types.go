@@ -97,14 +97,13 @@ type DeliveryClientRef struct {
 // ============================================================
 
 type NotificationSystem struct {
-	TournamentClientId string              `toml:"tournamentClientId" json:"tournamentClientId"`
-	DeliveryClients    []DeliveryClientRef `toml:"deliveryClients" json:"deliveryClients"`
-	UrlToTournament    string              `toml:"urlToTournament" json:"urlToTournament"`
-	Rules              RulesMatches        `toml:"rules" json:"rules"`
-	Stream             StreamLobby         `toml:"stream" json:"stream"`
-	Logo               Logo                `toml:"logo" json:"logo"`
-	Csv                Csv                 `toml:"csv" json:"csv"`
-	Game               GameConfig          `toml:"game" json:"game"`
+	DeliveryClients []DeliveryClientRef `toml:"deliveryClients" json:"deliveryClients"`
+	UrlToTournament string              `toml:"urlToTournament" json:"urlToTournament"`
+	Rules           RulesMatches        `toml:"rules" json:"rules"`
+	Stream          StreamLobby         `toml:"stream" json:"stream"`
+	Logo            Logo                `toml:"logo" json:"logo"`
+	Csv             Csv                 `toml:"csv" json:"csv"`
+	Game            GameConfig          `toml:"game" json:"game"`
 }
 
 type ToolsCfg struct {
@@ -145,6 +144,13 @@ type RolesID struct {
 type PlatformAuthorizations struct {
 	ActiveSlot int                 `toml:"activeSlot" json:"activeSlot"`
 	Slots      []ClientCredentials `toml:"slots" json:"slots"`
+}
+
+func (p PlatformAuthorizations) GetSlotByIndex(idx int) (ClientCredentials, bool) {
+	if idx < 0 || idx >= len(p.Slots) {
+		return ClientCredentials{}, false
+	}
+	return p.Slots[idx], true
 }
 
 type AuthorizationsCfg struct {

@@ -41,6 +41,7 @@ func (a *App) GetListThemes() ([]string, error) {
 
 func (a *App) LaunchWidgetBracket(
 	tournamentPlatform string,
+	slotIndex int,
 	cfgAuthorizations config.AuthorizationsCfg,
 	cfgWidgets config.WidgetsCfg,
 ) error {
@@ -53,18 +54,14 @@ func (a *App) LaunchWidgetBracket(
 	}
 	a.mu.Unlock()
 
-	// ========================================================
-	// 1. Проверка URL виджета
-	// ========================================================
+	// 1. Проверка URL
 	if len(cfgWidgets.Bracket.UrlToTournament) == 0 {
 		err := fmt.Errorf("No tournament url/slug for get data tournament\n")
 		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
 
-	// ========================================================
-	// 2. Авторизация турнирной платформы + выбор провайдера
-	// ========================================================
+	// 2. Авторизация + выбор провайдера
 	var (
 		provider service.BracketProvider
 		renderer renderer.BracketRenderer
@@ -75,13 +72,13 @@ func (a *App) LaunchWidgetBracket(
 
 	switch tournamentPlatform {
 	case "startgg":
-		cred, idx, ok := cfgAuthorizations.Startgg.GetActiveSlotWithIndex()
+		slot, ok := cfgAuthorizations.Startgg.GetSlotByIndex(slotIndex)
 		if !ok {
-			err := fmt.Errorf("no active client slot for startgg")
+			err := fmt.Errorf("no slot with index=%d for startgg", slotIndex)
 			logger.Log(entityLogger.Error, err.Error())
 			return err
 		}
-		tourneyCred, tourneySlotIndex = cred, idx
+		tourneyCred, tourneySlotIndex = slot, slotIndex
 
 		if tourneyCred.ClientID == "" {
 			err := fmt.Errorf("no clientID in startgg slot #%d", tourneySlotIndex+1)
@@ -100,14 +97,6 @@ func (a *App) LaunchWidgetBracket(
 		}
 		logger.Log(entityLogger.Success, fmt.Sprintf("Start.gg slot #%d authorized", tourneySlotIndex+1))
 
-		if err := a.AuthorizeStartgg(cred.ClientID, cred.SecretClient, tourneySlotIndex); err != nil {
-			logger.Log(entityLogger.Error, err.Error())
-			return err
-		}
-		logger.Log(entityLogger.Success,
-			fmt.Sprintf("The client (%v) has been successfully read",
-				a.TournamentClient.NamePlatform))
-
 		client := startgg.NewClient(a.TournamentClient.HTTPClient)
 		provider = startggProvider.NewStartGGBracketProvider(client)
 		renderer = startggRenderer.NewStartGGRendererWithThemeProvider(a.ThemeProvider)
@@ -118,9 +107,7 @@ func (a *App) LaunchWidgetBracket(
 		return err
 	}
 
-	// ========================================================
 	// 3. Проверка BracketId
-	// ========================================================
 	if cfgWidgets.Bracket.BracketId == "" {
 		err := fmt.Errorf("No bracket ID for widget — enter a valid tournament URL")
 		logger.Log(entityLogger.Error, err.Error())
