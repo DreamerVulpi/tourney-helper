@@ -19,6 +19,8 @@ interface AppState {
   activeModal: string | null;
   activeAuthorizationSettings: string | null;
   activeSlotIndex: number | null;
+  activeCategoryIntegration: string;
+  categorySelectionIntegration: Record<string, { platform: string | null; slotIndex: number | null}>;
 
   // Initialization
   isLoaded: boolean;
@@ -57,6 +59,11 @@ interface AppState {
   setActiveModal: (m: string | null) => void;
   setActiveAuthorizationSettings: (s: string | null) => void;
   setActiveSlotIndex: (i: number | null) => void;
+  setActiveCategoryIntegration: (id: string) => void;
+  setCategorySelectionIntegration: (
+    categoryId: string,
+    selection: { platform: string | null; slotIndex: number | null }
+  ) => void;
 
   setActiveProfile: (p: string) => void;
 
@@ -103,6 +110,8 @@ export const useAppStore = create<AppState>((set) => ({
   activeModal: null,
   activeAuthorizationSettings: null,
   activeSlotIndex: null,
+  activeCategoryIntegration: "tournament",
+  categorySelectionIntegration: {},
 
   // Initialization
   isLoaded: false,
@@ -150,6 +159,14 @@ export const useAppStore = create<AppState>((set) => ({
   setLang: (lang) => set({ lang }),
   setActiveTab: (activeTab) => set({ activeTab }),
   setActiveModal: (activeModal) => set({ activeModal }),
+  setActiveCategoryIntegration: (id) => set({ activeCategoryIntegration: id }),
+  setCategorySelectionIntegration: (categoryId, selection) =>
+    set((state) => ({
+      categorySelectionIntegration: {
+        ...(state.categorySelectionIntegration || {}),
+        [categoryId]: selection,
+      },
+  })),
 
   setActiveAuthorizationSettings: (activeAuthorizationSettings) =>
     set({ activeAuthorizationSettings, activeSlotIndex: null }),

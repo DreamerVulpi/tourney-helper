@@ -33,6 +33,7 @@ import { locales } from "../utils/listLocales.js";
 import { useThemeClasses } from "../hooks/App/useThemeClasses"
 import { getThemeClasses } from "../utils/themeClasses";
 import { useAppStore } from "../store/useAppStore";
+import { TabbedSection } from "../components/ui/tabbedSection.jsx";
 
 const NotificationSystemPlate = ({
   locale,
@@ -150,6 +151,12 @@ const NotificationSystemPlate = ({
   const handleStageChange = useCallback((value) => {
     changeRule("stage", value, updateConfig);
   }, [updateConfig]);
+
+  const TOOL_TABS = [
+    { id: "rules", icon: FileSignature, label: locale.RulesOfTournament.Label },
+    { id: "lobby", icon: Monitor,        label: locale.LobbyLiveBroadcast.Label },
+    { id: "logo", icon: ImageIcon, label: locale.ConfigurationLogo.Label}
+  ]
   
   return (
     <PanelTemplate
@@ -222,85 +229,20 @@ const NotificationSystemPlate = ({
                   themeClasses={themeClasses}
                 />
               </div>
-            <div className={`p-6 rounded-[2.5rem] border space-y-6 ${themeClasses.section}`}>
-              <div className={`flex items-center gap-2 border-b pb-3 ${themeClasses.divider}`}>
-                <ImagePlus size={16} className="text-blue-500" />
-                <span className={`text-[10px] font-black uppercase italic ${themeClasses.label}`}>
-                  {locale.ConfigurationLogo.Label}
-                </span>
-              </div>
-              <div className="flex gap-4 items-start">
-                <div className={`w-24 h-24 rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden shrink-0  ${themeClasses.divider}`}>
-                  {previewLogo ? (
-                    <img
-                      src={previewLogo}
-                      className="w-full h-full object-cover"
-                      alt="Logo"
-                    />
-                  ) : (
-                    <ImageIcon size={24} className="text-slate-500/20" />
-                  )}
-                </div>
-                <div className="flex-1 space-y-4">
-                  <div className="space-y-1">
-                    <Field
-                      label={locale.ConfigurationLogo.UrlImageLabel}
-                      icon={Globe}
-                      value={urlLogoTournament}
-                      onChange={(value) =>
-                        updateConfig("tools", {
-                          notificationSystem: {
-                            logo: { img: value },
-                          },
-                        })
-                      }
-                      themeClasses={themeClasses}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
         </div>
 
         {/* Central and right panels */}
-        <div className="lg:col-span-6 space-y-4">
-          <div
-            className={`p-6 rounded-[2.5rem] border space-y-6 ${themeClasses.section}`}
+        <div className="lg:col-span-5 space-y-4 ">
+          <TabbedSection
+            tabs={TOOL_TABS}
+            activeTab={activeTab}
+            onChange={setActiveTab}
+            themeClasses={themeClasses}
+            className="flex-1 min-h-0"
           >
-            <div
-              className={`flex items-center justify-between border-b pb-3 ${themeClasses.divider}`}
-            >
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setActiveTab("rules")}
-                  className={`flex items-center gap-2  ${activeTab === "rules" ? "opacity-100 scale-105" : "opacity-40 hover:opacity-70"}`}
-                >
-                  <FileSignature size={16} className="text-blue-500" />
-                  <span
-                    className={`text-[10px] font-black uppercase italic ${themeClasses.label}`}
-                  >
-                    {locale.RulesOfTournament.Label}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setActiveTab("lobby")}
-                  className={`flex items-center gap-2  ${activeTab === "lobby" ? "opacity-100 scale-105" : "opacity-40 hover:opacity-70"}`}
-                >
-                  <Monitor size={16} className="text-blue-500" />
-                  <span
-                    className={`text-[10px] font-black uppercase italic ${themeClasses.label}`}
-                  >
-                    {locale.LobbyLiveBroadcast.Label}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {/* Content tabs */}
-            <div className="flex-1">
-              {activeTab === "rules" ? (
-                <div className="space-y-4">
+            {(tab) =>
+              tab === "rules" ? (
+                <div className="flex flex-col h-full min-h-0 space-y-4">
                   <div className="grid grid-cols-2 gap-x-2 gap-y-2">
                     <Field
                       label={`${locale.RulesOfTournament.StandardFormat} (1-5)`}
@@ -365,10 +307,39 @@ const NotificationSystemPlate = ({
                     />
                   </div>
                 </div>
+              ) : tab === "logo" ? (
+                <div className="flex flex-col h-full min-h-0 space-y-4">
+                  <div className="flex gap-4 items-start">
+                    <div className={`w-24 h-24 rounded-2xl border-2 border-dashed flex items-center justify-center overflow-hidden shrink-0  ${themeClasses.divider}`}>
+                      {previewLogo ? (
+                        <img
+                          src={previewLogo}
+                          className="w-full h-full object-cover"
+                          alt="Logo"
+                        />
+                      ) : (
+                        <ImageIcon size={24} className="text-slate-500/20" />
+                      )}
+                    </div>
+                    <Field
+                      label={locale.ConfigurationLogo.UrlImageLabel}
+                      icon={Globe}
+                      value={urlLogoTournament}
+                      onChange={(value) =>
+                        updateConfig("tools", {
+                          notificationSystem: {
+                            logo: { img: value },
+                          },
+                        })
+                      }
+                      themeClasses={themeClasses}
+                    />
+                  </div>
+                  
+                </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
+                <div className="flex flex-col h-full min-h-0 space-y-4">
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-2">
                       <Field
                         variant="select"
                         label={locale.LobbyLiveBroadcast.RegionLabel}
@@ -409,8 +380,6 @@ const NotificationSystemPlate = ({
                           },
                         ]}
                       />
-                    </div>
-                    <div className="space-y-1">
                       <Field
                         variant="select"
                         icon={Zap}
@@ -435,9 +404,7 @@ const NotificationSystemPlate = ({
                           },
                         ]}
                       />
-                    </div>
-                    <div className="space-y-1">
-                        <Field
+                      <Field
                           variant="select"
                           icon={Cpu}
                           label={locale.LobbyLiveBroadcast.CrossplatformLabel}
@@ -464,23 +431,21 @@ const NotificationSystemPlate = ({
                           },
                         ]}
                         />
+                        <Field
+                          icon={Key}
+                          label={locale.LobbyLiveBroadcast.AccessCodeLabel}
+                          themeClasses={themeClasses}
+                          value={passcode}
+                          onChange={(value) =>
+                            updateConfig("tools", {
+                              notificationSystem: {
+                                stream: { passcode: value },
+                              },
+                            })
+                          }
+                        />
                     </div>
-                    <div className="space-y-1">
-                      <Field
-                        icon={Key}
-                        label={locale.LobbyLiveBroadcast.AccessCodeLabel}
-                        themeClasses={themeClasses}
-                        value={passcode}
-                        onChange={(value) =>
-                          updateConfig("tools", {
-                            notificationSystem: {
-                              stream: { passcode: value },
-                            },
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
+                
                   <Field
                       icon={Globe}
                       label={locale.LobbyLiveBroadcast.LinkToLobbyLabel}
@@ -495,9 +460,9 @@ const NotificationSystemPlate = ({
                       }
                     />
                 </div>
-              )}
-            </div>
-          </div>
+              )
+            }
+          </TabbedSection>
         </div>
       </div>
       <ValidationModal
