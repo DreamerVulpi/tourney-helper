@@ -57,6 +57,10 @@ func (h *Handler) InitBot(
 	tournament config.NotificationSystem,
 	debugMode bool,
 ) {
+	logger.Log(entityLogger.Debug, fmt.Sprintf(
+		"[InitBot] called | botCred.Roles.Default=%q | botCred.GuildID=%q",
+		botCred.Roles.Default, botCred.GuildID,
+	))
 	h.tournamentPlatform = activeTournamentPlatform
 
 	h.params.guildID = botCred.GuildID
@@ -80,6 +84,10 @@ func (h *Handler) InitBot(
 		Conn:          tournament.Stream.Conn,
 		Passcode:      tournament.Stream.Passcode,
 	}
+	logger.Log(entityLogger.Debug, fmt.Sprintf(
+		"[InitBot] after assign | h.params.rolesIdList.Default=%q",
+		h.params.rolesIdList.Default,
+	))
 }
 
 func (h *Handler) Start(
@@ -136,7 +144,7 @@ func (h *Handler) Start(
 			"Notification System | Working without log channel...")
 	}
 
-	h.Ns.Messenger = ds
+	h.Ns.DeliveryMethod = ds
 
 	// --- 5. Регистрация слэш-команд ---
 	registeredCommands, err := h.InitCommands(
@@ -147,7 +155,7 @@ func (h *Handler) Start(
 	)
 	if err != nil {
 		session.Close()
-		h.Ns.Messenger = nil
+		h.Ns.DeliveryMethod = nil
 		return err
 	}
 

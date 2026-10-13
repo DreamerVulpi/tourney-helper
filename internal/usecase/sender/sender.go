@@ -19,15 +19,15 @@ import (
 )
 
 type NotificationSystem struct {
-	Messenger entitySender.NotificationSender
-	Data      entitySender.NotificationData
-	Db        *dbManager.Database
+	DeliveryMethod entitySender.NotificationSender
+	Data           entitySender.NotificationData
+	Db             *dbManager.Database
 
 	DebugMode   bool
 	TestContact entitySender.Participant
 
-	LimiterMessenger *rateLimiter.RateLimiter
-	MetricsMessenger *metrics.Collector
+	LimiterDeliveryMethod *rateLimiter.RateLimiter
+	MetricsDeliveryMethod *metrics.Collector
 
 	LimiterTournamentPlatform *rateLimiter.RateLimiter
 	MetricsTournamentPlatform *metrics.Collector
@@ -49,15 +49,15 @@ func NewNotificationSystem(
 	metricsTournamentPlatform *metrics.Collector,
 	t time.Duration) *NotificationSystem {
 	return &NotificationSystem{
-		Messenger:                 s,
+		DeliveryMethod:            s,
 		Data:                      d,
 		Db:                        db,
 		DebugMode:                 mode,
 		TestContact:               contact,
 		ReminderInterval:          t,
-		LimiterMessenger:          limiterMessenger,
+		LimiterDeliveryMethod:     limiterMessenger,
 		LimiterTournamentPlatform: limiterTournamentPlatform,
-		MetricsMessenger:          metricsMessenger,
+		MetricsDeliveryMethod:     metricsMessenger,
 		MetricsTournamentPlatform: metricsTournamentPlatform,
 	}
 }

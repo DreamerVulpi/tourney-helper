@@ -5,7 +5,6 @@ import type {
   Authorizations,
   AuthFlags,
   ToolsCfg,
-  NotificationSystemCfg,
 } from "../types/index.ts";
 import { SERVICE_STATUS } from '../utils/listStatus.js';
 
@@ -134,17 +133,16 @@ export const useAppStore = create<AppState>((set) => ({
   selectedGame: 'Tekken8',
 
   // Configs
-  // TODO: Add settings && widgets
   settings:       {} as Settings,
   widgets:        {} as WidgetsCfg,
   tools: {
     notificationSystem: {
-      deliveryClients: [],
       urlToTournament: "",
       rules: { standardFormat: 2, finalsFormat: 3, rounds: 3, duration: 60, stage: "Random" },
       stream: { area: "Any", language: "EN", conn: "Wired", crossplatform: false, passcode: "0000", linkToLobby: "" },
       logo: { img: "" },
-      csv: { nameFile: "" },
+      tournamentSlug: "",
+      bracketID: "",
       game: { name: "tekken" },
     },
   },

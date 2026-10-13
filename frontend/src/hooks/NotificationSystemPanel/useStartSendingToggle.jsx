@@ -7,21 +7,26 @@ import { SERVICE_STATUS } from "../../utils/listStatus.js";
 export function useStartSendingToggle(
   isStartedSending,
   setIsStartedSending,
-
   isProcessing,
   setIsProcessing,
   setReport,
   setStatusNotificationSystem,
-  { activeDeliveryMethod, activePlatform, systemCfg, tourneyCfg, lang },
+  {
+    tourneyClient,
+    deliveryClient,
+    authorizations,    
+    notificationSystem,
+    settings,          
+  },
 ) {
+  
   const toggleSending = async () => {
     if (isProcessing) return;
-
     setIsProcessing(true);
 
     if (isStartedSending) {
       try {
-        setReport({isOpen: false})
+        setReport({ isOpen: false });
         await StopSendNotifications();
         setIsStartedSending(false);
         setStatusNotificationSystem(SERVICE_STATUS.OFF);
@@ -32,27 +37,33 @@ export function useStartSendingToggle(
         setIsProcessing(false);
       }
       return;
-    } else {
-      try {
-        setStatusNotificationSystem(SERVICE_STATUS.STARTING);
-        await StartSendNotifications(
-          activeDeliveryMethod,
-          activePlatform,
-          systemCfg,
-          tourneyCfg,
-          lang,
-        );
-        setReport({isOpen: true})
-        setIsStartedSending(true);
-        setStatusNotificationSystem(SERVICE_STATUS.RUNNING);
-      } catch (err) {
-        console.error(err);
-        setIsStartedSending(false);
-        setStatusNotificationSystem(SERVICE_STATUS.ERROR);
-      } finally {
-        setIsProcessing(false);
-      }
+    }
+
+    try {
+      setStatusNotificationSystem(SERVICE_STATUS.STARTING);
+      console.log("[useStartSendingToggle] notificationSystem:", notificationSystem);
+      console.log("[useStartSendingToggle] settings:", settings);
+      await StartSendNotifications(
+        deliveryClient.platform,    // messenger: "discord" | "telegram"
+        deliveryClient.slotIndex,   // messengerSlot
+        tourneyClient.platform,     // tournamentPlatform: "startgg" | "challonge"
+        tourneyClient.slotIndex,    // tourneySlot
+        authorizations,             // cfgAuthorizations
+        notificationSystem,         // cfgTournament
+        settings,                   // SettingsApplicationCfg
+      );
+
+      setReport({ isOpen: true });
+      setIsStartedSending(true);
+      setStatusNotificationSystem(SERVICE_STATUS.RUNNING);
+    } catch (err) {
+      console.error(err);
+      setIsStartedSending(false);
+      setStatusNotificationSystem(SERVICE_STATUS.ERROR);
+    } finally {
+      setIsProcessing(false);
     }
   };
+
   return toggleSending;
 }

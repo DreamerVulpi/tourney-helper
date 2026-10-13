@@ -23,17 +23,15 @@ import { Field } from "../components/ui/Field.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import { ValidationModal } from "../components/ValidationModal.jsx";
 import  NotificationMonitorModal from "../components/modals/NotificationMonitorModal.jsx"
-import { useMessengerAuth } from "../hooks/useMessengerAuth.jsx";
-import { useTournamentPlatform } from "../hooks/useTournamentPlatform.jsx";
 import { durationItems, listFT } from "../utils/NotificationSystemPanel.jsx/lists.js";
 import { listGames } from "../utils/listGames.js";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { NotificationButton } from "../hooks/NotificationSystemPanel/useButtonFooter.jsx";
-import { locales } from "../utils/listLocales.js";
 import { useThemeClasses } from "../hooks/App/useThemeClasses"
 import { getThemeClasses } from "../utils/themeClasses";
 import { useAppStore } from "../store/useAppStore";
 import { TabbedSection } from "../components/ui/tabbedSection.jsx";
+import { useClientFromRef } from "../hooks/App/useClientFromRef.jsx"
 
 const NotificationSystemPlate = ({
   locale,
@@ -46,20 +44,22 @@ const NotificationSystemPlate = ({
   report,
   setReport,
 }) => {
+  const selections = useAppStore((s) => s.integrationsSelections);
+
+  // Ключ совпадает с activeTab в сторе → "notifications"
+  const tourneyRef  = selections?.notifications?.tourney?.[0]  ?? null;
+  const deliveryRef = selections?.notifications?.delivery?.[0] ?? null;
+
+  // Future: Add support more 1 delivery method
+  const tourneyClient  = useClientFromRef(tourneyRef);
+  const deliveryClient = useClientFromRef(deliveryRef);
+ 
   const notificationSystem = useAppStore((s) => s.tools?.notificationSystem);
   const theme        = useAppStore((s) => s.theme);
-  const lang         = useAppStore((s) => s.lang);
-  const systemCfg    = useAppStore((s) => s.systemCfg);
+  const authorizations    = useAppStore((s) => s.authorizations);
   const settings = useAppStore((s) => s.settings);
-  const authFlags   = useAppStore((s) => s.authFlags);
-  const setAuthFlags = useAppStore((s) => s.setAuthFlags);
   const activeModal  = useAppStore((s) => s.activeModal);
-
-  const activePlatform    = useAppStore((s) => s.activeTournamentPlatform);
-  const setActivePlatform = useAppStore((s) => s.setActiveTournamentPlatform);
-  const activeDeliveryMethod    = useAppStore((s) => s.activeDeliveryMethod);
-  const setActiveDeliveryMethod = useAppStore((s) => s.setActiveDeliveryMethod);
-
+  
   const setStatusNotificationSystem = useAppStore((s) => s.setStatusNotificationSystem);
   const themeClasses = useThemeClasses(getThemeClasses);
 
@@ -89,13 +89,24 @@ const NotificationSystemPlate = ({
   const urlLogoTournament = notificationSystem?.logo?.img ?? "";
   const previewLogo = urlLogoTournament || "https://raw.githubusercontent.com/DreamerVulpi/tourney-helper/main/branding/icons/256.png"
 
+  console.log("[NSP] selections.notificationSystem:", JSON.stringify(selections?.notificationSystem));
+  console.log("[NSP] tourneyRef:", tourneyRef, "| deliveryRef:", deliveryRef);
+  console.log("[NSP] tourneyClient:", tourneyClient);
+  console.log("[NSP] deliveryClient:", deliveryClient);
+  console.log("[NSP] authorizations:", authorizations);
+  console.log("[NSP] urlToTournament:", urlToTournament, "| gameName:", gameName);
+  console.log("[NSP] isReadyToStart:", {
+    tourneyOk:  tourneyClient?.status  === "authorized",
+    deliveryOk: deliveryClient?.status === "authorized",
+    urlOk:      !!urlToTournament,
+    gameOk:     !!gameName,
+  });
   // State for ready of notification system
   const isReadyToStart =
-    activePlatform &&
-    authFlags?.[activePlatform] &&
-    activeDeliveryMethod &&
-    authFlags?.[activeDeliveryMethod] &&
-    urlToTournament && gameName;
+    tourneyClient?.status  === "authorized" &&
+    deliveryClient?.status === "authorized" &&
+    !!urlToTournament &&
+    !!gameName;
   // State for selected tab: Tournament Rules || Live Broadcast Lobby
   const [activeTab, setActiveTab] = useState("rules"); // "rules" or "lobby"
   // State for revial validation alert
@@ -112,7 +123,13 @@ const NotificationSystemPlate = ({
     setIsProcessing,
     setReport,
     setStatusNotificationSystem,
-    { activeDeliveryMethod: activeDeliveryMethod, activePlatform, systemCfg, notificationSystem, lang },
+    {
+      tourneyClient,
+      deliveryClient,
+      authorizations,
+      notificationSystem,
+      settings,
+    },
   );
 
   const handleTournamentUrlChange = useCallback((value) => {
@@ -157,7 +174,8 @@ const NotificationSystemPlate = ({
     { id: "lobby", icon: Monitor,        label: locale.LobbyLiveBroadcast.Label },
     { id: "logo", icon: ImageIcon, label: locale.ConfigurationLogo.Label}
   ]
-  
+  console.log("[NSP] notificationSystem before toggle:", notificationSystem);
+
   return (
     <PanelTemplate
       themeClasses={themeClasses}
@@ -173,7 +191,11 @@ const NotificationSystemPlate = ({
               debugMode={debugMode}
               theme={theme}
               locale={locale}
-              activeDeliveryMethod={activeDeliveryMethod}
+              deliveryLabel={
+                deliveryClient
+                  ? (`${deliveryClient.platform} #${deliveryClient.slotIndex + 1}`)
+                  : ""
+              }
               isReadyToStart={isReadyToStart}
               isProcessing={isProcessing}
               handleStartedSendingToggle={handleStartedSendingToggle}

@@ -9,7 +9,7 @@ import (
 )
 
 func (ns *NotificationSystem) GetMessengerMetrics() entityMetrics.Snapshot {
-	snapshot := ns.MetricsMessenger.Snapshot()
+	snapshot := ns.MetricsDeliveryMethod.Snapshot()
 	total := ns.TotalMessages.Load()
 	sent := ns.MessagesSentCurrentCycle.Load()
 	remaining := total - sent
@@ -17,7 +17,7 @@ func (ns *NotificationSystem) GetMessengerMetrics() entityMetrics.Snapshot {
 		remaining = 0
 	}
 
-	snapshot.EstimateRemainingMs = ns.MetricsMessenger.EstimateRemaining(remaining).Milliseconds()
+	snapshot.EstimateRemainingMs = ns.MetricsDeliveryMethod.EstimateRemaining(remaining).Milliseconds()
 	return snapshot
 }
 
@@ -26,21 +26,21 @@ func (ns *NotificationSystem) GetTournamentPlatformMetrics() entityMetrics.Snaps
 }
 
 func (ns *NotificationSystem) GetMessengerLimits() entityPlatformRules.Limits {
-	return ns.LimiterMessenger.Limits()
+	return ns.LimiterDeliveryMethod.Limits()
 }
 
 func (ns *NotificationSystem) GetMessengerMessageLimit() int64 {
-	if ns.LimiterMessenger == nil {
+	if ns.LimiterDeliveryMethod == nil {
 		return 0
 	}
 
-	if ns.Messenger == nil {
+	if ns.DeliveryMethod == nil {
 		return 0
 	}
 
-	limits := ns.LimiterMessenger.Limits()
+	limits := ns.LimiterDeliveryMethod.Limits()
 
-	if ns.Messenger.IsLogChannelEnabled() {
+	if ns.DeliveryMethod.IsLogChannelEnabled() {
 		return limits.MessagesPerMinute / 2
 	}
 	return limits.MessagesPerMinute
@@ -51,7 +51,7 @@ func (ns *NotificationSystem) GetTournamentPlatformLimits() entityPlatformRules.
 }
 
 func (ns *NotificationSystem) IsReady() bool {
-	return ns.Messenger != nil
+	return ns.DeliveryMethod != nil
 }
 
 func (ns *NotificationSystem) getDebugDMChannel(ctx context.Context) (string, error) {
@@ -60,12 +60,12 @@ func (ns *NotificationSystem) getDebugDMChannel(ctx context.Context) (string, er
 		return *ns.TestContact.DmChannelId, nil
 	}
 
-	channel, err := ns.Messenger.CreateDMChannel(ctx, ns.TestContact.MessengerID)
+	channel, err := ns.DeliveryMethod.CreateDMChannel(ctx, ns.TestContact.MessengerID)
 	if err != nil {
 		return "", err
 	}
 
 	ns.TestContact.DmChannelId = channel
-	ns.MetricsMessenger.RecordAPIRequest(err, time.Since(start))
+	ns.MetricsDeliveryMethod.RecordAPIRequest(err, time.Since(start))
 	return *channel, nil
 }

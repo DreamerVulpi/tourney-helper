@@ -109,7 +109,7 @@ const HeaderPlate = ({
         items: itemsByField.delivery,
         icon: Mail,
         maxVisible: 2,
-        single: false,
+        single: true,
       },
     ],
 

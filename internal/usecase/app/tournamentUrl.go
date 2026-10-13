@@ -10,8 +10,8 @@ import (
 type Mode string
 
 const (
-	ModeSlug   Mode = "slug"   // slug турнира (для рассылки)
-	ModeWidget Mode = "widget" // ID турнирной сетки (для виджета)
+	ModeSlug      Mode = "slug"      // slug турнира (для рассылки)
+	ModeBracketID Mode = "bracketID" // ID турнирной сетки (для виджета)
 )
 
 // ParseTournamentURL — единая точка парсинга URL турнира.
@@ -50,7 +50,7 @@ func (a *App) ParseTournamentURL(platform string, rawURL string, mode Mode) (str
 }
 
 func (a *App) ParseTournamentURLForWidget(platform, rawURL string) (string, error) {
-	return a.ParseTournamentURL(platform, rawURL, ModeWidget)
+	return a.ParseTournamentURL(platform, rawURL, ModeBracketID)
 }
 
 func (a *App) ParseTournamentURLForNotification(platform, rawURL string) (string, error) {
@@ -88,7 +88,7 @@ func parseStartGG(u *url.URL, parts []string, mode Mode) (string, error) {
 	}
 
 	switch mode {
-	case ModeWidget:
+	case ModeBracketID:
 		// Ищем "brackets" и берём следующий за ним сегмент.
 		//
 		// URL:  /tournament/<slug>/event/<event>/brackets/<phaseId>/<groupId>

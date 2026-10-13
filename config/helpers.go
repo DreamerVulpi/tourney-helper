@@ -49,35 +49,16 @@ func IsSlotAuthorized(c ClientCredentials) bool {
 	return c.Status == AuthStatusAuthorized
 }
 
-// GetActiveSlot возвращает активный ClientCredentials для платформы.
-// Если активный слот не задан или пуст — возвращает пустой ClientCredentials
-// и false вторым значением.
-func (p PlatformAuthorizations) GetActiveSlot() (ClientCredentials, bool) {
-	if p.ActiveSlot < 0 || p.ActiveSlot >= len(p.Slots) {
+// GetSlotWithIndex возвращает слот по индексу и ok=false, если индекс вне границ.
+// В отличие от GetActiveSlotWithIndex, не проверяет IsSlotOccupied —
+// эту проверку делает вызывающая сторона через .Token/.ClientID и т.п.
+func (p PlatformAuthorizations) GetSlotWithIndex(index int) (ClientCredentials, bool) {
+	if index < 0 || index >= len(p.Slots) {
 		return ClientCredentials{}, false
 	}
-	c := p.Slots[p.ActiveSlot]
-	if !IsSlotOccupied(c) {
-		return ClientCredentials{}, false
-	}
-	return c, true
+	return p.Slots[index], true
 }
 
-// GetActiveClientCredentials — удобный хелпер для ConfigAuthorizations.
-// platformID: "startgg" | "challonge" | "discord" | "telegram"
-func (c AuthorizationsCfg) GetActiveClientCredentials(platformID string) (ClientCredentials, bool) {
-	switch platformID {
-	case "startgg":
-		return c.Startgg.GetActiveSlot()
-	case "challonge":
-		return c.Challonge.GetActiveSlot()
-	case "discord":
-		return c.Discord.GetActiveSlot()
-	case "telegram":
-		return c.Telegram.GetActiveSlot()
-	}
-	return ClientCredentials{}, false
-}
 func NewEmptyPlatformAuthorizations() PlatformAuthorizations {
 	slots := make([]ClientCredentials, SlotsPerPlatform)
 	return PlatformAuthorizations{
@@ -129,7 +110,6 @@ func NewDefaultWidgets() WidgetsCfg {
 func NewDefaultTools() ToolsCfg {
 	return ToolsCfg{
 		NotificationSystem: NotificationSystem{
-			DeliveryClients: nil,
 			UrlToTournament: "",
 			Rules: RulesMatches{
 				StandardFormat: 2,
@@ -147,7 +127,6 @@ func NewDefaultTools() ToolsCfg {
 				LinkToLobby:   "",
 			},
 			Logo: Logo{Img: ""},
-			Csv:  Csv{NameFile: ""},
 			Game: GameConfig{Name: "tekken"},
 		},
 	}

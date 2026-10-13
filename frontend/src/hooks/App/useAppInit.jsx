@@ -80,10 +80,7 @@ export function useAppInit({
         setTools((prev) => ({
           ...(prev ?? {}),
           notificationSystem: {
-            deliveryClients:    ns.deliveryClients    ?? [],
-
             urlToTournament: ns.urlToTournament ?? "",
-
             rules: {
               standardFormat: Number(ns.rules?.standardFormat) || 2,
               finalsFormat:   Number(ns.rules?.finalsFormat)   || 3,
@@ -102,7 +99,6 @@ export function useAppInit({
             },
 
             logo: { img: ns.logo?.img ?? "" },
-            csv:  { nameFile: ns.csv?.nameFile ?? "" },
             game: { name: ns.game?.name ?? "tekken" },
           },
         }));

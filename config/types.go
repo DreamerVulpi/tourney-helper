@@ -79,10 +79,6 @@ type Logo struct {
 	Img string `toml:"img" json:"img"`
 }
 
-type Csv struct {
-	NameFile string `toml:"nameFile" json:"nameFile"`
-}
-
 type GameConfig struct {
 	Name string `toml:"name" json:"name"`
 }
@@ -97,13 +93,13 @@ type DeliveryClientRef struct {
 // ============================================================
 
 type NotificationSystem struct {
-	DeliveryClients []DeliveryClientRef `toml:"deliveryClients" json:"deliveryClients"`
-	UrlToTournament string              `toml:"urlToTournament" json:"urlToTournament"`
-	Rules           RulesMatches        `toml:"rules" json:"rules"`
-	Stream          StreamLobby         `toml:"stream" json:"stream"`
-	Logo            Logo                `toml:"logo" json:"logo"`
-	Csv             Csv                 `toml:"csv" json:"csv"`
-	Game            GameConfig          `toml:"game" json:"game"`
+	UrlToTournament string       `toml:"urlToTournament" json:"urlToTournament"`
+	TournamentSlug  string       `toml:"tournamentSlug" json:"tournamentSlug"`
+	BracketId       string       `toml:"bracketID" json:"bracketID"`
+	Rules           RulesMatches `toml:"rules" json:"rules"`
+	Stream          StreamLobby  `toml:"stream" json:"stream"`
+	Logo            Logo         `toml:"logo" json:"logo"`
+	Game            GameConfig   `toml:"game" json:"game"`
 }
 
 type ToolsCfg struct {

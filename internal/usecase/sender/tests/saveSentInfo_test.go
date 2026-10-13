@@ -24,7 +24,7 @@ func TestSaveSentInfo_Success(t *testing.T) {
 		Data: fakeNotificationData{
 			name: "Startgg",
 		},
-		Messenger: fakeNotificationSender{
+		DeliveryMethod: fakeNotificationSender{
 			name: "Discord",
 		},
 		Db: &dbManager.Database{
@@ -101,7 +101,7 @@ func TestSaveSentInfo_NilTimes(t *testing.T) {
 		Data: &fakeNotificationData{
 			name: "Startgg",
 		},
-		Messenger: &fakeNotificationSender{
+		DeliveryMethod: &fakeNotificationSender{
 			name: "Discord",
 		},
 		Db: &dbManager.Database{
@@ -144,7 +144,7 @@ func TestSaveSentInfo_StateConversion(t *testing.T) {
 		Data: &fakeNotificationData{
 			name: "Startgg",
 		},
-		Messenger: &fakeNotificationSender{
+		DeliveryMethod: &fakeNotificationSender{
 			name: "Discord",
 		},
 		Db: &dbManager.Database{
@@ -193,7 +193,7 @@ func TestSaveSentInfo_Error(t *testing.T) {
 		Data: &fakeNotificationData{
 			name: "Startgg",
 		},
-		Messenger: &fakeNotificationSender{
+		DeliveryMethod: &fakeNotificationSender{
 			name: "Discord",
 		},
 		Db: &dbManager.Database{

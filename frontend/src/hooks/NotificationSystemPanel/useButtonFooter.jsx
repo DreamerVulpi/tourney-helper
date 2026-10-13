@@ -14,7 +14,7 @@ export const NotificationButton = React.memo(
     debugMode,
     theme,
     locale,
-    activeDeliveryMethod,
+    deliveryLabel,
     isReadyToStart,
     isProcessing,
     handleStartedSendingToggle,
@@ -34,7 +34,7 @@ export const NotificationButton = React.memo(
 
             <span className="text-[9px] font-bold uppercase italic tracking-tight leading-tight">
               {locale.Mailing.AttentionDebugModeMsg}{" "}
-              {activeDeliveryMethod || ""}
+              {deliveryLabel || ""}
             </span>
           </div>
         )}

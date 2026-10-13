@@ -50,12 +50,12 @@ export interface DeliveryClientRef {
 }
 
 export interface NotificationSystemCfg {
-  deliveryClients: DeliveryClientRef[];
   urlToTournament: string;
+  tournamentSlug: string;
+  bracketID: string;
   rules: RulesMatches;
   stream: StreamLobby;
   logo: { img: string };
-  csv: { nameFile: string };
   game: { name: string };
 }
 

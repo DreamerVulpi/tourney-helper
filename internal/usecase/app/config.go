@@ -49,7 +49,13 @@ func (a *App) LoadSettingsApp() (config.SettingsApplicationCfg, error) {
 }
 
 func (a *App) SaveSettingsApp(cfg config.SettingsApplicationCfg) error {
-	return config.SaveSettings(a.ActiveProfile, cfg)
+	if err := config.SaveSettings(a.ActiveProfile, cfg); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.SettingsCfg = cfg
+	a.mu.Unlock()
+	return nil
 }
 
 // ============================================================
@@ -72,7 +78,19 @@ func (a *App) LoadToolsCfg() (config.ToolsCfg, error) {
 }
 
 func (a *App) SaveToolsCfg(cfg config.ToolsCfg) error {
-	return config.SaveTools(a.ActiveProfile, cfg)
+	logger.Log(entityLogger.Debug, fmt.Sprintf(
+		"[SaveToolsCfg] incoming url=%s | game=%s",
+		cfg.NotificationSystem.UrlToTournament,
+		cfg.NotificationSystem.Game.Name,
+	))
+	if err := config.SaveTools(a.ActiveProfile, cfg); err != nil {
+		return err
+	}
+
+	a.mu.Lock()
+	a.NotificationSystemCfg = &cfg.NotificationSystem
+	a.mu.Unlock()
+	return nil
 }
 
 // ============================================================
@@ -92,7 +110,13 @@ func (a *App) LoadWidgetsCfg() (config.WidgetsCfg, error) {
 }
 
 func (a *App) SaveWidgetsCfg(cfg config.WidgetsCfg) error {
-	return config.SaveWidgets(a.ActiveProfile, cfg)
+	if err := config.SaveWidgets(a.ActiveProfile, cfg); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.WidgetsCfg = cfg
+	a.mu.Unlock()
+	return nil
 }
 
 // ============================================================
@@ -112,7 +136,13 @@ func (a *App) LoadAuthorizations() (config.AuthorizationsCfg, error) {
 }
 
 func (a *App) SaveAuthorizations(cfg config.AuthorizationsCfg) error {
-	return config.SaveAuthorizations(a.ActiveProfile, cfg)
+	if err := config.SaveAuthorizations(a.ActiveProfile, cfg); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.AuthorizationsCfg = cfg
+	a.mu.Unlock()
+	return nil
 }
 
 // SetSlotStatus — устанавливает статус слота и сохраняет конфиг.
@@ -138,5 +168,5 @@ func (a *App) SetSlotStatus(platformID string, slotIndex int, status config.Auth
 	platform.SetSlotStatus(slotIndex, status, reason)
 
 	a.AuthorizationsCfg = cfg
-	return config.SaveAuthorizations(a.ActiveProfile, cfg)
+	return a.SaveAuthorizations(cfg)
 }
