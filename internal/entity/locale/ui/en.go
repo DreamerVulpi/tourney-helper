@@ -36,6 +36,14 @@ var validationUrlBracketEn = ValidationUrlBracket{
 }
 
 var En = Ui{
+	ProfilesPanel: ProfilesPanel{
+		MultiSelectLabel: "Select a profile",
+		Add:              "Add",
+		Delete:           "Delete selected",
+		Share:            "Share selected",
+		Duplicate:        "Dulpicate selected",
+		Placeholder:      "Profile",
+	},
 	WidgetBracketPanel: WidgetBracketPanel{
 		UrlToBracketLabel:     "Tournament bracket URL",
 		ListOfThemes:          "Theme",
@@ -79,12 +87,7 @@ var En = Ui{
 		VersionLabel:            "Version:",
 		LogsLabel:               "Logs",
 		ClearButtonLabel:        "Clear",
-		Profile: Profile{
-			Title:  "Profile",
-			Add:    "Add",
-			Delete: "Delete selected",
-			Share:  "Share selected",
-		},
+		ProfilesLabel:           "Profile",
 	},
 	IntegrationsPanel: IntegrationsPanel{
 		DeliveryMethodLabel:  DeliveryMethodLabelEN,

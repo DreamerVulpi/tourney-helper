@@ -93,7 +93,7 @@ func (a *App) AuthorizeDiscord(clientID, clientSecret string, slotIndex int) err
 	}
 
 	client.NamePlatform = "Discord"
-	a.MessengerClient = client
+	a.DeliveryMethodClient = client
 	return nil
 }
 
@@ -153,7 +153,7 @@ func (a *App) InitSystemNotification(
 	collectorDiscord := metrics.NewCollector()
 	limiterDiscord := rateLimiter.NewDiscordLimiter(collectorDiscord)
 
-	dh := discord.Handler{Auth: a.MessengerClient, Metrics: collectorDiscord}
+	dh := discord.Handler{Auth: a.DeliveryMethodClient, Metrics: collectorDiscord}
 
 	meDiscordPlatform, err := dh.Auth.GetDiscordMe(a.ctx)
 	if err != nil {

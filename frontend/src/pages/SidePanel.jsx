@@ -1,24 +1,17 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import {
   ArrowLeftFromLine,
   ArrowRightFromLine,
-  CopyPlus,
   GitFork,
   Send,
-  Share,
   SquareUser,
   UserCog,
-  UserMinus,
-  UserPlus,
   Users
 } from "lucide-react";
 import { getThemeClasses } from "../utils/themeClasses";
 import { NavItem } from "../components/SidePanel/navItem";
 import { ProgramLogo } from "../components/ui/Logo";
 import { useAppStore } from "../store/useAppStore";
-import { Modal } from "../components/modals/Modal";
-import { Field } from "../components/ui/Field";
-import ExpandableAction from "../components/ui/ExpandableAction";
 
 
 const SidePanel = ({ locale, updateConfig }) => {
@@ -26,9 +19,6 @@ const SidePanel = ({ locale, updateConfig }) => {
   const theme       = useAppStore((s) => s.theme);
   const activeTab   = useAppStore((s) => s.activeTab);
   const setActiveTab = useAppStore((s) => s.setActiveTab);
-  const setTheme     = useAppStore((s) => s.setTheme);
-  const lang         = useAppStore((s) => s.lang);
-  const setLang      = useAppStore((s) => s.setLang);
 
   const sidePanelCollapsed = useAppStore((s) => s.sidePanelCollapsed);
   const setSidePanelCollapsed = useAppStore((s) => s.setSidePanelCollapsed);
@@ -72,23 +62,6 @@ const SidePanel = ({ locale, updateConfig }) => {
       ...(settings ?? {}),
       SidePanelCollapsed: next,
     });
-  };
-
-  const profileBtnRef = useRef(null);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [anchorRect, setAnchorRect] = useState(null);
-
-  const handleProfileClick = () => {
-    const rect = profileBtnRef.current?.getBoundingClientRect();
-    if (rect) {
-      setAnchorRect({
-        top: rect.top,
-        left: rect.left,
-        width: rect.width,
-        height: rect.height,
-      });
-    }
-    setIsProfileOpen((v) => !v);
   };
 
   return (
@@ -158,7 +131,7 @@ const SidePanel = ({ locale, updateConfig }) => {
           />
         </div>
 
-        <div ref={profileBtnRef} className="mt-auto space-y-1">
+        <div className="mt-auto space-y-1">
           <NavItem
             icon={<UserCog size={20} />}
             label={locale.IntegrationsLabel}
@@ -170,98 +143,14 @@ const SidePanel = ({ locale, updateConfig }) => {
           />
           <NavItem
             icon={<SquareUser size={20} />}
-            label={locale.Profile.Title}
+            label={locale.ProfilesLabel}
             collapsed={sidePanelCollapsed}
-            onClick={handleProfileClick}
+            active={activeTab === "profiles"}
+            onClick={() => setActiveTab("profiles")}
             themeClasses={themeClasses}
             showStatus={false}
           />
         </div>
-
-        <Modal
-          isOpen={isProfileOpen}
-          onClose={() => setIsProfileOpen(false)}
-          title={locale.Profile.Title}
-          icon={SquareUser}
-          iconColor="blue"
-          themeClasses={themeClasses}
-          position="anchored"
-          overlay={false}
-          anchorRect={anchorRect}
-          placement="top"
-          offset={10}
-          width="max-w-68"
-          footer={
-            <div className="flex items-center justify-center gap-4">
-              <ExpandableAction
-                icon={<UserPlus size={20} />}
-                collapsedClassName={"bg-blue-600 text-white"}
-                collapsedWidth={"36px"}
-                width={"80px"}
-                items={[
-                  {
-                    id: "add",
-                    label: locale.Profile.Add,
-                    flex: 1,
-                    className: `text-white ${"bg-blue-700 hover:bg-blue-500"}`,
-                  },
-                ]}
-              />
-              <ExpandableAction
-                icon={<UserMinus size={20} />}
-                collapsedClassName={"bg-red-600 text-white border border-red-500/30"}
-                collapsedWidth={"36px"}
-                width={"80px"}
-                items={[
-                  {
-                    id: "delete",
-                    label: locale.Profile.Delete,
-                    flex: 1,
-                    className: `text-white ${"bg-red-700 hover:bg-red-600"}`,
-                  },
-                ]}
-              />
-              <ExpandableAction
-                icon={<CopyPlus size={20} />}
-                collapsedClassName={"bg-amber-600 text-white border border-amber-500/30"}
-                collapsedWidth={"36px"}
-                width={"80px"}
-                items={[
-                  {
-                    id: "delete",
-                    label: "Dublicate",
-                    flex: 1,
-                    className: `text-white ${"bg-amber-700 hover:bg-amber-600"}`,
-                  },
-                ]}
-              />
-              <ExpandableAction
-                icon={<Share size={20} />}
-                collapsedClassName={"bg-amber-600 text-white border border-amber-500/30"}
-                collapsedWidth={"36px"}
-                width={"80px"}
-                items={[
-                  {
-                    id: "share",
-                    label: locale.Profile.Share,
-                    flex: 1,
-                    className: `text-white ${"bg-red-700 hover:bg-amber-600"}`,
-                  },
-                ]}
-              />
-            </div>
-          }
-        >
-          <div className="p-4 space-y-2">
-            <Field
-              variant="combobox"
-              height="2.5rem"
-              value={"Tekken Club Klee"}
-              themeClasses={themeClasses}
-            />
-            
-          </div>
-        </Modal>
       </nav>
   );
 };

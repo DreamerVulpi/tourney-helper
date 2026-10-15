@@ -24,6 +24,7 @@ import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
 import { useBracketFlagsSync } from "./hooks/App/useBracketFlagsSync.jsx";
 import { useAppStore } from "./store/useAppStore"
 import IntegrationsPlate from "./pages/IntegrationsPanel.jsx";
+import ProfilesPanel from "./pages/ProfilesPanel.jsx";
 
 const App = () => {
   // ---- UI ----
@@ -82,16 +83,7 @@ const App = () => {
 
   // Initialization application
   useAppInit({
-    locale, 
-    setWidgets,       
-    setAuthorizations,
-    setActiveProfile, 
-    setSettings,
-    setLang,
-    setTheme,
-    setSidePanelCollapsed,
-    setTools,
-    setIntegrationsSelections,
+    locale
   });
   
 
@@ -289,6 +281,12 @@ const App = () => {
                 {activeTab === "integrations" && (
                   <IntegrationsPlate
                     locale={locale.IntegrationsPanel}
+                    updateConfig={updateConfig}
+                  />
+                )}
+                {activeTab === "profiles" && (
+                  <ProfilesPanel
+                    locale={locale.ProfilesPanel}
                     updateConfig={updateConfig}
                   />
                 )}

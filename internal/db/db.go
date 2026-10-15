@@ -12,6 +12,7 @@ import (
 
 	"strings"
 
+	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/pressly/goose/v3"
 	_ "modernc.org/sqlite"
 )
@@ -34,8 +35,12 @@ func getAbsPath(fileName string) string {
 	return filepath.Join(exPath, fileName)
 }
 
-func NewPool() (*sql.DB, error) {
-	db, err := sql.Open("sqlite", getAbsPath("tourneyHelperProject.db"))
+func NewPool(activeProfile string) (*sql.DB, error) {
+	path := getAbsPath(filepath.Join("profiles", activeProfile, fmt.Sprintf("%v.db", config.ProfileDbFileName)))
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return nil, fmt.Errorf("sqlite | failed to create profile dir: %w", err)
+	}
+	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, fmt.Errorf("sqlite | failed to open db: %w", err)
 	}

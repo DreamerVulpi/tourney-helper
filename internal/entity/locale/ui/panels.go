@@ -7,6 +7,7 @@ type Ui struct {
 	NotificationSystemPanel NotificationSystemPanel
 	DatabasePanel           DatabasePanel
 	WidgetBracketPanel      WidgetBracketPanel
+	ProfilesPanel           ProfilesPanel
 	IntegrationsPanel       IntegrationsPanel
 	ValidationAlertModal    ValidationAlertModal
 	ProgressModal           ProgressModal
@@ -20,6 +21,15 @@ type HeaderPanel struct {
 	MultiSelectClient MultiSelectClient
 }
 
+type ProfilesPanel struct {
+	MultiSelectLabel string
+	Add              string
+	Delete           string
+	Duplicate        string
+	Share            string
+	Placeholder      string
+}
+
 type SidePanel struct {
 	ManagementTourmanets    string
 	NotificationSystemLabel string
@@ -30,7 +40,7 @@ type SidePanel struct {
 	LogsLabel               string
 	ClearButtonLabel        string
 	IntegrationsLabel       string
-	Profile                 Profile
+	ProfilesLabel           string
 }
 
 type NotificationSystemPanel struct {

@@ -39,6 +39,8 @@ function FieldBase({
   maxVisible = 3,
   locale,
   renderItem,
+  onRename,
+  validateRename,
 
   themeClasses,
 }) {
@@ -70,6 +72,8 @@ function FieldBase({
           style={{ height }}
         />
       ) : variant === "multiselect" ? (
+        <>
+        {console.log("[Field] variant=multiselect items:", items, "value:", value)}
         <MultiSelectList
           selectedValues={Array.isArray(value) ? value : []}
           items={items}
@@ -85,7 +89,10 @@ function FieldBase({
           single={single}
           locale={locale}
           renderItem={renderItem}
+          onRename={onRename}
+          validateRename={validateRename}
         />
+        </>
       ) : variant === "copy" ? (
         <div
           style={{ height }}

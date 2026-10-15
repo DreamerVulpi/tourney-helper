@@ -23,25 +23,27 @@ import (
 )
 
 type App struct {
-	ctx              context.Context
-	MessengerClient  *auth.AuthClient
-	TournamentClient *auth.AuthClient
-	Db               *dbManager.Database
-	Locale           *config.SettingsApplicationCfg
-	logUpdateTimer   *time.Timer
-	OAuthServer      *auth.OAuthCallbackServer
-	UpdateService    *update.Service
-	UpdateManager    *update.Manager
+	ctx                  context.Context
+	DeliveryMethodClient *auth.AuthClient
+	TournamentClient     *auth.AuthClient
+	Db                   *dbManager.Database
+	Locale               *config.SettingsApplicationCfg
+	logUpdateTimer       *time.Timer
+	OAuthServer          *auth.OAuthCallbackServer
+	UpdateService        *update.Service
+	UpdateManager        *update.Manager
 
-	mu            sync.Mutex
-	ns            *sender.NotificationSystem
-	nsCancel      context.CancelFunc
-	wCancel       context.CancelFunc
-	activeBot     bot.BotHandler
-	WidgetServer  *widget.Server
-	RenderBracket renderer.BracketRenderer
-	ThemeProvider *widget.ThemeProvider
-	UrlValidator  *validator.Validator
+	mu               sync.Mutex
+	profileMu        sync.RWMutex
+	switchingProfile bool
+	ns               *sender.NotificationSystem
+	nsCancel         context.CancelFunc
+	wCancel          context.CancelFunc
+	activeBot        bot.BotHandler
+	WidgetServer     *widget.Server
+	RenderBracket    renderer.BracketRenderer
+	ThemeProvider    *widget.ThemeProvider
+	UrlValidator     *validator.Validator
 
 	ActiveProfile         string
 	SettingsCfg           config.SettingsApplicationCfg
@@ -203,4 +205,10 @@ func (a *App) RestoreClientStatuses() (config.AuthorizationsCfg, error) {
 		return cfg, fmt.Errorf("save authorizations: %w", err)
 	}
 	return cfg, nil
+}
+
+func (a *App) DB() *dbManager.Database {
+	a.profileMu.RLock()
+	defer a.profileMu.RUnlock()
+	return a.Db
 }

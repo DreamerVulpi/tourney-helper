@@ -27,10 +27,6 @@ func (a *App) GetUiLocale(lang string) ui.Ui {
 	}
 }
 
-func (a *App) GetActiveProfileName() (string, error) {
-	return config.GetActiveProfileName()
-}
-
 // ============================================================
 // SETTINGS
 // ============================================================

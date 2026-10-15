@@ -14,13 +14,6 @@ type AuthorizationStatuses struct {
 	Empty        string
 }
 
-type Profile struct {
-	Title  string
-	Add    string
-	Delete string
-	Share  string
-}
-
 type ValidationUrlBracket struct {
 	UrlValid              string
 	InvalidUrlTitle       string

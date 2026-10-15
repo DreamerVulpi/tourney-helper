@@ -10,9 +10,14 @@ import (
 
 	"time"
 
+	"regexp"
+	"strings"
+
 	"github.com/BurntSushi/toml"
 	"github.com/ilyakaznacheev/cleanenv"
 )
+
+const ProfileDbFileName = "tourneyHelperProject"
 
 type MessengerPlatform struct {
 	Token          string  `toml:"token" json:"token"`
@@ -173,6 +178,26 @@ func writeTOML(path string, cfg any) error {
 	return os.WriteFile(path, buf.Bytes(), 0644)
 }
 
+var profileNameRe = regexp.MustCompile(`^[A-Za-z0-9 _\-()#\p{Cyrillic}]+$`)
+
+func ValidateProfileName(name string) error {
+	name = strings.TrimSpace(name)
+
+	if name == "" {
+		return fmt.Errorf("profile name is empty")
+	}
+	if len([]rune(name)) > 64 {
+		return fmt.Errorf("profile name is too long (max 64)")
+	}
+	if name == "." || name == ".." {
+		return fmt.Errorf("invalid profile name")
+	}
+	if !profileNameRe.MatchString(name) {
+		return fmt.Errorf("profile name contains invalid characters")
+	}
+	return nil
+}
+
 // ============================================================
 // РЕЕСТР ПРОФИЛЕЙ
 // ============================================================
@@ -199,9 +224,75 @@ func SaveRegistry(reg ProfilesRegistry) error {
 	return writeTOML(path, reg)
 }
 
+func RenameProfile(oldName, newName string) error {
+	oldName = strings.TrimSpace(oldName)
+	newName = strings.TrimSpace(newName)
+
+	if err := ValidateProfileName(newName); err != nil {
+		return err
+	}
+
+	if oldName == newName {
+		return nil // нечего делать
+	}
+
+	oldDir := GetProfileDir(oldName)
+	newDir := GetProfileDir(newName)
+
+	if !FileExists(oldDir) {
+		return fmt.Errorf("profile %q does not exist", oldName)
+	}
+	if FileExists(newDir) {
+		return fmt.Errorf("profile %q already exists", newName)
+	}
+
+	// 1. Переименовываем директорию
+	if err := os.Rename(oldDir, newDir); err != nil {
+		return fmt.Errorf("rename dir: %w", err)
+	}
+
+	// 2. Обновляем реестр; при ошибке — откат
+	reg, err := LoadRegistry()
+	if err != nil {
+		_ = os.Rename(newDir, oldDir)
+		return fmt.Errorf("load registry: %w", err)
+	}
+
+	found := false
+	for i, p := range reg.Profiles {
+		if p.Name == oldName {
+			reg.Profiles[i].Name = newName
+			reg.Profiles[i].LastOpenedAt = time.Now()
+			found = true
+			break
+		}
+	}
+	if !found {
+		// Директория была, но в реестре нет — откатываем
+		_ = os.Rename(newDir, oldDir)
+		return fmt.Errorf("profile %q not found in registry", oldName)
+	}
+
+	if reg.Active == oldName {
+		reg.Active = newName
+	}
+
+	if err := SaveRegistry(reg); err != nil {
+		_ = os.Rename(newDir, oldDir) // откат директории
+		return fmt.Errorf("save registry: %w", err)
+	}
+
+	return nil
+}
+
 func CreateProfile(name string) error {
 	if name == "" {
 		return fmt.Errorf("profile name cannot be empty")
+	}
+
+	name = strings.TrimSpace(name)
+	if err := ValidateProfileName(name); err != nil {
+		return err
 	}
 
 	// 1. Файловая структура

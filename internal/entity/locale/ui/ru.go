@@ -36,6 +36,14 @@ var validationUrlBracketRu = ValidationUrlBracket{
 }
 
 var Ru = Ui{
+	ProfilesPanel: ProfilesPanel{
+		MultiSelectLabel: "Выберите профиль",
+		Add:              "Добавить",
+		Delete:           "Удалить выбранный",
+		Share:            "Поделиться выбранным",
+		Duplicate:        "Дублировать выбранное",
+		Placeholder:      "Профиль",
+	},
 	IntegrationsPanel: IntegrationsPanel{
 		DeliveryMethodLabel:  DeliveryMethodLabelRU,
 		TourneyLabel:         TourneyLabelRU,
@@ -100,12 +108,7 @@ var Ru = Ui{
 		WidgetOfScoreboardLabel: "Виджет счета",
 		IntegrationsLabel:       "Интеграции",
 		VersionLabel:            "Версия: ",
-		Profile: Profile{
-			Title:  "Профиль",
-			Add:    "Добавить",
-			Delete: "Удалить выбранный",
-			Share:  "Поделиться выбранным",
-		},
+		ProfilesLabel:           "Профиль",
 	},
 	LogPanel: LogPanel{
 		Label:                            "Логи",

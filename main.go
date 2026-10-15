@@ -8,12 +8,9 @@ import (
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
-	"github.com/dreamervulpi/tourney-helper/internal/db"
-	"github.com/dreamervulpi/tourney-helper/internal/db/repo"
+
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	application "github.com/dreamervulpi/tourney-helper/internal/usecase/app"
-	usecaseDB "github.com/dreamervulpi/tourney-helper/internal/usecase/db"
-	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
@@ -71,73 +68,15 @@ func main() {
 	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)
 	app.OAuthServer.Start()
 
-	conn, err := db.NewPool()
-	if err != nil {
-		logger.Log(entityLogger.Error, err.Error())
-		return
+	if errGetProfile := app.GetActiveProfile(); errGetProfile != nil {
+		logger.Log(entityLogger.Error, errGetProfile.Error())
 	}
 
-	db := dbManager.Database{
-		Conn:        conn,
-		Participant: usecaseDB.Participant{Repo: &repo.Participants{Conn: conn}},
-		Accounts:    usecaseDB.ParticipantAccounts{Repo: &repo.ParticipantAccounts{Conn: conn}},
-		Stats:       usecaseDB.ParticipantStats{Repo: &repo.ParticipantStats{Conn: conn}},
-		Bans:        usecaseDB.ParticipantBans{Repo: &repo.ParticipantBans{Conn: conn}},
-		SentSets:    usecaseDB.SentSet{Repo: &repo.SentSet{Conn: conn}},
+	if errLoadProfile := app.LoadProfile(); errLoadProfile != nil {
+		logger.Log(entityLogger.Error, errLoadProfile.Error())
 	}
-	app.Db = &db
 
-	// ============================================================
-	// 3. Загрузка активного профиля
-	// ============================================================
-	activeProfile, err := config.GetActiveProfileName()
-	if err != nil || activeProfile == "" {
-		// нет активного — создаём дефолтный
-		if err := config.CreateProfile(config.DefaultProfileName); err != nil {
-			logger.Log(entityLogger.Error, "cannot create default profile: "+err.Error())
-			return
-		}
-		activeProfile = config.DefaultProfileName
-	}
-	app.ActiveProfile = activeProfile
-	logger.Log(entityLogger.Info, fmt.Sprintf("Active profile: %s", app.ActiveProfile))
-
-	// ============================================================
-	// 4. Загрузка конфигов профиля
-	// ============================================================
-	settingsCfg, err := config.LoadSettings(activeProfile)
-	if err != nil {
-		logger.Log(entityLogger.Warning, "settings not loaded, using defaults: "+err.Error())
-		settingsCfg = config.NewDefaultSettings()
-		_ = config.SaveSettings(activeProfile, settingsCfg)
-	}
-	app.SettingsCfg = settingsCfg
-
-	widgetsCfg, err := config.LoadWidgets(activeProfile)
-	if err != nil {
-		logger.Log(entityLogger.Warning, "widgets configs not loaded, using defaults values: "+err.Error())
-		widgetsCfg = config.NewDefaultWidgets()
-		_ = config.SaveWidgets(activeProfile, widgetsCfg)
-	}
-	app.WidgetsCfg = widgetsCfg
-
-	toolsCfg, err := config.LoadTools(activeProfile)
-	if err != nil {
-		logger.Log(entityLogger.Warning, "tools configs not loaded, using defaults values: "+err.Error())
-		toolsCfg = config.NewDefaultTools()
-		_ = config.SaveTools(activeProfile, toolsCfg)
-	}
-	app.NotificationSystemCfg = &toolsCfg.NotificationSystem
-
-	authorizationsCfg, err := config.LoadAuthorizations(activeProfile)
-	if err != nil {
-		logger.Log(entityLogger.Warning, "authorizations not loaded, using defaults values: "+err.Error())
-		authorizationsCfg = config.NewEmptyAuthorizations()
-		_ = config.SaveAuthorizations(activeProfile, authorizationsCfg)
-	}
-	app.AuthorizationsCfg = authorizationsCfg
-
-	err = wails.Run(&options.App{
+	errWailsRun := wails.Run(&options.App{
 		Title:     "TourneyHelper",
 		MinWidth:  1280,
 		MinHeight: 720,
@@ -152,7 +91,7 @@ func main() {
 		},
 	})
 
-	if err != nil {
-		logger.Log(entityLogger.Error, err.Error())
+	if errWailsRun != nil {
+		logger.Log(entityLogger.Error, errWailsRun.Error())
 	}
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Pencil, Search } from "lucide-react";
+import { debounce } from "../../utils/debounce";
 
 export function MultiSelectList({
   selectedValues = [],
@@ -15,14 +16,47 @@ export function MultiSelectList({
   itemHeight = 32,
   searchable = false,
   single = false,
-  locale,
+  locale = "No items",
   renderItem,
+
+  // --- rename ---
+  onRename,
+  validateRename,
 }) {
+  console.log("[MSL] RENDER items:", items, "selectedValues:", selectedValues, "single:", single);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+
+  // --- rename state ---
+  const canRename = Boolean(single && onRename);
+  const currentValue = selectedValues[0] ?? "";
+  const currentItem = items.find((i) => i.value === currentValue);
+
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [renameError, setRenameError] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const editingRef = useRef(false);
+  useEffect(() => {
+    editingRef.current = editing;
+  }, [editing]);
+
   const ref = useRef(null);
   const inputRef = useRef(null);
+  const renameInputRef = useRef(null);
 
+  // --- отложенное открытие (debounce) ---
+  const openDelayed = useMemo(
+    () =>
+      debounce(() => {
+        if (editingRef.current) return;
+        setOpen(true);
+      }, 200),
+    []
+  );
+
+  // --- клик вне — закрыть ---
   useEffect(() => {
     const onDocClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
@@ -34,24 +68,43 @@ export function MultiSelectList({
     return () => document.removeEventListener("mousedown", onDocClick);
   }, []);
 
+  // --- Escape ---
   useEffect(() => {
-    if (!open) return;
+    if (!open && !editing) return;
+
     const onKey = (e) => {
       if (e.key === "Escape") {
-        setOpen(false);
-        setQuery("");
+        if (editing) {
+          cancelRename();
+        } else {
+          setOpen(false);
+          setQuery("");
+        }
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, editing]);
 
+  // --- автофокус на поиск ---
   useEffect(() => {
     if (open && searchable) {
       const t = setTimeout(() => inputRef.current?.focus(), 0);
       return () => clearTimeout(t);
     }
   }, [open, searchable]);
+
+  // --- автофокус на rename input ---
+  useEffect(() => {
+    if (editing) {
+      const t = setTimeout(() => {
+        renameInputRef.current?.focus();
+        renameInputRef.current?.select();
+      }, 0);
+      return () => clearTimeout(t);
+    }
+  }, [editing]);
 
   const filtered = useMemo(() => {
     if (!searchable || !query.trim()) return items;
@@ -77,34 +130,156 @@ export function MultiSelectList({
     .map((i) => (i.needsReauth ? `⚠ ${i.label}` : i.label))
     .join(", ");
 
+  // --- rename ---
+  const startRename = (e) => {
+    e.stopPropagation();
+    if (openDelayed.cancel) openDelayed.cancel();
+    setOpen(false);
+    setQuery("");
+    setDraft(currentValue);
+    setRenameError(null);
+    setEditing(true);
+  };
+
+  const cancelRename = () => {
+    setEditing(false);
+    setDraft("");
+    setRenameError(null);
+  };
+
+  const commitRename = async () => {
+    if (!canRename) return;
+    const trimmed = draft.trim();
+
+    if (trimmed === currentValue) {
+      cancelRename();
+      return;
+    }
+
+    if (validateRename) {
+      const err = validateRename(trimmed);
+      if (err) {
+        setRenameError(err);
+        return;
+      }
+    }
+
+    setSaving(true);
+    try {
+      await onRename(currentValue, trimmed);
+      cancelRename();
+    } catch (e) {
+      setRenameError(String(e?.message ?? e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleButtonClick = () => {
+    if (open) {
+      setOpen(false);
+      setQuery("");
+      return;
+    }
+    openDelayed();
+  };
+
   const searchHeight = searchable ? 36 : 0;
   const listMaxHeight = maxVisible * itemHeight + searchHeight;
 
+  console.log("[MSL] BEFORE RETURN items:", items, "filtered:", filtered, "selectedLabels:", selectedLabels);
   return (
     <div ref={ref} className="relative w-full" style={style}>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        style={{ height: style?.height }}
-        className={`
-          w-full flex items-center gap-2
-          rounded-xl border px-3
-          text-xs font-bold text-left
-          ${themeClasses.field}
-          ${className}
-        `}
-      >
-        {Icon && <Icon size={iconSize} className="text-blue-600 shrink-0" />}
-        <span className="truncate flex-1">
-          {selectedLabels || placeholder}
-        </span>
-        <ChevronDown
-          size={14}
-          className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
+      {editing ? (
+        // ============== режим редактирования ==============
+        <div className="w-full">
+          <div
+            className={`
+              w-full flex items-center gap-2
+              rounded-xl border px-3
+              ${themeClasses.field}
+              ${className}
+              ${renameError ? "border-red-500" : ""}
+            `}
+            style={{ height: style?.height }}
+          >
+            {Icon && <Icon size={iconSize} className="text-blue-600 shrink-0" />}
+            <input
+              ref={renameInputRef}
+              type="text"
+              value={draft}
+              onChange={(e) => {
+                setDraft(e.target.value);
+                if (renameError) setRenameError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void commitRename();
+                } else if (e.key === "Escape") {
+                  e.preventDefault();
+                  cancelRename();
+                }
+              }}
+              onBlur={() => {
+                if (!saving) void commitRename();
+              }}
+              disabled={saving}
+              className="flex-1 bg-transparent outline-none text-xs font-bold min-w-0"
+            />
+          </div>
+          {renameError && (
+            <div className="mt-1 px-1 text-[10px] text-red-500 font-bold">
+              {renameError}
+            </div>
+          )}
+        </div>
+      ) : (
+        // ============== обычный режим ==============
+        <button
+          type="button"
+          onClick={handleButtonClick}
+          onDoubleClick={canRename && currentValue ? startRename : undefined}
+          style={{ height: style?.height }}
+          className={`
+            w-full flex items-center gap-2
+            rounded-xl border px-3
+            text-xs font-bold text-left
+            ${themeClasses.field}
+            ${className}
+          `}
+        >
+          {Icon && <Icon size={iconSize} className="text-blue-600 shrink-0" />}
+          <span className="truncate flex-1">
+            {selectedLabels || placeholder}
+          </span>
 
-      {open && (
+          {canRename && currentValue && (
+            <span
+              role="button"
+              tabIndex={0}
+              onClick={startRename}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  startRename(e);
+                }
+              }}
+              className="shrink-0 p-1 rounded hover:bg-white/10 cursor-pointer"
+              title="Переименовать"
+            >
+              <Pencil size={12} className="opacity-60" />
+            </span>
+          )}
+
+          <ChevronDown
+            size={14}
+            className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        </button>
+      )}
+
+      {open && !editing && (
         <div
           className={`
             absolute z-50 mt-1 w-full
@@ -123,7 +298,7 @@ export function MultiSelectList({
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={locale.SearchLabel}
+                placeholder={locale?.SearchLabel ?? "Search..."}
                 className="flex-1 bg-transparent outline-none text-xs font-bold placeholder:opacity-40"
               />
             </div>
@@ -135,7 +310,7 @@ export function MultiSelectList({
           >
             {filtered.length === 0 ? (
               <div className="px-3 py-4 text-xs opacity-50 text-center">
-                {locale.NoClients}
+                {locale?.NoClients ?? "No items"}
               </div>
             ) : (
               filtered.map((item) => {
@@ -170,7 +345,7 @@ export function MultiSelectList({
                           : <Check size={11} strokeWidth={3} />
                       )}
                     </span>
-                    
+
                     {item.needsReauth && (
                       <span
                         className="ml-auto shrink-0 text-[8px] font-black uppercase italic text-orange-500"
@@ -179,6 +354,7 @@ export function MultiSelectList({
                         {item.status || "Expired"}
                       </span>
                     )}
+
                     {renderItem ? (
                       renderItem(item, { checked, single })
                     ) : (
