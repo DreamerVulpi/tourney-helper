@@ -25,6 +25,7 @@ import { useBracketFlagsSync } from "./hooks/App/useBracketFlagsSync.jsx";
 import { useAppStore } from "./store/useAppStore"
 import IntegrationsPlate from "./pages/IntegrationsPanel.jsx";
 import ProfilesPanel from "./pages/ProfilesPanel.jsx";
+import { useToolsLocked } from "./hooks/App/useToolsLocked.jsx";
 
 const App = () => {
   // ---- UI ----
@@ -73,13 +74,14 @@ const App = () => {
 
   useBracketFlagsSync();
 
-  // Сохраняем выбор клиентов при каждом изменении
+  const toolsLocked = useToolsLocked();
+  const setActiveTab = useAppStore((s) => s.setActiveTab);
+
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!selectionsHydrated) return;
-    updateConfig("settings", { integrationsSelections: selections });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selections, isLoaded, selectionsHydrated]);
+    if (toolsLocked && activeTab === "profiles") {
+      setActiveTab("notifications");
+    }
+  }, [toolsLocked, activeTab, setActiveTab]);
 
   // Initialization application
   useAppInit({

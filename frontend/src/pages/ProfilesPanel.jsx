@@ -1,39 +1,57 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   UserPlus,
   UserMinus,
   CopyPlus,
   Share,
+  Trash2,
 } from "lucide-react";
 
 import { Field } from "../components/ui/Field.jsx";
 import ExpandableAction from "../components/ui/ExpandableAction";
 import PanelTemplate from "../components/layout/PanelTemplate";
-import { useAppStore } from "../store/useAppStore";
+import ConfirmModal from "../components/modals/ConfirmModal.jsx";
+import PromptModal from "../components/modals/PromptModal.jsx";
 import { useThemeClasses } from "../hooks/App/useThemeClasses";
 import { getThemeClasses } from "../utils/themeClasses";
 import { useProfiles } from "../hooks/Profiles/useProfiles";
+import { useAppStore } from "../store/useAppStore";
+import { ValidationModal } from "../components/ValidationModal.jsx";
 
 const PROFILE_NAME_RE = /^[A-Za-z0-9 _\-()#\u0400-\u04FF]+$/;
 
 const ProfilesPanel = ({ locale }) => {
+  const theme = useAppStore ((s) => s.theme);
   const themeClasses = useThemeClasses(getThemeClasses);
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [duplicatePromptOpen, setDuplicatePromptOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
+  const confirmMsgParts = locale.ValidationProfile?.ConfirmMsg?.split("%v");
+
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [errorOpen, setErrorOpen] = useState(false);
+
+  const showError = useCallback((msg) => {
+    setErrorMessage(msg);
+    setErrorOpen(true);
+  }, []);
+
   const {
-    profiles, active, loading, error,
+    profiles, active,
     switchTo, add, remove, duplicate, rename,
   } = useProfiles();
 
   const validateProfileName = useCallback((newName) => {
     const trimmed = newName.trim();
-    if (!trimmed) return "Имя не может быть пустым";
-    if (trimmed.length > 17) return "Слишком длинное имя";
-    if (!PROFILE_NAME_RE.test(trimmed)) return "Недопустимые символы";
+    if (!trimmed) return locale.ValidationProfile.NameCannotBeEmpty;
+    if (trimmed.length > 17) return locale.ValidationProfile.NameTooLong;
+    if (!PROFILE_NAME_RE.test(trimmed)) return locale.ValidationProfile.InvalidCharacters;
     if (trimmed !== active && profiles.some((p) => p.name === trimmed)) {
-      return "Такое имя уже существует";
+      return locale.ValidationProfile?.NameAlreadyExists;
     }
     return null;
-  }, [active, profiles]);
+  }, [active, profiles, locale]);
 
   const handleRenameProfile = useCallback(async (oldName, newName) => {
     await rename(oldName, newName);
@@ -46,45 +64,58 @@ const ProfilesPanel = ({ locale }) => {
   };
 
   const handleAddProfile = useCallback(async () => {
-    const name = nextProfileName(profiles.map((p) => p.name));
+  const name = nextProfileName(profiles.map((p) => p.name));
     if (!name?.trim()) return;
     try {
       await add(name.trim());
-    } catch {
-      window.alert("Не удалось создать профиль");
+    } catch (e) {
+      showError(String(e?.message ?? e ?? locale.ValidationProfile.UnableCreateProfile));
     }
-  }, [profiles, add]);
+  }, [profiles, add, showError]);
 
-  const handleDeleteProfile = useCallback(async () => {
-    if (!active) return;
-    if (!window.confirm(`Удалить профиль «${active}»?`)) return;
+  const confirmDelete = useCallback(async () => {
+    setPendingAction("delete");
     try {
       await remove(active);
-    } catch {
-      window.alert("Не удалось удалить профиль");
+      setDeleteConfirmOpen(false);
+    } catch (e) {
+      showError(String(e?.message ?? e ?? locale.ValidationProfile.UnableDeleteProfile));
+    } finally {
+      setPendingAction(null);
     }
-  }, [active, remove]);
+  }, [active, remove, showError]);
 
-  const handleDuplicateProfile = useCallback(async () => {
-    if (!active) return;
-    const target = window.prompt("Имя нового профиля", `${active} copy`);
-    if (!target?.trim() || target.trim() === active) return;
+  const confirmDuplicate = useCallback(async (target) => {
+    setPendingAction("duplicate");
     try {
-      await duplicate(active, target.trim());
-    } catch {
-      window.alert("Не удалось скопировать профиль");
+      await duplicate(active, target);
+      setDuplicatePromptOpen(false);
+    } catch (e) {
+      showError(String(e?.message ?? e ?? locale.ValidationProfile.UnableCopyProfile));
+    } finally {
+      setPendingAction(null);
     }
-  }, [active, duplicate]);
+  }, [active, duplicate, showError]);
 
   const handleSwitchProfile = useCallback(async (vals) => {
     const name = vals[0];
     if (!name || name === active) return;
     try {
       await switchTo(name);
-    } catch {
-      window.alert("Не удалось переключить профиль");
+    } catch (e) {
+      showError(String(e?.message ?? e ?? locale.ValidationProfile.UnableSwitchProfile));
     }
-  }, [active, switchTo]);
+  }, [active, switchTo, showError]);
+
+  const handleDeleteProfile = useCallback(() => {
+    if (!active) return;
+    setDeleteConfirmOpen(true);
+  }, [active]);
+
+  const handleDuplicateProfile = useCallback(() => {
+    if (!active) return;
+    setDuplicatePromptOpen(true);
+  }, [active]);
 
   const profileItems = useMemo(
     () => profiles.map((p) => ({ value: p.name, label: p.name })),
@@ -99,11 +130,6 @@ const ProfilesPanel = ({ locale }) => {
   return (
     <PanelTemplate themeClasses={themeClasses}>
       <div className="p-4 space-y-4">
-        {/* Статусы */}
-        {loading && <div className="text-xs opacity-60">Загрузка…</div>}
-        {error && <div className="text-xs text-red-500">{error}</div>}
-
-        {/* Выбор/переименование профиля */}
         <Field
           label={locale.MultiSelectLabel}
           variant="multiselect"
@@ -120,8 +146,7 @@ const ProfilesPanel = ({ locale }) => {
           maxVisible={5}
           locale={locale}
         />
-
-        {/* Кнопки действий */}
+        <div className="flex items-center justify-center gap-4"></div>
         <div className="flex items-center justify-center gap-4">
           <ExpandableAction
             icon={<UserPlus size={20} />}
@@ -177,6 +202,52 @@ const ProfilesPanel = ({ locale }) => {
           />
         </div>
       </div>
+    
+    <ValidationModal
+      isOpen={errorOpen}
+      onClose={()=> setErrorOpen(false)}
+      message={errorMessage}
+      locale={locale}
+      themeClasses={themeClasses}
+    />
+    <ConfirmModal
+      isOpen={deleteConfirmOpen}
+      onClose={() => setDeleteConfirmOpen(false)}
+      onConfirm={confirmDelete}
+      loading={pendingAction === "delete"}
+      title={`${locale.Delete} «${active}»?`}
+      message={
+        <>
+          {confirmMsgParts[0]}{" "}
+          <span className="text-red-500 font-black italic">{active}</span>{" "}
+          {confirmMsgParts[1]}
+        </>
+      }
+      confirmLabel={locale.ValidationProfile?.ConfirmButtonLabel}
+      icon={Trash2}
+      iconColor="red"
+      iconColorClass="text-red-500"
+      danger
+      theme={theme}
+      themeClasses={themeClasses}
+    />
+
+    <PromptModal
+      isOpen={duplicatePromptOpen}
+      onClose={() => setDuplicatePromptOpen(false)}
+      onConfirm={confirmDuplicate}
+      loading={pendingAction === "duplicate"}
+      title={locale.DuplicateProfile}
+      label={locale.NameNewProfileLabel}
+      placeholder={locale.PlaceholderProfile}
+      defaultValue={`${active} copy`}
+      confirmLabel={locale.ConfirmButtonDuplicateLabel}
+      validate={validateProfileName}
+      icon={CopyPlus}
+      iconColor="amber"
+      theme={theme}
+      themeClasses={themeClasses}
+    />
     </PanelTemplate>
   );
 };

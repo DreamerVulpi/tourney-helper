@@ -12,6 +12,8 @@ import { getThemeClasses } from "../utils/themeClasses";
 import { NavItem } from "../components/SidePanel/navItem";
 import { ProgramLogo } from "../components/ui/Logo";
 import { useAppStore } from "../store/useAppStore";
+import { SERVICE_STATUS } from "../utils/listStatus";
+import { useToolsLocked } from "../hooks/App/useToolsLocked";
 
 
 const SidePanel = ({ locale, updateConfig }) => {
@@ -29,7 +31,7 @@ const SidePanel = ({ locale, updateConfig }) => {
   const statusWidgetBracket      = useAppStore((s) => s.statusWidgetBracket);
 
   const settings = useAppStore((s) => s.settings);
-
+  const isProfilesLocked = useToolsLocked();
   const hoverTimeout = useRef(null);
 
   const handleMouseEnter = () => {
@@ -117,7 +119,7 @@ const SidePanel = ({ locale, updateConfig }) => {
             active={activeTab === "dbPlayers"}
             onClick={() => setActiveTab("dbPlayers")}
             themeClasses={themeClasses}
-            status={statusDatabase}
+            showStatus={false}
           />
 
           <NavItem
@@ -149,6 +151,12 @@ const SidePanel = ({ locale, updateConfig }) => {
             onClick={() => setActiveTab("profiles")}
             themeClasses={themeClasses}
             showStatus={false}
+            disabled={isProfilesLocked}
+            lockTooltip={
+              isProfilesLocked
+                ? locale.ProfilesLockedHint ?? ""
+                : undefined
+            }
           />
         </div>
       </nav>

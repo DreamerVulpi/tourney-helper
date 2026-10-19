@@ -33,7 +33,9 @@ func (a *App) RenameProfile(oldName, newName string) error {
 	defer a.profileMu.Unlock()
 
 	if a.switchingProfile {
-		return fmt.Errorf("profile switch already in progress")
+		err := fmt.Errorf("profile switch already in progress")
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 	a.switchingProfile = true
 	defer func() { a.switchingProfile = false }()
@@ -65,6 +67,7 @@ func (a *App) RenameProfile(oldName, newName string) error {
 				logger.Log(entityLogger.Error, "reload after failed rename: "+lerr.Error())
 			}
 		}
+		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
 
@@ -72,7 +75,9 @@ func (a *App) RenameProfile(oldName, newName string) error {
 	if wasActive {
 		a.ActiveProfile = newName
 		if err := a.LoadProfile(); err != nil {
-			return fmt.Errorf("reload after rename: %w", err)
+			err := fmt.Errorf("reload after rename: %w", err)
+			logger.Log(entityLogger.Error, err.Error())
+			return err
 		}
 		a.emitProfileChanged()
 	}
@@ -90,7 +95,9 @@ func (a *App) SwitchProfile(name string) error {
 	defer a.profileMu.Unlock()
 
 	if a.switchingProfile {
-		return fmt.Errorf("profile switch already in progress")
+		err := fmt.Errorf("profile switch already in progress")
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 	a.switchingProfile = true
 	defer func() { a.switchingProfile = false }()
@@ -123,7 +130,8 @@ func (a *App) AddProfile(name string) error {
 	defer func() { a.switchingProfile = false }()
 
 	if err := config.CreateProfile(name); err != nil {
-		logger.Log(entityLogger.Error, fmt.Sprintf("cannot create %v profile: %v", name, err.Error()))
+		errStr := fmt.Sprintf("cannot create %v profile: %v", name, err.Error())
+		logger.Log(entityLogger.Error, errStr)
 		return err
 	}
 
@@ -150,7 +158,8 @@ func (a *App) DeleteProfile(name string) error {
 	}
 
 	if err := config.DeleteProfile(name); err != nil {
-		logger.Log(entityLogger.Error, fmt.Sprintf("cannot delete %v profile: %v", name, err.Error()))
+		errStr := fmt.Sprintf("cannot delete %v profile: %v", name, err.Error())
+		logger.Log(entityLogger.Error, errStr)
 		return err
 	}
 
@@ -161,6 +170,8 @@ func (a *App) DeleteProfile(name string) error {
 		}
 		if newActive == "" {
 			if err := config.CreateProfile(config.DefaultProfileName); err != nil {
+				errStr := fmt.Sprintf("cannot create %v profile: %v", name, err.Error())
+				logger.Log(entityLogger.Error, errStr)
 				return err
 			}
 			newActive = config.DefaultProfileName
@@ -235,26 +246,36 @@ func (a *App) DuplicateProfile(source, target string) error {
 	defer a.profileMu.Unlock()
 
 	if source == "" || target == "" {
-		return fmt.Errorf("source and target names must be non-empty")
+		err := fmt.Errorf("source and target names must be non-empty")
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 	if source == target {
-		return fmt.Errorf("source and target must differ")
+		err := fmt.Errorf("source and target must differ")
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 
 	srcDir := config.GetProfileDir(source)
 	dstDir := config.GetProfileDir(target)
 
 	if !config.FileExists(srcDir) {
-		return fmt.Errorf("source profile %q does not exist", source)
+		err := fmt.Errorf("source profile %q does not exist", source)
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 	if config.FileExists(dstDir) {
-		return fmt.Errorf("target profile %q already exists", target)
+		err := fmt.Errorf("target profile %q already exists", target)
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 
 	// 1. Копируем всё, кроме файлов БД (их получим через VACUUM INTO)
 	if err := copyProfileDir(srcDir, dstDir); err != nil {
 		_ = os.RemoveAll(dstDir)
-		return fmt.Errorf("copy profile dir: %w", err)
+		err := fmt.Errorf("copy profile dir: %w", err)
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 
 	// 2. Копируем БД через VACUUM INTO — безопасно даже при активном WAL
@@ -263,7 +284,9 @@ func (a *App) DuplicateProfile(source, target string) error {
 
 	if err := vacuumInto(srcDbPath, dstDbPath); err != nil {
 		_ = os.RemoveAll(dstDir)
-		return fmt.Errorf("vacuum into: %w", err)
+		err := fmt.Errorf("vacuum into: %w", err)
+		logger.Log(entityLogger.Error, err.Error())
+		return err
 	}
 
 	// 3. Регистрируем в реестре

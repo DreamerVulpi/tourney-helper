@@ -2,6 +2,19 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type ValidationProfile struct {
+	NameCannotBeEmpty   string
+	NameTooLong         string
+	NameAlreadyExists   string
+	InvalidCharacters   string
+	UnableCreateProfile string
+	UnableDeleteProfile string
+	UnableCopyProfile   string
+	UnableSwitchProfile string
+	ConfirmMsg          string
+	ConfirmButtonLabel  string
+}
+
 type AuthorizationStatuses struct {
 	Authorized   string
 	Unauthorized string

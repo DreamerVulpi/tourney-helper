@@ -65,7 +65,10 @@ export function getThemeClasses(theme) {
             rounded-full
             bg-slate-300
             accent-blue-600
-        `
+        `,
+        lockPanel: isDark
+            ? "bg-amber-600 ring-amber-700 text-white"
+            : "bg-amber-500 ring-amber-600 text-white",
     };
 }
 

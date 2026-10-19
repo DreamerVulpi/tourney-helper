@@ -22,12 +22,19 @@ type HeaderPanel struct {
 }
 
 type ProfilesPanel struct {
-	MultiSelectLabel string
-	Add              string
-	Delete           string
-	Duplicate        string
-	Share            string
-	Placeholder      string
+	MultiSelectLabel            string
+	Add                         string
+	Delete                      string
+	Duplicate                   string
+	Share                       string
+	Placeholder                 string
+	DuplicateProfile            string
+	NameNewProfileLabel         string
+	PlaceholderProfile          string
+	ConfirmButtonDuplicateLabel string
+	SearchLabel                 string
+	NoItemsLabel                string
+	ValidationProfile           ValidationProfile
 }
 
 type SidePanel struct {
@@ -41,6 +48,7 @@ type SidePanel struct {
 	ClearButtonLabel        string
 	IntegrationsLabel       string
 	ProfilesLabel           string
+	ProfilesLockedHint      string
 }
 
 type NotificationSystemPanel struct {
