@@ -5,6 +5,7 @@ import {
   CopyPlus,
   Share,
   Trash2,
+  Download,
 } from "lucide-react";
 
 import { Field } from "../components/ui/Field.jsx";
@@ -17,6 +18,7 @@ import { getThemeClasses } from "../utils/themeClasses";
 import { useProfiles } from "../hooks/Profiles/useProfiles";
 import { useAppStore } from "../store/useAppStore";
 import { ValidationModal } from "../components/ValidationModal.jsx";
+import { SuccessModal } from "../components/modals/SuccessModal.jsx";
 
 const PROFILE_NAME_RE = /^[A-Za-z0-9 _\-()#\u0400-\u04FF]+$/;
 
@@ -29,8 +31,15 @@ const ProfilesPanel = ({ locale }) => {
   const [pendingAction, setPendingAction] = useState(null);
   const confirmMsgParts = locale.ValidationProfile?.ConfirmMsg?.split("%v");
 
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [importedName, setImportedName] = useState("");
+
   const [errorMessage, setErrorMessage] = useState(null);
   const [errorOpen, setErrorOpen] = useState(false);
+
+  const showSuccess = useCallback(() => {
+    setSuccessOpen(true);
+  }, []);
 
   const showError = useCallback((msg) => {
     setErrorMessage(msg);
@@ -40,8 +49,36 @@ const ProfilesPanel = ({ locale }) => {
   const {
     profiles, active,
     switchTo, add, remove, duplicate, rename,
+    exportCurrent, importNew,
   } = useProfiles();
 
+  // --- Экспорт ---
+  const handleExport = useCallback(async () => {
+    if (!active) return;
+    try {
+      const savedPath = await exportCurrent(active);
+      if (savedPath) {
+        showSuccess(
+          locale.ExportSuccessTitle,
+          `${locale.ExportSuccessMsg}\n${savedPath}`
+        );
+      }
+    } catch (e) {
+      showError(String(e?.message ?? e ?? "Unable to export the profile"));
+    }
+  }, [active, exportCurrent, showError, showSuccess, locale]);
+
+  // --- Импорт ---
+  const handleImport = useCallback(async () => {
+    try {
+      const name = await importNew();
+      setImportedName(name);
+      showSuccess();
+    } catch (e) {
+      showError(String(e?.message ?? e ?? "Unable to import the profile"));
+    }
+  }, [importNew, showError, showSuccess, locale]);
+ 
   const validateProfileName = useCallback((newName) => {
     const trimmed = newName.trim();
     if (!trimmed) return locale.ValidationProfile.NameCannotBeEmpty;
@@ -197,12 +234,32 @@ const ProfilesPanel = ({ locale }) => {
               label: locale.Share,
               flex: 1,
               className: "text-white bg-emerald-700 hover:bg-emerald-600",
-              onClick: () => { /* TODO: export to zip */ },
+              onClick: handleExport,
+            }]}
+          />
+          <ExpandableAction
+            icon={<Download size={20} />}
+            collapsedClassName="bg-emerald-600 text-white border border-emerald-500/30"
+            collapsedWidth="36px"
+            width="80px"
+            items={[{
+              id: "share",
+              label: locale.ImportProfile,
+              flex: 1,
+              className: "text-white bg-emerald-700 hover:bg-emerald-600",
+              onClick: handleImport,
             }]}
           />
         </div>
       </div>
-    
+
+    <SuccessModal
+      isOpen={successOpen}
+      onClose={() => setSuccessOpen(false)}
+      message={`${locale.ImportSuccessMsg} \"${importedName}\"`}
+      locale={locale}
+      themeClasses={themeClasses}
+    />
     <ValidationModal
       isOpen={errorOpen}
       onClose={()=> setErrorOpen(false)}

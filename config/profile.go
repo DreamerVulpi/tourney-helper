@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -199,12 +200,51 @@ func LoadProfile(name string) (Profile, error) {
 	}, nil
 }
 
-// ============================================================
-// GUARD: файл профиля существует?
-// ============================================================
+func CopyDirRecursive(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-func mustProfileConfigPath(profileName, fileName string) string {
-	dir := GetProfileConfigsDir(profileName)
-	_ = os.MkdirAll(dir, 0755) // на всякий случай
-	return filepath.Join(dir, fileName)
+		// Вычисляем относительный путь
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		destPath := filepath.Join(dst, relPath)
+
+		if info.IsDir() {
+			// Создаем папку
+			return os.MkdirAll(destPath, info.Mode())
+		}
+
+		// Копируем файл
+		return copyFile(path, destPath)
+	})
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, in); err != nil {
+		return err
+	}
+
+	// Сохраняем права доступа (для Linux/Mac)
+	info, err := in.Stat()
+	if err == nil {
+		_ = os.Chmod(dst, info.Mode())
+	}
+
+	return nil
 }

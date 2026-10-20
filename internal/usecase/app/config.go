@@ -37,9 +37,11 @@ func (a *App) LoadSettingsApp() (config.SettingsApplicationCfg, error) {
 		nullCfg := config.NewDefaultSettings()
 		_ = config.SaveSettings(a.ActiveProfile, nullCfg)
 		logger.Log(entityLogger.Warning,
-			"Settings could not be loaded. Default settings recreated")
+			"The program's configuration settings could not be loaded. Default settings recreated")
 		return nullCfg, nil
 	}
+	logger.Log(entityLogger.Success,
+		"The program's configuration settings have been successfully loaded")
 	a.Locale = &cfg
 	return cfg, nil
 }
@@ -59,7 +61,6 @@ func (a *App) SaveSettingsApp(cfg config.SettingsApplicationCfg) error {
 // ============================================================
 
 func (a *App) LoadToolsCfg() (config.ToolsCfg, error) {
-	logger.Log(entityLogger.Info, a.ActiveProfile)
 	cfg, err := config.LoadTools(a.ActiveProfile)
 	if err != nil {
 		nullCfg := config.NewDefaultTools()
@@ -74,11 +75,6 @@ func (a *App) LoadToolsCfg() (config.ToolsCfg, error) {
 }
 
 func (a *App) SaveToolsCfg(cfg config.ToolsCfg) error {
-	logger.Log(entityLogger.Debug, fmt.Sprintf(
-		"[SaveToolsCfg] incoming url=%s | game=%s",
-		cfg.NotificationSystem.UrlToTournament,
-		cfg.NotificationSystem.Game.Name,
-	))
 	if err := config.SaveTools(a.ActiveProfile, cfg); err != nil {
 		return err
 	}
@@ -102,6 +98,8 @@ func (a *App) LoadWidgetsCfg() (config.WidgetsCfg, error) {
 			"Widgets configuration could not be loaded. It has been recreated")
 		return nullCfg, nil
 	}
+	logger.Log(entityLogger.Success,
+		"The widgets configuration has been successfully loaded")
 	return cfg, nil
 }
 
@@ -128,6 +126,8 @@ func (a *App) LoadAuthorizations() (config.AuthorizationsCfg, error) {
 			"Authorizations could not be loaded. Empty slots recreated")
 		return nullCfg, nil
 	}
+	logger.Log(entityLogger.Success,
+		"Authorizations has been successfully loaded")
 	return cfg, nil
 }
 

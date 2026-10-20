@@ -6,11 +6,12 @@ import {
   DeleteProfile,
   DuplicateProfile,
   RenameProfile,
-  GetSettings,
-  GetAuthorizations,
-  GetWidgets,
-  GetNotificationSystem,
+  ExportProfile,
+  ImportProfile,
 } from "../../../wailsjs/go/application/App";
+
+export const exportProfile = (name) => ExportProfile(name);
+export const importProfile = () => ImportProfile();
 
 export const listProfiles = () => GetListProfiles();
 export const getActiveProfile = () => GetActiveProfileName();

@@ -51,7 +51,7 @@ const PromptModal = ({
         w-full flex items-center justify-center gap-3
         h-[56px] rounded-xl
         font-black uppercase italic tracking-wider text-white
-        bg-blue-600 hover:bg-blue-500
+        bg-amber-600 hover:bg-amber-500
         ${loading ? "opacity-50 cursor-not-allowed" : ""}
       `}
     >

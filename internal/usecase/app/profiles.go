@@ -49,8 +49,6 @@ func (a *App) RenameProfile(oldName, newName string) error {
 
 	wasActive := a.ActiveProfile == oldName
 
-	// 1. Если переименовываем активный — закрываем соединение,
-	//    чтобы файл БД не был залочен.
 	if wasActive && a.Db != nil && a.Db.Conn != nil {
 		if err := a.Db.Conn.Close(); err != nil {
 			logger.Log(entityLogger.Warning, "failed to close old db: "+err.Error())
@@ -58,10 +56,7 @@ func (a *App) RenameProfile(oldName, newName string) error {
 		a.Db = nil
 	}
 
-	// 2. Пробуем переименовать
 	if err := config.RenameProfile(oldName, newName); err != nil {
-		// Откат: если был активным — переоткрываем под старым именем,
-		// чтобы не оставить приложение без БД.
 		if wasActive {
 			if lerr := a.LoadProfile(); lerr != nil {
 				logger.Log(entityLogger.Error, "reload after failed rename: "+lerr.Error())
@@ -71,7 +66,6 @@ func (a *App) RenameProfile(oldName, newName string) error {
 		return err
 	}
 
-	// 3. Если переименовали активный — переоткрываем под новым именем
 	if wasActive {
 		a.ActiveProfile = newName
 		if err := a.LoadProfile(); err != nil {
@@ -85,11 +79,6 @@ func (a *App) RenameProfile(oldName, newName string) error {
 	logger.Log(entityLogger.Info, fmt.Sprintf("profile renamed: %q -> %q", oldName, newName))
 	return nil
 }
-
-func (a *App) ShareProfile(name, dstZipPath string) error {
-	return fmt.Errorf("not implemented")
-}
-
 func (a *App) SwitchProfile(name string) error {
 	a.profileMu.Lock()
 	defer a.profileMu.Unlock()
@@ -101,6 +90,8 @@ func (a *App) SwitchProfile(name string) error {
 	}
 	a.switchingProfile = true
 	defer func() { a.switchingProfile = false }()
+
+	oldName := a.ActiveProfile
 
 	if name == a.ActiveProfile {
 		return nil
@@ -115,6 +106,8 @@ func (a *App) SwitchProfile(name string) error {
 		return err
 	}
 
+	logger.Log(entityLogger.Info,
+		fmt.Sprintf("Switch profile: %v -> %v", oldName, name))
 	a.emitProfileChanged()
 	return nil
 }

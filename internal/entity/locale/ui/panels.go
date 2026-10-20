@@ -27,6 +27,7 @@ type ProfilesPanel struct {
 	Delete                      string
 	Duplicate                   string
 	Share                       string
+	ImportProfile               string
 	Placeholder                 string
 	DuplicateProfile            string
 	NameNewProfileLabel         string
@@ -34,6 +35,12 @@ type ProfilesPanel struct {
 	ConfirmButtonDuplicateLabel string
 	SearchLabel                 string
 	NoItemsLabel                string
+	ErrorFillParams             string
+	OkButtonLabel               string
+	ImportSuccessTitle          string
+	ImportSuccessMsg            string
+	ExportSuccessTitle          string
+	ExportSuccessMsg            string
 	ValidationProfile           ValidationProfile
 }
 

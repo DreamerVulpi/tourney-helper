@@ -233,7 +233,7 @@ func RenameProfile(oldName, newName string) error {
 	}
 
 	if oldName == newName {
-		return nil // нечего делать
+		return nil
 	}
 
 	oldDir := GetProfileDir(oldName)
@@ -246,12 +246,10 @@ func RenameProfile(oldName, newName string) error {
 		return fmt.Errorf("profile %q already exists", newName)
 	}
 
-	// 1. Переименовываем директорию
 	if err := os.Rename(oldDir, newDir); err != nil {
 		return fmt.Errorf("rename dir: %w", err)
 	}
 
-	// 2. Обновляем реестр; при ошибке — откат
 	reg, err := LoadRegistry()
 	if err != nil {
 		_ = os.Rename(newDir, oldDir)
@@ -268,7 +266,6 @@ func RenameProfile(oldName, newName string) error {
 		}
 	}
 	if !found {
-		// Директория была, но в реестре нет — откатываем
 		_ = os.Rename(newDir, oldDir)
 		return fmt.Errorf("profile %q not found in registry", oldName)
 	}
@@ -278,7 +275,7 @@ func RenameProfile(oldName, newName string) error {
 	}
 
 	if err := SaveRegistry(reg); err != nil {
-		_ = os.Rename(newDir, oldDir) // откат директории
+		_ = os.Rename(newDir, oldDir)
 		return fmt.Errorf("save registry: %w", err)
 	}
 
@@ -295,18 +292,15 @@ func CreateProfile(name string) error {
 		return err
 	}
 
-	// 1. Файловая структура
 	if err := InitProfile(name); err != nil {
 		return err
 	}
 
-	// 2. Реестр
 	reg, err := LoadRegistry()
 	if err != nil {
 		return err
 	}
 
-	// Если профиль уже в реестре — обновляем только lastOpenedAt
 	found := false
 	for i, p := range reg.Profiles {
 		if p.Name == name {
@@ -353,7 +347,6 @@ func DeleteProfile(name string) error {
 	}
 	reg.Profiles = filtered
 
-	// Если удалили активный — переключаемся на первый доступный
 	if reg.Active == name {
 		if len(reg.Profiles) > 0 {
 			reg.Active = reg.Profiles[0].Name
@@ -371,7 +364,6 @@ func SetActiveProfile(name string) error {
 		return err
 	}
 
-	// Проверяем, что профиль существует в реестре
 	found := false
 	for i, p := range reg.Profiles {
 		if p.Name == name {

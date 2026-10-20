@@ -107,5 +107,23 @@ export function useProfiles() {
     }
   }, [refresh]);
 
-  return { profiles, active, loading, error, refresh, switchTo, add, remove, duplicate, rename };
+  const exportCurrent = useCallback(async (name) => {
+    return await api.exportProfile(name);
+  }, []);
+
+  const importNew = useCallback(async () => {
+    setError(null);
+    try {
+      const importedName = await api.importProfile();
+      if (importedName) {
+        await refresh();
+      }
+      return importedName;
+    } catch (e) {
+      setError(String(e));
+      throw e;
+    }
+  }, [refresh]);
+
+  return { profiles, active, loading, error, refresh, switchTo, add, remove, duplicate, rename, exportCurrent, importNew };
 }
