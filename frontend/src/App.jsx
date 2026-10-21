@@ -29,29 +29,13 @@ import { useToolsLocked } from "./hooks/App/useToolsLocked.jsx";
 
 const App = () => {
   // ---- UI ----
-  const setTheme       = useAppStore((s) => s.setTheme);
-  const setLang        = useAppStore((s) => s.setLang);
   const { locale }     = useLocale();
   const activeTab      = useAppStore((s) => s.activeTab);
   const setActiveModal = useAppStore((s) => s.setActiveModal);
 
-  // ---- Side panel ----
-  const setSidePanelCollapsed = useAppStore((s) => s.setSidePanelCollapsed);
-
   // ---- Configs ----
   const settings      = useAppStore((s) => s.settings);
-  const widgets       = useAppStore((s) => s.widgets);
-  const tools    = useAppStore((s) => s.tools);
-  const authorizations = useAppStore((s) => s.authorizations);
-  const selections = useAppStore((s) => s.integrationsSelections);
-  const selectionsHydrated = useAppStore((s) => s.selectionsHydrated);
 
-  const setSettings   = useAppStore((s) => s.setSettings);
-  const setWidgets = useAppStore((s) => s.setWidgets);
-  const setAuthorizations = useAppStore((s) => s.setAuthorizations);
-  const setActiveProfile = useAppStore((s) => s.setActiveProfile);
-  const setTools = useAppStore((s) => s.setTools);
-  const setIntegrationsSelections = useAppStore((s) => s.setIntegrationsSelections);
 
   // Scale UI
   const scale = useScale();

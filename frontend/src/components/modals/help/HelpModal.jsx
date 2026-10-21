@@ -4,6 +4,26 @@ import { HelpCircle } from "lucide-react";
 import { OpenURL } from "../../../../wailsjs/go/application/App.js"
 import  NotificatonSystemHelpPage  from "./NotificationSystemHelpPage.jsx"  
 import  DatabaseHelpPage  from "./DatabaseHelpPage.jsx"  
+import WidgetBracketHelpPage from "./WidgetBracketHelpPage.jsx";
+import IntegrationsHelpPage from "./IntegrationsHelpPage.jsx";
+import ProfilesHelpPage from "./ProfilesHelpPage.jsx";
+
+const renderHelpPage = (locale, activeTab, themeClasses) => {
+  switch (activeTab) {
+    case "notifications":
+      return NotificatonSystemHelpPage(locale.HelpPageNotificationSystem, themeClasses);
+    case "dbPlayers":
+      return DatabaseHelpPage(locale.HelpPageDatabase, themeClasses);
+    case "widgetBracket":
+      return WidgetBracketHelpPage(locale.HelpPageWidgetBracket, themeClasses);
+    case "integrations":
+      return IntegrationsHelpPage(locale.HelpPageIntegrations, themeClasses);
+    case "profiles":
+      return ProfilesHelpPage(locale.HelpPageProfiles, themeClasses);
+    default:
+      return null;
+  }
+};
 
 const HelpModal = ({
   isOpen,
@@ -17,10 +37,7 @@ const HelpModal = ({
 
   const content = (
     <div className={`p-6 max-h-[70vh] overflow-y-auto space-y-6`}>
-        {
-            activeTab === "notifications" ? NotificatonSystemHelpPage(locale.HelpPageNotificationSystem, themeClasses)
-            : activeTab === "dbPlayers" ? DatabaseHelpPage(locale.HelpPageDatabase, themeClasses) : ""
-        }
+        {renderHelpPage(locale, activeTab, themeClasses)}
     </div>
   )
 

@@ -1,7 +1,5 @@
 
-import { Bug, FileQuestionMark, MailQuestion, Settings, TextSearch, UserCog, UserPen } from "lucide-react";
-import { Field } from "../../ui/Field.jsx"
-import { MessageBox } from "../MessageBox.jsx";
+import { Bug, MailQuestion, Settings, TextSearch, UserCog, UserPen } from "lucide-react";
 import { QuestionAnswerBox } from "./QuestionAnswerBox.jsx"
 import { OpenURL } from "../../../../wailsjs/go/application/App.js";
 
@@ -25,61 +23,8 @@ export function NotificationSystemHelpPage(locale, themeClasses) {
             themeClasses: themeClasses
         }
     )
-    const whatIsDebugMode = QuestionAnswerBox(
-        {
-            icon: Bug,
-            iconColor: blueDesign.iconColor,
-            borderClass: blueDesign.borderClass,
-            question: locale.WhatIsDebugMode.Question,
-            answer: locale.WhatIsDebugMode.Answer,
-            themeClasses: themeClasses
-        }
-    )
 
-    const howGetDataForStartgg = QuestionAnswerBox(
-        {
-            icon: TextSearch,
-            iconColor: amberDesign.iconColor,
-            borderClass: amberDesign.borderClass,
-            question: locale.HowGetDataForStartgg.Question,
-            answer: locale.HowGetDataForStartgg.Answer,
-            themeClasses: themeClasses
-        }
-    )
-
-    const partsAnswerHGDFD = locale.HowGetDataForDiscord.Answer.split("%v")
-    const howGetDataForDiscord = QuestionAnswerBox(
-        {
-            icon: TextSearch,
-            iconColor: amberDesign.iconColor,
-            borderClass: amberDesign.borderClass,
-            question: locale.HowGetDataForDiscord.Question,
-            answer: <>
-                {partsAnswerHGDFD[0]}
-                <span
-                    className="text-blue-500 underline cursor-pointer hover:text-blue-400"
-                    onClick={() => {
-                        OpenURL("https://discord.com/developers/applications")
-                    }}
-                >
-                    {partsAnswerHGDFD[1]}
-                </span>
-                {partsAnswerHGDFD[2]}
-            </>,
-            themeClasses: themeClasses
-        }
-    )
-
-    const initialSetupQA = QuestionAnswerBox(
-        {
-            icon: MailQuestion,
-            iconColor: amberDesign.iconColor,
-            borderClass: amberDesign.borderClass,
-            question: locale.InitialSetup.Question,
-            answer: locale.InitialSetup.Answer,
-            themeClasses: themeClasses
-        }
-    )
+    
 
     const partsAnswerWCD = locale.WhatCanDo.Answer.split("%v")
     const whatCanDo = QuestionAnswerBox(
@@ -114,19 +59,31 @@ export function NotificationSystemHelpPage(locale, themeClasses) {
         }
     )
 
+    
+
+    const whatIsDebugMode = QuestionAnswerBox(
+        {
+            icon: Bug,
+            iconColor: amberDesign.iconColor,
+            borderClass: amberDesign.borderClass,
+            question: locale.WhatIsDebugMode.Question,
+            answer: locale.WhatIsDebugMode.Answer,
+            themeClasses: themeClasses
+        }
+    )
+
+
     return (
         <div className="flex gap-4">
             <div className="w-[50%] flex flex-col gap-4">
                 {howIsWorks}
                 {whatCanDo}
-                {whatIsDebugMode}
+                
             </div>
 
             <div className="w-[50%] flex flex-col gap-4">
-                {initialSetupQA}
                 {usuallyUse}
-                {howGetDataForStartgg}
-                {howGetDataForDiscord}
+                {whatIsDebugMode}
             </div>
         </div>
     )

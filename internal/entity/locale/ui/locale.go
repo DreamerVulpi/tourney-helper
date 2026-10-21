@@ -386,14 +386,29 @@ type HelpQA struct {
 	Answer   string
 }
 
-type HelpPageNotificationSystem struct {
-	InitialSetup         HelpQA
+type HelpPageWidgetBracket struct {
+	HowIsWorks HelpQA
+	WhatCanDo  HelpQA
+}
+
+type HelpPageIntegrations struct {
 	HowIsWorks           HelpQA
-	WhatIsDebugMode      HelpQA
-	WhatCanDo            HelpQA
+	WhatIsThis           HelpQA
+	InitialSetup         HelpQA
 	HowGetDataForStartgg HelpQA
 	HowGetDataForDiscord HelpQA
-	UsuallyUsing         HelpQA
+}
+
+type HelpPageProfiles struct {
+	WhatCanDo  HelpQA
+	WhatIsThis HelpQA
+}
+
+type HelpPageNotificationSystem struct {
+	HowIsWorks      HelpQA
+	WhatIsDebugMode HelpQA
+	WhatCanDo       HelpQA
+	UsuallyUsing    HelpQA
 }
 
 type HelpPageDatabase struct {
@@ -407,4 +422,7 @@ type HelpModal struct {
 	CloseButtonLabel           string
 	HelpPageNotificationSystem HelpPageNotificationSystem
 	HelpPageDatabase           HelpPageDatabase
+	HelpPageWidgetBracket      HelpPageWidgetBracket
+	HelpPageIntegrations       HelpPageIntegrations
+	HelpPageProfiles           HelpPageProfiles
 }
