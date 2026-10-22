@@ -11,6 +11,7 @@ import (
 
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	application "github.com/dreamervulpi/tourney-helper/internal/usecase/app"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/locale"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
@@ -65,9 +66,6 @@ func main() {
 	widget.InitDirectories()
 	app.WidgetServer = widget.NewServer()
 
-	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)
-	app.OAuthServer.Start()
-
 	if errGetProfile := app.GetActiveProfile(); errGetProfile != nil {
 		logger.Log(entityLogger.Error, errGetProfile.Error())
 	}
@@ -75,6 +73,9 @@ func main() {
 	if errLoadProfile := app.LoadProfile(); errLoadProfile != nil {
 		logger.Log(entityLogger.Error, errLoadProfile.Error())
 	}
+
+	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr, locale.Lang(app.SettingsCfg.Language))
+	app.OAuthServer.Start()
 
 	errWailsRun := wails.Run(&options.App{
 		Title:     "TourneyHelper",

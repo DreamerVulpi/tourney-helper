@@ -8,6 +8,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/locale/ui"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/locale"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/version"
 )
@@ -52,6 +53,7 @@ func (a *App) SaveSettingsApp(cfg config.SettingsApplicationCfg) error {
 	}
 	a.mu.Lock()
 	a.SettingsCfg = cfg
+	a.OAuthServer.SetLanguage(locale.Lang(a.SettingsCfg.Language))
 	a.mu.Unlock()
 	return nil
 }
