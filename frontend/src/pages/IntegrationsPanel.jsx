@@ -628,12 +628,7 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
 
                         <div className="flex justify-end pt-2">
                           <button
-                            onClick={() =>
-                              authorizeTournamentSlot(
-                                activeAuthorizationSettings,
-                                activeSlotIndex
-                              )
-                            }
+                            onClick={() => authorizeTournamentSlot(activeAuthorizationSettings, activeSlotIndex)}
                             disabled={isAuthorizeDisabled}
                             className={`px-4 py-2 rounded-lg text-xs font-black uppercase italic transition-colors ${
                               isAuthorizeDisabled
@@ -743,12 +738,7 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
 
                         <div className="flex justify-end pt-2">
                           <button
-                            onClick={() =>
-                              authorizeMessengerSlot(
-                                activeAuthorizationSettings,
-                                activeSlotIndex
-                              )
-                            }
+                            onClick={() => authorizeMessengerSlot(activeAuthorizationSettings, activeSlotIndex)}
                             disabled={
                               getCurrentSlot()?.status === AUTH_STATUS.PENDING
                             }

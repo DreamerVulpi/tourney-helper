@@ -27,4 +27,14 @@ var En = Pages{
 		TimeUnit:     "s.",
 		ButtonLabel:  "Close",
 	},
+	Redirect: Page{
+		Title:   "Redirecting...",
+		Heading: "Redirecting",
+		Message: "Please, wait...",
+	},
+	ErrorBrowserDeny: Page{
+		Title:   "Error",
+		Heading: "No Access",
+		Message: "Your browser has blocked the authorization window from opening. Please allow pop-ups for this site or use the button below.",
+	},
 }

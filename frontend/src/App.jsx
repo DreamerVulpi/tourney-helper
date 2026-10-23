@@ -165,7 +165,7 @@ const App = () => {
     };
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     EventsOn("update-status", (status) => {
       switch (status) {
         case "extracting":
@@ -190,8 +190,22 @@ const App = () => {
     };
   }, [locale]);
 
-  const iframeRef_WidgetBracket = useRef(null);
+  useEffect(() => {
+    const unsubscribe = EventsOn("auth:request_url", (url) => {
+      const authWindow = window.open(url, "_blank");
+      
+      if (!authWindow) {
+        // Если браузер заблокировал окно (попап-блокировщик)
+        alert("Пожалуйста, разрешите всплывающие окна для этого приложения, чтобы авторизоваться.");
+      }
+    });
 
+    return () => {
+      EventsOff("auth:request_url");
+    };
+  }, []);
+
+  const iframeRef_WidgetBracket = useRef(null);
 
   return (
     <div

@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
 	"net/http"
 
 	"fmt"
-
-	"os/exec"
 
 	loggerEntity "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
@@ -126,6 +125,51 @@ func GetTokenFromFile(filename string) (*oauth2.Token, error) {
 	return token, nil
 }
 
+// StartAuth инициализирует OAuth-флоу и возвращает URL для открытия в браузере,
+// а также канал, в который придет код авторизации.
+func (ac *AuthClient) StartAuth(ctx context.Context) (string, chan string, error) {
+	if ac.Config == nil {
+		return "", nil, fmt.Errorf("Config is nil. Check your Get...Oauth2 functions")
+	}
+	if ac.CallbackServer == nil {
+		return "", nil, fmt.Errorf("OAuth callback server is nil")
+	}
+
+	state := uuid.New().String()
+	codeChan := make(chan string, 1)
+	ac.CallbackServer.Register(ac.CallbackPath, state, codeChan)
+	authURL := ac.Config.AuthCodeURL(state)
+
+	logger.Log(loggerEntity.Info, fmt.Sprintf("Link to auth: %v", authURL))
+
+	return authURL, codeChan, nil
+}
+
+// FinishAuth ожидает код и обменивает его на токен.
+func (ac *AuthClient) FinishAuth(ctx context.Context, codeChan chan string) error {
+	var code string
+	select {
+	case code = <-codeChan:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	token, err := ac.Config.Exchange(ctx, code)
+	if err != nil {
+		return err
+	}
+
+	if err := saveTokenToFile(ac.TokenFile, token); err != nil {
+		return err
+	}
+
+	ac.Token = token
+	ac.HTTPClient = ac.Config.Client(ctx, token)
+	return nil
+}
+
+// Init проверяет наличие токена на диске. Если токена нет — запускает OAuth.
+// Используется в основном для фоновых вызовов (например, при старте приложения).
 func (ac *AuthClient) Init(ctx context.Context) error {
 	if ac.Config == nil {
 		return fmt.Errorf("Config is nil. Check your Get...Oauth2 functions")
@@ -158,14 +202,13 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 		logger.Log(loggerEntity.Warning,
 			fmt.Sprintf("Token invalid or missing is %s, starting web flow...\n", ac.TokenFile))
 
-		state := uuid.New().String()
-		codeChan := make(chan string, 1)
-		ac.CallbackServer.Register(ac.CallbackPath, state, codeChan)
-		authURL := ac.Config.AuthCodeURL(state)
+		authURL, codeChan, err := ac.StartAuth(ctx)
+		if err != nil {
+			return err
+		}
 
-		logger.Log(loggerEntity.Info,
-			fmt.Sprintf("Link to auth: %v", authURL))
-
+		// Если Init вызывается в фоне (без UI), открываем браузер системно.
+		// Для UI-вызовов используйте StartAuth + FinishAuth напрямую из App методов.
 		if err := exec.Command(
 			"rundll32",
 			"url.dll,FileProtocolHandler",
@@ -174,23 +217,7 @@ func (ac *AuthClient) Init(ctx context.Context) error {
 			return err
 		}
 
-		var code string
-
-		select {
-		case code = <-codeChan:
-
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-
-		token, err = ac.Config.Exchange(ctx, code)
-		if err != nil {
-			return err
-		}
-
-		if err := saveTokenToFile(ac.TokenFile, token); err != nil {
-			return err
-		}
+		return ac.FinishAuth(ctx, codeChan)
 	}
 
 	ac.Token = token

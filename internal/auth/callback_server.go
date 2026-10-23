@@ -18,9 +18,18 @@ type OAuthCallbackServer struct {
 
 	texts pages.Pages
 
-	handlers map[string]http.HandlerFunc
+	handlers    map[string]http.HandlerFunc
+	pendingURLs map[string]string
 
 	mu sync.Mutex
+}
+
+func (o *OAuthCallbackServer) RegisterRedirect(path string, authURL string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.pendingURLs[path] = authURL
+	o.handlers[path] = o.redirectHandler
 }
 
 func NewOAuthCallbackServer(addr string, lang locale.Lang) *OAuthCallbackServer {
@@ -29,10 +38,13 @@ func NewOAuthCallbackServer(addr string, lang locale.Lang) *OAuthCallbackServer 
 		"OAuth server init: lang=%q -> heading=%q", lang, texts.Success.Heading,
 	))
 	o := &OAuthCallbackServer{
-		handlers: make(map[string]http.HandlerFunc),
-		mux:      http.NewServeMux(),
-		texts:    locale.PagesFor(lang),
+		handlers:    make(map[string]http.HandlerFunc),
+		pendingURLs: make(map[string]string),
+		mux:         http.NewServeMux(),
+		texts:       texts,
 	}
+
+	o.mux.HandleFunc("/redirect", o.redirectHandler)
 	o.mux.HandleFunc("/", o.router)
 
 	o.server = &http.Server{
@@ -41,6 +53,26 @@ func NewOAuthCallbackServer(addr string, lang locale.Lang) *OAuthCallbackServer 
 	}
 
 	return o
+}
+
+func (o *OAuthCallbackServer) SetPendingURL(path string, authURL string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.pendingURLs[path] = authURL
+}
+
+func (o *OAuthCallbackServer) redirectHandler(w http.ResponseWriter, r *http.Request) {
+	o.mu.Lock()
+	authURL := o.pendingURLs[r.URL.Path]
+	o.mu.Unlock()
+
+	if authURL == "" {
+		http.Error(w, "No pending auth URL", http.StatusBadRequest)
+		return
+	}
+
+	texts := o.getTexts()
+	writeRedirectPage(w, authURL, texts)
 }
 
 func (o *OAuthCallbackServer) router(w http.ResponseWriter, r *http.Request) {
@@ -79,22 +111,25 @@ func (o *OAuthCallbackServer) Register(path string, state string, codeChan chan 
 		receivedState := r.URL.Query().Get("state")
 		if receivedState != state {
 			writePage(w, http.StatusBadRequest, pageData{
-				Page:    texts.ErrorCantAuth,
-				Success: false,
+				Page:      texts.ErrorCantAuth,
+				AutoClose: texts.AutoClose,
+				Success:   false,
 			})
 			return
 		}
 		code := r.URL.Query().Get("code")
 		if code == "" {
 			writePage(w, http.StatusBadRequest, pageData{
-				Page:    texts.ErrorDontGetCode,
-				Success: false,
+				Page:      texts.ErrorDontGetCode,
+				AutoClose: texts.AutoClose,
+				Success:   false,
 			})
 			return
 		}
 		writePage(w, http.StatusOK, pageData{
-			Page:    texts.Success,
-			Success: true,
+			Page:      texts.Success,
+			AutoClose: texts.AutoClose,
+			Success:   true,
 		})
 		codeChan <- code
 	}

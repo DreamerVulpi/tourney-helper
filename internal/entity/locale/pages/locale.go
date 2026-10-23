@@ -6,6 +6,8 @@ type Pages struct {
 	ErrorDontGetCode Page
 	ErrorNoPage      Page
 	AutoClose        AutoClose
+	Redirect         Page
+	ErrorBrowserDeny Page
 }
 
 type AutoClose struct {
