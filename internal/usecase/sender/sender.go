@@ -211,10 +211,20 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 		logger.Log(entityLogger.Info, "There are currently no battles with the \"Not Started\" status...")
 	}
 
+	var sendErrors int64
 	for _, set := range sets {
 		if err := ns.processSet(ctx, slug, set); err != nil {
+			sendErrors++
 			logger.Log(entityLogger.Error, err.Error())
 		}
+	}
+
+	sent := ns.MessagesSentCurrentCycle.Load()
+	if sent+sendErrors != total {
+		logger.Log(entityLogger.Warning, fmt.Sprintf(
+			"Process | metrics mismatch: total=%d sent=%d errors=%d",
+			total, sent, sendErrors,
+		))
 	}
 
 	return nil

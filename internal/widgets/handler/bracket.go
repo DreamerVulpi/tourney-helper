@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/dreamervulpi/tourney-helper/internal/widget/service"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/service"
 	"github.com/gin-gonic/gin"
 )
 

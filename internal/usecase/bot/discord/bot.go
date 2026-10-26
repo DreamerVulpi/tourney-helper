@@ -24,8 +24,6 @@ type params struct {
 	rulesMatches config.RulesMatches
 	streamLobby  config.StreamLobby
 
-	// Данные бота — теперь берутся из botCred в момент Start,
-	// но кэшируются здесь, чтобы не тащить через весь Handler.
 	guildID        string
 	rolesIdList    config.RolesID
 	debugMode      bool

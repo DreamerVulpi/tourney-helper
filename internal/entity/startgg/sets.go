@@ -1,5 +1,12 @@
 package startgg
 
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 // State (1 - IsNotStarted, 2 - InProcess, 3 - IsDone)
 type State int
 
@@ -49,9 +56,47 @@ type EntrantSource struct {
 	Condition string `json:"condition"`
 }
 
+type SetID string
+
+func (s *SetID) UnmarshalJSON(b []byte) error {
+	if len(b) == 0 {
+		return fmt.Errorf("setid: empty input")
+	}
+	switch {
+	case b[0] == '"':
+		var str string
+		if err := json.Unmarshal(b, &str); err != nil {
+			return fmt.Errorf("setid: %w", err)
+		}
+		*s = SetID(str)
+	case string(b) == "null":
+		*s = ""
+	default:
+		// число без кавычек, кладём как есть
+		*s = SetID(string(b))
+	}
+	return nil
+}
+
+func (s SetID) String() string { return string(s) }
+
+func (s SetID) Numeric() (int64, bool) {
+	n, err := strconv.ParseInt(string(s), 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}
+
+func (s SetID) IsPreview() bool {
+	return strings.HasPrefix(string(s), "preview_")
+}
+
+func (n Nodes) RealID() (int64, bool) { return n.Id.Numeric() }
+
 // Information about Set
 type Nodes struct {
-	Id             int64          `json:"id"`
+	Id             SetID          `json:"id"`
 	State          State          `json:"state"`
 	FullRoundText  string         `json:"fullRoundText"`
 	Round          int            `json:"round"`

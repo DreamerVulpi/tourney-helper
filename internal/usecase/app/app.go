@@ -17,8 +17,8 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
-	"github.com/dreamervulpi/tourney-helper/internal/widget"
-	"github.com/dreamervulpi/tourney-helper/internal/widget/renderer"
+	widgets "github.com/dreamervulpi/tourney-helper/internal/widgets"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/renderer"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -40,9 +40,9 @@ type App struct {
 	nsCancel         context.CancelFunc
 	wCancel          context.CancelFunc
 	activeBot        bot.BotHandler
-	WidgetServer     *widget.Server
+	WidgetServer     *widgets.Server
 	RenderBracket    renderer.BracketRenderer
-	ThemeProvider    *widget.ThemeProvider
+	ThemeProvider    *widgets.ThemeProvider
 	UrlValidator     *validator.Validator
 
 	ActiveProfile         string
@@ -54,7 +54,7 @@ type App struct {
 
 func NewApp() *App {
 	return &App{
-		ThemeProvider: widget.NewThemeProvider(""),
+		ThemeProvider: widgets.NewThemeProvider(""),
 	}
 }
 

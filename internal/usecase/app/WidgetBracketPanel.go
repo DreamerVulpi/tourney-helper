@@ -15,10 +15,10 @@ import (
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
-	startggProvider "github.com/dreamervulpi/tourney-helper/internal/widget/provider/startgg"
-	"github.com/dreamervulpi/tourney-helper/internal/widget/renderer"
-	startggRenderer "github.com/dreamervulpi/tourney-helper/internal/widget/renderer/startgg"
-	"github.com/dreamervulpi/tourney-helper/internal/widget/service"
+	startggProvider "github.com/dreamervulpi/tourney-helper/internal/widgets/provider/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/renderer"
+	startggRenderer "github.com/dreamervulpi/tourney-helper/internal/widgets/renderer/startgg"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/service"
 )
 
 func (a *App) GetListThemes() ([]string, error) {
@@ -54,14 +54,12 @@ func (a *App) LaunchWidgetBracket(
 	}
 	a.mu.Unlock()
 
-	// 1. Проверка URL
 	if len(cfgWidgets.Bracket.UrlToTournament) == 0 {
 		err := fmt.Errorf("No tournament url/slug for get data tournament\n")
 		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
 
-	// 2. Авторизация + выбор провайдера
 	var (
 		provider service.BracketProvider
 		renderer renderer.BracketRenderer
@@ -107,7 +105,6 @@ func (a *App) LaunchWidgetBracket(
 		return err
 	}
 
-	// 3. Проверка BracketId
 	if cfgWidgets.Bracket.BracketId == "" {
 		err := fmt.Errorf("No bracket ID for widget — enter a valid tournament URL")
 		logger.Log(entityLogger.Error, err.Error())
@@ -116,9 +113,6 @@ func (a *App) LaunchWidgetBracket(
 	logger.Log(entityLogger.Info,
 		fmt.Sprintf("Widget will open bracket ID: %s", cfgWidgets.Bracket.BracketId))
 
-	// ========================================================
-	// 4. Запуск сервера
-	// ========================================================
 	_, cancel := context.WithCancel(context.Background())
 	a.mu.Lock()
 	a.RenderBracket = renderer
@@ -132,8 +126,10 @@ func (a *App) LaunchWidgetBracket(
 		logger.Log(entityLogger.Info, "Widget server starting on :8080")
 
 		err := a.WidgetServer.Start(":8080")
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) && !errors.Is(err, context.DeadlineExceeded) {
 			logger.Log(entityLogger.Error, fmt.Sprintf("Widget server: %v", err))
+		} else if err != nil && errors.Is(err, context.DeadlineExceeded) {
+			logger.Log(entityLogger.Info, "Widget server stopped (context deadline exceeded during shutdown)")
 		}
 	}()
 
@@ -157,6 +153,10 @@ func (a *App) StopWidgetBracket() {
 	defer cancelShutdown()
 
 	if err := a.WidgetServer.Stop(ctx); err != nil {
-		logger.Log(entityLogger.Error, err.Error())
+		if !errors.Is(err, context.DeadlineExceeded) {
+			logger.Log(entityLogger.Error, err.Error())
+		} else {
+			logger.Log(entityLogger.Debug, "Widget server forced to stop due to timeout")
+		}
 	}
 }

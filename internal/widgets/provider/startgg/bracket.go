@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	entityStartgg "github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
-	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widget"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widgets"
 	"github.com/dreamervulpi/tourney-helper/internal/infrastructure/startgg"
 )
 

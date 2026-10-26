@@ -6,8 +6,8 @@ import (
 
 	"context"
 
-	"github.com/dreamervulpi/tourney-helper/internal/widget/handler"
-	"github.com/dreamervulpi/tourney-helper/internal/widget/service"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/handler"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/service"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )

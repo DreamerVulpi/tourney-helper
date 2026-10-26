@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode"
 
-	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widget"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widgets"
 )
 
 type BracketRenderer interface {

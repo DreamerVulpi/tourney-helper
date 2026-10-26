@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widget"
-	"github.com/dreamervulpi/tourney-helper/internal/widget/renderer"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widgets"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/renderer"
 )
 
 type BracketService struct {

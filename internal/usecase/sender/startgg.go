@@ -185,8 +185,19 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 					return nil, ctx.Err()
 				}
 
+				if set.Id.IsPreview() {
+					logger.Log(loggerEntity.Info, fmt.Sprintf("GetSetsData | Startgg | skip preview set: %s", set.Id))
+					continue
+				}
+
+				id, ok := set.Id.Numeric()
+				if !ok {
+					logger.Log(loggerEntity.Warning, fmt.Sprintf("GetSetsData | Startgg | unexpected non-numeric set id: %s", set.Id))
+					continue
+				}
+
 				if len(set.Slots[0].Entrant.Participants) == 0 || len(set.Slots[1].Entrant.Participants) == 0 {
-					log.Printf("GetSetsData | Startgg | No contact data from platform")
+					logger.Log(loggerEntity.Info, "GetSetsData | Startgg | No contact data from platform")
 					continue
 				}
 
@@ -203,7 +214,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 
 				set := sender.SetData{
 					TournamentName: tournament.Name,
-					SetID:          set.Id,
+					SetID:          id,
 					StreamName:     set.Stream.StreamName,
 					StreamSourse:   set.Stream.StreamSource,
 					RoundNum:       set.Round,
@@ -212,7 +223,7 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 					ContactPlayer2: p2,
 					IsFinals:       isFinals,
 					State:          int(set.State),
-					FullInviteLink: fmt.Sprint("https://www.start.gg/", slug, "/set/", set.Id),
+					FullInviteLink: fmt.Sprint("https://www.start.gg/", slug, "/set/", id),
 				}
 				setsData = append(setsData, set)
 			}

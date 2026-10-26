@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
-	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widget"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widgets"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
-	"github.com/dreamervulpi/tourney-helper/internal/widget/renderer"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/renderer"
 )
 
 func classifySection(set entity.Set) string {

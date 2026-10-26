@@ -16,7 +16,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
 	"github.com/dreamervulpi/tourney-helper/internal/version"
-	"github.com/dreamervulpi/tourney-helper/internal/widget"
+	widgets "github.com/dreamervulpi/tourney-helper/internal/widgets"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -63,8 +63,8 @@ func main() {
 	app.UrlValidator = validator.NewValidator()
 	app.UpdateService = updateService
 	app.UpdateManager = updateManager
-	widget.InitDirectories()
-	app.WidgetServer = widget.NewServer()
+	widgets.InitDirectories()
+	app.WidgetServer = widgets.NewServer()
 
 	if errGetProfile := app.GetActiveProfile(); errGetProfile != nil {
 		logger.Log(entityLogger.Error, errGetProfile.Error())

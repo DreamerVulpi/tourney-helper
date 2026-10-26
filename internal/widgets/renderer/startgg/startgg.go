@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
-	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widget"
+	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widgets"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
-	widget "github.com/dreamervulpi/tourney-helper/internal/widget"
+	widget "github.com/dreamervulpi/tourney-helper/internal/widgets"
 )
 
 //go:embed template.html bracketLayout.js startgg.css
