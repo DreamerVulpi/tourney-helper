@@ -45,26 +45,22 @@ func (p *StartGGBracketProvider) GetBracket(ctx context.Context, id string) (*en
 }
 
 func generateSlot(slots []entityStartgg.WidgetSlot, index int) entity.Slot {
-	// Индекс вне диапазона — возвращаем пустой слот
 	if index >= len(slots) {
 		return entity.Slot{}
 	}
 
 	slot := slots[index]
 
-	// Entrant может быть nil (например, "entrant": null в JSON)
 	if slot.Entrant == nil {
 		return entity.Slot{}
 	}
 
-	// Participants может быть пустым — тоже валидный пустой слот
 	if len(slot.Entrant.Participants) == 0 {
 		return entity.Slot{}
 	}
 
 	p := slot.Entrant.Participants[0]
 
-	// Standing может быть nil — тогда Score = 0
 	var score int
 	if slot.Standing != nil {
 		score = slot.Standing.Stats.Score.Value

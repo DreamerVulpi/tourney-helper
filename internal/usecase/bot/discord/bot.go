@@ -148,10 +148,10 @@ func (h *Handler) Start(
 
 	// --- 5. Регистрация слэш-команд ---
 	registeredCommands, err := h.InitCommands(
-		tourneyCred.ClientID, // ← активный турнирный клиент
+		botCred.ClientID,
 		session,
 		&tournament,
-		&botCred, // ← передаём активный слот бота
+		&botCred,
 	)
 	if err != nil {
 		session.Close()

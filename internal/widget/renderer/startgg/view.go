@@ -78,10 +78,16 @@ func (r *StartGGRenderer) buildView(bracket *entity.Bracket) entity.BracketView 
 
 	view.Connections = buildConnections(bracket)
 
-	// Отладка
 	logger.Log(entityLogger.Debug, fmt.Sprintf("Connections count: %d", len(view.Connections)))
 
 	return view
+}
+
+func formatScore(score int) string {
+	if score == -1 {
+		return "DQ"
+	}
+	return strconv.Itoa(score)
 }
 
 func buildSetView(set entity.Set) entity.SetView {
@@ -101,7 +107,7 @@ func buildSetView(set entity.Set) entity.SetView {
 			Id:       strconv.FormatInt(slot.Id, 10),
 			Prefix:   renderer.ClearString(slot.Prefix),
 			Nickname: renderer.ClearString(slot.GameNickname),
-			Score:    slot.Score,
+			Score:    formatScore(slot.Score),
 		})
 	}
 

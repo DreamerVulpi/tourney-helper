@@ -117,8 +117,6 @@ func (p *ThemeProvider) HasTheme(name string) bool {
 	return err == nil
 }
 
-// resolveThemesDir возвращает абсолютный путь к директории тем
-// относительно директории, где находится исполняемый файл.
 func resolveThemesDir(dir string) string {
 	if filepath.IsAbs(dir) {
 		return dir
@@ -129,7 +127,6 @@ func resolveThemesDir(dir string) string {
 		return dir
 	}
 
-	// Разрешаем симлинки (macOS/Linux)
 	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
 		exe = resolved
 	}
@@ -137,8 +134,6 @@ func resolveThemesDir(dir string) string {
 	return filepath.Join(filepath.Dir(exe), dir)
 }
 
-// ExternalDir возвращает путь к директории внешних тем.
-// Полезно для логирования и отладки.
 func (p *ThemeProvider) ExternalDir() string {
 	return p.externalDir
 }

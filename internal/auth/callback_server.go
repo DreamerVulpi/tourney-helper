@@ -34,7 +34,7 @@ func (o *OAuthCallbackServer) RegisterRedirect(path string, authURL string) {
 
 func NewOAuthCallbackServer(addr string, lang locale.Lang) *OAuthCallbackServer {
 	texts := locale.PagesFor(lang)
-	logger.Log(entityLogger.Info, fmt.Sprintf(
+	logger.Log(entityLogger.Debug, fmt.Sprintf(
 		"OAuth server init: lang=%q -> heading=%q", lang, texts.Success.Heading,
 	))
 	o := &OAuthCallbackServer{

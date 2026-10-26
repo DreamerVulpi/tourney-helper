@@ -45,7 +45,7 @@ body {
 
 .bracket-content {
     position: relative;
-    width: max-content;       /* размер по содержимому */
+    width: max-content;
     min-width: 100%;
     padding: 40px;
     display: flex;
@@ -73,7 +73,7 @@ body {
     stroke-width: calc(var(--connection-width, 2px) + 1px);
 }
 
-/* Winners + Grand Final в одной строке */
+/* Winners + Grand Final in one string */
 .winners-final-row {
     display: flex;
     align-items: flex-start;

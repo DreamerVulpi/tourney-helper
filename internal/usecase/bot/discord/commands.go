@@ -75,6 +75,18 @@ func (h *Handler) InitCommands(
 	tournament *config.NotificationSystem,
 	botCred *config.ClientCredentials,
 ) ([]*discordgo.ApplicationCommand, error) {
+	if session.State == nil || session.State.Application == nil {
+		return nil, fmt.Errorf(
+			"InitCommands: session application state is not ready (is the session opened?)",
+		)
+	}
+	if session.State.Application.ID != appID {
+		return nil, fmt.Errorf(
+			"InitCommands: appID %q does not match session application %q "+
+				"(check that you pass botCred.ClientID, not tourneyCred.ClientID)",
+			appID, session.State.Application.ID,
+		)
+	}
 	commandHandlers := make(map[string]func(i *discordgo.InteractionCreate))
 	commandHandlers["contact"] = h.viewContact
 

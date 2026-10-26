@@ -38,7 +38,7 @@ type PlayerView struct {
 	Id       string
 	Prefix   string
 	Nickname string
-	Score    int
+	Score    string
 }
 
 type SetView struct {
