@@ -16,7 +16,7 @@ var directories = []string{
 
 func InitDirectories() error {
 	for _, dir := range directories {
-		path := filepath.Join("widget", dir)
+		path := filepath.Join("widgets", dir)
 		if err := createDir(config.GetAbsPath(path)); err != nil {
 			return err
 		}

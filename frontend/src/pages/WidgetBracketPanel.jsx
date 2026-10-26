@@ -229,14 +229,13 @@ const WidgetBracketPlate = ({
       if (scale !== 1.0) params.set("scale", String(scale));
       if (autoRefresh) params.set("autoRefresh", "1");
 
-      return `http://localhost:8080/widget/bracket/${bracketId}?${params.toString()}`;
+      return `http://localhost:8080/widgets/bracket/${bracketId}?${params.toString()}`;
   }, [bracketId, themeBracket, clearBackground, hideStages, bracketMode, scale, autoRefresh]);
 
-  // Базовый URL — только турнир + тема. НЕ зависит от флагов.
-  // Используется для начального src iframe.
+
   const baseIframeUrl = useMemo(() => {
       if (!bracketId) return "";
-      return `http://localhost:8080/widget/bracket/${bracketId}?theme=${themeBracket}`;
+      return `http://localhost:8080/widgets/bracket/${bracketId}?theme=${themeBracket}`;
   }, [bracketId, themeBracket]);
 
   // ---------- Фиксируем начальный URL при старте виджета ----------
@@ -265,7 +264,7 @@ const WidgetBracketPlate = ({
           if (bracketMode !== "all") params.set("bracketMode", bracketMode);
           if (scale !== 1.0) params.set("scale", String(scale));
           if (autoRefresh) params.set("autoRefresh", "1");
-          initialSrcRef.current = `http://localhost:8080/widget/bracket/${bracketId}?${params.toString()}`;
+          initialSrcRef.current = `http://localhost:8080/widgets/bracket/${bracketId}?${params.toString()}`;
       }
 
       setIframeLoaded(false);

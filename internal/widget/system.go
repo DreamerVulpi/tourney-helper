@@ -18,7 +18,7 @@ var builtinThemes embed.FS
 const DefaultThemeName = "default"
 
 // DefaultThemesDir — path to other themes (binary)
-const DefaultThemesDir = "widget/bracket/themes"
+const DefaultThemesDir = "widgets/bracket/themes"
 
 // ThemeProvider access to CSS themes
 type ThemeProvider struct {

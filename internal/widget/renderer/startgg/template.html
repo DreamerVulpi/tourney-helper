@@ -780,7 +780,7 @@
             return;
         }
 
-        const url = `/widget/bracket/${bracketId}/data?theme=${encodeURIComponent(theme)}`;
+        const url = `/widgets/bracket/${bracketId}/data?theme=${encodeURIComponent(theme)}`;
 
         try {
             const res = await fetch(url, { cache: 'no-store' });
@@ -932,7 +932,7 @@
         applyFlagsAndRedraw(event.data.flags);
     });
 
-    const BRACKET_FLAGS_URL = '/widget/bracket/flags';
+    const BRACKET_FLAGS_URL = '/widgets/bracket/flags';
     let lastFlagsJson = null;
 
     async function fetchFlagsFromBackend() {

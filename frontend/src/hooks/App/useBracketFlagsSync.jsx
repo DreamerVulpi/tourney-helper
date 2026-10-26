@@ -34,7 +34,7 @@ export function useBracketFlagsSync() {
     }
 
 
-    fetch("http://localhost:8080/widget/bracket/flags", {
+    fetch("http://localhost:8080/widgets/bracket/flags", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(flags),
