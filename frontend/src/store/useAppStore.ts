@@ -47,7 +47,6 @@ interface AppState {
   tools: ToolsCfg | null;
   authorizations: Authorizations | null;
   authFlags: AuthFlags;
-  integrationsSelections: Record<string, Record<string, string[]>>;
   selectionsHydrated: boolean;
 
   // Actions
@@ -87,11 +86,6 @@ interface AppState {
 
   
   // Integrations selections
-  setSelection: (tab: string, fieldKey: string, ids: string[]) => void;
-  setIntegrationsSelections: (
-    selections: Record<string, Record<string, string[]>>
-  ) => void;
-  clearSelectionsForSlot: (platform: string, slotIndex: number) => void;
   setSelectionsHydrated: (v: boolean) => void;
 }
 
@@ -148,7 +142,6 @@ export const useAppStore = create<AppState>((set) => ({
   },
   authorizations: {} as Authorizations,
   authFlags:      defaultAuthFlags,
-  integrationsSelections: {},
   selectionsHydrated: false,
 
   // Actions
@@ -214,37 +207,7 @@ export const useAppStore = create<AppState>((set) => ({
   setTools: (v) =>
     set((state) => ({
       tools: typeof v === 'function' ? v(state.tools) : v,
-    })),
+    })),  
 
-    // ============================================================
-  // Integrations selections
-  // ============================================================
-  setSelection: (tab, fieldKey, ids) =>
-    set((state) => ({
-      integrationsSelections: {
-        ...state.integrationsSelections,
-        [tab]: {
-          ...(state.integrationsSelections[tab] || {}),
-          [fieldKey]: ids,
-        },
-      },
-    })),
-
-  clearSelectionsForSlot: (platform, slotIndex) => {
-    const deadId = `${platform}:${slotIndex}`;
-    set((state) => {
-      const next: Record<string, Record<string, string[]>> = {};
-      for (const [tab, fields] of Object.entries(state.integrationsSelections || {})) {
-        next[tab] = {};
-        for (const [key, ids] of Object.entries(fields || {})) {
-          next[tab][key] = (ids || []).filter((id) => id !== deadId);
-        }
-      }
-      return { integrationsSelections: next };
-    });
-  },
-
-  setIntegrationsSelections: (selections) =>
-    set({ integrationsSelections: selections }),
   setSelectionsHydrated: (selectionsHydrated) => set({selectionsHydrated}),
 }));

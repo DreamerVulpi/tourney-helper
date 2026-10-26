@@ -81,7 +81,8 @@ const WidgetBracketPlate = ({
   const scale           = bracket?.scale           ?? 1.0;
   const autoRefresh     = bracket?.autoRefresh     ?? false;
 
-  const selections = useAppStore((s) => s.integrationsSelections);
+  const settings = useAppStore((s) => s.settings);
+  const selections = settings?.integrationsSelections || {};
   const authorizations = useAppStore((s) => s.authorizations);
 
   const bracketRef = selections?.widgetBracket?.tourney?.[0] ?? null;

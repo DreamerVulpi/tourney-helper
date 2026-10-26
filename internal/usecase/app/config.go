@@ -41,6 +41,17 @@ func (a *App) LoadSettingsApp() (config.SettingsApplicationCfg, error) {
 			"The program's configuration settings could not be loaded. Default settings recreated")
 		return nullCfg, nil
 	}
+
+	if cfg.IntegrationsSelections.Notifications == nil {
+		cfg.IntegrationsSelections.Notifications = make(map[string][]string)
+	}
+	if cfg.IntegrationsSelections.DbPlayers == nil {
+		cfg.IntegrationsSelections.DbPlayers = make(map[string][]string)
+	}
+	if cfg.IntegrationsSelections.WidgetBracket == nil {
+		cfg.IntegrationsSelections.WidgetBracket = make(map[string][]string)
+	}
+
 	logger.Log(entityLogger.Success,
 		"The program's configuration settings have been successfully loaded")
 	a.Locale = &cfg

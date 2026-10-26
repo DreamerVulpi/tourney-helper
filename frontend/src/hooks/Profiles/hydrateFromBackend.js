@@ -12,12 +12,11 @@ import { pruneSelections } from "../../utils/integrations.js";
 export async function hydrateFromBackend({ markLoaded = false } = {}) {
   const store = useAppStore.getState();
 
-  // 1. Активный профиль
   const activeProfile = await GetActiveProfileName();
   store.setActiveProfile(activeProfile || "");
 
-  // 2. Settings
   const settings = await LoadSettingsApp();
+  
   let integrationsSelections = {};
   if (settings) {
     const lang  = settings.Language || settings.language || "EN";
@@ -47,6 +46,7 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
     store.setLang(lang);
     store.setTheme(theme);
     store.setSidePanelCollapsed(sidePanelCollapsed);
+    
   }
 
   // 3. Tools
@@ -144,12 +144,16 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
     console.warn("Failed to restore client statuses:", err);
   }
 
-  // Гидрация selections — ПОСЛЕ восстановления статусов
   const pruned = pruneSelections(
     integrationsSelections,
     useAppStore.getState().authorizations
   );
-  store.setIntegrationsSelections(pruned);
+
+  store.setSettings((prev) => ({
+    ...prev,
+    integrationsSelections: pruned,
+  }));
+
   store.setSelectionsHydrated(true);
 }
 

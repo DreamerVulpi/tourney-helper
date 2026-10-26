@@ -85,9 +85,9 @@ func NewDefaultSettings() SettingsApplicationCfg {
 		SidePanelCollapsed:    false,
 		DebugMode:             false,
 		IntegrationsSelections: IntegrationsSelections{
-			Notifications: map[string][]string{},
-			DbPlayers:     map[string][]string{},
-			WidgetBracket: map[string][]string{},
+			Notifications: make(map[string][]string),
+			DbPlayers:     make(map[string][]string),
+			WidgetBracket: make(map[string][]string),
 		},
 	}
 }

@@ -94,3 +94,16 @@ export function pruneSelections(selections, authorizations) {
   }
   return next;
 }
+
+export function removeIdFromSelections(selections, deadId) {
+  if (!selections) return {};
+  
+  const next = {};
+  for (const [tab, fields] of Object.entries(selections)) {
+    next[tab] = {};
+    for (const [key, ids] of Object.entries(fields || {})) {
+      next[tab][key] = (ids || []).filter((id) => id !== deadId);
+    }
+  }
+  return next;
+}

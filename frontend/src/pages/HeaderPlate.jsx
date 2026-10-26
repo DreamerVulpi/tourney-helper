@@ -52,8 +52,7 @@ const HeaderPlate = ({
   const setActiveModal = useAppStore((s) => s.setActiveModal);
 
   const settings      = useAppStore((s) => s.settings);
-  const selections = useAppStore((s) => s.integrationsSelections);
-  const setSelection = useAppStore((s) => s.setSelection);
+  const selections = settings?.integrationsSelections || {};
 
   const themeClasses = useThemeClasses(getAppThemeClasses)
   const headerThemeClasses = useThemeClasses(getHeaderThemeClasses);
@@ -133,7 +132,7 @@ const HeaderPlate = ({
         items: itemsByField.tourney,
         icon: Trophy,
         maxVisible: 2,
-        single: false,
+        single: true,
       },
     ],
   }), [locale, itemsByField]);
@@ -163,13 +162,17 @@ const HeaderPlate = ({
                 labelWidth={cfg.labelWidth}
                 value={currentValue}
                 onChange={(ids) => {
-                  console.log(
-                    "[HP] onChange | activeTab:", activeTab,
-                    "| fieldKey:", cfg.fieldKey,
-                    "| ids:", ids,
-                    "| types:", Array.isArray(ids) ? ids.map((x) => typeof x) : typeof ids
-                  );
-                  setSelection(activeTab, cfg.fieldKey, ids);
+                  const nextSelections = {
+                    ...selections,
+                    [activeTab]: {
+                      ...(selections[activeTab] || {}),
+                      [cfg.fieldKey]: ids,
+                    },
+                  };
+
+                  updateConfig("settings", {
+                    integrationsSelections: nextSelections,
+                  });
                 }}
                 items={cfg.items}
                 width="21rem"

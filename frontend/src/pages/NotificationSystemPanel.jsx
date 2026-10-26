@@ -44,7 +44,8 @@ const NotificationSystemPlate = ({
   report,
   setReport,
 }) => {
-  const selections = useAppStore((s) => s.integrationsSelections);
+  const settings = useAppStore((s) => s.settings);
+  const selections = settings?.integrationsSelections || {};
 
   // Ключ совпадает с activeTab в сторе → "notifications"
   const tourneyRef  = selections?.notifications?.tourney?.[0]  ?? null;
@@ -57,7 +58,6 @@ const NotificationSystemPlate = ({
   const notificationSystem = useAppStore((s) => s.tools?.notificationSystem);
   const theme        = useAppStore((s) => s.theme);
   const authorizations    = useAppStore((s) => s.authorizations);
-  const settings = useAppStore((s) => s.settings);
   const activeModal  = useAppStore((s) => s.activeModal);
   
   const setStatusNotificationSystem = useAppStore((s) => s.setStatusNotificationSystem);
