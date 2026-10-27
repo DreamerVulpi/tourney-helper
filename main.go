@@ -8,15 +8,15 @@ import (
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
-	"github.com/dreamervulpi/tourney-helper/internal/db"
-	"github.com/dreamervulpi/tourney-helper/internal/db/repo"
+
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	application "github.com/dreamervulpi/tourney-helper/internal/usecase/app"
-	usecaseDB "github.com/dreamervulpi/tourney-helper/internal/usecase/db"
-	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/locale"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
 	"github.com/dreamervulpi/tourney-helper/internal/version"
+	widgets "github.com/dreamervulpi/tourney-helper/internal/widgets"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -40,7 +40,7 @@ func main() {
 		}
 	}()
 
-	if err := config.Init(config.GetAbsPath("config")); err != nil {
+	if err := config.Init(); err != nil {
 		logger.Log(entityLogger.Error, err.Error())
 	}
 
@@ -60,41 +60,24 @@ func main() {
 	)
 
 	app := application.NewApp()
+	app.UrlValidator = validator.NewValidator()
 	app.UpdateService = updateService
 	app.UpdateManager = updateManager
+	widgets.InitDirectories()
+	app.WidgetServer = widgets.NewServer()
 
-	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr)
+	if errGetProfile := app.GetActiveProfile(); errGetProfile != nil {
+		logger.Log(entityLogger.Error, errGetProfile.Error())
+	}
+
+	if errLoadProfile := app.LoadProfile(); errLoadProfile != nil {
+		logger.Log(entityLogger.Error, errLoadProfile.Error())
+	}
+
+	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr, locale.Lang(app.SettingsCfg.Language))
 	app.OAuthServer.Start()
 
-	conn, err := db.NewPool()
-	if err != nil {
-		logger.Log(entityLogger.Error, err.Error())
-		return
-	}
-
-	db := dbManager.Database{
-		Conn:        conn,
-		Participant: usecaseDB.Participant{Repo: &repo.Participants{Conn: conn}},
-		Accounts:    usecaseDB.ParticipantAccounts{Repo: &repo.ParticipantAccounts{Conn: conn}},
-		Stats:       usecaseDB.ParticipantStats{Repo: &repo.ParticipantStats{Conn: conn}},
-		Bans:        usecaseDB.ParticipantBans{Repo: &repo.ParticipantBans{Conn: conn}},
-		SentSets:    usecaseDB.SentSet{Repo: &repo.SentSet{Conn: conn}},
-	}
-	app.Db = &db
-
-	cfgMessenger, err := config.LoadConfig(config.GetAbsPath("config/config.toml"))
-	if err != nil {
-		logger.Log(entityLogger.Error, "not loaded messenger config: "+err.Error())
-	}
-	cfgTournament, err := config.LoadTournament(config.GetAbsPath("config/tournament.toml"))
-	if err != nil {
-		logger.Log(entityLogger.Error, "not loaded tournament config: "+err.Error())
-	}
-
-	app.ConfigMessenger = &cfgMessenger
-	app.ConfigTournament = &cfgTournament
-
-	err = wails.Run(&options.App{
+	errWailsRun := wails.Run(&options.App{
 		Title:     "TourneyHelper",
 		MinWidth:  1280,
 		MinHeight: 720,
@@ -109,7 +92,7 @@ func main() {
 		},
 	})
 
-	if err != nil {
-		logger.Log(entityLogger.Error, err.Error())
+	if errWailsRun != nil {
+		logger.Log(entityLogger.Error, errWailsRun.Error())
 	}
 }

@@ -20,10 +20,11 @@ import (
 )
 
 type params struct {
+	tournament   config.NotificationSystem
+	rulesMatches config.RulesMatches
+	streamLobby  config.StreamLobby
+
 	guildID        string
-	tournament     config.ConfigTournament
-	rulesMatches   config.RulesMatches
-	streamLobby    config.StreamLobby
 	rolesIdList    config.RolesID
 	debugMode      bool
 	debugChannelID string
@@ -40,17 +41,33 @@ type Handler struct {
 
 	session        *discordgo.Session
 	registeredCmds []*discordgo.ApplicationCommand
-	cfgCache       config.ConfigMessenger
-	ReadyChan      chan struct{}
+
+	cfgCache config.ClientCredentials
+
+	ReadyChan chan struct{}
 
 	Metrics *metrics.Collector
 }
 
-func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform string, tournament config.ConfigTournament) {
+func (h *Handler) InitBot(
+	botCred config.ClientCredentials,
+	activeTournamentPlatform string,
+	tournament config.NotificationSystem,
+	debugMode bool,
+) {
+	logger.Log(entityLogger.Debug, fmt.Sprintf(
+		"[InitBot] called | botCred.Roles.Default=%q | botCred.GuildID=%q",
+		botCred.Roles.Default, botCred.GuildID,
+	))
 	h.tournamentPlatform = activeTournamentPlatform
-	h.params.guildID = cfg.Discord.GuildID
-	h.params.debugMode = cfg.DebugMode.Mode
+
+	h.params.guildID = botCred.GuildID
+	h.params.debugChannelID = botCred.DebugChannelID
+	h.params.rolesIdList = botCred.Roles
+	h.params.debugMode = debugMode
+
 	h.params.tournament = tournament
+
 	h.params.rulesMatches = config.RulesMatches{
 		StandardFormat: tournament.Rules.StandardFormat,
 		FinalsFormat:   tournament.Rules.FinalsFormat,
@@ -65,11 +82,21 @@ func (h *Handler) InitBot(cfg config.ConfigMessenger, activeTournamentPlatform s
 		Conn:          tournament.Stream.Conn,
 		Passcode:      tournament.Stream.Passcode,
 	}
-	h.params.rolesIdList = cfg.Discord.Roles
-	h.params.debugChannelID = cfg.Discord.DebugChannelID
+	logger.Log(entityLogger.Debug, fmt.Sprintf(
+		"[InitBot] after assign | h.params.rolesIdList.Default=%q",
+		h.params.rolesIdList.Default,
+	))
 }
 
-func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn *sql.DB, cfg config.ConfigMessenger, tournament config.ConfigTournament) error {
+func (h *Handler) Start(
+	ctx context.Context,
+	tourneyAuth *auth.AuthClient,
+	conn *sql.DB,
+	botCred config.ClientCredentials,
+	tourneyCred config.ClientCredentials,
+	tournament config.NotificationSystem,
+	settings config.SettingsApplicationCfg,
+) error {
 	h.mtx.Lock()
 	if h.session != nil {
 		h.mtx.Unlock()
@@ -77,23 +104,32 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 	}
 	h.mtx.Unlock()
 
-	session, err := discordgo.New(cfg.Discord.Token)
+	// --- 1. Валидация токена мессенджера ---
+	if botCred.Token == "" {
+		return fmt.Errorf("no token in active discord slot")
+	}
+
+	// --- 2. Создание сессии ---
+	session, err := discordgo.New(botCred.Token)
 	if err != nil {
 		return err
 	}
 
-	err = session.Open()
-	if err != nil {
+	if err := session.Open(); err != nil {
 		return err
 	}
 
-	h.InitBot(cfg, tourneyAuth.NamePlatform, tournament)
+	// --- 3. Инициализация данных бота ---
+	h.InitBot(botCred, tourneyAuth.NamePlatform, tournament, settings.DebugMode)
+
 	ds := &DiscordSender{
 		session:    session,
 		params:     h.params,
 		Metrics:    h.Metrics,
 		saveLocale: h.Ns.Db.EditParticipantLocale,
 	}
+
+	// --- 4. Локаль по умолчанию ---
 	standart, errL := ds.reconizeLocale(ds.params.rolesIdList.Default)
 	if errL != nil {
 		ds.defaultLocale = entityLocale.En
@@ -102,20 +138,30 @@ func (h *Handler) Start(ctx context.Context, tourneyAuth *auth.AuthClient, conn 
 	}
 
 	if ds.params.debugChannelID == "" {
-		logger.Log(entityLogger.Info, "Notification System | Working without log channel...")
+		logger.Log(entityLogger.Info,
+			"Notification System | Working without log channel...")
 	}
-	h.Ns.Messenger = ds
-	registeredCommands, err := h.InitCommands(h.Auth.Config.ClientID, session, &tournament, &cfg)
+
+	h.Ns.DeliveryMethod = ds
+
+	// --- 5. Регистрация слэш-команд ---
+	registeredCommands, err := h.InitCommands(
+		botCred.ClientID,
+		session,
+		&tournament,
+		&botCred,
+	)
 	if err != nil {
 		session.Close()
-		h.Ns.Messenger = nil
+		h.Ns.DeliveryMethod = nil
 		return err
 	}
 
+	// --- 6. Сохранение состояния ---
 	h.mtx.Lock()
 	h.session = session
 	h.registeredCmds = registeredCommands
-	h.cfgCache = cfg
+	h.cfgCache = botCred
 	h.mtx.Unlock()
 
 	close(h.ReadyChan)
@@ -159,7 +205,7 @@ func (h *Handler) Stop() error {
 					continue
 				}
 
-				err := session.ApplicationCommandDelete(auth.Config.ClientID, h.cfgCache.Discord.GuildID, v.ID)
+				err := session.ApplicationCommandDelete(auth.Config.ClientID, h.cfgCache.GuildID, v.ID)
 				if err != nil {
 					log.Printf("cannot delete '%v' command: %v\n", v.Name, err)
 				} else {

@@ -1,6 +1,80 @@
 package startgg
 
 const (
+	GetConnectionsBracket = `
+	query getConnectionsBracket($phaseGroupId: ID!, $page:Int!, $perPage:Int!, $states: [Int]){
+		phaseGroup(id:$phaseGroupId){
+			id
+			sets(
+				page: $page
+				perPage: $perPage
+				sortType: STANDARD
+				filters: {state: $states}
+			){
+			pageInfo{
+				total
+			}
+			nodes{
+				id
+				round
+				winnerId
+				entrant1Source {
+					type
+					typeId
+					condition
+				}
+				entrant2Source {
+					type
+					typeId
+					condition
+				}
+				}
+			}
+		}
+	}
+	`
+	GetSetsWithScore = `
+	query getSetsWithScore($phaseGroupId: ID!, $page:Int!, $perPage:Int!, $states: [Int]){
+		phaseGroup(id: $phaseGroupId) {
+			id
+			sets(
+				page: $page
+				perPage: $perPage
+				sortType: STANDARD
+				filters: { state: $states }
+			) {
+				pageInfo {
+					total
+				}
+				nodes {
+					id
+					state
+					stream {
+						streamSource
+					}
+					fullRoundText
+					round
+					slots {
+						entrant {
+							id
+							participants {
+								prefix
+								gamerTag
+							}
+						}
+						standing {
+							stats {
+								score {
+									value
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	`
 	GetUserBySlug = `
 	query getUserBySlug($userSlug: String!) {
 		user(slug: $userSlug) {

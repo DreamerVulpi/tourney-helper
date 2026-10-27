@@ -1,41 +1,37 @@
-import React, { useState } from "react";
+import { useAppStore } from "../store/useAppStore";
+import { getThemeClasses as getAppThemeClasses } from "../utils/themeClasses.jsx";
+import { getThemeClasses  as getHeaderThemeClasses } from "../utils/theme/HeaderPlate/themes";
+import { useThemeClasses } from "../hooks/App/useThemeClasses"
+import { useState, useEffect, useMemo } from "react";
 
 import {
-  Trophy,
   LanguagesIcon,
-  ChevronDown,
   Sun,
   Moon,
   HelpCircle,
   Info,
-  PanelLeftClose,
-  PanelLeftOpen,
+  UserCog,
+  Mail,
+  Trophy,
+  Tag,
+  Link2,
 } from "lucide-react";
-import { getThemeClasses } from "../utils/theme/HeaderPlate/themes.jsx";
+
 import { createThemeChanger } from "../utils/changeTheme";
-import { ExtraButton } from "../components/ui/ExtraButton";
-import { DropdownList } from "../components/ui/DropdownList";
 import { Field } from "../components/ui/Field.jsx";
 import AboutModal from "../components/modals/AboutModal.jsx"
 import HelpModal from "../components/modals/help/HelpModal.jsx"
 import UpdateModal from "../components/modals/UpdateModal.jsx"
-import Logo from "../../../branding/icons/256.png";
 import ProgressModal from "../components/modals/ProgressModal.jsx";
+import { useAuthorizedIntegrations } from "../hooks/App/useAuthorizedIntegrations.jsx";
+import { filterValidSelection, getAllBusyIds } from "../utils/integrations";
+import IntegrationItem from "../components/ui/IntegrationItem"
 
 const HeaderPlate = ({
-  theme,
-  setTheme,
-  lang,
-  setLang,
   locale,
+  updateConfig,
   updateInfo,
   check,
-  updateConfig,
-  themeClasses,
-  activeModal,
-  activeTab,
-  setActiveModal,
-  settings,
   handleInstallUpdate,
   updateProgressOpen,
   updateStatus,
@@ -45,134 +41,179 @@ const HeaderPlate = ({
   setUpdateStatus,
   setUpdateMessage,
   setUpdateProgress,
-  isSidePanelHovered,
-  sidePanelCollapsed,
-  setSidePanelCollapsed,
 }) => {
-  // Font for logo programm
-  const fontStyle = (
-    <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-      .font-super-bold { font-family: 'Inter', sans-serif; font-weight: 900; }
-    `}</style>
-  );
+  // ---- store ----
+  const theme        = useAppStore((s) => s.theme);
+  const setTheme     = useAppStore((s) => s.setTheme);
+  const lang         = useAppStore((s) => s.lang);
+  const setLang      = useAppStore((s) => s.setLang);
+  const activeTab    = useAppStore((s) => s.activeTab);
+  const activeModal  = useAppStore((s) => s.activeModal);
+  const setActiveModal = useAppStore((s) => s.setActiveModal);
 
-  // Variable for selector languages
-  const [isLangOpen, setIsLangOpen] = useState(false);
+  const settings      = useAppStore((s) => s.settings);
+  const selections = settings?.integrationsSelections || {};
+
+  const themeClasses = useThemeClasses(getAppThemeClasses)
+  const headerThemeClasses = useThemeClasses(getHeaderThemeClasses);
+
+  const tournamentItems = useAuthorizedIntegrations({ category: "tournament" });
+  const deliveryItems  = useAuthorizedIntegrations({ category: "delivery"  });
+
   // Function for change theme & save to configuration of programm
   const changeTheme = createThemeChanger(theme, setTheme, updateConfig);
-  // Details of theme for this page
-  const headerThemeClasses = getThemeClasses(theme);
 
-  const handleSidePanelCollapse = () => {
-    const next = !sidePanelCollapsed;
+  // все ID, занятые другими полями/табами, кроме текущего
+ const itemsByField = useMemo(() => {
+  const buildFor = (fieldKey, baseItems) => {
+    const busy = getAllBusyIds(selections, activeTab, fieldKey);
+    const current = selections?.[activeTab]?.[fieldKey] || [];
+    const filtered = baseItems.filter(
+      (it) => !busy.has(it.id) || current.includes(it.id)
+    );
 
-    setSidePanelCollapsed(next);
+    console.log(
+      "[HP] buildFor | activeTab:", activeTab,
+      "| fieldKey:", fieldKey,
+      "| busy:", [...busy],
+      "| current:", current,
+      "| allItems:", baseItems.map((it) => it.id),
+      "| filtered:", filtered.map((it) => it.id)
+    );
 
-    updateConfig("settings", {
-      ...settings,
-      SidePanelCollapsed: next,
-    });
+    return filtered;
   };
- 
+
+  return {
+    tourney:  buildFor("tourney",  tournamentItems),
+    delivery: buildFor("delivery", deliveryItems),
+  };
+}, [selections, activeTab, tournamentItems, deliveryItems]);
+
+  const TAB_CLIENT_CONFIG = useMemo(() => ({
+    notifications: [
+      {
+        fieldKey: "tourney",
+        label: locale.MultiSelectClient.TourneyLabel,
+        labelWidth: "6rem",
+        items: itemsByField.tourney,
+        icon: Trophy,
+        maxVisible: 2,
+        single: true,
+      },
+      {
+        fieldKey: "delivery",
+        label: locale.MultiSelectClient.DeliveryMethodLabel,
+        labelWidth: "5rem",
+        items: itemsByField.delivery,
+        icon: Mail,
+        maxVisible: 2,
+        single: true,
+      },
+    ],
+
+    dbPlayers: [
+      {
+        fieldKey: "tourney",
+        label: locale.MultiSelectClient.TourneyLabel,
+        labelWidth: "6rem",
+        items: itemsByField.tourney,
+        icon: Trophy,
+        maxVisible: 2,
+        single: false,
+      },
+    ],
+
+    widgetBracket: [
+      {
+        fieldKey: "tourney",
+        label: locale.MultiSelectClient.TourneyLabel,
+        labelWidth: "6rem",
+        items: itemsByField.tourney,
+        icon: Trophy,
+        maxVisible: 2,
+        single: true,
+      },
+    ],
+  }), [locale, itemsByField]);
+
+  console.log(
+  "[HP] render | activeTab:", activeTab,
+  "| selections:", JSON.stringify(selections)
+);
+
   return (
     <header
-      className={`h-[4rem] flex items-center justify-between px-[1.5rem] shrink-0 border-b z-50 transition-colors duration-300 ${
+      className={`h-[4rem] flex items-center justify-between px-[1rem] shrink-0 border-b z-50 transition-colors duration-300 ${
         headerThemeClasses.header
       }`}
     >
-      <div className="flex items-center gap-[1.5rem]">
-        {/* Logo */}
-        {fontStyle}
-        <div className="flex items-center gap-[0.4rem] mb-2 mt-2 select-none">
-        <div className="p-2 bg-blue-600/10 rounded-lg">
-          <img
-            src={Logo}
-            alt="Tourney Helper"
-            className="w-8 h-8 object-contain"
-          />
-        </div>
-          <div className="hidden lg:block">
-            <span
-              className={`font-super-bold italic text-2xl tracking-tighter uppercase ${
-                headerThemeClasses.logoTitle
-              }`}
-            >
-              <span>TOURNEY</span>
-              <span className="text-blue-600 ml-[0.rem]">HELPER</span>
-            </span>
-          </div>
-        </div>
-        <div
-          className={`
-            flex items-center
-            gap-2
-            pl-3
-            ml-2
-            border-l
-            h-6
-            transition-all duration-300
-            ${headerThemeClasses.divider}
-            ${
-              isSidePanelHovered
-                ? "opacity-100 translate-x-0"
-                : "opacity-0 -translate-x-2 pointer-events-none"
-            }
-          `}
-        >
-          <button
-            type="button"
-            onClick={handleSidePanelCollapse}
-            className={`
-              w-7 h-7
-              flex items-center justify-center
-              rounded-lg
-              transition-colors duration-200
-              hover:bg-black/10
-              dark:hover:bg-white/10
-            `}
-            aria-label={
-              sidePanelCollapsed
-                ? "Expand side panel"
-                : "Collapse side panel"
-            }
-          >
-            {sidePanelCollapsed ? (
-              <PanelLeftOpen size={17} />
-            ) : (
-              <PanelLeftClose size={17} />
-            )}
-          </button>
-        </div>
+      <div className="flex items-center gap-[0.5rem]">
+        {activeTab &&
+          TAB_CLIENT_CONFIG[activeTab] &&
+          TAB_CLIENT_CONFIG[activeTab].map((cfg) => {
+            const currentValue = selections?.[activeTab]?.[cfg.fieldKey] || [];
+            return (
+              <Field
+                key={cfg.fieldKey}
+                variant="multiselect"
+                label={cfg.label}
+                labelPosition="left"
+                labelWidth={cfg.labelWidth}
+                value={currentValue}
+                onChange={(ids) => {
+                  const nextSelections = {
+                    ...selections,
+                    [activeTab]: {
+                      ...(selections[activeTab] || {}),
+                      [cfg.fieldKey]: ids,
+                    },
+                  };
+
+                  updateConfig("settings", {
+                    integrationsSelections: nextSelections,
+                  });
+                }}
+                items={cfg.items}
+                width="21rem"
+                icon={cfg.icon}
+                placeholder={locale.MultiSelectClient.ChooseClient}
+                searchable
+                maxVisible={cfg.maxVisible}
+                single={cfg.single}
+                themeClasses={themeClasses}
+                locale={locale.MultiSelectClient}
+                renderItem={(item) => <IntegrationItem item={item} />}
+              />
+            );
+          })}
       </div>
 
-      <div className="flex items-center gap-[1rem]">
-        {/* Selector language */}
+      <div className="flex items-center gap-[0.5rem]">
         <Field
-        variant="select"
-        value={lang}
-        width={"6.5rem"}
-        icon = {LanguagesIcon}
-        themeClasses={headerThemeClasses}
-        items={[
-            {
-              label: "RU",
-              value: "RU",
-            },
-            {
-              label: "EN",
-              value: "EN",
-            }
-          ]}
-        onChange={(value) => {
-            setLang(value);
-            updateConfig?.("settings", {
-              language: value,
-            });
-          }}
+          variant="select"
+          value={lang}
+          width={"6.1rem"}
+          icon = {LanguagesIcon}
+          themeClasses={headerThemeClasses}
+          items={[
+              {
+                label: "RU",
+                value: "RU",
+              },
+              {
+                label: "EN",
+                value: "EN",
+              }
+            ]}
+          onChange={(value) => {
+              setLang(value);
+              updateConfig?.("settings", {
+                language: value,
+              });
+            }}
         />
 
-        {/* Theme switcher */}
         <button
           onClick={changeTheme}
           className={`flex items-center gap-[0.25rem] p-[0.25rem] rounded-full border  duration-300 ${
@@ -193,17 +234,16 @@ const HeaderPlate = ({
           >
             <Moon style={{ width: "0.875rem", height: "0.875rem" }} />
           </div>
-        </button>
+        </button> 
 
-        {/* Extra buttons */}
         <div
-          className={`flex items-center gap-[1rem] pl-[1rem] border-l h-[1.5rem] text-slate-500 ${
+          className={`flex items-center gap-[0.5rem] pl-[0.5rem] border-l h-[1.5rem] text-slate-500 ${
             headerThemeClasses.divider
           }`}
         >
           <Field
             variant="button"
-            width="100px"
+            width="6.2rem"
             icon={HelpCircle}
             labelButton={locale.Help.Label}
             themeClasses={themeClasses}
@@ -212,7 +252,7 @@ const HeaderPlate = ({
           <Field
             variant="button"
             icon={Info}
-            width="100px"
+            width="6.2rem"
             labelButton={locale.About.Label}
             themeClasses={themeClasses}
             onClick={()=> setActiveModal("about")}

@@ -1,5 +1,6 @@
 import React from "react";
 import { Search } from "lucide-react";
+import { EmptyState } from "./EmptyState";
 
 function TableBodyBase({
   players,
@@ -43,28 +44,13 @@ function TableBodyBase({
         ))
       ) : (
         <tr>
-          <td
-            colSpan={columns.length}
-            className="p-12 text-center"
-          >
-            <div className="flex flex-col items-center justify-center py-6">
-              <div className="p-4 bg-slate-500/5 border border-slate-500/10 rounded-2xl text-slate-500/40 mb-4 shadow-inner">
-                <Search
-                  size={32}
-                  strokeWidth={1.5}
-                  className="animate-pulse"
+            <td colSpan={columns.length} className="p-12 text-center">
+                <EmptyState
+                    icon={Search}
+                    title={locale.Table.NoData}
+                    description={locale.Table.NoDataAccordingFilters}
                 />
-              </div>
-
-              <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-1 italic">
-                {locale.Table.NoData}
-              </h3>
-
-              <p className="text-[10px] text-slate-500 max-w-[250px] leading-relaxed uppercase font-bold">
-                {locale.Table.NoDataAccordingFilters}
-              </p>
-            </div>
-          </td>
+            </td>
         </tr>
       )}
     </tbody>

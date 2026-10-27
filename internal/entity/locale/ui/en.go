@@ -13,7 +13,81 @@ var listRegionsEn = ListRegions{
 	ND:           "No data",
 }
 
+var multiSelectClientEN = MultiSelectClient{
+	SearchLabel:         "Search...",
+	NoClients:           "No clients",
+	ChooseClient:        "Select an OAuth client",
+	DeliveryMethodLabel: DeliveryMethodLabelEN,
+	TourneyLabel:        TourneyLabelEN,
+}
+
+var (
+	DeliveryMethodLabelEN = "Delivery method"
+	TourneyLabelEN        = "Tournament Platform"
+)
+
+var validationUrlBracketEn = ValidationUrlBracket{
+	UrlValid:              "Valid URL",
+	InvalidUrlTitle:       "Invalid URL",
+	InvalidUrlDescription: "Please check the URL and try again",
+	UnsupportedPlatform:   "Unsupported platform",
+	EnterUrlTitle:         "Enter tournament bracket URL",
+	EnterUrlDescription:   "Paste the link to your bracket on platform",
+}
+
 var En = Ui{
+	ProfilesPanel: ProfilesPanel{
+		MultiSelectLabel:            "Select a profile",
+		Add:                         "Add",
+		Delete:                      "Delete selected",
+		Share:                       "Share selected",
+		ImportProfile:               "Import profile",
+		Duplicate:                   "Dulpicate selected",
+		Placeholder:                 "Profile",
+		DuplicateProfile:            "Duplicate Profile",
+		NameNewProfileLabel:         "New Profile Name",
+		PlaceholderProfile:          "For example, new_profile_2",
+		ConfirmButtonDuplicateLabel: "Duplicate",
+		SearchLabel:                 "Search...",
+		NoItemsLabel:                "Not found",
+		ErrorFillParams:             "Error",
+		OkButtonLabel:               "OK",
+		ExportSuccessTitle:          "Export complete",
+		ExportSuccessMsg:            "The profile has been successfully saved to the following location:",
+		ImportSuccessTitle:          "Import complete",
+		ImportSuccessMsg:            "The profile was successfully imported as:",
+		ValidationProfile: ValidationProfile{
+			NameCannotBeEmpty:   "The name cannot be empty",
+			NameTooLong:         "The name is too long",
+			InvalidCharacters:   "Invalid characters",
+			NameAlreadyExists:   "That name already exists",
+			UnableCreateProfile: "Unable to create a profile",
+			UnableDeleteProfile: "Unable to delete the profile",
+			UnableCopyProfile:   "Unable to copy the profile",
+			UnableSwitchProfile: "Unable to switch profiles",
+			ConfirmMsg:          "Profile %v will be deleted along with the entire database, settings, and clients. This action cannot be undone.",
+			ConfirmButtonLabel:  "Confirm",
+		},
+	},
+	WidgetBracketPanel: WidgetBracketPanel{
+		UrlToBracketLabel:     "Tournament bracket URL",
+		ListOfThemes:          "Theme",
+		Start:                 "Start",
+		Stop:                  "Stop",
+		HideTheStages:         "Hide the stages",
+		LinkOfWidget:          "Link of widget",
+		ClearBackground:       "Clear background",
+		BracketDisplayMode:    "Bracket display mode",
+		AllMode:               "All",
+		WinnersMode:           "Winners",
+		LosersMode:            "Losers",
+		WidgetNotRunning:      "Widget isn't running",
+		ClickStartDescription: "Click start to launch the bracket widget",
+		LoadBracket:           "Loading tournament bracket",
+		FetchData:             "Fetching tournament data...",
+		AutoRefresh:           "Automatic update",
+		ValidationUrlBracket:  validationUrlBracketEn,
+	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Error filling in parameters",
 		OkButtonLabel:   "OK",
@@ -34,9 +108,49 @@ var En = Ui{
 		DatabaseLabel:           "Player Database",
 		WidgetOfBracketLabel:    "Bracket Widget",
 		WidgetOfScoreboardLabel: "Scoreboard Widget",
+		IntegrationsLabel:       "Integrations",
 		VersionLabel:            "Version:",
 		LogsLabel:               "Logs",
 		ClearButtonLabel:        "Clear",
+		ProfilesLabel:           "Profile",
+		ProfilesLockedHint:      "Stop all tools/widgets to enable interaction with profiles",
+	},
+	IntegrationsPanel: IntegrationsPanel{
+		DeliveryMethodLabel:  DeliveryMethodLabelEN,
+		TourneyLabel:         TourneyLabelEN,
+		SignInButtonLabel:    "Sign In",
+		AuthorizeButtonLabel: "Authorization...",
+		ClientsLabel:         "OAuth clients",
+		EmptyFieldHeader:     "Select an integration on the left side of the window",
+		EmptyFieldHint:       "Click the left mouse button to select",
+		ClientSettings:       "Client Settings",
+		Platform: Platform{
+			AuthorizationStatuses: AuthorizationStatuses{
+				Authorized:   "Authorized",
+				Unauthorized: "Unauthorized",
+				Expired:      "Expired",
+				Error:        "Error",
+				Pending:      "Pending",
+				Invalid:      "Invalid data",
+				Unknown:      "Unknown",
+				InProcess:    "In process",
+				Empty:        "Empty",
+			},
+			DownloadSettings:             "Download settings",
+			RedirectURL:                  "Redirect URL",
+			ParamsBot:                    "Params %v bot",
+			TokenBot:                     "Bot Token",
+			DefaultLocale:                "Default locale",
+			RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",
+			RequireMsgTournamentPlatform: "To authorize, you must enter: Client ID and Client Secret",
+			LaunchMsg:                    "Authorisation initiated on",
+			SuccessMsg:                   "Authorisation successful on",
+			ErrMsg:                       "Authorisation error. Please check that the details you entered are correct",
+			DeleteClientTitle:            "Delete a client",
+			DeleteClientMsg1:             "Are you sure you want to delete the client",
+			DeleteClientMsg2:             "? This action cannot be undone, all data for this customer will be deleted.",
+			DeleteButtonLabel:            "Confirm",
+		},
 	},
 	HeaderPanel: HeaderPanel{
 		Help: HelpModal{
@@ -44,24 +158,17 @@ var En = Ui{
 			Title:            "Help",
 			CloseButtonLabel: "Close",
 			HelpPageNotificationSystem: HelpPageNotificationSystem{
-				InitialSetup: HelpQA{
-					Question: "How do I set up the notification system for the first time?",
-					Answer: `1. Fill in the required "CLIENT ID" and "SECRET CLIENT" fields for the tournament platform. 
-					2. Fill in the required fields "BOT TOKEN," "GUILD ID," "CLIENT ID," and "CLIENT SECRET" for the messenger. (The remaining fields are optional.)
-					3. Select the tournament data source and the messenger for notifications by clicking the platform button itself. 
-					4. After clicking the platform button, the “TourneyHelper” program will redirect you to the login page. The result of the query will be displayed in the log window.
-                    5. Invite the bot you created for the messaging app to the server where the tournament players are located.`,
-				},
 				HowIsWorks: HelpQA{
 					Question: "How does the notification system work?",
 					Answer:   `Based on the selected tournament platform, the system retrieves data about matches and their participants; if this data is new, it is saved to a local database. Using this data, the system’s bot begins sending messages to all participants (whom the system expects to be on the tournament organizer’s server) via private message every 5 minutes if the match has not started.`,
 				},
 				UsuallyUsing: HelpQA{
 					Question: "How do I use this going forward?",
-					Answer: `1. Enter a link to the tournament bracket.
-                    2. Select a genre/game from the drop-down list.
-                    3. Enter a link to the tournament logo.
-					4. Optionally, select the necessary settings in "Tournament Rules" and "Live Stream Lobby."
+					Answer: `1. Select an available authorized OAuth client.
+					2. Enter a link to the tournament bracket.
+                    3. Select a genre/game from the drop-down list.
+                    4. Enter a link to the tournament logo.
+					5. Optionally, select the necessary settings in "Tournament Rules" and "Live Stream Lobby."
                     If you need to check system, enable debug mode."`,
 				},
 				WhatIsDebugMode: HelpQA{
@@ -73,6 +180,47 @@ var En = Ui{
 					Answer: `1. Once the system starts up, a bot is activated that supports the following commands: %v
 					/contacts [player_nickname] [game_name]%v - allows you to search for a player’s contact in the database directly through the messenger (for example, if the computer running "TourneyHelper" isn’t nearby or if a player wants to find a specific player’s contact on their own)%v
 					2. Use the other features of the "TourneyHelper" program.`,
+				},
+			},
+			HelpPageDatabase: HelpPageDatabase{
+				WhatIsDatabase: HelpQA{
+					Question: "What is the player database?",
+					Answer:   `It is a local repository of player data required for the notification system to function properly.`,
+				},
+				HowUse: HelpQA{
+					Question: "How do I use it?",
+					Answer: `The program allows you to fully control the database — you can add (manually or via a file), edit, modify, and delete player data, as well as keep track of your game league or ban list.%v
+					If you're adding players, you must log in to start.gg in advance in the "Sending notifications" tab.`,
+				},
+			},
+			HelpPageWidgetBracket: HelpPageWidgetBracket{
+				HowIsWorks: HelpQA{
+					Question: "How does it work?",
+					Answer:   "The program launches a local server with widgets that can be accessed via links. Some of them require an OAuth client to retrieve tournament data.",
+				},
+				WhatCanDo: HelpQA{
+					Question: "How do I use this going forward?",
+					Answer: `1. Select an available, authorized OAuth client.
+					2. Enter a link to the tournament bracket.
+					3. Launch the widget.
+					4. Copy the widget link and use it.
+					
+					While the widget is running, you can toggle the following settings:
+					"Clear background" — makes the widget’s background transparent;
+					"Hide the stages" — hides the rounds in the tournament bracket;
+					"Automatic update" — refreshes the tournament bracket data once per minute without reloading the page;%v
+					
+					If you need to change the tournament bracket, the final link to the widget will update, so you’ll need to copy it again`,
+				},
+			},
+			HelpPageIntegrations: HelpPageIntegrations{
+				InitialSetup: HelpQA{
+					Question: "How do I log in?",
+					Answer:   `To log in, you must fill in all required fields correctly. These fields are marked with an "*" in the label.  If the login is successful, a confirmation window will appear.`,
+				},
+				WhatIsThis: HelpQA{
+					Question: "What is integration?",
+					Answer:   `Integration refers to an authorized client (OAuth) and/or a dataset used to interact with the service. The number of these varies by service.`,
 				},
 				HowGetDataForStartgg: HelpQA{
 					Question: "How do I get data for start.gg?",
@@ -90,15 +238,14 @@ var En = Ui{
 					The remaining fields, "ROLE-ID X" and "LOG CHANNEL ID," can be obtained by right-clicking on the element within Discord itself and selecting "Copy ID" (You must first enable developer mode in Discord’s settings).`,
 				},
 			},
-			HelpPageDatabase: HelpPageDatabase{
-				WhatIsDatabase: HelpQA{
-					Question: "What is the player database?",
-					Answer:   `It is a local repository of player data required for the notification system to function properly.`,
+			HelpPageProfiles: HelpPageProfiles{
+				WhatCanDo: HelpQA{
+					Question: "What can I do?",
+					Answer:   `You can: add, delete, duplicate, export, and import.`,
 				},
-				HowUse: HelpQA{
-					Question: "How do I use it?",
-					Answer: `The program allows you to fully control the database — you can add (manually or via a file), edit, modify, and delete player data, as well as keep track of your game league or ban list.%v
-					If you're adding players, you must log in to start.gg in advance in the "Sending notifications" tab.`,
+				WhatIsThis: HelpQA{
+					Question: "What is a profile?",
+					Answer:   `A profile is a saved set of configurations and integrations.`,
 				},
 			},
 		},
@@ -130,6 +277,7 @@ var En = Ui{
 			GetUpdateButtonLabel:            "Get an update",
 			SkipUpdateButtonLabel:           "Skip the update",
 		},
+		MultiSelectClient: multiSelectClientEN,
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
 		MonitoringSystem: MonitoringSystem{
@@ -147,24 +295,6 @@ var En = Ui{
 			Ms:                    "ms",
 		},
 		DebugModeSwitchLabel: "Debug Mode",
-		Platform: Platform{
-			AuthorizeStatePlatform: AuthorizeStatePlatform{
-				Authorized:   "Authorized",
-				Unauthorized: "Unauthorized",
-			},
-			DownloadSettings:             "Download settings",
-			RedirectURL:                  "Redirect URL",
-			ParamsBot:                    "Params %v bot",
-			TokenBot:                     "Bot Token",
-			DefaultLocale:                "Default locale",
-			Messenger:                    "Messenger",
-			Tourney:                      "Tournament Platform",
-			RequireMsgMessengerPlatform:  "To authorize, you must enter: Client ID, Client Secret, Guild ID, and Bot Token",
-			RequireMsgTournamentPlatform: "To authorize, you must enter: Client ID and Client Secret",
-			LaunchMsg:                    "Authorisation initiated on",
-			SuccessMsg:                   "Authorisation successful on",
-			ErrMsg:                       "Authorisation error. Please check that the details you entered are correct",
-		},
 		UrlToTournamentLabel: "Tournament Bracket URL",
 		GenreOrGameLabel:     "Genre/Game",
 		ListOfGamesLabel:     "Games List",

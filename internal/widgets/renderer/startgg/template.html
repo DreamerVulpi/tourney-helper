@@ -1,0 +1,980 @@
+{{ define "set" }}
+<div
+    class="set"
+    id="set-{{ .Id }}"
+    data-set-id="{{ .Id }}"
+    data-state="{{ .State }}"
+    data-position="{{ .Position }}"
+>
+    {{ range .Players }}
+    <div
+        class="player {{ if eq .Nickname "" }}empty{{ end }}"
+        data-slot="{{ .Slot }}"
+    >
+        <div class="player-slot">{{ .Slot }}</div>
+        {{ if .Nickname }}
+            {{ if .Prefix }}<div class="player-prefix">{{ .Prefix }}</div>{{ end }}
+            <div class="player-name">{{ .Nickname }}</div>
+            <div class="player-score">{{ .Score }}</div>
+        {{ else }}
+            <div class="player-name">—</div>
+        {{ end }}
+    </div>
+    {{ end }}
+</div>
+{{ end }}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bracket</title>
+    <style> {{ .SystemCSS }}</style>
+    <style> {{ .ThemeCSS }}</style>
+    <style>
+        /* Секции теперь позиционируются абсолютно внутри .bracket-content */
+        .bracket-content { position: relative; }
+        .bracket-section { position: absolute; }
+    </style>
+</head>
+<body>
+<div class="bracket-wrapper">
+    <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="bracket-viewport" id="bracket-viewport">
+        <div class="bracket-content" id="bracket-content">
+            <div class="bracket-section" id="winners-section">
+                <div class="round-headers" id="winners-headers"></div>
+                <div class="section-nodes" id="winners-nodes"></div>
+            </div>
+            <div class="bracket-section" id="final-section">
+                <div class="round-headers" id="final-headers"></div>
+                <div class="section-nodes" id="final-nodes"></div>
+            </div>
+            <div class="bracket-section" id="losers-section">
+                <div class="round-headers" id="losers-headers"></div>
+                <div class="section-nodes" id="losers-nodes"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // CSS variables
+    // ============================================================
+
+    function getCSSVar(name, fallback) {
+        const value = getComputedStyle(document.documentElement)
+            .getPropertyValue(name)
+            .trim();
+        return value || fallback;
+    }
+
+    function getCSSPx(name, fallback) {
+        const value = getCSSVar(name, '');
+        if (!value) return fallback;
+        const parsed = parseInt(value, 10);
+        return isNaN(parsed) ? fallback : parsed;
+    }
+
+    let NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP, COLUMN_STEP, TOTAL_COLUMNS;
+
+    function readConfig() {
+        NODE_WIDTH  = getCSSPx('--node-width', 220);
+        NODE_HEIGHT = getCSSPx('--node-height', 76);
+        LINK_WIDTH  = getCSSPx('--link-width', 60);
+        NODE_GAP    = getCSSPx('--node-gap', 40);
+
+        COLUMN_STEP = NODE_WIDTH + LINK_WIDTH;
+
+        console.log('Bracket config:', {
+            NODE_WIDTH, NODE_HEIGHT, LINK_WIDTH, NODE_GAP, COLUMN_STEP,
+        });
+    }
+
+    // Максимум колонок среди всех секций — общая ширина сетки.
+    function computeTotalColumns() {
+        const roundsBySection = new Map();
+
+        allSets.forEach(s => {
+            if (!roundsBySection.has(s.section)) {
+                roundsBySection.set(s.section, new Set());
+            }
+            roundsBySection.get(s.section).add(s.round);
+        });
+
+        let max = 1;
+        roundsBySection.forEach(set => {
+            if (set.size > max) max = set.size;
+        });
+
+        return max;
+    }
+
+    function computeSectionColumns(sectionName) {
+        const rounds = new Set();
+        allSets.forEach(s => {
+            if (s.section === sectionName) rounds.add(s.round);
+        });
+        return rounds.size || 1;
+    }
+
+    // ============================================================
+    // Данные из Go
+    // ============================================================
+
+    const allSets = [
+        {{ range .Sets }}
+        {
+            id: "{{ .Id | js }}",
+            section: "{{ .Section }}",
+            round: {{ .Round }},
+            state: {{ .State }},
+            position: {{ .Position }},
+            fullRoundText: "{{ .FullRoundText | js }}",
+            stream: "{{ .Stream | js }}",
+            winnerId: "{{ .WinnerId | js }}",
+            players: [
+                {{ range .Players }}
+                { slot: {{ .Slot }}, id: "{{ .Id | js }}", prefix: "{{ .Prefix | js }}", nickname: "{{ .Nickname | js }}", score: {{ .Score }} },
+                {{ end }}
+            ]
+        },
+        {{ end }}
+    ];
+
+    const connections = [
+        {{ range .Connections }}
+        { fromSetID: "{{ .FromSetID | js }}", fromSlot: {{ .FromSlot }}, toSetID: "{{ .ToSetID | js }}", toSlot: {{ .ToSlot }}, condition: "{{ .Condition }}" },
+        {{ end }}
+    ];
+
+    // ============================================================
+    // Stream platform detection
+    // ============================================================
+
+    function detectStreamPlatform(stream) {
+        if (!stream) return '';
+        const s = String(stream).toLowerCase().trim();
+        if (s === 'twitch') return 'twitch';
+        if (s === 'youtube') return 'youtube';
+        if (s.includes('twitch.tv') || s.includes('twitch.com')) return 'twitch';
+        if (s.includes('youtube.com') || s.includes('youtu.be')) return 'youtube';
+        return '';
+    }
+
+    // ============================================================
+    // Set element
+    // ============================================================
+
+    function createSetElement(setData) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'set-wrapper';
+
+        const div = document.createElement('div');
+        div.className = 'set';
+        div.id = `set-${setData.id}`;
+        div.dataset.setId = setData.id;
+        div.dataset.state = setData.state;
+
+        const playersDiv = document.createElement('div');
+        playersDiv.className = 'set-players';
+
+        const winnerId = setData.winnerId || '';
+
+        setData.players.forEach(player => {
+            const isEmpty = !player.nickname || player.nickname === "";
+            const playerId = player.id || '';
+            const isWinner = !isEmpty && winnerId !== '' && playerId === winnerId;
+            const isLoser = !isEmpty && winnerId !== '' && playerId !== winnerId;
+
+            const playerDiv = document.createElement('div');
+            playerDiv.className = 'player'
+                + (isEmpty  ? ' empty'  : '')
+                + (isWinner ? ' winner' : '')
+                + (isLoser  ? ' loser'  : '');
+            playerDiv.dataset.slot = player.slot;
+
+            playerDiv.innerHTML = `
+                ${player.nickname ? `
+                    ${player.prefix ? `<div class="player-prefix">${player.prefix}</div>` : ""}
+                    <div class="player-name">${player.nickname}</div>
+                    <div class="player-score">${player.score}</div>
+                ` : `<div class="player-name">—</div>`}
+            `;
+
+            playersDiv.appendChild(playerDiv);
+        });
+
+        div.appendChild(playersDiv);
+
+        if (setData.stream) {
+            const liveDiv = document.createElement('div');
+            liveDiv.className = 'set-live';
+            liveDiv.title = setData.stream;
+            liveDiv.textContent = 'LIVE';
+
+            const platform = detectStreamPlatform(setData.stream);
+            if (platform) {
+                liveDiv.classList.add(`set-live--${platform}`);
+            }
+
+            div.appendChild(liveDiv);
+        }
+
+        wrapper.appendChild(div);
+        return wrapper;
+    }
+
+    // ============================================================
+    // Tree
+    // ============================================================
+
+    function buildTree(sectionName) {
+        const setsMap = new Map();
+
+        allSets.filter(s => s.section === sectionName).forEach(setData => {
+            setsMap.set(setData.id, { ...setData, children: [], parents: [] });
+        });
+
+        let matched = 0, notFoundFrom = 0, notFoundTo = 0;
+
+        connections.forEach(conn => {
+            const from = setsMap.get(conn.fromSetID);
+            const to = setsMap.get(conn.toSetID);
+
+            if (!from && !to) return;
+            if (!from) { notFoundFrom++; return; }
+            if (!to)   { notFoundTo++;   return; }
+
+            matched++;
+
+            const toSlot = conn.toSlot !== undefined ? conn.toSlot : 0;
+            const fromSlot = conn.fromSlot !== undefined ? conn.fromSlot : 0;
+
+            to.children.push({ node: from, slot: fromSlot, toSlot: toSlot });
+            from.parents.push({ node: to, slot: toSlot, fromSlot: fromSlot });
+        });
+
+        const allSetsArray = Array.from(setsMap.values());
+        let rootRound;
+        if (sectionName === 'losers') {
+            rootRound = Math.min(...allSetsArray.map(s => s.round));
+        } else {
+            rootRound = Math.max(...allSetsArray.map(s => s.round));
+        }
+        const roots = allSetsArray.filter(s => s.round === rootRound);
+
+        if (roots.length === 0 && allSetsArray.length > 0) {
+            const maxRound = Math.max(...allSetsArray.map(s => s.round));
+            roots.push(...allSetsArray.filter(s => s.round === maxRound));
+        }
+
+        return { setsMap, roots };
+    }
+
+    function assignYCoordinate(node, orderCounter, visited = new Set()) {
+        if (!node || visited.has(node.id)) return;
+        visited.add(node.id);
+
+        const sortedChildren = node.children.slice().sort((a, b) => {
+            const slotA = a.slot !== undefined ? a.slot : 0;
+            const slotB = b.slot !== undefined ? b.slot : 0;
+            return slotA - slotB;
+        });
+
+        if (sortedChildren.length === 1) {
+            assignYCoordinate(sortedChildren[0].node, orderCounter, visited);
+            node.y = sortedChildren[0].node.y;
+            return;
+        }
+
+        if (sortedChildren[0]) {
+            assignYCoordinate(sortedChildren[0].node, orderCounter, visited);
+        }
+
+        node.y = orderCounter.value++;
+
+        if (sortedChildren[1]) {
+            assignYCoordinate(sortedChildren[1].node, orderCounter, visited);
+        }
+    }
+
+    function assignDepthAndX(roots) {
+        let maxDepth = 0;
+
+        function calculateDepth(node, depth, visited) {
+            if (!node || visited.has(node.id)) return;
+            visited.add(node.id);
+            node.depth = depth;
+            if (depth > maxDepth) maxDepth = depth;
+            node.children.forEach(ch => calculateDepth(ch.node, depth + 1, visited));
+        }
+
+        roots.forEach(root => calculateDepth(root, 0, new Set()));
+        roots.forEach(root => {
+            function invertX(node, visited) {
+                if (!node || visited.has(node.id)) return;
+                visited.add(node.id);
+                node.x = maxDepth - node.depth;
+                node.children.forEach(ch => invertX(ch.node, visited));
+            }
+            invertX(root, new Set());
+        });
+
+        return maxDepth;
+    }
+
+    function centerParents(roots) {
+        function postOrder(node, visited) {
+            if (!node || visited.has(node.id)) return;
+            visited.add(node.id);
+            node.children.forEach(ch => postOrder(ch.node, visited));
+
+            if (node.children.length === 2) {
+                node.y = (node.children[0].node.y + node.children[1].node.y) / 2;
+            } else if (node.children.length === 1) {
+                node.y = node.children[0].node.y;
+            } else if (node.y === undefined) {
+                node.y = 0;
+            }
+        }
+        roots.forEach(root => postOrder(root, new Set()));
+    }
+
+    function compressVertically(roots) {
+        roots.forEach(root => {
+            function divide(node, visited) {
+                if (!node || visited.has(node.id)) return;
+                visited.add(node.id);
+                node.children.forEach(ch => divide(ch.node, visited));
+
+                if (typeof node.y === 'number' && !isNaN(node.y)) {
+                    node.y = node.y / 2;
+                }
+
+                if (node.children.length === 1) {
+                    node.y = node.children[0].node.y;
+                } else if (node.children.length === 2) {
+                    node.y = (node.children[0].node.y + node.children[1].node.y) / 2;
+                }
+            }
+            divide(root, new Set());
+        });
+    }
+
+    // xOffset — на сколько колонок сдвинуть заголовки внутри секции.
+    function renderRoundHeaders(headersContainerId, setsMap, xOffset = 0) {
+        const container = document.getElementById(headersContainerId);
+        if (!container) return;
+        container.innerHTML = '';
+
+        const roundsByX = new Map();
+        setsMap.forEach(setData => {
+            if (typeof setData.x !== 'number') return;
+            const key = setData.x;
+            if (!roundsByX.has(key)) {
+                roundsByX.set(key, {
+                    x: key,
+                    fullRoundText: setData.fullRoundText || `Round ${setData.round}`,
+                    count: 0,
+                });
+            }
+            roundsByX.get(key).count++;
+        });
+
+        Array.from(roundsByX.values())
+            .sort((a, b) => a.x - b.x)
+            .forEach(round => {
+                const header = document.createElement('div');
+                header.className = 'round-header';
+                header.textContent = round.fullRoundText;
+                header.title = round.fullRoundText;
+                header.style.left = `${(round.x + xOffset) * COLUMN_STEP}px`;
+                container.appendChild(header);
+            });
+    }
+
+    // ============================================================
+    // Render sections
+    // ============================================================
+
+    // Рендерит секцию в контейнер. Позиционирует саму секцию
+    // (position:absolute) по X/Y в координатах .bracket-content.
+    function renderSection(sectionName, containerId, headersContainerId, xOffset = 0, yOffset = 0) {
+        const container = document.getElementById(containerId);
+        if (!container) return null;
+
+        const section = container.closest('.bracket-section');
+
+        const { setsMap, roots } = buildTree(sectionName);
+        if (setsMap.size === 0) {
+            if (section) section.classList.add('hidden');
+            return { setsMap, roots, maxDepth: 0, xOffset, yOffset, width: 0, height: 0 };
+        }
+
+        if (roots.length === 0) {
+            if (section) {
+                section.classList.add('hidden');
+                section.style.display = 'none';
+            }
+            return null;
+        }
+
+        const SUBTREE_GAP_UNITS = 2;
+        const orderCounter = { value: 0 };
+        const visitedY = new Set();
+
+        roots.forEach((root, index) => {
+            if (index > 0) orderCounter.value += SUBTREE_GAP_UNITS;
+            assignYCoordinate(root, orderCounter, visitedY);
+        });
+
+        const maxDepth = assignDepthAndX(roots);
+        centerParents(roots);
+        compressVertically(roots);
+
+        setsMap.forEach(setData => {
+            const element = createSetElement(setData);
+            const left = (setData.x || 0) * COLUMN_STEP;   // внутри секции — от 0
+            const top  = (setData.y || 0) * (NODE_HEIGHT + NODE_GAP);
+            element.style.left = `${left}px`;
+            element.style.top  = `${top}px`;
+            container.appendChild(element);
+        });
+
+        let maxY = 0;
+        setsMap.forEach(setData => {
+            if (typeof setData.y === 'number' && !isNaN(setData.y) && setData.y > maxY) {
+                maxY = setData.y;
+            }
+        });
+
+        const width  = (maxDepth + 1) * COLUMN_STEP - LINK_WIDTH;
+        const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
+
+        container.style.width  = `${width}px`;
+        container.style.height = `${height}px`;
+
+        // позиционируем саму секцию в координатах .bracket-content
+        if (section) {
+            section.style.left = `${xOffset * COLUMN_STEP}px`;
+            section.style.top  = `${yOffset}px`;
+        }
+
+        renderRoundHeaders(headersContainerId, setsMap, 0);  // внутри секции offset 0
+        return { setsMap, roots, maxDepth, xOffset, yOffset, width, height };
+    }
+
+    // final-секция рендерится отдельно: сдвиг по X = winnersColumns,
+    // по Y — подгоняем так, чтобы roots[0].y совпал с winnersRootY.
+    function renderFinalSection(winnersRootY, xOffset, yOffset) {
+        const container = document.getElementById('final-nodes');
+        if (!container) return null;
+
+        const section = container.closest('.bracket-section');
+
+        const { setsMap, roots } = buildTree('final');
+        if (roots.length === 0) {
+            if (section) {
+                section.classList.add('hidden');
+                section.style.display = 'none';
+            }
+            return null;
+        }
+
+        const orderCounter = { value: 0 };
+        const visitedY = new Set();
+        roots.forEach(root => assignYCoordinate(root, orderCounter, visitedY));
+
+        const maxDepth = assignDepthAndX(roots);
+        centerParents(roots);
+        compressVertically(roots);
+
+        let rootY = 0;
+        if (roots.length > 0 && typeof roots[0].y === 'number') rootY = roots[0].y;
+
+        const offsetY = winnersRootY - rootY;
+
+        setsMap.forEach(setData => {
+            const finalY = (setData.y || 0) + offsetY;
+            const element = createSetElement(setData);
+            const left = (setData.x || 0) * COLUMN_STEP;
+            element.style.left = `${left}px`;
+            element.style.top  = `${finalY * (NODE_HEIGHT + NODE_GAP)}px`;
+            container.appendChild(element);
+            setData.y = finalY;
+        });
+
+        let maxY = 0;
+        setsMap.forEach(setData => {
+            if (typeof setData.y === 'number' && !isNaN(setData.y) && setData.y > maxY) {
+                maxY = setData.y;
+            }
+        });
+
+        const width  = (maxDepth + 1) * COLUMN_STEP - LINK_WIDTH;
+        const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
+
+        container.style.width  = `${width}px`;
+        container.style.height = `${height}px`;
+
+        if (section) {
+            section.style.left = `${xOffset * COLUMN_STEP}px`;
+            section.style.top  = `${yOffset}px`;
+        }
+
+        renderRoundHeaders('final-headers', setsMap, 0);
+        return { setsMap, roots, maxDepth, xOffset, yOffset, width, height };
+    }
+
+    function renderConnections() {
+        const svg = document.getElementById('connections-svg');
+        const wrapper = document.querySelector('.bracket-wrapper');
+
+        if (!svg || !wrapper) return;
+
+        svg.innerHTML = '';
+
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const width  = wrapper.scrollWidth;
+        const height = wrapper.scrollHeight;
+
+        svg.setAttribute('width', width);
+        svg.setAttribute('height', height);
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.style.width  = `${width}px`;
+        svg.style.height = `${height}px`;
+
+        connections.forEach(conn => {
+            const fromEl = document.getElementById(`set-${conn.fromSetID}`);
+            const toEl   = document.getElementById(`set-${conn.toSetID}`);
+            if (!fromEl || !toEl) return;
+
+            const fromSection = fromEl.closest('.bracket-section');
+            const toSection   = toEl.closest('.bracket-section');
+
+            const fromSectionId = fromSection?.id;
+            const toSectionId   = toSection?.id;
+
+            const involvesLosers =
+                fromSectionId === 'losers-section' || toSectionId === 'losers-section';
+
+            if (involvesLosers && fromSectionId !== toSectionId) return;
+
+            const fromRect = fromEl.getBoundingClientRect();
+            const toRect   = toEl.getBoundingClientRect();
+
+            const x1 = fromRect.right - wrapperRect.left;
+            const y1 = fromRect.top + fromRect.height / 2 - wrapperRect.top;
+            const x2 = toRect.left - wrapperRect.left;
+            const y2 = toRect.top + toRect.height / 2 - wrapperRect.top;
+
+            const midX = (x1 + x2) / 2;
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.classList.add('connection');
+            path.dataset.fromSet  = conn.fromSetID;
+            path.dataset.toSet    = conn.toSetID;
+            path.dataset.fromSlot = conn.fromSlot;
+            path.dataset.toSlot   = conn.toSlot;
+
+            path.setAttribute('d', `M ${x1} ${y1} H ${midX} V ${y2} H ${x2}`);
+            svg.appendChild(path);
+        });
+    }
+
+    // ============================================================
+    // Init
+    // ============================================================
+
+    function init() {
+        readConfig();
+        TOTAL_COLUMNS = computeTotalColumns();
+
+        const winnersColumns = computeSectionColumns('winners');
+        const finalColumns   = computeSectionColumns('final');
+        const losersColumns  = computeSectionColumns('losers');
+
+        // X-сдвиги (в колонках):
+        //   winners — 0
+        //   final   — сразу после winners
+        //   losers  — выравниваем по ПРАВОМУ краю с final
+        const winnersXOffset = 0;
+        const finalXOffset   = winnersColumns;
+        const losersXOffset  = Math.max(0, (finalXOffset + finalColumns) - losersColumns);
+
+        // Сначала рендерим winners, чтобы узнать высоту и root Y.
+        const winnersResult = renderSection(
+            'winners', 'winners-nodes', 'winners-headers',
+            winnersXOffset, 0
+        );
+
+        const winnersHeight = winnersResult?.height ?? 0;
+        const winnersRootY  = winnersResult?.roots?.[0]?.y ?? 0;
+
+        // Final: X — сразу после winners, Y — выравниваем по winnersRootY.
+        // Но секция final абсолютная, внутри неё offsetY уже применён
+        // к нодам, так что top секции = 0 (выравнивание ушло в ноды).
+        const finalYOffset = 0;
+        renderFinalSection(winnersRootY, finalXOffset, finalYOffset);
+
+        // Losers: Y — под winners + отступ между рядами.
+        const ROWS_GAP = NODE_GAP * 4;
+        const losersYOffset = winnersHeight + ROWS_GAP;
+
+        renderSection(
+            'losers', 'losers-nodes', 'losers-headers',
+            losersXOffset, losersYOffset
+        );
+
+        // Общая ширина/высота .bracket-content — чтобы скролл знал размеры.
+        const content = document.getElementById('bracket-content');
+        if (content) {
+            const totalWidth  = (finalXOffset + finalColumns) * COLUMN_STEP - LINK_WIDTH;
+            const losersResult = document.getElementById('losers-nodes')?.style?.height;
+            const losersHeight = parseFloat(losersResult || '0') || 0;
+            const totalHeight  = losersYOffset + losersHeight;
+
+            content.style.width  = `${totalWidth}px`;
+            content.style.height = `${totalHeight}px`;
+        }
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                renderConnections();
+            });
+        });
+    }
+
+    // ============================================================
+    // Player highlight
+    // ============================================================
+
+    function setupPlayerHighlight() {
+        const content = document.getElementById('bracket-content');
+        if (!content) return;
+
+        let currentNickname = null;
+
+        function clearHighlight() {
+            document.querySelectorAll('.player.highlighted').forEach(el => el.classList.remove('highlighted'));
+            document.querySelectorAll('.connection.highlighted').forEach(el => el.classList.remove('highlighted'));
+            currentNickname = null;
+        }
+
+        function applyHighlight(nickname) {
+            if (!nickname) return;
+            currentNickname = nickname;
+
+            const highlightedSlots = new Set();
+
+            document.querySelectorAll('.set').forEach(setEl => {
+                const setId = setEl.dataset.setId;
+                if (!setId) return;
+
+                setEl.querySelectorAll('.player').forEach(playerEl => {
+                    const nameEl = playerEl.querySelector('.player-name');
+                    if (!nameEl) return;
+
+                    if (nameEl.textContent.trim() === nickname) {
+                        playerEl.classList.add('highlighted');
+                        const slot = playerEl.dataset.slot;
+                        if (slot !== undefined) highlightedSlots.add(`${setId}:${slot}`);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.connection.highlighted').forEach(el => el.classList.remove('highlighted'));
+
+            const toHighlight = [];
+            document.querySelectorAll('.connection').forEach(pathEl => {
+                const fromSetId = pathEl.dataset.fromSet;
+                const toSetId   = pathEl.dataset.toSet;
+                const fromSlot  = pathEl.dataset.fromSlot;
+                const toSlot    = pathEl.dataset.toSlot;
+                if (!fromSetId || !toSetId) return;
+
+                const fromMatch = highlightedSlots.has(`${fromSetId}:${fromSlot}`);
+                const toMatch   = highlightedSlots.has(`${toSetId}:${toSlot}`);
+
+                const toHasPlayer = document.querySelector(
+                    `#set-${toSetId} .player[data-slot="${toSlot}"] .player-name`
+                )?.textContent.trim();
+                const toIsEmpty = !toHasPlayer || toHasPlayer === '—';
+
+                if ((fromMatch || toMatch) && !toIsEmpty) {
+                    toHighlight.push(pathEl);
+                }
+            });
+
+            const svg = document.getElementById('connections-svg');
+            toHighlight.forEach(pathEl => {
+                pathEl.classList.add('highlighted');
+                svg.appendChild(pathEl);
+            });
+        }
+
+        content.addEventListener('mouseover', (e) => {
+            const playerEl = e.target.closest('.player');
+            if (!playerEl) return;
+
+            const nameEl = playerEl.querySelector('.player-name');
+            if (!nameEl) return;
+
+            const nickname = nameEl.textContent.trim();
+            if (!nickname || nickname === '—') return;
+            if (nickname === currentNickname) return;
+
+            clearHighlight();
+            applyHighlight(nickname);
+        });
+
+        content.addEventListener('mouseleave', clearHighlight);
+    }
+
+    function applyScale(scale) {
+        const viewport = document.getElementById('bracket-viewport');
+        if (!viewport) return;
+
+        let s = parseFloat(scale);
+        if (isNaN(s) || s <= 0) s = 1.0;
+        s = Math.max(0.5, Math.min(2.0, s));
+
+        viewport.style.transform = `scale(${s})`;
+        viewport.style.transformOrigin = 'top left';
+    }
+
+    // ============================================================
+    // Auto-refresh
+    // ============================================================
+
+    const AUTO_REFRESH_INTERVAL_MS = 60_000;
+    let autoRefreshTimerId = null;
+
+    function startAutoRefresh() {
+        if (autoRefreshTimerId != null) return;
+        console.log('[bracket] auto-refresh enabled, interval:', AUTO_REFRESH_INTERVAL_MS);
+
+        autoRefreshTimerId = setInterval(() => {
+            console.log('[bracket] auto-refresh tick');
+            refreshBracketData();
+        }, AUTO_REFRESH_INTERVAL_MS);
+    }
+
+    function stopAutoRefresh() {
+        if (autoRefreshTimerId == null) return;
+        clearInterval(autoRefreshTimerId);
+        autoRefreshTimerId = null;
+        console.log('[bracket] auto-refresh disabled');
+    }
+
+    async function refreshBracketData() {
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const bracketId = pathParts[pathParts.length - 1];
+        const theme = new URLSearchParams(window.location.search).get('theme') || '';
+
+        if (!bracketId) {
+            console.warn('[bracket] cannot refresh: bracketId not found in URL');
+            return;
+        }
+
+        const url = `/widgets/bracket/${bracketId}/data?theme=${encodeURIComponent(theme)}`;
+
+        try {
+            const res = await fetch(url, { cache: 'no-store' });
+            if (!res.ok) {
+                console.warn('[bracket] refresh failed:', res.status);
+                return;
+            }
+
+            const data = await res.json();
+            console.log('[bracket] new data received');
+
+            applyNewData(data);
+        } catch (err) {
+            console.warn('[bracket] refresh error:', err);
+        }
+    }
+
+    function applyNewData(data) {
+        if (!data) return;
+
+        if (Array.isArray(data.sets)) {
+            allSets.length = 0;
+            allSets.push(...data.sets);
+        }
+        if (Array.isArray(data.connections)) {
+            connections.length = 0;
+            connections.push(...data.connections);
+        }
+
+        document.getElementById('winners-nodes').innerHTML = '';
+        document.getElementById('final-nodes').innerHTML = '';
+        document.getElementById('losers-nodes').innerHTML = '';
+
+        document.getElementById('winners-headers').innerHTML = '';
+        document.getElementById('final-headers').innerHTML = '';
+        document.getElementById('losers-headers').innerHTML = '';
+
+        document.getElementById('connections-svg').innerHTML = '';
+
+        ['winners-section', 'final-section', 'losers-section'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('hidden');
+                el.style.display = '';
+            }
+        });
+
+        init();
+    }
+
+    // ============================================================
+    // Flags
+    // ============================================================
+
+    function applyFlags(flags) {
+        const root = document.documentElement;
+        root.classList.toggle('transparent-bg', !!flags.transparent);
+        root.classList.toggle('hide-rounds',    !!flags.hideRounds);
+
+        applyBracketMode(flags.bracketMode || 'all');
+        applyScale(flags.scale);
+
+        if (flags.autoRefresh) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+
+        console.log('[bracket] flags applied:', flags);
+    }
+
+    function applyBracketMode(mode) {
+        const root = document.documentElement;
+        root.classList.remove('bracket-mode-all', 'bracket-mode-winners', 'bracket-mode-losers');
+
+        switch (mode) {
+            case 'winners': root.classList.add('bracket-mode-winners'); break;
+            case 'losers':  root.classList.add('bracket-mode-losers');  break;
+            default:        root.classList.add('bracket-mode-all');     break;
+        }
+    }
+
+    function applyFlagsAndRedraw(flags) {
+        applyFlags(flags);
+        renderConnections();
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                renderConnections();
+            });
+        });
+    }
+
+    (function applyInitialFlags() {
+        const params = new URLSearchParams(location.search);
+
+        const bracketMode = params.get('bracketMode') || 'all';
+        const autoRefresh = params.has('autoRefresh');
+
+        if (params.has('transparent') || params.has('hideRounds') ||
+            params.has('bracketMode') || params.has('scale') ||
+            params.has('autoRefresh')) {
+            applyFlags({
+                transparent:  params.has('transparent'),
+                hideRounds:   params.has('hideRounds'),
+                bracketMode,
+                scale:        params.get('scale') ? parseFloat(params.get('scale')) : 1.0,
+                autoRefresh,
+            });
+            return;
+        }
+
+        try {
+            const stored = localStorage.getItem('bracket:flags');
+            if (stored) {
+                const flags = JSON.parse(stored);
+                if (!flags.bracketMode) flags.bracketMode = 'all';
+                applyFlags(flags);
+            }
+        } catch (e) {}
+    })();
+
+    try {
+        const channel = new BroadcastChannel('bracket:flags');
+        channel.onmessage = (event) => {
+            if (!event.data || event.data.type !== 'bracket:flags-changed') return;
+            console.log('[bracket] BroadcastChannel message:', event.data.flags);
+            applyFlagsAndRedraw(event.data.flags);
+        };
+        console.log('[bracket] BroadcastChannel connected');
+    } catch (e) {
+        console.warn('[bracket] BroadcastChannel not available:', e);
+    }
+
+    window.addEventListener('storage', (event) => {
+        if (event.key !== 'bracket:flags' || !event.newValue) return;
+        try {
+            const flags = JSON.parse(event.newValue);
+            console.log('[bracket] storage event:', flags);
+            applyFlagsAndRedraw(flags);
+        } catch (e) {
+            console.warn('[bracket] storage event parse error:', e);
+        }
+    });
+
+    window.addEventListener('message', (event) => {
+        if (!event.data || event.data.type !== 'bracket:flags-changed') return;
+        console.log('[bracket] postMessage:', event.data.flags);
+        applyFlagsAndRedraw(event.data.flags);
+    });
+
+    const BRACKET_FLAGS_URL = '/widgets/bracket/flags';
+    let lastFlagsJson = null;
+
+    async function fetchFlagsFromBackend() {
+        try {
+            const res = await fetch(BRACKET_FLAGS_URL, { cache: 'no-store' });
+            if (!res.ok) return null;
+            return await res.json();
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function pollFlags() {
+        const flags = await fetchFlagsFromBackend();
+        if (!flags) return;
+
+        const json = JSON.stringify(flags);
+        if (json === lastFlagsJson) return;
+        lastFlagsJson = json;
+
+        console.log('[bracket] flags from backend:', flags);
+        applyFlagsAndRedraw(flags);
+    }
+
+    pollFlags();
+    setInterval(pollFlags, 1000);
+
+    // ============================================================
+    // Resize + start
+    // ============================================================
+
+    window.addEventListener('resize', () => {
+        clearTimeout(window.resizeTimer);
+        window.resizeTimer = setTimeout(renderConnections, 50);
+    });
+
+    window.addEventListener('load', () => {
+        init();
+        setupPlayerHighlight();
+        refreshBracketData();
+    });
+</script>
+
+</body>
+</html>

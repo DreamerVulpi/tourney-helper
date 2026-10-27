@@ -1,19 +1,21 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Database } from "lucide-react";
-import { getThemeClasses } from "../utils/theme/LoggerPlate/themes";
 import { createLoadLogs } from "../hooks/App/useLogs.jsx";
+import { useThemeClasses } from "../hooks/App/useThemeClasses"
+import { getThemeClasses } from "../utils/themeClasses";
+import { useAppStore } from "../store/useAppStore";
 
-const LoggerPlate = ({ theme, locale}) => {
-  const themeClasses = getThemeClasses(theme);
+const LoggerPlate = ({ locale}) => {
+  const theme = useAppStore((s) => s.theme);
+  const themeClasses = useThemeClasses(getThemeClasses);
+
   const [logs, setLogs] = useState([]);
     const loadLogs = useCallback(createLoadLogs(setLogs), []);
 
     useEffect(() => {
         loadLogs();
-
         const interval = setInterval(loadLogs, 1000);
-
         return () => clearInterval(interval);
     }, [loadLogs]);
 

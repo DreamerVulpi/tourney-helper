@@ -2,55 +2,85 @@ import { useMemo } from "react";
 import { debounce } from "../../utils/debounce";
 
 import {
-  SaveSystemConfig,
-  SaveTournamentConfig,
+  SaveToolsCfg,
   SaveSettingsApp,
+  SaveWidgetsCfg,
+  SaveAuthorizations,
 } from "../../../wailsjs/go/application/App.js";
 
 export function useAutoSave() {
-  const debouncedSaveSystem = useMemo(
-    () => debounce((cfg) => SaveSystemConfig(cfg), 1000),
-    [],
-  );
-  const debouncedSaveTourney = useMemo(
-    () =>
-      debounce((cfg) => {
-        const dataToSend = {
-          ...cfg,
-          startgg: cfg.startgg || {},
-          challonge: cfg.challonge || {},
-          rules: {
-            ...cfg.rules,
-            standardFormat: parseInt(cfg.rules?.standardFormat) || 2,
-            finalsFormat: parseInt(cfg.rules?.finalsFormat) || 3,
-            rounds: parseInt(cfg.rules?.rounds) || 3,
-            duration: parseInt(cfg.rules?.duration) || 60,
-            stage: cfg.rules?.stage ?? "Random",
-          },
-        };
-        SaveTournamentConfig(dataToSend);
-      }, 1000),
-    [],
-  );
 
+  // ============================================================
+  // Settings (settings.toml)
+  // ============================================================
   const debouncedSaveSettings = useMemo(
     () =>
       debounce(async (cfg) => {
         try {
           await SaveSettingsApp(cfg);
-          console.log(
-            "The app settings have been successfully saved on the backend",
-          );
+          console.log("Settings saved on backend");
         } catch (err) {
-          console.error("The app settings could not be saved:", err);
+          console.error("Could not save settings:", err);
         }
       }, 1000),
     [],
   );
 
+  // ============================================================
+  // Widgets (widgets.toml)
+  // ============================================================
+  const debouncedSaveWidgets = useMemo(
+    () =>
+      debounce(async (cfg) => {
+        try {
+          const dataToSend = {
+            bracket: {
+              urlToTournament: cfg.bracket?.urlToTournament || "",
+              bracketId:       cfg.bracket?.bracketId       || "",
+              theme:           cfg.bracket?.theme           || "Default",
+              clearBackground: cfg.bracket?.clearBackground ?? false,
+              hideStages:      cfg.bracket?.hideStages      ?? false,
+              bracketMode:     cfg.bracket?.bracketMode     || "all",
+              scale:           cfg.bracket?.scale           ?? 1.0,
+              autoRefresh:     cfg.bracket?.autoRefresh     ?? false,
+            },
+          };
+          await SaveWidgetsCfg(dataToSend);
+          console.log("Widgets config saved on backend");
+        } catch (err) {
+          console.error("Could not save widgets config:", err);
+        }
+      }, 1000),
+    [],
+  );
+
+  // ============================================================
+  // Authorizations (authorizations.toml)
+  // ============================================================
+  const debouncedSaveAuthorizations = useMemo(
+    () =>
+      debounce(async (cfg) => {
+        try {
+          await SaveAuthorizations(cfg);
+          console.log("Authorizations saved on backend");
+        } catch (err) {
+          console.error("Could not save authorizations:", err);
+        }
+      }, 1000),
+    [],
+  );
+
+  // ============================================================
+  // Tools (tools.toml)
+  // ============================================================
+  const debouncedSaveTools = useMemo(
+    () => debounce((cfg) => SaveToolsCfg(cfg), 1000), [],
+  );
+
   return {
-    debouncedSaveSystem,
-    debouncedSaveTourney,
     debouncedSaveSettings,
+    debouncedSaveWidgets,
+    debouncedSaveAuthorizations,
+    debouncedSaveTools,
   };
 }

@@ -13,7 +13,119 @@ var listRegions = ListRegions{
 	ND:           "Нет данных",
 }
 
+var multiSelectClientRU = MultiSelectClient{
+	SearchLabel:         "Поиск...",
+	NoClients:           "Нет клиентов",
+	ChooseClient:        "Выберите OAuth клиент",
+	DeliveryMethodLabel: DeliveryMethodLabelRU,
+	TourneyLabel:        TourneyLabelRU,
+}
+
+var (
+	DeliveryMethodLabelRU = "Метод отправки"
+	TourneyLabelRU        = "Турнирная платформа"
+)
+
+var validationUrlBracketRu = ValidationUrlBracket{
+	UrlValid:              "Верная ссылка",
+	InvalidUrlTitle:       "Неверная ссылка",
+	InvalidUrlDescription: "Пожалуйста, проверьте ссылку и попробуйте еще раз",
+	UnsupportedPlatform:   "Неподдерживаемая платформа",
+	EnterUrlTitle:         "Введите ссылку на турнирную сетку",
+	EnterUrlDescription:   "Вставьте ссылку на вашу турнирную сетку платформы",
+}
+
 var Ru = Ui{
+	ProfilesPanel: ProfilesPanel{
+		MultiSelectLabel:            "Выберите профиль",
+		Add:                         "Добавить",
+		Delete:                      "Удалить выбранный",
+		Share:                       "Поделиться выбранным",
+		ImportProfile:               "Импортировать профиль",
+		Duplicate:                   "Дублировать выбранное",
+		Placeholder:                 "Профиль",
+		DuplicateProfile:            "Дублировать профиль",
+		NameNewProfileLabel:         "Имя нового профиля",
+		PlaceholderProfile:          "Например, new_profile_2",
+		ConfirmButtonDuplicateLabel: "Дублировать",
+		SearchLabel:                 "Поиск...",
+		NoItemsLabel:                "Не найдено",
+		ErrorFillParams:             "Ошибка",
+		OkButtonLabel:               "ОК",
+		ExportSuccessTitle:          "Экспорт завершен",
+		ExportSuccessMsg:            "Профиль успешно сохранен по пути:",
+		ImportSuccessTitle:          "Импорт завершен",
+		ImportSuccessMsg:            "Профиль был успешно импортирован как:",
+		ValidationProfile: ValidationProfile{
+			NameCannotBeEmpty:   "Имя не может быть пустым",
+			NameTooLong:         "Слишком длинное имя",
+			InvalidCharacters:   "Недопустимые символы",
+			NameAlreadyExists:   "Такое имя уже существует",
+			UnableCreateProfile: "Не удалось создать профиль",
+			UnableDeleteProfile: "Не удалось удалить профиль",
+			UnableCopyProfile:   "Не удалось скопировать профиль",
+			UnableSwitchProfile: "Не удалось переключить профиль",
+			ConfirmMsg:          "Профиль %v будет удалён вместе со всей БД, настройками и клиентами. Это действие нельзя отменить.",
+			ConfirmButtonLabel:  "Подтвердить",
+		},
+	},
+	IntegrationsPanel: IntegrationsPanel{
+		DeliveryMethodLabel:  DeliveryMethodLabelRU,
+		TourneyLabel:         TourneyLabelRU,
+		SignInButtonLabel:    "Авторизоваться",
+		AuthorizeButtonLabel: "Авторизация...",
+		ClientsLabel:         "OAuth клиенты",
+		ClientSettings:       "Настройки клиента",
+		EmptyFieldHeader:     "Выберите интеграцию в левой части окна",
+		EmptyFieldHint:       "Кликните левой кнопкой мыши для выбора",
+		Platform: Platform{
+			AuthorizationStatuses: AuthorizationStatuses{
+				Authorized:   "Авторизован",
+				Unauthorized: "Не авторизован",
+				Expired:      "Истек срок",
+				Error:        "Ошибка",
+				Pending:      "В ожидании",
+				Invalid:      "Неверные данные",
+				Unknown:      "Неизвестно",
+				InProcess:    "В работе",
+				Empty:        "Пусто",
+			},
+			LaunchMsg:                    "Запуск авторизации в",
+			SuccessMsg:                   "Успешная авторизация на",
+			ErrMsg:                       "Ошибка авторизации. Проверьте правильность введенных данных",
+			DownloadSettings:             "Параметры получения",
+			RedirectURL:                  "Ссылка на перенаправление (Redirect URL)",
+			ParamsBot:                    "Параметры %v бота",
+			TokenBot:                     "Токен бота",
+			DefaultLocale:                "Стандартная локаль",
+			RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
+			RequireMsgTournamentPlatform: "Для авторизации требуется заполнить: Client ID и Client Secret",
+			DeleteClientTitle:            "Удалить клиент",
+			DeleteClientMsg1:             "Вы уверены, что хотите удалить клиента",
+			DeleteClientMsg2:             "? Это действие нельзя отменить, все данные по этому клиенту будут удалены.",
+			DeleteButtonLabel:            "Подтвердить",
+		},
+	},
+	WidgetBracketPanel: WidgetBracketPanel{
+		UrlToBracketLabel:     "Ссылка на турнирную сетку",
+		ListOfBracketsLabel:   "Cетка",
+		ListOfThemes:          "Тема оформления",
+		Start:                 "Запустить",
+		Stop:                  "Остановить",
+		HideTheStages:         "Скрыть этапы",
+		ClearBackground:       "Чистый фон",
+		BracketDisplayMode:    "Режим отображения сеток",
+		AllMode:               "Все",
+		WinnersMode:           "Виннера",
+		LosersMode:            "Лузера",
+		LinkOfWidget:          "Ссылка на виджет",
+		WidgetNotRunning:      "Виджет не работает",
+		ClickStartDescription: "Нажмите \"Старт\" для запуска виджета турнирной сетки",
+		LoadBracket:           "Загрузка турнирной сетки",
+		FetchData:             "Получение данных...",
+		AutoRefresh:           "Автообновление",
+		ValidationUrlBracket:  validationUrlBracketRu,
+	},
 	ValidationAlertModal: ValidationAlertModal{
 		ErrorFillParams: "Ошибка заполнения параметров",
 		OkButtonLabel:   "Понятно",
@@ -23,7 +135,10 @@ var Ru = Ui{
 		DatabaseLabel:           "База данных игроков",
 		WidgetOfBracketLabel:    "Виджет сетки",
 		WidgetOfScoreboardLabel: "Виджет счета",
+		IntegrationsLabel:       "Интеграции",
 		VersionLabel:            "Версия: ",
+		ProfilesLabel:           "Профиль",
+		ProfilesLockedHint:      "Остановите все инструменты/виджеты, чтобы разблокировать взаимодействие с профилями",
 	},
 	LogPanel: LogPanel{
 		Label:                            "Логи",
@@ -42,24 +157,17 @@ var Ru = Ui{
 			Title:            "Помощь",
 			CloseButtonLabel: "Закрыть",
 			HelpPageNotificationSystem: HelpPageNotificationSystem{
-				InitialSetup: HelpQA{
-					Question: "Как произвести первоначальную настройку системы уведомлений?",
-					Answer: `1. Заполнить обязательные поля "CLIENT ID" и "SECRET CLIENT" у турнирной платформы.
-					2. Заполнить обязательные поля "BOT TOKEN", "GUILD ID", "CLIENT ID", "CLIENT SECRET" у мессенджера. (остальные поля по желанию)
-					3. Выбрать источник данных турнира и мессенджер для рассылки нажав на саму кнопку платформы.
-					4. После нажатия на кнопку платформы программа "TourneyHelper" перенаправит на авторизацию. Результат чтения будет написан в окне логов.
-					5. Созданного бота для мессенджера пригласите на сервер где находятся игроки турнира.`,
-				},
 				HowIsWorks: HelpQA{
 					Question: "Как работает система рассылки уведомлений?",
 					Answer:   `Система запрашивает на основе выбранной турнирной платформы данные о боях и их участниках, если они новые - сохраняет в локальной базе данных. Благодаря этим данным бот системы начинает рассылать сообщения всем участникам (которые система ожидает, что они будут на сервере организатора турнира) в ЛС каждые 5 минут если бой не был начат.`,
 				},
 				UsuallyUsing: HelpQA{
 					Question: "Как использовать в дальнейшем?",
-					Answer: `1. Указываете ссылку на турнирную сетку.
-					2. Выбираете жанр/игру из выпадающего списка.
-					3. Указываете ссылку на логотип турнира.
-					4. Выбираете по желанию необходимые параметры в "Правилах турнира" и "Лобби прямой трансляции".
+					Answer: `1. Выбрать свободный авторизованный OAuth клиент.
+					2. Указать ссылку на турнирную сетку.
+					3. Выбрать жанр/игру из выпадающего списка.
+					4. Указать ссылку на логотип турнира.
+					5. Выбрать по желанию необходимые параметры в "Правилах турнира" и "Лобби прямой трансляции".
 					В случае необходимости проверки рассылки, включаете режим отладки.`,
 				},
 				WhatIsDebugMode: HelpQA{
@@ -72,21 +180,6 @@ var Ru = Ui{
 					/контакты [никнейм_игрока] [название_игры] %v - позволяет искать контакт игрока в хранилище напрямую через мессенджер (к примеру, если компьютер с запущенной программой "TourneyHelper" не поблизости или игрок хочет узнать самостоятельно контакт конкретного игрока)%v
 					2. Использовать остальной функционал программы "TourneyHelper".`,
 				},
-				HowGetDataForStartgg: HelpQA{
-					Question: "Как получить данные для start.gg?",
-					Answer: `1. Войти в свой аккаунт start.gg -> "Developer Settings" -> "Oauth Applications"
-					2. Создать "Ouath Auth Applications". По мере заполнения данных в поле "Application Authorization Callback" указывается значение из ячейки "Ссылка на перенаправление" из программы "TourneyHelper".
-					3. Полученные значения "CLIENT ID" и "CLIENT SECRET" перенести в программу "TourneyHelper".`,
-				},
-				HowGetDataForDiscord: HelpQA{
-					Question: "Как получить данные для Discord?",
-					Answer: `1. Войти в свой аккаунт Discord -> Перейти в раздел %v разработчиков%v.
-					2. Создать свое приложение (Кнопка "Новое приложение").
-					3. В приложении выбрать: Обзор -> "Oauth". Данные для "CLIENT ID", "CLIENT SECRET" передать в программу "TourneyHelper".
-					4. В разделе "Перенаправления" добавить значение "REDIRECT API" из программы "TourneyHelper".
-					5. В приложении выбрать: Бот -> Получить токен бота и передать в поле "TOKEN BOT" программы "TourneyHelper".
-					Остальные поля "ROLE-ID X" и "LOG CHANNEL ID" получаются нажатием ПКМ по элементу в самом Discord и выбрать "Скопировать ID" (Предварительно необходимо включить режим разработчика в настройках Discord).`,
-				},
 			},
 			HelpPageDatabase: HelpPageDatabase{
 				WhatIsDatabase: HelpQA{
@@ -96,7 +189,62 @@ var Ru = Ui{
 				HowUse: HelpQA{
 					Question: "Как использовать?",
 					Answer: `Программа поддерживает возможность полного контроля над хранилищем - добавлять (вручную или файлом), редактировать, изменять, удалять данные о игроках, а также можно вести учет своей игровой лиги или бан-листа.%v
-					В случае добавления игроков необходимо заранее авторизоваться на start.gg во вкладке "Рассылка уведомлений"`,
+					В случае добавления игроков списком необходимо использовать свободный авторизованный OAuth клиент`,
+				},
+			},
+			HelpPageWidgetBracket: HelpPageWidgetBracket{
+				HowIsWorks: HelpQA{
+					Question: "Как это работает?",
+					Answer:   "Программа запускает локальный сервер с виджетами, доступ к которым осуществляет через ссылки. Некоторые из них требуют OAuth клиент для получения турнирных данных.",
+				},
+				WhatCanDo: HelpQA{
+					Question: "Как использовать в дальнейшем?",
+					Answer: `1. Выбрать свободный авторизованный OAuth клиент.
+					2. Указать ссылку на турнирную сетку.
+					3. Запустить виджет.
+					4. Скопировать ссылку виджета и использовать.
+					
+					Во время работы можно переключать параметры:
+					"Чистый фон" - задний фон виджета становится прозрачным;
+					"Скрыть этапы" - отключает видимость этапов турнирной сетки;
+					"Автообновление" - 1 раз в минуту обновляет данные в турнирной сетки без перезагрузки страницы;%v
+					
+					В случае, если потребуется сменить турнирную сетку, то обновится и конечная ссылка на виджет, в следствии чего надо будет скопировать заново`,
+				},
+			},
+			HelpPageIntegrations: HelpPageIntegrations{
+				InitialSetup: HelpQA{
+					Question: "Как авторизоваться?",
+					Answer:   `Для авторизации необходимо корректно указать все обязательные поля. Они указаны символом "*" в названии.  В случае успеха появится окно с подтверждением.`,
+				},
+				WhatIsThis: HelpQA{
+					Question: "Что такое интеграция?",
+					Answer:   `Интеграция - это авторизованный клиент (OAuth) и/или набор данных для взаимодействия с сервисом. Их количество у каждого сервиса индивидуально.`,
+				},
+				HowGetDataForStartgg: HelpQA{
+					Question: "Как получить данные для OAuth клиента start.gg?",
+					Answer: `1. Войти в свой аккаунт start.gg -> "Developer Settings" -> "OAuth Applications"
+					2. Создать "OAuth Auth Applications". По мере заполнения данных в поле "Application Authorization Callback" указывается значение из ячейки "Ссылка на перенаправление" из программы "TourneyHelper".
+					3. Полученные значения "CLIENT ID" и "CLIENT SECRET" перенести в программу "TourneyHelper".`,
+				},
+				HowGetDataForDiscord: HelpQA{
+					Question: "Как получить данные для OAuth клиента Discord?",
+					Answer: `1. Войти в свой аккаунт Discord -> Перейти в раздел %v разработчиков%v.
+					2. Создать свое приложение (Кнопка "Новое приложение").
+					3. В приложении выбрать: Обзор -> "OAuth". Данные для "CLIENT ID", "CLIENT SECRET" передать в программу "TourneyHelper".
+					4. В разделе "Перенаправления" добавить значение "REDIRECT API" из программы "TourneyHelper".
+					5. В приложении выбрать: Бот -> Получить токен бота и передать в поле "TOKEN BOT" программы "TourneyHelper".
+					Остальные поля "ROLE-ID X" и "LOG CHANNEL ID" получаются нажатием ПКМ по элементу в самом Discord и выбрать "Скопировать ID" (Предварительно необходимо включить режим разработчика в настройках Discord).`,
+				},
+			},
+			HelpPageProfiles: HelpPageProfiles{
+				WhatCanDo: HelpQA{
+					Question: "Что я могу сделать?",
+					Answer:   `Имеется возможность: добавить, удалить, дублировать, экспортировать и импортировать.`,
+				},
+				WhatIsThis: HelpQA{
+					Question: "Что такое профиль?",
+					Answer:   `Профиль - это сохраненный набор конфигураций и интеграций.`,
 				},
 			},
 		},
@@ -128,6 +276,7 @@ var Ru = Ui{
 			GetUpdateButtonLabel:            "Получить обновление",
 			SkipUpdateButtonLabel:           "Пропустить обновление",
 		},
+		MultiSelectClient: multiSelectClientRU,
 	},
 	NotificationSystemPanel: NotificationSystemPanel{
 		MonitoringSystem: MonitoringSystem{
@@ -145,24 +294,6 @@ var Ru = Ui{
 			Ms:                    "мс",
 		},
 		DebugModeSwitchLabel: "Режим отладки",
-		Platform: Platform{
-			AuthorizeStatePlatform: AuthorizeStatePlatform{
-				Authorized:   "Авторизован",
-				Unauthorized: "Неавторизован",
-			},
-			LaunchMsg:                    "Запуск авторизации в",
-			SuccessMsg:                   "Успешная авторизация на",
-			ErrMsg:                       "Ошибка авторизации. Проверьте правильность введенных данных",
-			DownloadSettings:             "Параметры получения",
-			RedirectURL:                  "Ссылка на перенаправление (Redirect URL)",
-			ParamsBot:                    "Параметры %v бота",
-			TokenBot:                     "Токен бота",
-			DefaultLocale:                "Стандартная локаль",
-			Messenger:                    "Мессенджер",
-			Tourney:                      "Турнирная платформа",
-			RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
-			RequireMsgTournamentPlatform: "Для авторизации требуется заполнить: Client ID и Client Secret",
-		},
 		UrlToTournamentLabel: "Ссылка на турнирную сетку",
 		GenreOrGameLabel:     "Жанр/Игра",
 		ListOfGamesLabel:     "Список игр",

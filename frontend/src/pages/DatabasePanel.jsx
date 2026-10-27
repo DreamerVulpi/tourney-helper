@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Plus,
   Search,
@@ -40,8 +40,19 @@ import { CopyButton } from "../components/ui/CopyButton.jsx";
 import { Field } from "../components/ui/Field.jsx";
 import { TableHeader } from "../components/ui/TableHeader.jsx";
 import { TableBody } from "../components/ui/TableBody.jsx";
+import { useAppStore } from "../store/useAppStore";
+import { useThemeClasses } from "../hooks/App/useThemeClasses"
+import { getThemeClasses } from "../utils/themeClasses";
 
-const DatabasePlate = ({ theme, locale, lang, themeClasses, selectedGame, setSelectedGame, sidePanelCollapsed }) => {
+const DatabasePlate = ({ locale }) => {
+  const theme               = useAppStore((s) => s.theme);
+  const lang                = useAppStore((s) => s.lang);
+  const selectedGame        = useAppStore((s) => s.selectedGame);
+  const setSelectedGame     = useAppStore((s) => s.setSelectedGame);
+  const sidePanelCollapsed  = useAppStore((s) => s.sidePanelCollapsed);
+  const setStatusDatabase   = useAppStore((s) => s.setStatusDatabase);
+  const themeClasses = useThemeClasses(getThemeClasses);
+  
   // Notes in 1 request to database
   const limit = 5;
 
@@ -1143,18 +1154,6 @@ const columns = prepareColumns(
   ) {
     importProgress = 100;
   }
-  console.log("RATING DEBUG", {
-  activeFilter,
-  players: players.length,
-  filteredPlayers: filteredPlayers.length,
-  totalCount,
-  ratings: players.map((p) => ({
-    nickname: p.nickname,
-    rating: p.rating,
-    status: p.status,
-    isBanned: p.isBanned,
-  })),
-});
 
   return (
     <PanelTemplate themeClasses={themeClasses}>

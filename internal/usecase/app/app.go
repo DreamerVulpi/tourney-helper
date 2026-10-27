@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -10,34 +11,51 @@ import (
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	"github.com/dreamervulpi/tourney-helper/internal/entity/app"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/bot"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/dbManager"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/update"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
+	widgets "github.com/dreamervulpi/tourney-helper/internal/widgets"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/renderer"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 type App struct {
-	ctx              context.Context
-	ConfigTournament *config.ConfigTournament
-	ConfigMessenger  *config.ConfigMessenger
-	MessengerClient  *auth.AuthClient
-	TournamentClient *auth.AuthClient
-	Db               *dbManager.Database
-	Locale           *config.SettingsApplication
-	logUpdateTimer   *time.Timer
-	OAuthServer      *auth.OAuthCallbackServer
-	UpdateService    *update.Service
-	UpdateManager    *update.Manager
+	ctx                  context.Context
+	DeliveryMethodClient *auth.AuthClient
+	TournamentClient     *auth.AuthClient
+	Db                   *dbManager.Database
+	Locale               *config.SettingsApplicationCfg
+	logUpdateTimer       *time.Timer
+	OAuthServer          *auth.OAuthCallbackServer
+	UpdateService        *update.Service
+	UpdateManager        *update.Manager
 
-	mu        sync.Mutex
-	ns        *sender.NotificationSystem
-	nsCancel  context.CancelFunc
-	activeBot bot.BotHandler
+	mu               sync.Mutex
+	profileMu        sync.RWMutex
+	switchingProfile bool
+	ns               *sender.NotificationSystem
+	nsCancel         context.CancelFunc
+	wCancel          context.CancelFunc
+	activeBot        bot.BotHandler
+	WidgetServer     *widgets.Server
+	RenderBracket    renderer.BracketRenderer
+	ThemeProvider    *widgets.ThemeProvider
+	UrlValidator     *validator.Validator
+
+	ActiveProfile         string
+	SettingsCfg           config.SettingsApplicationCfg
+	WidgetsCfg            config.WidgetsCfg
+	NotificationSystemCfg *config.NotificationSystem
+	AuthorizationsCfg     config.AuthorizationsCfg
 }
 
 func NewApp() *App {
-	return &App{}
+	return &App{
+		ThemeProvider: widgets.NewThemeProvider(""),
+	}
 }
 
 func (a *App) Startup(ctx context.Context) {
@@ -112,4 +130,85 @@ func (a *App) InstallUpdate() error {
 			)
 		},
 	)
+}
+
+func (a *App) ValidateTournamentURL(rawURL string) (app.ValidationResult, error) {
+	r := a.UrlValidator.ValidateURL(rawURL)
+
+	if !r.Valid && r.Platform == "unknown" {
+		return app.ValidationResult{
+			Valid:    false,
+			Platform: r.Platform,
+		}, fmt.Errorf("unsupported tournament platform")
+	}
+
+	return app.ValidationResult{
+		Valid:    r.Valid,
+		Platform: r.Platform,
+	}, nil
+}
+
+func (a *App) RestoreClientStatuses() (config.AuthorizationsCfg, error) {
+	if a.ActiveProfile == "" {
+		return config.AuthorizationsCfg{}, fmt.Errorf("no active profile")
+	}
+
+	cfg, err := config.LoadAuthorizations(a.ActiveProfile)
+	if err != nil {
+		return config.AuthorizationsCfg{}, fmt.Errorf("load authorizations: %w", err)
+	}
+
+	ctx := a.ctx
+
+	// ---------- STARTGG ----------
+	for i := range cfg.Startgg.Slots {
+		slot := &cfg.Startgg.Slots[i]
+		if !config.IsSlotOccupied(*slot) {
+			continue
+		}
+		slot.Status = a.checkStartggSlot(ctx, *slot, i)
+		if slot.Status == config.AuthStatusAuthorized {
+			now := time.Now()
+			slot.LastAuthAt = &now
+		}
+	}
+
+	// ---------- CHALLONGE ----------
+	for i := range cfg.Challonge.Slots {
+		slot := &cfg.Challonge.Slots[i]
+		if !config.IsSlotOccupied(*slot) {
+			continue
+		}
+		slot.Status = a.checkChallongeSlot(ctx, *slot, i)
+	}
+
+	// ---------- DISCORD ----------
+	for i := range cfg.Discord.Slots {
+		slot := &cfg.Discord.Slots[i]
+		if !config.IsSlotOccupied(*slot) {
+			continue
+		}
+		slot.Status = a.checkDiscordSlot(ctx, *slot, i)
+	}
+
+	// ---------- TELEGRAM ----------
+	for i := range cfg.Telegram.Slots {
+		slot := &cfg.Telegram.Slots[i]
+		if !config.IsSlotOccupied(*slot) {
+			continue
+		}
+		slot.Status = a.checkTelegramSlot(ctx, *slot, i)
+	}
+
+	a.AuthorizationsCfg = cfg
+	if err := config.SaveAuthorizations(a.ActiveProfile, cfg); err != nil {
+		return cfg, fmt.Errorf("save authorizations: %w", err)
+	}
+	return cfg, nil
+}
+
+func (a *App) DB() *dbManager.Database {
+	a.profileMu.RLock()
+	defer a.profileMu.RUnlock()
+	return a.Db
 }

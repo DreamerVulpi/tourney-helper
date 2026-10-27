@@ -144,6 +144,26 @@ func GetData[T any](c *Client, rawQuery string, variables map[string]any) (*T, e
 	return &results, nil
 }
 
+func GetAllPages[T any](fetch func(page int) (nodes []T, total int, err error), perPage int) ([]T, error) {
+	var all []T
+	page := 1
+
+	for {
+		nodes, total, err := fetch(page)
+		if err != nil {
+			return nil, err
+		}
+
+		all = append(all, nodes...)
+		if len(all) >= total {
+			break
+		}
+
+		page++
+	}
+	return all, nil
+}
+
 func (c *Client) LoadDataFromJSON(path string, gameName string) ([]startgg.ImportedParticipantContact, error) {
 	if path == "" {
 		return nil, errors.New("loadJSON: filename is empty")
@@ -371,4 +391,26 @@ func (c *Client) LoadDataFromCSV(path string, gameName string) ([]startgg.Import
 	}
 
 	return participants, nil
+}
+
+func RawMessageToString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	s := string(raw)
+	if s == "null" || s == `""` {
+		return ""
+	}
+	if raw[0] == '"' {
+		var str string
+		if err := json.Unmarshal(raw, &str); err != nil {
+			return ""
+		}
+		return str
+	}
+	var num json.Number
+	if err := json.Unmarshal(raw, &num); err != nil {
+		return ""
+	}
+	return num.String()
 }

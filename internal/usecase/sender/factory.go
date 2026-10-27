@@ -9,14 +9,14 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 )
 
-func GetTournamentAdapter(collector *metrics.Collector, authClient *auth.AuthClient, messengerName string, url string, debug bool, game string, contacts map[string]sender.Participant) (sender.NotificationData, error) {
+func GetTournamentAdapter(collector *metrics.Collector, authClient *auth.AuthClient, deliveryMethodName string, url string, debug bool, game string, contacts map[string]sender.Participant) (sender.NotificationData, error) {
 	switch strings.ToLower(authClient.NamePlatform) {
 	case "startgg":
 		client, err := auth.GetClientStartgg(authClient, collector)
 		if err != nil {
 			return nil, err
 		}
-		return NewStartggAdapter(client, messengerName, url, debug, game, contacts), nil
+		return NewStartggAdapter(client, deliveryMethodName, url, debug, game, contacts), nil
 	case "challonge":
 		client, err := auth.GetClientChallonge(authClient)
 		if err != nil {

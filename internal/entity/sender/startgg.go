@@ -8,6 +8,7 @@ type StartggClient interface {
 	GetTournament(slug string) (entity.Tournament, error)
 	GetListGroups(slug string, states []int) ([]entity.PhaseGroupInfo, error)
 	GetSets(groupID int64, page, perPage int, states []int) ([]entity.Nodes, error)
+	GetSetsWithScore(groupID int64, perPage int) ([]entity.WidgetSetNode, error)
 }
 
 type StartggFinalConfig struct {

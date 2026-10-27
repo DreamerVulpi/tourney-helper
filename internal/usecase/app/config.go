@@ -3,9 +3,12 @@ package application
 import (
 	"strings"
 
+	"fmt"
+
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/locale/ui"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
+	"github.com/dreamervulpi/tourney-helper/internal/usecase/locale"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/version"
 )
@@ -25,121 +28,154 @@ func (a *App) GetUiLocale(lang string) ui.Ui {
 	}
 }
 
-func (a *App) LoadSettingsApp() (config.SettingsApplication, error) {
-	path := config.GetAbsPath("config/settings.toml")
-	cfg, err := config.LoadSettings(path)
+// ============================================================
+// SETTINGS
+// ============================================================
+
+func (a *App) LoadSettingsApp() (config.SettingsApplicationCfg, error) {
+	cfg, err := config.LoadSettings(a.ActiveProfile)
 	if err != nil {
-		nullCfg := config.SettingsApplication{
-			Language:              "EN",
-			Theme:                 "Dark",
-			CheckUpdatesOnStartUp: true,
-			IgnoredVersion:        "",
-			SidePanelCollapsed:    false,
-		}
+		nullCfg := config.NewDefaultSettings()
+		_ = config.SaveSettings(a.ActiveProfile, nullCfg)
+		logger.Log(entityLogger.Warning,
+			"The program's configuration settings could not be loaded. Default settings recreated")
 		return nullCfg, nil
 	}
+
+	if cfg.IntegrationsSelections.Notifications == nil {
+		cfg.IntegrationsSelections.Notifications = make(map[string][]string)
+	}
+	if cfg.IntegrationsSelections.DbPlayers == nil {
+		cfg.IntegrationsSelections.DbPlayers = make(map[string][]string)
+	}
+	if cfg.IntegrationsSelections.WidgetBracket == nil {
+		cfg.IntegrationsSelections.WidgetBracket = make(map[string][]string)
+	}
+
+	logger.Log(entityLogger.Success,
+		"The program's configuration settings have been successfully loaded")
 	a.Locale = &cfg
 	return cfg, nil
 }
 
-func (a *App) SaveSettingsApp(cfg config.SettingsApplication) error {
-	return config.SaveSettings(config.GetAbsPath("config/settings.toml"), cfg)
+func (a *App) SaveSettingsApp(cfg config.SettingsApplicationCfg) error {
+	if err := config.SaveSettings(a.ActiveProfile, cfg); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.SettingsCfg = cfg
+	a.OAuthServer.SetLanguage(locale.Lang(a.SettingsCfg.Language))
+	a.mu.Unlock()
+	return nil
 }
 
-func (a *App) LoadSystemConfig() (config.ConfigMessenger, error) {
-	path := config.GetAbsPath("config/config.toml")
-	cfg, err := config.LoadConfig(path)
+// ============================================================
+// TOOLS
+// ============================================================
+
+func (a *App) LoadToolsCfg() (config.ToolsCfg, error) {
+	cfg, err := config.LoadTools(a.ActiveProfile)
 	if err != nil {
-		nullCfg := config.ConfigMessenger{
-			Discord: config.MessengerPlatform{
-				Token:          "",
-				ClientID:       "",
-				SecretClient:   "",
-				GuildID:        "",
-				DebugChannelID: "",
-				Roles: config.RolesID{
-					Ru: "",
-					En: "",
-				},
-			},
-			Telegram: config.MessengerPlatform{
-				Token:          "",
-				ClientID:       "",
-				SecretClient:   "",
-				GuildID:        "",
-				DebugChannelID: "",
-				Roles: config.RolesID{
-					Ru: "",
-					En: "",
-				},
-			},
-			DebugMode: config.DebugMode{
-				Mode: false,
-			},
-			Db: config.Database{
-				Dsn: "",
-			},
-		}
-		config.SaveConfig(path, nullCfg)
-		logger.Log(entityLogger.Warning, "The system configuration could not be loaded. It has been recreated")
+		nullCfg := config.NewDefaultTools()
+		_ = config.SaveTools(a.ActiveProfile, nullCfg)
+		logger.Log(entityLogger.Warning,
+			"The tools configuration could not be loaded. It has been recreated")
 		return nullCfg, nil
 	}
-	logger.Log(entityLogger.Success, "The system configuration has been successfully loaded")
+	logger.Log(entityLogger.Success,
+		"The tools configuration has been successfully loaded")
 	return cfg, nil
 }
 
-func (a *App) SaveSystemConfig(cfg config.ConfigMessenger) error {
-	return config.SaveConfig(config.GetAbsPath("config/config.toml"), cfg)
+func (a *App) SaveToolsCfg(cfg config.ToolsCfg) error {
+	if err := config.SaveTools(a.ActiveProfile, cfg); err != nil {
+		return err
+	}
+
+	a.mu.Lock()
+	a.NotificationSystemCfg = &cfg.NotificationSystem
+	a.mu.Unlock()
+	return nil
 }
 
-func (a *App) LoadTournamentConfig() (config.ConfigTournament, error) {
-	cfg, err := config.LoadTournament(config.GetAbsPath("config/tournament.toml"))
+// ============================================================
+// WIDGETS
+// ============================================================
+
+func (a *App) LoadWidgetsCfg() (config.WidgetsCfg, error) {
+	cfg, err := config.LoadWidgets(a.ActiveProfile)
 	if err != nil {
-		nullCfg := config.ConfigTournament{
-			Startgg: config.TournamentPlatform{
-				Name:         "",
-				ClientID:     "",
-				SecretClient: "",
-			},
-			Challonge: config.TournamentPlatform{
-				Name:         "",
-				ClientID:     "",
-				SecretClient: "",
-			},
-			UrlToTournament: "",
-			Rules: config.RulesMatches{
-				StandardFormat: 2,
-				FinalsFormat:   3,
-				Stage:          "Any",
-				Rounds:         3,
-				Duration:       60,
-			},
-			Stream: config.StreamLobby{
-				Area:          "Any",
-				Language:      "EN",
-				Conn:          "Wired",
-				Crossplatform: false,
-				Passcode:      "0000",
-				LinkToLobby:   "",
-			},
-			Logo: config.Logo{
-				Img: "",
-			},
-			Csv: config.Csv{
-				NameFile: "",
-			},
-			Game: config.ConfigGame{
-				Name: "",
-			},
-		}
-		config.SaveTournament(config.GetAbsPath("config/tournament.toml"), nullCfg)
-		logger.Log(entityLogger.Warning, "The tournament configuration could not be loaded. It has been recreated")
+		nullCfg := config.NewDefaultWidgets()
+		_ = config.SaveWidgets(a.ActiveProfile, nullCfg)
+		logger.Log(entityLogger.Warning,
+			"Widgets configuration could not be loaded. It has been recreated")
 		return nullCfg, nil
 	}
-	logger.Log(entityLogger.Success, "The tournament configuration has been successfully loaded")
+	logger.Log(entityLogger.Success,
+		"The widgets configuration has been successfully loaded")
 	return cfg, nil
 }
 
-func (a *App) SaveTournamentConfig(cfg config.ConfigTournament) error {
-	return config.SaveTournament(config.GetAbsPath("config/tournament.toml"), cfg)
+func (a *App) SaveWidgetsCfg(cfg config.WidgetsCfg) error {
+	if err := config.SaveWidgets(a.ActiveProfile, cfg); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.WidgetsCfg = cfg
+	a.mu.Unlock()
+	return nil
+}
+
+// ============================================================
+// AUTHORIZATIONS
+// ============================================================
+
+func (a *App) LoadAuthorizations() (config.AuthorizationsCfg, error) {
+	cfg, err := config.LoadAuthorizations(a.ActiveProfile)
+	if err != nil {
+		nullCfg := config.NewEmptyAuthorizations()
+		_ = config.SaveAuthorizations(a.ActiveProfile, nullCfg)
+		logger.Log(entityLogger.Warning,
+			"Authorizations could not be loaded. Empty slots recreated")
+		return nullCfg, nil
+	}
+	logger.Log(entityLogger.Success,
+		"Authorizations has been successfully loaded")
+	return cfg, nil
+}
+
+func (a *App) SaveAuthorizations(cfg config.AuthorizationsCfg) error {
+	if err := config.SaveAuthorizations(a.ActiveProfile, cfg); err != nil {
+		return err
+	}
+	a.mu.Lock()
+	a.AuthorizationsCfg = cfg
+	a.mu.Unlock()
+	return nil
+}
+
+// SetSlotStatus — устанавливает статус слота и сохраняет конфиг.
+// platformID: "startgg" | "challonge" | "discord" | "telegram"
+func (a *App) SetSlotStatus(platformID string, slotIndex int, status config.AuthStatus, reason string) error {
+	cfg := a.AuthorizationsCfg
+
+	var platform *config.PlatformAuthorizations
+	switch platformID {
+	case "startgg":
+		platform = &cfg.Startgg
+	case "challonge":
+		platform = &cfg.Challonge
+	case "discord":
+		platform = &cfg.Discord
+	case "telegram":
+		platform = &cfg.Telegram
+	default:
+		logger.Log(entityLogger.Error, fmt.Sprintf("unknown platform: %s", platformID))
+		return fmt.Errorf("unknown platform: %s", platformID)
+	}
+
+	platform.SetSlotStatus(slotIndex, status, reason)
+
+	a.AuthorizationsCfg = cfg
+	return a.SaveAuthorizations(cfg)
 }

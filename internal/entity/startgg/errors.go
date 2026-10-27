@@ -2,7 +2,7 @@ package startgg
 
 type Errors struct {
 	Message    string      `json:"message"`
-	Path       []string    `json:"path"`
+	Path       []any       `json:"path"`
 	Locations  []Locations `json:"locations"`
 	Extensions Extensions  `json:"extensions"`
 }

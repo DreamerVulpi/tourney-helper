@@ -37,7 +37,7 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 		return
 	}
 
-	errWaitP1 := ns.LimiterMessenger.Wait(ctx, entityRateLimiter.Operation{
+	errWaitP1 := ns.LimiterDeliveryMethod.Wait(ctx, entityRateLimiter.Operation{
 		Type:     entityRateLimiter.OperationMessage,
 		Priority: entityRateLimiter.PriorityHigh,
 		Cost:     1,
@@ -47,16 +47,16 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 		return
 	}
 
-	_, errP1 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP1)
+	_, errP1 := ns.DeliveryMethod.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP1)
 	if errP1 != nil && !errors.Is(errP1, context.Canceled) {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin, errP1.Error()))
 	}
 	if errP1 == nil {
-		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
+		logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
 	}
 	ns.MessagesSentCurrentCycle.Add(1)
 
-	errWaitP2 := ns.LimiterMessenger.Wait(ctx, entityRateLimiter.Operation{
+	errWaitP2 := ns.LimiterDeliveryMethod.Wait(ctx, entityRateLimiter.Operation{
 		Type:     entityRateLimiter.OperationMessage,
 		Priority: entityRateLimiter.PriorityHigh,
 		Cost:     1,
@@ -66,12 +66,12 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 		return
 	}
 
-	_, errP2 := ns.Messenger.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP2)
+	_, errP2 := ns.DeliveryMethod.SendMessage(ctx, ns.TestContact.MessengerID, &debugChannelID, setForP2)
 	if errP2 != nil && !errors.Is(errP2, context.Canceled) {
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin, errP2.Error()))
 	}
 	if errP2 == nil {
-		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
+		logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
 	}
 	ns.MessagesSentCurrentCycle.Add(1)
 }
@@ -86,7 +86,7 @@ func (ns *NotificationSystem) sendNotification(ctx context.Context, contact enti
 		return lastSent, fmt.Errorf("sendNotification | Can't send notification to %s: MessengerID is empty", contact.GameNickname)
 	}
 
-	dmChannelID, err := ns.Messenger.SendMessage(ctx, contact.MessengerID, contact.DmChannelId, set)
+	dmChannelID, err := ns.DeliveryMethod.SendMessage(ctx, contact.MessengerID, contact.DmChannelId, set)
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return lastSent, fmt.Errorf("sendNotification | Can't send notification to %s: %v", contact.MessengerID, err)
 	}

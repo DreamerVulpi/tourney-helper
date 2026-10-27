@@ -1,0 +1,300 @@
+:root {
+    /* Размеры элементов сетки */
+    --node-width: 200px;
+    --node-height: 66px;
+    --link-width: 40px;
+    --node-gap: 16px;
+
+    /* Ширина полосы LIVE */
+    --live-width: 28px;
+
+    /* Скроллбар — дефолтные значения (тема может переопределить) */
+    --scrollbar-track: transparent;
+    --scrollbar-thumb: rgba(160, 160, 160, 0.35);
+    --scrollbar-thumb-hover: rgba(200, 200, 200, 0.55);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.bracket-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1920px;
+    max-height: 1080px;
+    height: 100%;
+    overflow: auto;
+}
+
+.bracket-viewport {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
+}
+
+.bracket-content {
+    position: relative;
+    width: max-content;
+    min-width: 100%;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 60px;
+}
+
+.connections {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.connection {
+    fill: none;
+    vector-effect: non-scaling-stroke;
+    transition: stroke 0.15s ease, stroke-width 0.15s ease;
+}
+
+.connection.highlighted {
+    stroke-width: calc(var(--connection-width, 2px) + 1px);
+}
+
+/* Winners + Grand Final in one string */
+.winners-final-row {
+    display: flex;
+    align-items: flex-start;
+}
+
+.bracket-section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.section-nodes {
+    position: relative;
+}
+
+/* ============================================================
+ * Обёртка вокруг сета
+ * ============================================================ */
+
+.set-wrapper {
+    position: absolute;
+    width: var(--node-width);
+    min-height: var(--node-height);
+    z-index: 20;
+}
+
+/* ============================================================
+ * Сет — flex-контейнер: игроки + опциональная полоса LIVE
+ * ============================================================ */
+
+.set {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    min-height: var(--node-height);
+    overflow: visible;
+}
+
+/* ============================================================
+ * Контейнер игроков — растягивается на всю доступную ширину
+ * ============================================================ */
+
+.set-players {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* важно для truncation длинных ников */
+}
+
+/* Скругление углов у крайних игроков */
+.player:first-child {
+    border-top-left-radius: var(--set-radius);
+}
+
+.player:last-child {
+    border-bottom-left-radius: var(--set-radius);
+}
+
+/* Правые углы скругляем ТОЛЬКО если нет .set-live */
+.set:not(:has(.set-live)) .player:first-child {
+    border-top-right-radius: var(--set-radius);
+}
+
+.set:not(:has(.set-live)) .player:last-child {
+    border-bottom-right-radius: var(--set-radius);
+}
+
+/* ============================================================
+ * Полоса LIVE — фиксированная ширина справа
+ * ============================================================ */
+
+.set-live {
+    flex: 0 0 var(--live-width);
+    width: var(--live-width);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    user-select: none;
+    pointer-events: none;
+    border-top-right-radius: var(--set-radius);
+    border-bottom-right-radius: var(--set-radius);
+}
+
+/* ============================================================
+ * Игрок
+ * ============================================================ */
+
+.player {
+    position: relative;
+    flex: 1;
+    min-height: calc(var(--node-height) / 2);
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.player-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.player-slot {
+    flex: 0 0 auto;
+    text-align: center;
+}
+
+.round-headers {
+    position: relative;
+    width: 100%;
+    height: 22px;
+    margin-bottom: var(--section-gap, 20px);
+    flex-shrink: 0;
+}
+
+.round-header {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: var(--node-width);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* ============================================================
+ * Режим скрытых этапов
+ * ============================================================ */
+
+html.hide-rounds .round-headers {
+    display: none !important;
+}
+
+/* ============================================================
+ * Режимы отображения секций
+ * ============================================================ */
+
+/* All — ничего не скрыто (по умолчанию) */
+html.bracket-mode-all #winners-section,
+html.bracket-mode-all #final-section,
+html.bracket-mode-all #losers-section {
+    display: block;
+}
+
+/* Winners only — скрываем Losers */
+html.bracket-mode-winners #losers-section {
+    display: none !important;
+}
+
+/* Losers only — скрываем Winners и Final */
+html.bracket-mode-losers #winners-section,
+html.bracket-mode-losers #final-section {
+    display: none !important;
+}
+
+/* Прячем пустой ряд, если обе секции скрыты */
+html.bracket-mode-losers .winners-final-row {
+    display: none !important;
+}
+
+iframe {
+    background: transparent;
+}
+
+/* ================================================================
+ * Scrollbar — структура
+ * ================================================================
+ *
+ * Скроллбар всегда имеет прозрачный трек и полупрозрачный
+ * серый ползунок — независимо от режима (transparent-bg или нет).
+ * Цвета задаются через переменные, которые тема может переопределить:
+ *
+ *   --scrollbar-track
+ *   --scrollbar-thumb
+ *   --scrollbar-thumb-hover
+ */
+
+.bracket-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb, rgba(160, 160, 160, 0.35))
+                     var(--scrollbar-track, transparent);
+}
+
+.bracket-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.bracket-wrapper::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, transparent);
+    border-radius: 0;
+}
+
+.bracket-wrapper::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, rgba(160, 160, 160, 0.35));
+    border-radius: 0;
+    border: none;
+}
+
+.bracket-wrapper::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover, rgba(200, 200, 200, 0.55));
+}
+
+.bracket-wrapper::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track, transparent);
+}
+
+/* Убираем стрелки на скроллбаре (Windows / старые WebKit) */
+.bracket-wrapper::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+    width: 0;
+}

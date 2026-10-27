@@ -1,7 +1,9 @@
 export function changeRule(field, value, updateConfig) {
-  updateConfig("tournament", {
-    rules: {
-      [field]: value,
+  updateConfig("tools", {
+    notificationSystem: {
+      rules: {
+        [field]: value,
+      },
     },
   });
 }

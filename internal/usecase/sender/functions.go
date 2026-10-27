@@ -30,7 +30,7 @@ func (ns *NotificationSystem) CheckParticipant(ctx context.Context, apiData enti
 	switch {
 	case err == nil:
 		if dbData.MessengerID == "" || dbData.MessengerID == "N/D" {
-			updated, err := ns.Messenger.FindContactOfParticipant(ctx, dbData)
+			updated, err := ns.DeliveryMethod.FindContactOfParticipant(ctx, dbData)
 			if err == nil {
 				updated.Id = dbData.Id
 				dbData = updated
@@ -45,7 +45,7 @@ func (ns *NotificationSystem) CheckParticipant(ctx context.Context, apiData enti
 	case errors.Is(err, sql.ErrNoRows):
 		log.Printf("Process | Player not found in DB, searching in %s...", apiData.MessengerName)
 
-		foundParticipant, err := ns.Messenger.FindContactOfParticipant(ctx, apiData)
+		foundParticipant, err := ns.DeliveryMethod.FindContactOfParticipant(ctx, apiData)
 		if err != nil {
 			log.Printf("Process | Player not found in %s: %v", apiData.MessengerName, err)
 			if _, errSave := ns.Db.AddParticipant(ctx, foundParticipant); errSave != nil {
@@ -67,7 +67,7 @@ func (ns *NotificationSystem) SaveSentInfo(ctx context.Context, slug string, set
 	request := entityDB.SentSetAddRequest{
 		SetId:              set.SetID,
 		TournamentPlatform: ns.Data.GetPlatformTournamentName(),
-		MessengerPlatform:  ns.Messenger.GetPlatformMessengerName(),
+		MessengerPlatform:  ns.DeliveryMethod.GetPlatformMessengerName(),
 		TournamentSlug:     slug,
 		State:              entityDB.PointerSetState(currentState),
 		SentAtP1:           timeP1,

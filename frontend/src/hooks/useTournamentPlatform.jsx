@@ -1,71 +1,89 @@
 import { useCallback } from "react";
 import { authorizeTournamentPlatform } from "../services/auth/tournamentPlatform/index.js";
+import { AUTH_STATUS } from "../utils/authStatus";
+import { useSlotStatus } from "./App/useSlotsStatus.js";
 
 export const useTournamentPlatform = ({
-  tourneyCfg,
   locale,
-  activePlatform,
-  setActivePlatform,
-  setAuthStatus,
+  activeTournamentPlatform,
+  setActiveTournamentPlatform,
+  setAuthFlags,
   setValidationAlert,
+  authorizations,
+  updateConfig,
+  updatePlatformSlot,
 }) => {
+  const { markSlotStatus } = useSlotStatus({
+    authorizations,
+    updateConfig,
+    updatePlatformSlot,
+  });
+
   const handleTournamentPlatformClick = useCallback(
-    async (platformName) => {
-      const nextPlatform =
-        activePlatform === platformName
-          ? ""
-          : platformName;
+    (platformName) => {
+      const next =
+        activeTournamentPlatform === platformName ? "" : platformName;
+      setActiveTournamentPlatform(next);
+    },
+    [activeTournamentPlatform, setActiveTournamentPlatform]
+  );
 
-      setActivePlatform(nextPlatform);
+  const authorizeTournamentSlot = useCallback(
+    async (platformName, slotIndex) => {
+      const platform = authorizations?.[platformName];
+      const slot = platform?.slots?.[slotIndex];
 
-      if (!nextPlatform) return;
-
-      const {
-        clientID,
-        secretClient,
-      } = tourneyCfg[nextPlatform] ?? {};
-
-      if (!clientID || !secretClient) {
-        setActivePlatform("");
-
+      if (!slot) {
         setValidationAlert({
           isOpen: true,
           message: locale.Platform.RequireMsgTournamentPlatform,
         });
-
         return;
       }
 
+      const { clientID, secretClient } = slot;
+
+      if (!clientID || !secretClient) {
+        setValidationAlert({
+          isOpen: true,
+          message: locale.Platform.RequireMsgTournamentPlatform,
+        });
+        return;
+      }
+
+      await markSlotStatus(platformName, slotIndex, AUTH_STATUS.PENDING, "");
+
       try {
-        await authorizeTournamentPlatform(nextPlatform, {
+        await authorizeTournamentPlatform(platformName, {
           clientID,
           secretClient,
+          slotIndex,
         });
 
-        setAuthStatus((prev) => ({
-          ...prev,
-          [nextPlatform]: true,
-        }));
+        await markSlotStatus(
+          platformName,
+          slotIndex,
+          AUTH_STATUS.AUTHORIZED,
+          ""
+        );
+
+        setAuthFlags((prev) => ({ ...prev, [platformName]: true }));
       } catch (err) {
         console.error(err);
 
-        setAuthStatus((prev) => ({
-          ...prev,
-          [nextPlatform]: false,
-        }));
+        const reason = err?.message || String(err);
+        await markSlotStatus(
+          platformName,
+          slotIndex,
+          AUTH_STATUS.ERROR,
+          reason
+        );
+
+        setAuthFlags((prev) => ({ ...prev, [platformName]: false }));
       }
     },
-    [
-      activePlatform,
-      tourneyCfg,
-      locale,
-      setActivePlatform,
-      setAuthStatus,
-      setValidationAlert,
-    ]
+    [authorizations, locale, markSlotStatus, setAuthFlags, setValidationAlert]
   );
 
-  return {
-    handleTournamentPlatformClick,
-  };
+  return { handleTournamentPlatformClick, authorizeTournamentSlot };
 };

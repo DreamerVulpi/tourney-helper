@@ -1,5 +1,12 @@
 package startgg
 
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 // State (1 - IsNotStarted, 2 - InProcess, 3 - IsDone)
 type State int
 
@@ -43,14 +50,61 @@ type PageInfo struct {
 	Total int `json:"total"`
 }
 
+type EntrantSource struct {
+	Type      string `json:"type"`
+	TypeID    int64  `json:"typeId"`
+	Condition string `json:"condition"`
+}
+
+type SetID string
+
+func (s *SetID) UnmarshalJSON(b []byte) error {
+	if len(b) == 0 {
+		return fmt.Errorf("setid: empty input")
+	}
+	switch {
+	case b[0] == '"':
+		var str string
+		if err := json.Unmarshal(b, &str); err != nil {
+			return fmt.Errorf("setid: %w", err)
+		}
+		*s = SetID(str)
+	case string(b) == "null":
+		*s = ""
+	default:
+		// число без кавычек, кладём как есть
+		*s = SetID(string(b))
+	}
+	return nil
+}
+
+func (s SetID) String() string { return string(s) }
+
+func (s SetID) Numeric() (int64, bool) {
+	n, err := strconv.ParseInt(string(s), 10, 64)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}
+
+func (s SetID) IsPreview() bool {
+	return strings.HasPrefix(string(s), "preview_")
+}
+
+func (n Nodes) RealID() (int64, bool) { return n.Id.Numeric() }
+
 // Information about Set
 type Nodes struct {
-	Id            int64    `json:"id"`
-	State         State    `json:"state"`
-	FullRoundText string   `json:"fullRoundText"`
-	Round         int      `json:"round"`
-	Stream        Streamer `json:"stream"`
-	Slots         []Slots  `json:"slots"`
+	Id             SetID          `json:"id"`
+	State          State          `json:"state"`
+	FullRoundText  string         `json:"fullRoundText"`
+	Round          int            `json:"round"`
+	WinnerId       int64          `json:"winnerId"`
+	Stream         Streamer       `json:"stream"`
+	Slots          []Slot         `json:"slots"`
+	Entrant1Source *EntrantSource `json:"entrant1Source"`
+	Entrant2Source *EntrantSource `json:"entrant2Source"`
 }
 
 type Streamer struct {
@@ -58,9 +112,22 @@ type Streamer struct {
 	StreamSource string `json:"streamSource"`
 }
 
-// Slots in set
-type Slots struct {
-	Entrant Entrant `json:"entrant"`
+type Standing struct {
+	Stats Stats `json:"stats"`
+}
+
+type Stats struct {
+	Score Score `json:"score"`
+}
+
+type Score struct {
+	Value int `json:"value"`
+}
+
+// Slot in set
+type Slot struct {
+	Entrant  Entrant  `json:"entrant"`
+	Standing Standing `json:"standing"`
 }
 
 // Player in tournament
@@ -71,6 +138,7 @@ type Entrant struct {
 
 // Player data
 type Participant struct {
+	Prefix            string            `json:"prefix"`
 	GamerTag          string            `json:"gamerTag"`
 	ConnectedAccounts ConnectedAccounts `json:"connectedAccounts"`
 	User              User              `json:"user"`

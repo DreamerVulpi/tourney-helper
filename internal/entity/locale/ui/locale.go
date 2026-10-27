@@ -2,6 +2,40 @@ package ui
 
 import "github.com/dreamervulpi/tourney-helper/internal/entity/locale/stages"
 
+type ValidationProfile struct {
+	NameCannotBeEmpty   string
+	NameTooLong         string
+	NameAlreadyExists   string
+	InvalidCharacters   string
+	UnableCreateProfile string
+	UnableDeleteProfile string
+	UnableCopyProfile   string
+	UnableSwitchProfile string
+	ConfirmMsg          string
+	ConfirmButtonLabel  string
+}
+
+type AuthorizationStatuses struct {
+	Authorized   string
+	Unauthorized string
+	Expired      string
+	Error        string
+	Invalid      string
+	Pending      string
+	Unknown      string
+	InProcess    string
+	Empty        string
+}
+
+type ValidationUrlBracket struct {
+	UrlValid              string
+	InvalidUrlTitle       string
+	InvalidUrlDescription string
+	UnsupportedPlatform   string
+	EnterUrlTitle         string
+	EnterUrlDescription   string
+}
+
 type ProgressModal struct {
 	Title    string
 	Download string
@@ -258,7 +292,7 @@ type ConfigurationLogo struct {
 }
 
 type Platform struct {
-	AuthorizeStatePlatform       AuthorizeStatePlatform
+	AuthorizationStatuses        AuthorizationStatuses
 	RequireMsgMessengerPlatform  string
 	RequireMsgTournamentPlatform string
 	LaunchMsg                    string
@@ -266,11 +300,23 @@ type Platform struct {
 	ErrMsg                       string
 	TokenBot                     string
 	DefaultLocale                string
-	Messenger                    string
-	Tourney                      string
 	DownloadSettings             string
 	RedirectURL                  string
 	ParamsBot                    string
+	ChooseClient                 string
+	MultiSelectClient            MultiSelectClient
+	DeleteClientTitle            string
+	DeleteClientMsg1             string
+	DeleteClientMsg2             string
+	DeleteButtonLabel            string
+}
+
+type MultiSelectClient struct {
+	SearchLabel         string
+	NoClients           string
+	ChooseClient        string
+	DeliveryMethodLabel string
+	TourneyLabel        string
 }
 
 type AuthorizeStatePlatform struct {
@@ -344,14 +390,29 @@ type HelpQA struct {
 	Answer   string
 }
 
-type HelpPageNotificationSystem struct {
-	InitialSetup         HelpQA
+type HelpPageWidgetBracket struct {
+	HowIsWorks HelpQA
+	WhatCanDo  HelpQA
+}
+
+type HelpPageIntegrations struct {
 	HowIsWorks           HelpQA
-	WhatIsDebugMode      HelpQA
-	WhatCanDo            HelpQA
+	WhatIsThis           HelpQA
+	InitialSetup         HelpQA
 	HowGetDataForStartgg HelpQA
 	HowGetDataForDiscord HelpQA
-	UsuallyUsing         HelpQA
+}
+
+type HelpPageProfiles struct {
+	WhatCanDo  HelpQA
+	WhatIsThis HelpQA
+}
+
+type HelpPageNotificationSystem struct {
+	HowIsWorks      HelpQA
+	WhatIsDebugMode HelpQA
+	WhatCanDo       HelpQA
+	UsuallyUsing    HelpQA
 }
 
 type HelpPageDatabase struct {
@@ -365,4 +426,7 @@ type HelpModal struct {
 	CloseButtonLabel           string
 	HelpPageNotificationSystem HelpPageNotificationSystem
 	HelpPageDatabase           HelpPageDatabase
+	HelpPageWidgetBracket      HelpPageWidgetBracket
+	HelpPageIntegrations       HelpPageIntegrations
+	HelpPageProfiles           HelpPageProfiles
 }

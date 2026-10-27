@@ -12,6 +12,9 @@ export function getThemeClasses(theme) {
         field: isDark
             ? "bg-white/5 border-white/10 text-white focus:border-purple-500/50"
             : "bg-slate-100 border-slate-200 text-slate-700 focus:border-blue-500/50",
+        solidField: isDark
+            ? "bg-slate-800 border-white/10 text-white focus:border-purple-500/50"
+            : "bg-slate-100 border-slate-200 text-slate-700 focus:border-blue-500/50",
         button: isDark
             ? "bg-white/5 border-white/10 text-white focus:border-purple-500/50"
             : "bg-slate-100 border-slate-200 text-slate-700 focus:border-blue-500/50",
@@ -21,6 +24,7 @@ export function getThemeClasses(theme) {
         label: isDark
             ? "text-slate-500"
             : "text-slate-400",
+        btnActive: "bg-blue-600 hover:bg-blue-500 text-white",
         btnCopy: isDark
             ? "bg-black/20 border-white/10"
             : "bg-white border-slate-200",
@@ -30,17 +34,46 @@ export function getThemeClasses(theme) {
         tempSection: isDark
             ? "bg-blue-600/5 border-blue-600/10"
             : "bg-blue-50 border-blue-100",
+        copyButton: isDark
+            ? "bg-[#1d293d] hover:bg-[#2a3a55] text-slate-300 hover:text-white"
+            : "bg-[#c1c4c7] hover:bg-[#d1d4d7] text-slate-700 hover:text-slate-900",
+
+        copyButtonCopied: "bg-green-600 text-white",
+        logoTitle: isDark
+            ? "text-white"
+            : "text-slate-900",
+        navItem: isDark
+            ? "text-slate-400 hover:bg-white/5 hover:text-white" 
+            : "text-slate-600 hover:bg-blue-600/10 hover:text-blue-600",
+        navPanel: isDark
+            ? "bg-[#0a0a0a] border-white/5"
+            : "bg-white border-slate-200",
         validationError: isDark
             ? "bg-red-500/5 border-red-500/20 text-red-400"
             : "bg-red-500/[0.02] border-red-200 text-red-700",
         divider: isDark
             ? "border-white/5"
             : "border-slate-200",
+        footer: isDark
+            ? "bg-[#080808]/90 border-white/5" 
+            : "bg-white/95 border-slate-200 shadow-2xl",
+        logText: isDark
+            ? "text-slate-300"
+            : "text-slate-700",
+        range: `
+            h-1.5
+            rounded-full
+            bg-slate-300
+            accent-blue-600
+        `,
+        lockPanel: isDark
+            ? "bg-amber-600 ring-amber-700 text-white"
+            : "bg-amber-500 ring-amber-600 text-white",
     };
 }
 
-export function getLaunchButtonStyle(isStartedSending, debugMode) {
-    if (isStartedSending) return "bg-red-600 shadow-red-600/40";
+export function getLaunchButtonStyle(isStarted, debugMode) {
+    if (isStarted) return "bg-red-600 shadow-red-600/40";
     if (debugMode) return "bg-amber-500 shadow-amber-500/40";
     return "bg-blue-600 shadow-blue-600/20";
 }

@@ -16,7 +16,6 @@ const UpdateModal = ({
   themeClasses,
   settings,
   updateConfig,
-  currentVersion,
   onInstallUpdate,
 }) => {
   if (!isOpen) return null;

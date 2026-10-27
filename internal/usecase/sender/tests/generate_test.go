@@ -1,6 +1,8 @@
 package sender_test
 
 import (
+	"strconv"
+
 	"github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
 )
 
@@ -22,7 +24,7 @@ func createParticipant(
 	}
 }
 
-func createSet(
+func realSet(
 	id int64,
 	p1 startgg.Participant,
 	p2 startgg.Participant,
@@ -31,7 +33,7 @@ func createSet(
 ) startgg.Nodes {
 
 	return startgg.Nodes{
-		Id:    id,
+		Id:    startgg.SetID(strconv.FormatInt(id, 10)),
 		State: state,
 		Round: round,
 
@@ -40,7 +42,7 @@ func createSet(
 			StreamSource: "https://twitch.tv/test",
 		},
 
-		Slots: []startgg.Slots{
+		Slots: []startgg.Slot{
 			{
 				Entrant: startgg.Entrant{
 					Participants: []startgg.Participant{
@@ -56,5 +58,17 @@ func createSet(
 				},
 			},
 		},
+	}
+}
+
+func previewSet(
+	key string, // example "preview_3435724_-3_0"
+	round int,
+) startgg.Nodes {
+	return startgg.Nodes{
+		Id:    startgg.SetID(key),
+		State: startgg.IsNotStarted,
+		Round: round,
+		Slots: []startgg.Slot{{}, {}},
 	}
 }

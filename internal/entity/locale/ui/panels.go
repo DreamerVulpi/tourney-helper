@@ -6,14 +6,42 @@ type Ui struct {
 	LogPanel                LogPanel
 	NotificationSystemPanel NotificationSystemPanel
 	DatabasePanel           DatabasePanel
+	WidgetBracketPanel      WidgetBracketPanel
+	ProfilesPanel           ProfilesPanel
+	IntegrationsPanel       IntegrationsPanel
 	ValidationAlertModal    ValidationAlertModal
 	ProgressModal           ProgressModal
 }
 
 type HeaderPanel struct {
-	Help   HelpModal
-	About  AboutModal
-	Update UpdateModal
+	Help              HelpModal
+	About             AboutModal
+	Update            UpdateModal
+	Authorization     IntegrationsPanel
+	MultiSelectClient MultiSelectClient
+}
+
+type ProfilesPanel struct {
+	MultiSelectLabel            string
+	Add                         string
+	Delete                      string
+	Duplicate                   string
+	Share                       string
+	ImportProfile               string
+	Placeholder                 string
+	DuplicateProfile            string
+	NameNewProfileLabel         string
+	PlaceholderProfile          string
+	ConfirmButtonDuplicateLabel string
+	SearchLabel                 string
+	NoItemsLabel                string
+	ErrorFillParams             string
+	OkButtonLabel               string
+	ImportSuccessTitle          string
+	ImportSuccessMsg            string
+	ExportSuccessTitle          string
+	ExportSuccessMsg            string
+	ValidationProfile           ValidationProfile
 }
 
 type SidePanel struct {
@@ -25,6 +53,9 @@ type SidePanel struct {
 	VersionLabel            string
 	LogsLabel               string
 	ClearButtonLabel        string
+	IntegrationsLabel       string
+	ProfilesLabel           string
+	ProfilesLockedHint      string
 }
 
 type NotificationSystemPanel struct {
@@ -62,4 +93,38 @@ type DatabasePanel struct {
 	TotalCountNotesInDBLabel       string
 	TotalCountBannedNotesInDBLabel string
 	TotalCountRatingParticipants   string
+}
+
+type WidgetBracketPanel struct {
+	UrlToBracketLabel     string
+	ListOfBracketsLabel   string
+	ListOfThemes          string
+	Start                 string
+	Stop                  string
+	HideTheStages         string
+	LinkOfWidget          string
+	ClearBackground       string
+	BracketDisplayMode    string
+	AllMode               string
+	WinnersMode           string
+	LosersMode            string
+	WidgetNotRunning      string
+	ClickStartDescription string
+	LoadBracket           string
+	FetchData             string
+	AutoRefresh           string
+	ValidationUrlBracket  ValidationUrlBracket
+}
+
+type IntegrationsPanel struct {
+	Platform              Platform
+	SignInButtonLabel     string
+	AuthorizeButtonLabel  string
+	AuthorizationStatuses AuthorizationStatuses
+	ClientsLabel          string
+	EmptyFieldHeader      string
+	EmptyFieldHint        string
+	ClientSettings        string
+	DeliveryMethodLabel   string
+	TourneyLabel          string
 }

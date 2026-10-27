@@ -1,6 +1,7 @@
 package sender_test
 
 import (
+	"strconv"
 	"testing"
 
 	"context"
@@ -36,7 +37,7 @@ func TestGetSetsData_Success(t *testing.T) {
 		sets: map[int64]map[int][]startgg.Nodes{
 			100: {
 				1: {
-					createSet(
+					realSet(
 						1,
 						createParticipant(1, "Player1", "p1"),
 						createParticipant(2, "Player2", "p2"),
@@ -199,7 +200,7 @@ func TestGetSetsData_ContextCanceled(t *testing.T) {
 		sets: map[int64]map[int][]startgg.Nodes{
 			100: {
 				1: {
-					createSet(
+					realSet(
 						1,
 						createParticipant(
 							1,
@@ -243,6 +244,26 @@ func TestGetSetsData_ContextCanceled(t *testing.T) {
 	}
 }
 
+// setWithEmptySlot создаёт реальный сет, у которого у одного из игроков
+// нет participants — чтобы проверить скип по "No contact data".
+// emptyP1=true → пустой slots[0], иначе пустой slots[1].
+func setWithEmptySlot(id int64, emptyP1 bool) startgg.Nodes {
+	p := createParticipant(2, "Player2", "player2")
+	slots := []startgg.Slot{
+		{Entrant: startgg.Entrant{Participants: []startgg.Participant{}}},
+		{Entrant: startgg.Entrant{Participants: []startgg.Participant{p}}},
+	}
+	if !emptyP1 {
+		slots[0], slots[1] = slots[1], slots[0]
+	}
+	return startgg.Nodes{
+		Id:    startgg.SetID(strconv.FormatInt(id, 10)),
+		State: startgg.IsNotStarted,
+		Round: 1,
+		Slots: slots,
+	}
+}
+
 func TestGetSetsData_NoParticipants(t *testing.T) {
 	client := &fakeStartggClient{
 		tournament: startgg.Tournament{
@@ -264,11 +285,11 @@ func TestGetSetsData_NoParticipants(t *testing.T) {
 			100: {
 				1: {
 					{
-						Id:    1,
+						Id:    startgg.SetID("1"),
 						State: 1,
 						Round: 1,
 
-						Slots: []startgg.Slots{
+						Slots: []startgg.Slot{
 							{
 								Entrant: startgg.Entrant{
 									Participants: []startgg.Participant{},
@@ -329,7 +350,7 @@ func TestGetSetsData_MultiplePages(t *testing.T) {
 		sets: map[int64]map[int][]startgg.Nodes{
 			100: {
 				1: {
-					createSet(
+					realSet(
 						1,
 						createParticipant(1, "Player1", "p1"),
 						createParticipant(2, "Player2", "p2"),
@@ -339,7 +360,7 @@ func TestGetSetsData_MultiplePages(t *testing.T) {
 				},
 
 				2: {
-					createSet(
+					realSet(
 						2,
 						createParticipant(3, "Player3", "p3"),
 						createParticipant(4, "Player4", "p4"),
@@ -395,7 +416,7 @@ func TestGetSetsData_FinalsDetected(t *testing.T) {
 		sets: map[int64]map[int][]startgg.Nodes{
 			100: {
 				1: {
-					createSet(
+					realSet(
 						1,
 						createParticipant(1, "Player1", "p1"),
 						createParticipant(2, "Player2", "p2"),
@@ -460,7 +481,7 @@ func TestGetSetsData_NotFinals(t *testing.T) {
 		sets: map[int64]map[int][]startgg.Nodes{
 			100: {
 				1: {
-					createSet(
+					realSet(
 						1,
 						createParticipant(1, "Player1", "p1"),
 						createParticipant(2, "Player2", "p2"),
@@ -528,7 +549,7 @@ func TestGetSetsData_DebugMode(t *testing.T) {
 		sets: map[int64]map[int][]startgg.Nodes{
 			100: {
 				1: {
-					createSet(
+					realSet(
 						1,
 						createParticipant(1, "Player1", "p1"),
 						createParticipant(2, "Player2", "p2"),

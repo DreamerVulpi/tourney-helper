@@ -18,13 +18,12 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
+// TODO: Add support to another platforms
 func (a *App) LoadListPlayers(path string, selectedTournamentPlatform string, gameName string, isBan bool) (*app.ImportListPlayersResponse, error) {
 	switch strings.ToLower(selectedTournamentPlatform) {
 	case "startgg":
 		if a.TournamentClient == nil || a.TournamentClient.HTTPClient == nil {
 			logger.Log(entityLogger.Error, "app | tournament client or http client isn't inittialized (nil)")
-			logger.Log(entityLogger.Info, fmt.Sprintf("StartggClient: %v", a.TournamentClient))
-			logger.Log(entityLogger.Info, fmt.Sprintf("StartggClient: %v", a.MessengerClient))
 			return nil, fmt.Errorf("tournament client or http client isn't inittialized (nil)")
 		}
 

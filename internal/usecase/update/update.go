@@ -22,7 +22,7 @@ func (u *Updater) Run(pid int, source string, target string, exeName string) err
 	if err := u.waitProcess(pid); err != nil {
 		return err
 	}
-	//2
+	// 2
 	if err := u.copyFiles(source, target); err != nil {
 		return err
 	}
@@ -84,30 +84,6 @@ func (u *Updater) startApplication(target string, exeName string) error {
 	cmd.Dir = target
 	return cmd.Start()
 }
-
-// func (u *Updater) startApplication(target string, exeName string) error {
-// 	exePath := filepath.Join(target, exeName)
-
-// 	logger.Log(entityLogger.Info, "EXE PATH: "+exePath)
-
-// 	cmd := exec.Command(exePath)
-// 	cmd.Dir = target
-
-// 	if err := cmd.Start(); err != nil {
-// 		logger.Log(
-// 			entityLogger.Error,
-// 			"START ERROR: "+err.Error(),
-// 		)
-// 		return err
-// 	}
-
-// 	logger.Log(
-// 		entityLogger.Info,
-// 		fmt.Sprintf("STARTED PID: %d", cmd.Process.Pid),
-// 	)
-
-// 	return nil
-// }
 
 func (u *Updater) cleanup(source string) error {
 	return os.RemoveAll(source)
