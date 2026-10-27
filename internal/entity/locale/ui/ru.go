@@ -100,6 +100,10 @@ var Ru = Ui{
 			DefaultLocale:                "Стандартная локаль",
 			RequireMsgMessengerPlatform:  "Для авторизации требуется заполнить: Client ID, Client Secret, Guild ID и Bot Token",
 			RequireMsgTournamentPlatform: "Для авторизации требуется заполнить: Client ID и Client Secret",
+			DeleteClientTitle:            "Удалить клиент",
+			DeleteClientMsg1:             "Вы уверены, что хотите удалить клиента",
+			DeleteClientMsg2:             "? Это действие нельзя отменить, все данные по этому клиенту будут удалены.",
+			DeleteButtonLabel:            "Подтвердить",
 		},
 	},
 	WidgetBracketPanel: WidgetBracketPanel{

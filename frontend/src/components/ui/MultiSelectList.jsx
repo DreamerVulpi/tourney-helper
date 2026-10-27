@@ -46,7 +46,6 @@ export function MultiSelectList({
   const inputRef = useRef(null);
   const renameInputRef = useRef(null);
 
-  // --- отложенное открытие (debounce) ---
   const openDelayed = useMemo(
     () =>
       debounce(() => {
@@ -56,7 +55,6 @@ export function MultiSelectList({
     []
   );
 
-  // --- клик вне — закрыть ---
   useEffect(() => {
     const onDocClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
@@ -87,7 +85,6 @@ export function MultiSelectList({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, editing]);
 
-  // --- автофокус на поиск ---
   useEffect(() => {
     if (open && searchable) {
       const t = setTimeout(() => inputRef.current?.focus(), 0);
@@ -95,7 +92,6 @@ export function MultiSelectList({
     }
   }, [open, searchable]);
 
-  // --- автофокус на rename input ---
   useEffect(() => {
     if (editing) {
       const t = setTimeout(() => {
@@ -191,7 +187,6 @@ export function MultiSelectList({
   return (
     <div ref={ref} className="relative w-full" style={style}>
       {editing ? (
-        // ============== режим редактирования ==============
         <div className="w-full">
           <div
             className={`
@@ -235,7 +230,6 @@ export function MultiSelectList({
           )}
         </div>
       ) : (
-        // ============== обычный режим ==============
         <button
           type="button"
           onClick={handleButtonClick}
@@ -266,7 +260,6 @@ export function MultiSelectList({
                 }
               }}
               className="shrink-0 p-1 rounded hover:bg-white/10 cursor-pointer"
-              title="Переименовать"
             >
               <Pencil size={12} className="opacity-60" />
             </span>

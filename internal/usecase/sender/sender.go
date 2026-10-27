@@ -221,7 +221,7 @@ func (ns *NotificationSystem) Process(ctx context.Context, slug string) error {
 
 	sent := ns.MessagesSentCurrentCycle.Load()
 	if sent+sendErrors != total {
-		logger.Log(entityLogger.Warning, fmt.Sprintf(
+		logger.Log(entityLogger.Debug, fmt.Sprintf(
 			"Process | metrics mismatch: total=%d sent=%d errors=%d",
 			total, sent, sendErrors,
 		))

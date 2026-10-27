@@ -31,7 +31,6 @@ func parseLogLine(line string) (entityLogger.LogEntry, bool) {
 	case entityLogger.Info,
 		entityLogger.Success,
 		entityLogger.Warning,
-		entityLogger.Debug,
 		entityLogger.Error:
 
 		if strings.Contains(strings.ToLower(entry.Msg), "context canceled") {

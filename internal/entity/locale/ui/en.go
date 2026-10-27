@@ -146,6 +146,10 @@ var En = Ui{
 			LaunchMsg:                    "Authorisation initiated on",
 			SuccessMsg:                   "Authorisation successful on",
 			ErrMsg:                       "Authorisation error. Please check that the details you entered are correct",
+			DeleteClientTitle:            "Delete a client",
+			DeleteClientMsg1:             "Are you sure you want to delete the client",
+			DeleteClientMsg2:             "? This action cannot be undone, all data for this customer will be deleted.",
+			DeleteButtonLabel:            "Confirm",
 		},
 	},
 	HeaderPanel: HeaderPanel{

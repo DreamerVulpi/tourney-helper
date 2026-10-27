@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from "react";
 import {
-  UserCog,
   Plus,
   Key,
   Languages,
@@ -13,7 +12,7 @@ import {
   Blocks,
   Trophy,
   Send,
-  Gamepad2,
+  Trash2,
 } from "lucide-react";
 import { Field } from "../components/ui/Field.jsx";
 import { PlatformBtn } from "../components/ui/PlatformButton.jsx";
@@ -35,6 +34,7 @@ import {
 import { EmptyState } from "../components/ui/EmptyState.jsx";
 import { DeleteClientToken } from "../../wailsjs/go/application/App";
 import { TabbedSection } from "../components/ui/tabbedSection.jsx";
+import ConfirmModal from "../components/modals/ConfirmModal.jsx";
 
 // ============================================================
 // Компонент слота
@@ -163,6 +163,9 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
   // Стор
   // ============================================================
   const authorizations = useAppStore((s) => s.authorizations);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [slotToDelete, setSlotToDelete] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null);
 
   const activeAuthorizationSettings = useAppStore(
     (s) => s.activeAuthorizationSettings
@@ -322,27 +325,68 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
     });
   };
 
-  const handleSlotRemove = async (index) => {
+  // const handleSlotRemove = async (index) => {
+  //   try {
+  //     await DeleteClientToken(activeAuthorizationSettings, index);
+  //   } catch (err) {
+  //     console.warn("[handleSlotRemove] failed to delete token file:", err);
+  //   }
+
+  //   updateConfig("authorizations", {
+  //     [activeAuthorizationSettings]: updatePlatformSlot(
+  //       getPlatform(activeAuthorizationSettings),
+  //       index,
+  //       null
+  //     ),
+  //   });
+
+  //   if (activeSlotIndex === index) {
+  //     setActiveSlotIndex(null);
+  //     setCategorySelectionIntegration(activeCategory, {
+  //       platform: activeAuthorizationSettings,
+  //       slotIndex: null,
+  //     });
+  //   }
+  // };
+    // 1. Открывает модалку
+  const handleSlotRemoveClick = (index) => {
+    setSlotToDelete(index);
+    setDeleteConfirmOpen(true);
+  };
+
+  // 2. Выполняет удаление после подтверждения
+  const confirmSlotRemove = async () => {
+    if (slotToDelete === null) return;
+    
+    const index = slotToDelete;
+    setPendingAction("delete");
+
     try {
       await DeleteClientToken(activeAuthorizationSettings, index);
-    } catch (err) {
-      console.warn("[handleSlotRemove] failed to delete token file:", err);
-    }
 
-    updateConfig("authorizations", {
-      [activeAuthorizationSettings]: updatePlatformSlot(
-        getPlatform(activeAuthorizationSettings),
-        index,
-        null
-      ),
-    });
-
-    if (activeSlotIndex === index) {
-      setActiveSlotIndex(null);
-      setCategorySelectionIntegration(activeCategory, {
-        platform: activeAuthorizationSettings,
-        slotIndex: null,
+      updateConfig("authorizations", {
+        [activeAuthorizationSettings]: updatePlatformSlot(
+          getPlatform(activeAuthorizationSettings),
+          index,
+          null
+        ),
       });
+
+      if (activeSlotIndex === index) {
+        setActiveSlotIndex(null);
+        setCategorySelectionIntegration(activeCategory, {
+          platform: activeAuthorizationSettings,
+          slotIndex: null,
+        });
+      }
+      
+      setDeleteConfirmOpen(false); // Закрываем модалку при успехе
+    } catch (err) {
+      console.warn("[confirmSlotRemove] failed to delete token file:", err);
+      // Если есть showError для ValidationModal, можно вызвать его здесь
+    } finally {
+      setPendingAction(null);
+      setSlotToDelete(null);
     }
   };
 
@@ -571,7 +615,7 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
                       isActive={activeSlotIndex === index}
                       client={client}
                       onSelect={() => handleSlotSelect(index)}
-                      onRemove={() => handleSlotRemove(index)}
+                      onRemove={() => handleSlotRemoveClick(index)}
                       onNameChange={(value) => handleSlotNameChange(index, value)}
                       locale={locale.Platform.AuthorizationStatuses}
                       themeClasses={themeClasses}
@@ -762,6 +806,32 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
           </div>
         </div>
       </TabbedSection>
+      <ConfirmModal
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setSlotToDelete(null);
+        }}
+        onConfirm={confirmSlotRemove}
+        loading={pendingAction === "delete"}
+        title={`${locale.Platform.DeleteClientTitle} #${slotToDelete !== null ? slotToDelete + 1 : ""}?`}
+        message={
+          <>
+            {locale.Platform.DeleteClientMsg1}{" "}
+            <span className="text-red-500 font-black italic">
+              {getSlots(activeAuthorizationSettings)[slotToDelete]?.name || `Client #${slotToDelete + 1}`}
+            </span>{" "}
+            {locale.Platform.DeleteClientMsg2}
+          </>
+        }
+        confirmLabel={locale.Platform.DeleteButtonLabel}
+        icon={Trash2}
+        iconColor="red"
+        iconColorClass="text-red-500"
+        danger
+        theme={useAppStore.getState().theme}
+        themeClasses={themeClasses}
+    />
     </PanelTemplate>
   );
 };

@@ -110,7 +110,7 @@ func (a *App) LaunchWidgetBracket(
 		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
-	logger.Log(entityLogger.Info,
+	logger.Log(entityLogger.Debug,
 		fmt.Sprintf("Widget will open bracket ID: %s", cfgWidgets.Bracket.BracketId))
 
 	_, cancel := context.WithCancel(context.Background())

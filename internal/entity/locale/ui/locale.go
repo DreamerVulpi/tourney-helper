@@ -305,6 +305,10 @@ type Platform struct {
 	ParamsBot                    string
 	ChooseClient                 string
 	MultiSelectClient            MultiSelectClient
+	DeleteClientTitle            string
+	DeleteClientMsg1             string
+	DeleteClientMsg2             string
+	DeleteButtonLabel            string
 }
 
 type MultiSelectClient struct {

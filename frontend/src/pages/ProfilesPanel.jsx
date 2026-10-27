@@ -73,7 +73,9 @@ const ProfilesPanel = ({ locale }) => {
     try {
       const name = await importNew();
       setImportedName(name);
-      showSuccess();
+      if (importedName) {
+        showSuccess();
+      }
     } catch (e) {
       showError(String(e?.message ?? e ?? "Unable to import the profile"));
     }

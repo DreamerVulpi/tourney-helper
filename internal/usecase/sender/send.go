@@ -52,7 +52,7 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P1 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin, errP1.Error()))
 	}
 	if errP1 == nil {
-		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
+		logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P1 notification successful (%v) to test contact: %v", set.SetID, contactP1.GameNickname, ns.TestContact.MessengerLogin))
 	}
 	ns.MessagesSentCurrentCycle.Add(1)
 
@@ -71,7 +71,7 @@ func (ns *NotificationSystem) sendDebugNotifications(ctx context.Context, set en
 		logger.Log(entityLogger.Error, fmt.Sprintf("Set %d P2 notification failed (%v) to test contact: %v. Error: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin, errP2.Error()))
 	}
 	if errP2 == nil {
-		logger.Log(entityLogger.Debug, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
+		logger.Log(entityLogger.Success, fmt.Sprintf("Set %d P2 notification successful (%v) to test contact: %v", set.SetID, contactP2.GameNickname, ns.TestContact.MessengerLogin))
 	}
 	ns.MessagesSentCurrentCycle.Add(1)
 }
