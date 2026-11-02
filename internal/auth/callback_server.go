@@ -117,6 +117,21 @@ func (o *OAuthCallbackServer) Register(path string, state string, codeChan chan 
 			})
 			return
 		}
+
+		if errParam := r.URL.Query().Get("error"); errParam != "" {
+			errDesc := r.URL.Query().Get("error_description")
+
+			writePage(w, http.StatusBadRequest, pageData{
+				Page:      texts.ErrorCantAuth,
+				AutoClose: texts.AutoClose,
+				Success:   false,
+			})
+
+			codeChan <- ""
+			logger.Log(entityLogger.Error, fmt.Sprintf("OAuth error: %s - %s", errParam, errDesc))
+			return
+		}
+
 		code := r.URL.Query().Get("code")
 		if code == "" {
 			writePage(w, http.StatusBadRequest, pageData{
@@ -124,8 +139,10 @@ func (o *OAuthCallbackServer) Register(path string, state string, codeChan chan 
 				AutoClose: texts.AutoClose,
 				Success:   false,
 			})
+			codeChan <- ""
 			return
 		}
+
 		writePage(w, http.StatusOK, pageData{
 			Page:      texts.Success,
 			AutoClose: texts.AutoClose,

@@ -12,6 +12,7 @@ export const useMessengerAuth = ({
   authorizations,
   updateConfig,
   updatePlatformSlot,
+  debouncedSaveAuthorizations, // ← добавь, если ещё не передан
 }) => {
   const { markSlotStatus } = useSlotStatus({
     authorizations,
@@ -51,6 +52,8 @@ export const useMessengerAuth = ({
         return;
       }
 
+      debouncedSaveAuthorizations?.flush?.();
+
       await markSlotStatus(messengerName, slotIndex, AUTH_STATUS.PENDING, "");
 
       try {
@@ -61,14 +64,6 @@ export const useMessengerAuth = ({
           slotIndex,
         });
 
-        await markSlotStatus(
-          messengerName,
-          slotIndex,
-          AUTH_STATUS.AUTHORIZED,
-          ""
-        );
-
-        setAuthFlags((prev) => ({ ...prev, [messengerName]: true }));
       } catch (err) {
         console.error(err);
 
@@ -76,14 +71,21 @@ export const useMessengerAuth = ({
         await markSlotStatus(
           messengerName,
           slotIndex,
-          AUTH_STATUS.ERROR,
+          AUTH_STATUS.UNAUTHORIZED,
           reason
         );
 
         setAuthFlags((prev) => ({ ...prev, [messengerName]: false }));
       }
     },
-    [authorizations, locale, markSlotStatus, setAuthFlags, setValidationAlert]
+    [
+      authorizations,
+      locale,
+      markSlotStatus,
+      setAuthFlags,
+      setValidationAlert,
+      debouncedSaveAuthorizations,
+    ]
   );
 
   return { handleMessengerClick, authorizeMessengerSlot };

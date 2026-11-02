@@ -158,7 +158,7 @@ const SlotCard = ({
 // ============================================================
 // Основной компонент страницы
 // ============================================================
-const IntegrationsPlate = ({ locale, updateConfig }) => {
+const IntegrationsPlate = ({ locale, updateConfig, debouncedSaveAuthorizations }) => {
   // ============================================================
   // Стор
   // ============================================================
@@ -324,37 +324,11 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
       slotIndex: index,
     });
   };
-
-  // const handleSlotRemove = async (index) => {
-  //   try {
-  //     await DeleteClientToken(activeAuthorizationSettings, index);
-  //   } catch (err) {
-  //     console.warn("[handleSlotRemove] failed to delete token file:", err);
-  //   }
-
-  //   updateConfig("authorizations", {
-  //     [activeAuthorizationSettings]: updatePlatformSlot(
-  //       getPlatform(activeAuthorizationSettings),
-  //       index,
-  //       null
-  //     ),
-  //   });
-
-  //   if (activeSlotIndex === index) {
-  //     setActiveSlotIndex(null);
-  //     setCategorySelectionIntegration(activeCategory, {
-  //       platform: activeAuthorizationSettings,
-  //       slotIndex: null,
-  //     });
-  //   }
-  // };
-    // 1. Открывает модалку
   const handleSlotRemoveClick = (index) => {
     setSlotToDelete(index);
     setDeleteConfirmOpen(true);
   };
 
-  // 2. Выполняет удаление после подтверждения
   const confirmSlotRemove = async () => {
     if (slotToDelete === null) return;
     
@@ -380,10 +354,9 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
         });
       }
       
-      setDeleteConfirmOpen(false); // Закрываем модалку при успехе
+      setDeleteConfirmOpen(false);
     } catch (err) {
       console.warn("[confirmSlotRemove] failed to delete token file:", err);
-      // Если есть showError для ValidationModal, можно вызвать его здесь
     } finally {
       setPendingAction(null);
       setSlotToDelete(null);
@@ -403,6 +376,7 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
     activeSlotIndex,
     updateConfig,
     updatePlatformSlot,
+    debouncedSaveAuthorizations
   });
 
   const { handleTournamentPlatformClick, authorizeTournamentSlot } =
@@ -416,6 +390,7 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
       activeSlotIndex,
       updateConfig,
       updatePlatformSlot,
+      debouncedSaveAuthorizations
     });
 
   const getAuthorizedCount = (id) =>
@@ -492,16 +467,13 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
 
     const { categorySelectionIntegration, setCategorySelectionIntegration  } = useAppStore.getState();
 
-    // Сохраняем текущее
     setCategorySelectionIntegration(activeCategory, {
       platform: activeAuthorizationSettings,
       slotIndex: activeSlotIndex,
     });
 
-    // Переключаем
     setActiveCategoryIntegration(id);
 
-    // Читаем свежее из стора
     const saved = categorySelectionIntegration[id];
     if (saved?.platform) {
       setActiveAuthorizationSettings(saved.platform);
@@ -587,7 +559,6 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
               </div>
             ) : (
               <div className="flex flex-col h-full min-h-0">
-                {/* Заголовок */}
                 <div className="flex items-center justify-between border-b pb-2 mb-4 border-current/5 shrink-0">
                   <h4 className="text-[0.625rem] font-black uppercase text-amber-500 italic flex items-center gap-3">
                     <Blocks size={12} />
@@ -606,7 +577,7 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
                   </button>
                 </div>
 
-                {/* Сетка 5 слотов */}
+                {/* 5 SLOTS */}
                 <div className="grid grid-cols-5 gap-2 shrink-0">
                   {getSlots(activeAuthorizationSettings).map((client, index) => (
                     <SlotCard
@@ -623,7 +594,6 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
                   ))}
                 </div>
 
-                {/* ===== Форма для выбранного слота ===== */}
                 {activeSlotIndex !== null && (
                   <div className="flex-1 min-h-0 custom-scrollbar pt-3 pr-2 space-y-3 animate-fadeIn">
                     <div className="flex items-center gap-2">
@@ -633,7 +603,7 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
                       <div className="flex-1 h-px bg-slate-700/50" />
                     </div>
 
-                    {/* --- ФОРМА ДЛЯ START.GG / CHALLONGE --- */}
+                    {/* --- START.GG / CHALLONGE / TOORNAMENT --- */}
                     {(activeAuthorizationSettings === "startgg" ||
                       activeAuthorizationSettings === "challonge") && (
                       <div className="flex flex-col min-h-0 gap-3">
@@ -688,7 +658,7 @@ const IntegrationsPlate = ({ locale, updateConfig }) => {
                       </div>
                     )}
 
-                    {/* --- ФОРМА ДЛЯ DISCORD / TELEGRAM --- */}
+                    {/* --- DISCORD / TELEGRAM --- */}
                     {(activeAuthorizationSettings === "discord" ||
                       activeAuthorizationSettings === "telegram") && (
                       <>

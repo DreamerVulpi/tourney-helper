@@ -46,6 +46,10 @@ func NewStartGGRendererWithThemes(themesDir string) *StartGGRenderer {
 	}
 }
 
+func EnsureTheme(tp *widget.ThemeProvider) {
+	ensureStartGGTheme(tp)
+}
+
 func NewStartGGRendererWithThemeProvider(tp *widget.ThemeProvider) *StartGGRenderer {
 	tmpl := template.Must(
 		template.ParseFS(templateFS, "template.html", "bracketLayout.js"),

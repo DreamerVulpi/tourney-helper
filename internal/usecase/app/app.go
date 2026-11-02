@@ -19,6 +19,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
 	widgets "github.com/dreamervulpi/tourney-helper/internal/widgets"
 	"github.com/dreamervulpi/tourney-helper/internal/widgets/renderer"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/renderer/startgg"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -146,6 +147,11 @@ func (a *App) ValidateTournamentURL(rawURL string) (app.ValidationResult, error)
 		Valid:    r.Valid,
 		Platform: r.Platform,
 	}, nil
+}
+
+func (a *App) EnsureThemes() error {
+	startgg.EnsureTheme(a.ThemeProvider)
+	return nil
 }
 
 func (a *App) RestoreClientStatuses() (config.AuthorizationsCfg, error) {

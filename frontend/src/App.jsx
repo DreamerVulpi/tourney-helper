@@ -19,6 +19,7 @@ import { useConfigUpdater } from "./hooks/App/useConfigUpdater.jsx";
 import { getThemeClasses } from "./utils/themeClasses.jsx";
 import { useThemeClasses } from "./hooks/App/useThemeClasses";
 import { useCheckUpdate } from "./hooks/App/useCheckUpdate.jsx";
+import { useAuthEvents } from "./hooks/App/useAuthEvents.jsx";
 import { InstallUpdate } from "../wailsjs/go/application/App.js";
 import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
 import { useBracketFlagsSync } from "./hooks/App/useBracketFlagsSync.jsx";
@@ -35,7 +36,6 @@ const App = () => {
 
   // ---- Configs ----
   const settings      = useAppStore((s) => s.settings);
-
 
   // Scale UI
   const scale = useScale();
@@ -56,6 +56,7 @@ const App = () => {
     debouncedSaveTools,
   });
 
+  useAuthEvents();
   useBracketFlagsSync();
 
   const toolsLocked = useToolsLocked();
@@ -190,21 +191,6 @@ const App = () => {
     };
   }, [locale]);
 
-  useEffect(() => {
-    const unsubscribe = EventsOn("auth:request_url", (url) => {
-      const authWindow = window.open(url, "_blank");
-      
-      if (!authWindow) {
-        // Если браузер заблокировал окно (попап-блокировщик)
-        alert("Пожалуйста, разрешите всплывающие окна для этого приложения, чтобы авторизоваться.");
-      }
-    });
-
-    return () => {
-      EventsOff("auth:request_url");
-    };
-  }, []);
-
   const iframeRef_WidgetBracket = useRef(null);
 
   return (
@@ -282,6 +268,7 @@ const App = () => {
                   <IntegrationsPlate
                     locale={locale.IntegrationsPanel}
                     updateConfig={updateConfig}
+                    debouncedSaveAuthorizations={debouncedSaveAuthorizations}
                   />
                 )}
                 {activeTab === "profiles" && (
