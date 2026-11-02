@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 function calculateScale(width) {
     if (width >= 3840) return 2; // 4K
     if (width >= 2560) return 1.5; // 2K
-    if (width >= 1920) return 1; // 1080p
-    if (width >= 1280) return 0.85; // 720p
-    return 0.75
+    if (width >= 1920) return 1.2; // 1080p
+    if (width >= 1280) return 1; // 720p
+    return 0.85
 }
 
 export function useScale() {

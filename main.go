@@ -8,6 +8,7 @@ import (
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/auth"
+	widget "github.com/dreamervulpi/tourney-helper/internal/widgets"
 
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	application "github.com/dreamervulpi/tourney-helper/internal/usecase/app"
@@ -66,6 +67,11 @@ func main() {
 	widgets.InitDirectories()
 	app.WidgetServer = widgets.NewServer()
 
+	app.ThemeProvider = widget.NewThemeProvider("")
+	if err := app.EnsureThemes(); err != nil {
+		logger.Log(entityLogger.Debug, "themes init: "+err.Error())
+	}
+
 	if errGetProfile := app.GetActiveProfile(); errGetProfile != nil {
 		logger.Log(entityLogger.Error, errGetProfile.Error())
 	}
@@ -79,6 +85,8 @@ func main() {
 
 	errWailsRun := wails.Run(&options.App{
 		Title:     "TourneyHelper",
+		Width:     1280,
+		Height:    720,
 		MinWidth:  1280,
 		MinHeight: 720,
 		AssetServer: &assetserver.Options{

@@ -55,7 +55,7 @@ var Ru = Ui{
 		ExportSuccessTitle:          "Экспорт завершен",
 		ExportSuccessMsg:            "Профиль успешно сохранен по пути:",
 		ImportSuccessTitle:          "Импорт завершен",
-		ImportSuccessMsg:            "Профиль был успешно импортирован как:",
+		ImportSuccessMsg:            "Профиль был успешно импортирован",
 		ValidationProfile: ValidationProfile{
 			NameCannotBeEmpty:   "Имя не может быть пустым",
 			NameTooLong:         "Слишком длинное имя",

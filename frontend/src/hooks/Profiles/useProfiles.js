@@ -112,17 +112,19 @@ export function useProfiles() {
   }, []);
 
   const importNew = useCallback(async () => {
-    setError(null);
-    try {
-      const importedName = await api.importProfile();
-      if (importedName) {
-        await refresh();
+      setError(null);
+      try {
+          const importedName = await api.importProfile();
+          console.log("[importNew] importedName:", importedName, "type:", typeof importedName);
+          if (importedName) {
+              await refresh();
+          }
+          return importedName;
+      } catch (e) {
+          console.error("[importNew] error:", e);
+          setError(String(e));
+          throw e;
       }
-      return importedName;
-    } catch (e) {
-      setError(String(e));
-      throw e;
-    }
   }, [refresh]);
 
   return { profiles, active, loading, error, refresh, switchTo, add, remove, duplicate, rename, exportCurrent, importNew };

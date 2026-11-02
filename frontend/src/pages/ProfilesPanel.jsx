@@ -32,7 +32,6 @@ const ProfilesPanel = ({ locale }) => {
   const confirmMsgParts = locale.ValidationProfile?.ConfirmMsg?.split("%v");
 
   const [successOpen, setSuccessOpen] = useState(false);
-  const [importedName, setImportedName] = useState("");
 
   const [errorMessage, setErrorMessage] = useState(null);
   const [errorOpen, setErrorOpen] = useState(false);
@@ -71,13 +70,12 @@ const ProfilesPanel = ({ locale }) => {
   // --- Импорт ---
   const handleImport = useCallback(async () => {
     try {
-      const name = await importNew();
-      setImportedName(name);
-      if (importedName) {
+        const name = await importNew();
+        console.log("[handleImport] name:", name, "type:", typeof name);
         showSuccess();
-      }
     } catch (e) {
-      showError(String(e?.message ?? e ?? "Unable to import the profile"));
+        console.error("[handleImport] error:", e);
+        showError(String(e?.message ?? e ?? "Unable to import the profile"));
     }
   }, [importNew, showError, showSuccess, locale]);
  
@@ -258,7 +256,7 @@ const ProfilesPanel = ({ locale }) => {
     <SuccessModal
       isOpen={successOpen}
       onClose={() => setSuccessOpen(false)}
-      message={`${locale.ImportSuccessMsg} \"${importedName}\"`}
+      message={`${locale.ImportSuccessMsg}`}
       locale={locale}
       themeClasses={themeClasses}
     />

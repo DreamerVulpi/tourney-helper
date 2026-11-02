@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// SetSlotStatus устанавливает статус слота.
 func (p *PlatformAuthorizations) SetSlotStatus(index int, status AuthStatus, reason string) {
 	if index < 0 || index >= len(p.Slots) {
 		return
@@ -20,7 +19,6 @@ func (p *PlatformAuthorizations) SetSlotStatus(index int, status AuthStatus, rea
 	}
 }
 
-// GetSlotStatus возвращает статус слота.
 func (p *PlatformAuthorizations) GetSlotStatus(index int) AuthStatus {
 	if index < 0 || index >= len(p.Slots) {
 		return AuthStatusUnknown
@@ -28,7 +26,6 @@ func (p *PlatformAuthorizations) GetSlotStatus(index int) AuthStatus {
 	return p.Slots[index].Status
 }
 
-// CountByStatus — сколько слотов в заданном статусе.
 func (p *PlatformAuthorizations) CountByStatus(status AuthStatus) int {
 	n := 0
 	for _, s := range p.Slots {
@@ -39,19 +36,14 @@ func (p *PlatformAuthorizations) CountByStatus(status AuthStatus) int {
 	return n
 }
 
-// HasAuthorized возвращает true, если есть хотя бы один авторизованный слот.
 func (p *PlatformAuthorizations) HasAuthorized() bool {
 	return p.CountByStatus(AuthStatusAuthorized) > 0
 }
 
-// IsSlotAuthorized — короткий хелпер для проверки.
 func IsSlotAuthorized(c ClientCredentials) bool {
 	return c.Status == AuthStatusAuthorized
 }
 
-// GetSlotWithIndex возвращает слот по индексу и ok=false, если индекс вне границ.
-// В отличие от GetActiveSlotWithIndex, не проверяет IsSlotOccupied —
-// эту проверку делает вызывающая сторона через .Token/.ClientID и т.п.
 func (p PlatformAuthorizations) GetSlotWithIndex(index int) (ClientCredentials, bool) {
 	if index < 0 || index >= len(p.Slots) {
 		return ClientCredentials{}, false
@@ -141,8 +133,6 @@ func EnsureClientDir(profileName string) error {
 	return os.MkdirAll(dir, 0755)
 }
 
-// GetActiveSlotWithIndex возвращает активный слот и его индекс.
-// Если активный слот не задан или пуст — ok=false.
 func (p PlatformAuthorizations) GetActiveSlotWithIndex() (ClientCredentials, int, bool) {
 	if p.ActiveSlot < 0 || p.ActiveSlot >= len(p.Slots) {
 		return ClientCredentials{}, -1, false
@@ -154,7 +144,6 @@ func (p PlatformAuthorizations) GetActiveSlotWithIndex() (ClientCredentials, int
 	return c, p.ActiveSlot, true
 }
 
-// GetActiveClientCredentialsWithIndex — удобный хелпер для ConfigAuthorizations.
 func (c AuthorizationsCfg) GetActiveClientCredentialsWithIndex(platformID string) (ClientCredentials, int, bool) {
 	switch platformID {
 	case "startgg":

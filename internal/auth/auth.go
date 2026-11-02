@@ -125,8 +125,6 @@ func GetTokenFromFile(filename string) (*oauth2.Token, error) {
 	return token, nil
 }
 
-// StartAuth инициализирует OAuth-флоу и возвращает URL для открытия в браузере,
-// а также канал, в который придет код авторизации.
 func (ac *AuthClient) StartAuth(ctx context.Context) (string, chan string, error) {
 	if ac.Config == nil {
 		return "", nil, fmt.Errorf("Config is nil. Check your Get...Oauth2 functions")
@@ -145,13 +143,16 @@ func (ac *AuthClient) StartAuth(ctx context.Context) (string, chan string, error
 	return authURL, codeChan, nil
 }
 
-// FinishAuth ожидает код и обменивает его на токен.
 func (ac *AuthClient) FinishAuth(ctx context.Context, codeChan chan string) error {
 	var code string
 	select {
 	case code = <-codeChan:
 	case <-ctx.Done():
 		return ctx.Err()
+	}
+
+	if code == "" {
+		return fmt.Errorf("OAuth failed: no code received (provider returned an error)")
 	}
 
 	token, err := ac.Config.Exchange(ctx, code)
@@ -168,8 +169,6 @@ func (ac *AuthClient) FinishAuth(ctx context.Context, codeChan chan string) erro
 	return nil
 }
 
-// Init проверяет наличие токена на диске. Если токена нет — запускает OAuth.
-// Используется в основном для фоновых вызовов (например, при старте приложения).
 func (ac *AuthClient) Init(ctx context.Context) error {
 	if ac.Config == nil {
 		return fmt.Errorf("Config is nil. Check your Get...Oauth2 functions")

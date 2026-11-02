@@ -55,7 +55,7 @@ var En = Ui{
 		ExportSuccessTitle:          "Export complete",
 		ExportSuccessMsg:            "The profile has been successfully saved to the following location:",
 		ImportSuccessTitle:          "Import complete",
-		ImportSuccessMsg:            "The profile was successfully imported as:",
+		ImportSuccessMsg:            "The profile was successfully imported",
 		ValidationProfile: ValidationProfile{
 			NameCannotBeEmpty:   "The name cannot be empty",
 			NameTooLong:         "The name is too long",

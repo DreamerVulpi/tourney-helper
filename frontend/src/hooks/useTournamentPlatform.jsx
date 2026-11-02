@@ -12,6 +12,7 @@ export const useTournamentPlatform = ({
   authorizations,
   updateConfig,
   updatePlatformSlot,
+  debouncedSaveAuthorizations, // ← добавь
 }) => {
   const { markSlotStatus } = useSlotStatus({
     authorizations,
@@ -51,6 +52,8 @@ export const useTournamentPlatform = ({
         return;
       }
 
+      debouncedSaveAuthorizations?.flush?.();
+
       await markSlotStatus(platformName, slotIndex, AUTH_STATUS.PENDING, "");
 
       try {
@@ -59,15 +62,6 @@ export const useTournamentPlatform = ({
           secretClient,
           slotIndex,
         });
-
-        await markSlotStatus(
-          platformName,
-          slotIndex,
-          AUTH_STATUS.AUTHORIZED,
-          ""
-        );
-
-        setAuthFlags((prev) => ({ ...prev, [platformName]: true }));
       } catch (err) {
         console.error(err);
 
@@ -75,14 +69,21 @@ export const useTournamentPlatform = ({
         await markSlotStatus(
           platformName,
           slotIndex,
-          AUTH_STATUS.ERROR,
+          AUTH_STATUS.UNAUTHORIZED,
           reason
         );
 
         setAuthFlags((prev) => ({ ...prev, [platformName]: false }));
       }
     },
-    [authorizations, locale, markSlotStatus, setAuthFlags, setValidationAlert]
+    [
+      authorizations,
+      locale,
+      markSlotStatus,
+      setAuthFlags,
+      setValidationAlert,
+      debouncedSaveAuthorizations,
+    ]
   );
 
   return { handleTournamentPlatformClick, authorizeTournamentSlot };
