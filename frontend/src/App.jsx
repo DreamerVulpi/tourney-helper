@@ -27,6 +27,7 @@ import { useAppStore } from "./store/useAppStore"
 import IntegrationsPlate from "./pages/IntegrationsPanel.jsx";
 import ProfilesPanel from "./pages/ProfilesPanel.jsx";
 import { useToolsLocked } from "./hooks/App/useToolsLocked.jsx";
+import WindowTitleBar from "./components/WindowTitleBar.jsx";
 
 const App = () => {
   // ---- UI ----
@@ -194,41 +195,40 @@ const App = () => {
   const iframeRef_WidgetBracket = useRef(null);
 
   return (
-    <div
-    className={`grid grid-cols-[auto_1fr] grid-rows-[4rem_1fr] h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}
-  >
-    {!locale ? (
-      <div className="col-span-2 h-screen w-screen bg-[#050505] flex flex-col items-center justify-center gap-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-
-        <span className="font-mono text-xs text-slate-400">
-          Loading localization...
-        </span>
-      </div>
-      ) : (
-        <>
-          <div className="row-span-2 min-h-0">
-            <SidePanel
-              locale={locale.SidePanel}
-              updateConfig={updateConfig}
-            />
+    <div className={`flex flex-col h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}>
+      <WindowTitleBar/>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {!locale ? (
+          <div className="h-full w-full bg-[#050505] flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="font-mono text-xs text-slate-400">
+              Loading localization...
+            </span>
           </div>
-          <HeaderPlate
-            locale={locale.HeaderPanel}
-            updateConfig={updateConfig}
-            updateInfo={updateInfo}
-            check={check}
-            handleInstallUpdate={handleInstallUpdate}
-            updateProgressOpen={updateProgressOpen}
-            updateStatus={updateStatus}
-            updateMessage={updateMessage}
-            updateProgress={updateProgress}
-            setUpdateProgressOpen={setUpdateProgressOpen}
-            setUpdateMessage={setUpdateMessage}
-            setUpdateProgress={setUpdateProgress}
-          />
+        ) : (
+          <div className="grid grid-cols-[auto_1fr] grid-rows-[4rem_1fr] h-full w-full overflow-hidden">
+            <div className="row-span-2 min-h-0">
+              <SidePanel
+                locale={locale.SidePanel}
+                updateConfig={updateConfig}
+              />
+            </div>
+            <HeaderPlate
+              locale={locale.HeaderPanel}
+              updateConfig={updateConfig}
+              updateInfo={updateInfo}
+              check={check}
+              handleInstallUpdate={handleInstallUpdate}
+              updateProgressOpen={updateProgressOpen}
+              updateStatus={updateStatus}
+              updateMessage={updateMessage}
+              updateProgress={updateProgress}
+              setUpdateProgressOpen={setUpdateProgressOpen}
+              setUpdateMessage={setUpdateMessage}
+              setUpdateProgress={setUpdateProgress}
+            />
 
-          {/* MainWindow */}
+            {/* MainWindow */}
             <div className="flex flex-col min-w-0 min-h-0 overflow-hidden">
               <main className="flex-1 overflow-y-auto p-8 relative">
                 {activeTab === "notifications" && (
@@ -289,9 +289,10 @@ const App = () => {
                 locale={locale.LogPanel}
               />
             </div>
-        </>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
+      </div>
   );
 };
 

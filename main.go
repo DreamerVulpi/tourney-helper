@@ -98,6 +98,7 @@ func main() {
 		Bind: []interface{}{
 			app,
 		},
+		Frameless: true,
 	})
 
 	if errWailsRun != nil {

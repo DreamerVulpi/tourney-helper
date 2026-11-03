@@ -90,15 +90,8 @@ const SidePanel = ({ locale, updateConfig }) => {
               collapsed={sidePanelCollapsed}
               themeClasses={themeClasses}
               showStatus={false}
+              iconOnly={!sidePanelCollapsed}
               onClick={handleSidePanelCollapse}
-              content={
-                <>
-                  <ProgramLogo
-                    theme={themeClasses}
-                    collapsed={sidePanelCollapsed}
-                  />
-                </>
-              }
             />
           </div>
 

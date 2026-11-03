@@ -69,6 +69,11 @@ export function getThemeClasses(theme) {
         lockPanel: isDark
             ? "bg-amber-600 ring-amber-700 text-white"
             : "bg-amber-500 ring-amber-600 text-white",
+        titlebar: {
+            base: theme === "dark" ? "bg-[#0f172a] text-slate-400 border-slate-800" : "bg-blue-600/8 border-blue-600/10",
+            buttonHover: theme === "dark" ? "hover:bg-white/10 hover:text-white" : "hover:bg-black/5 hover:text-black",
+            closeHover: "hover:bg-red-500 hover:text-white",
+        },
     };
 }
 
