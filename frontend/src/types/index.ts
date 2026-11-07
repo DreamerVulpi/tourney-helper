@@ -19,8 +19,29 @@ export interface WidgetBracket {
   clientId: string | null;
 }
 
+export interface ScoreboardSide {
+  name: string;
+  logoPath: string;
+  flag: string;
+  points: number;
+  showLogo: boolean;
+  showFlag: boolean;
+}
+
+export interface WidgetScoreboard {
+  theme: string;
+  titleMatch: string;
+  hideLogos: boolean;
+  hideFlags: boolean;
+  scale: number;
+  format: string;
+  P1: ScoreboardSide;
+  P2: ScoreboardSide;
+}
+
 export interface WidgetsCfg {
   bracket: WidgetBracket;
+  scoreboard: WidgetScoreboard;
 }
 
 export interface ToolsCfg {

@@ -64,7 +64,9 @@ func main() {
 	app.UrlValidator = validator.NewValidator()
 	app.UpdateService = updateService
 	app.UpdateManager = updateManager
-	widgets.InitDirectories()
+	if err := widgets.InitDirectories(); err != nil {
+		logger.Log(entityLogger.Error, "widgets init: "+err.Error())
+	}
 	app.WidgetServer = widgets.NewServer()
 
 	app.ThemeProvider = widget.NewThemeProvider("")

@@ -9,8 +9,6 @@ import {
   Paintbrush,
   Square,
   Play,
-  List,
-  Wallpaper,
   ZoomIn,
   Trophy,
   Loader2,
@@ -31,8 +29,8 @@ import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
 import { Field } from "../components/ui/Field.jsx";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { ActionButton } from "../components/ui/ActionButton.jsx";
-import { useStartToggle } from "../hooks/WidgetBracketPanel/useStartToggle.jsx";
-import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
+import { useStartToggle } from "../hooks/WidgetScoreboardPanel/useStartToggle.jsx";
+import { useGetListFlags } from "../hooks/WidgetScoreboardPanel/useGetListFlags.jsx";
 import { useGetListThemes } from "../hooks/WidgetBracketPanel/useGetListThemes.jsx";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
 import { SectionBlock } from "../components/ui/SectionBlock.jsx";
@@ -47,6 +45,20 @@ const clampScale = (s) => {
   if (!Number.isFinite(n) || n <= 0) return 1.0;
   return Math.max(0.5, Math.min(2.0, n));
 };
+
+const DEFAULT_SIDE = {
+  name: "Player",
+  logoPath: "",
+  flag: "",
+  points: 0,
+  showLogo: true,
+  showFlag: true,
+};
+
+const defaultSideFor = (side) => ({
+  ...DEFAULT_SIDE,
+  name: side === "P2" ? "Player 2" : "Player 1",
+});
 
 // Хелпер: частичный апдейт стороны P1/P2 + titleMatch через updateConfig
 const patchScoreboard = (updateConfig, patch) =>
@@ -73,28 +85,28 @@ const WidgetScoreboardPlate = ({
   // ---- поля из конфига (единый источник истины) ----
   const themeScoreboard = scoreboard?.theme ?? "Default";
   const titleMatch = scoreboard?.titleMatch ?? "CUSTOM NAME";
-  const clearBackground = scoreboard?.clearBackground ?? false;
   const hideLogos = scoreboard?.hideLogos ?? false;
   const hideFlags = scoreboard?.hideFlags ?? false;
   const scale = scoreboard?.scale ?? 1.0;
   const format = scoreboard?.format ?? "FT2";
-  const p1 = scoreboard?.P1 ?? { name: "Player 1", logoPath: "", points: 0 };
-  const p2 = scoreboard?.P2 ?? { name: "Player 2", logoPath: "", points: 0 };
+  const p1 = scoreboard?.P1 ?? defaultSideFor("P1");
+  const p2 = scoreboard?.P2 ?? defaultSideFor("P2");
 
   const [activeTabP1, setActiveTabP1] = useState("logo");
   const [activeTabP2, setActiveTabP2] = useState("logo");
 
   const themeOptions = useGetListThemes();
+  const flagOptions = useGetListFlags(locale.FlagNames);
   const readyScale = clampScale(scale);
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
-  // const handleWidgetScoreboardToggle = useStartToggle(
-  //   isWidgetScoreboardRunning,
-  //   setIsWidgetScoreboardRunning,
-  //   isProcessing,
-  //   setIsProcessingWS,
-  //   setStatusWidgetScoreboard,
-  // );
+  const handleWidgetScoreboardToggle = useStartToggle(
+    isWidgetScoreboardRunning,
+    setIsWidgetScoreboardRunning,
+    isProcessing,
+    setIsProcessingWS,
+    setStatusWidgetScoreboard,
+  );
 
   // ---------- Обработчики конфига ----------
   const handleThemeChange = useCallback(
@@ -143,7 +155,7 @@ const WidgetScoreboardPlate = ({
   // Обновление стороны
   const updateSide = useCallback(
     (side, patch) => {
-      const current = scoreboard?.[side] ?? DEFAULT_SIDE;
+      const current = scoreboard?.[side] ?? defaultSideFor(side);
       // Отправляем ПОЛНЫЙ объект стороны, чтобы ничего не затиралось
       patchScoreboard(updateConfig, { 
         [side]: { ...current, ...patch } 
@@ -174,12 +186,11 @@ const WidgetScoreboardPlate = ({
   const scoreboardUrl = useMemo(() => {
     const params = new URLSearchParams();
     params.set("theme", themeScoreboard);
-    if (clearBackground) params.set("transparent", "1");
     if (hideLogos) params.set("hideLogos", "1");
     if (hideFlags) params.set("hideFlags", "1");
     if (readyScale !== 1.0) params.set("scale", String(readyScale));
     return `http://localhost:8080/widgets/scoreboard?${params.toString()}`;
-  }, [themeScoreboard, clearBackground, hideLogos, hideFlags, readyScale]);
+  }, [themeScoreboard, hideLogos, hideFlags, readyScale]);
 
   // ---------- Фиксируем src при старте; при смене темы — перезагружаем ----------
   const initialSrcRef = useRef(null);
@@ -204,7 +215,6 @@ const WidgetScoreboardPlate = ({
         {
           type: "scoreboard:flags-changed",
           flags: {
-            transparent: clearBackground,
             hideLogos,
             hideFlags,
             scale: readyScale,
@@ -217,7 +227,6 @@ const WidgetScoreboardPlate = ({
     iframe.addEventListener("load", sendFlags);
     return () => iframe.removeEventListener("load", sendFlags);
   }, [
-    clearBackground,
     hideLogos,
     hideFlags,
     readyScale,
@@ -229,34 +238,28 @@ const WidgetScoreboardPlate = ({
   const isStopDisabled = isProcessing;
   const getButtonStyle = getLaunchButtonStyle(isWidgetScoreboardRunning, false);
 
-  const DEFAULT_SIDE = { 
-    name: "Player", 
-    logoPath: "", 
-    points: 0, 
-    showLogo: true, 
-    showFlag: true 
-  };
-
   const EXTRA_TABS = [
     { id: "logo", icon: ImageIcon, label: "Logo"},
-    { id: "flag", icon: Flag,        label: "Flag" }
+    { id: "flag", icon: Flag,        label: locale.FlagsLabel ?? "Flags" }
   ]
 
   const renderSideControls = (side, activeTab, setActiveTab) => {
-  const data = scoreboard?.[side] ?? DEFAULT_SIDE;
+  const data = scoreboard?.[side] ?? defaultSideFor(side);
+  const selectedFlag = flagOptions.find((f) => f.value === data.flag);
   const isP2 = side === "P2";
 
   // Блок с именем
   const nameField = (
-    <Field
-      icon={User}
-      key="name"
-      variant="input"
-      value={data.name}
-      onChange={(val) => updateSide(side, { name: val })}
-      themeClasses={themeClasses}
-      placeholder="Player name"
-    />
+    <div key="name" className="flex-1 min-w-0">
+      <Field
+        icon={User}
+        variant="input"
+        value={data.name}
+        onChange={(val) => updateSide(side, { name: val })}
+        themeClasses={themeClasses}
+        placeholder="Player name"
+      />
+    </div>
   );
 
   // Блок с кнопками +/- (они всегда идут перед счетом)
@@ -339,7 +342,7 @@ const WidgetScoreboardPlate = ({
                 </div>
 
                 {/* Инпуты */}
-                <div className="flex flex-col gap-2 flex-1">
+                <div className="flex flex-col gap-2 flex-1 min-w-0">
                   <Field
                     icon={Globe}
                     variant="input"
@@ -359,18 +362,28 @@ const WidgetScoreboardPlate = ({
                 </div>
               </div>
             ) : tab === "flag" ? (
-              <div className="flex gap-2 items-start pt-2">
-                {/* Квадрат флага */}
-                <div className="relative w-18 h-18 flex-shrink-0">
+              <div className="flex gap-2 items-start pt-2 min-w-0">
+                {/* Прямоугольник флага */}
+                <div className="relative w-26 h-17 flex-shrink-0">
                   <div
-                    className={`w-full h-full rounded-lg border flex items-center justify-center ${
+                    className={`w-full h-full rounded-lg border flex items-center justify-center overflow-hidden ${
                       themeClasses?.field || "bg-slate-900 border-slate-700"
                     }`}
                   >
-                    <Flag
-                      className={data.showFlag !== false ? "text-slate-500 opacity-50" : "text-slate-700 opacity-30"}
-                      size={24}
-                    />
+                    {selectedFlag?.dataUrl ? (
+                      <img
+                        src={selectedFlag.dataUrl}
+                        alt={selectedFlag.label}
+                        className={`w-full h-full object-contain ${
+                          data.showFlag !== false ? "" : "opacity-30 grayscale"
+                        }`}
+                      />
+                    ) : (
+                      <Flag
+                        className={data.showFlag !== false ? "text-slate-500 opacity-50" : "text-slate-700 opacity-30"}
+                        size={24}
+                      />
+                    )}
                   </div>
                   <button
                     onClick={() => handleToggleVisibility(side, "showFlag")}
@@ -384,20 +397,32 @@ const WidgetScoreboardPlate = ({
                     {data.showFlag !== false ? <Eye size={12} /> : <EyeOff size={12} />}
                   </button>
                 </div>
-                
-                <div className="flex flex-col gap-2 flex-1">
+
+                <div className="flex flex-col gap-2 flex-1 min-w-0">
                   <Field
                     variant="multiselect"
                     single
                     searchable
-                    label={locale.Format ?? "Flags"}
-                    value={[format]}
-                    onChange={handleFormatChange}
-                    items={FORMAT_OPTIONS}
+                    label={locale.FlagsLabel ?? "Flags"}
+                    value={data.flag ? [data.flag] : []}
+                    onChange={(values) => updateSide(side, { flag: values?.[0] ?? "" })}
+                    items={flagOptions}
                     themeClasses={themeClasses}
                     height="1.9rem"
-                    placeholder="FT"
-                    
+                    placeholder={locale.FlagPlaceholder ?? "Country flag"}
+                    maxVisible={5}
+                    renderItem={(item) => (
+                      <span className="flex items-center gap-2 min-w-0">
+                        {item.dataUrl && (
+                          <img
+                            src={item.dataUrl}
+                            alt=""
+                            className="w-6 h-4 object-contain rounded-sm shrink-0"
+                          />
+                        )}
+                        <span className="truncate">{item.shortLabel ?? item.label}</span>
+                      </span>
+                    )}
                   />
                 </div>
               </div>
@@ -482,12 +507,12 @@ const WidgetScoreboardPlate = ({
           </div>
 
           {/* Игроки: P1 — центр — P2 */}
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-8 items-start shrink-0 flex-1">
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-start shrink-0 flex-1">
             {/* Левая сторона (P1) */}
             {renderSideControls("P1", activeTabP1, setActiveTabP1)}
 
             {/* Центр (Настройки матча) */}
-            <div className="flex flex-col gap-4 pt-1 items-center w-[20rem]">
+            <div className="flex flex-col gap-4 pt-1 items-center w-[17rem]">
               {/* Title Event */}
               <div className="w-full">
                 <Field
@@ -503,29 +528,33 @@ const WidgetScoreboardPlate = ({
 
               {/* Format + Кнопки */}
               <div className="w-full flex flex-col gap-2">
-                <div className="flex flex-row gap-1 w-full mt-1">
-                  <Field
-                    variant="multiselect"
-                    single
-                    searchable
-                    icon={Swords}
-                    label={locale.Format ?? "Format"}
-                    value={[format]}
-                    onChange={handleFormatChange}
-                    items={FORMAT_OPTIONS}
-                    themeClasses={themeClasses}
-                    height="1.9rem"
-                    placeholder="FT"
-                  />
-                  <Field
-                    variant="select"
-                    label={locale.ListOfThemes}
-                    icon={Paintbrush}
-                    onChange={handleThemeChange}
-                    value={themeScoreboard}
-                    themeClasses={themeClasses}
-                    items={themeOptions}
-                  />
+                <div className="flex flex-row gap-1 w-full mt-1 items-start">
+                  <div className="flex-1 min-w-0">
+                    <Field
+                      variant="multiselect"
+                      single
+                      searchable
+                      icon={Swords}
+                      label={locale.Format ?? "Format"}
+                      value={[format]}
+                      onChange={handleFormatChange}
+                      items={FORMAT_OPTIONS}
+                      themeClasses={themeClasses}
+                      height="1.9rem"
+                      placeholder="FT"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <Field
+                      variant="select"
+                      label={locale.ListOfThemes}
+                      icon={Paintbrush}
+                      onChange={handleThemeChange}
+                      value={themeScoreboard}
+                      themeClasses={themeClasses}
+                      items={themeOptions}
+                    />
+                  </div>
                 </div>
                 
                 <div className="flex flex-row gap-1 w-full mt-1">
@@ -561,7 +590,7 @@ const WidgetScoreboardPlate = ({
                   expandOnHover={isWidgetScoreboardRunning && !isProcessing}
                   className={`${getButtonStyle} w-full`}
                   iconClassName="fill-white"
-                  // onClick={handleWidgetScoreboardToggle}
+                  onClick={handleWidgetScoreboardToggle}
                 >
                   {isWidgetScoreboardRunning ? locale.Stop : locale.Start}
                 </ActionButton>

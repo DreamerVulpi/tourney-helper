@@ -23,6 +23,7 @@ type Server struct {
 	httpServer *http.Server
 	router     *gin.Engine
 	bracket    *handler.Handler
+	scoreboard *handler.ScoreboardHandler
 }
 
 func NewServer() *Server {
@@ -41,8 +42,9 @@ func NewServer() *Server {
 	}))
 
 	server := &Server{
-		router:  r,
-		bracket: handler.NewHandler(),
+		router:     r,
+		bracket:    handler.NewHandler(),
+		scoreboard: handler.NewScoreboardHandler(),
 	}
 
 	server.registerRoutes()

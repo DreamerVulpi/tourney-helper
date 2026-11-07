@@ -44,6 +44,30 @@ export function useAutoSave() {
               scale:           cfg.bracket?.scale           ?? 1.0,
               autoRefresh:     cfg.bracket?.autoRefresh     ?? false,
             },
+            scoreboard: {
+              theme:           cfg.scoreboard?.theme           || "Default",
+              titleMatch:      cfg.scoreboard?.titleMatch      ?? "",
+              hideLogos:       cfg.scoreboard?.hideLogos       ?? false,
+              hideFlags:       cfg.scoreboard?.hideFlags       ?? false,
+              scale:           cfg.scoreboard?.scale           ?? 1.0,
+              format:          cfg.scoreboard?.format          || "FT2",
+              P1: {
+                name:     cfg.scoreboard?.P1?.name     ?? "Player 1",
+                logoPath: cfg.scoreboard?.P1?.logoPath ?? "",
+                flag:     cfg.scoreboard?.P1?.flag     ?? "",
+                points:   cfg.scoreboard?.P1?.points   ?? 0,
+                showLogo: cfg.scoreboard?.P1?.showLogo ?? true,
+                showFlag: cfg.scoreboard?.P1?.showFlag ?? true,
+              },
+              P2: {
+                name:     cfg.scoreboard?.P2?.name     ?? "Player 2",
+                logoPath: cfg.scoreboard?.P2?.logoPath ?? "",
+                flag:     cfg.scoreboard?.P2?.flag     ?? "",
+                points:   cfg.scoreboard?.P2?.points   ?? 0,
+                showLogo: cfg.scoreboard?.P2?.showLogo ?? true,
+                showFlag: cfg.scoreboard?.P2?.showFlag ?? true,
+              },
+            },
           };
           await SaveWidgetsCfg(dataToSend);
           console.log("Widgets config saved on backend");

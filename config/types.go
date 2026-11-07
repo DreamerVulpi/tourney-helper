@@ -54,21 +54,21 @@ type WidgetBracket struct {
 type Side struct {
 	Name     string `toml:"name" json:"name"`
 	LogoPath string `toml:"logoPath" json:"logoPath"`
+	Flag     string `toml:"flag" json:"flag"`
 	Points   int    `toml:"points" json:"points"`
 	ShowLogo bool   `toml:"showLogo" json:"showLogo"`
 	ShowFlag bool   `toml:"showFlag" json:"showFlag"`
 }
 
 type WidgetScoreboard struct {
-	Theme           string  `toml:"theme" json:"theme"`
-	TitleMatch      string  `toml:"titleMatch" json:"titleMatch"`
-	ClearBackground bool    `toml:"clearBackground" json:"clearBackground"`
-	HideLogos       bool    `toml:"hideLogos" json:"hideLogos"`
-	HideFlags       bool    `toml:"hideFlags" json:"hideFlags"`
-	Scale           float64 `toml:"scale" json:"scale"`
-	Format          string  `toml:"format" json:"format"`
-	P1              Side    `toml:"P1" json:"P1"`
-	P2              Side    `toml:"P2" json:"P2"`
+	Theme      string  `toml:"theme" json:"theme"`
+	TitleMatch string  `toml:"titleMatch" json:"titleMatch"`
+	HideLogos  bool    `toml:"hideLogos" json:"hideLogos"`
+	HideFlags  bool    `toml:"hideFlags" json:"hideFlags"`
+	Scale      float64 `toml:"scale" json:"scale"`
+	Format     string  `toml:"format" json:"format"`
+	P1         Side    `toml:"P1" json:"P1"`
+	P2         Side    `toml:"P2" json:"P2"`
 }
 
 type WidgetsCfg struct {

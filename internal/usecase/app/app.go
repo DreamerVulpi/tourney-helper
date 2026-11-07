@@ -40,6 +40,7 @@ type App struct {
 	ns               *sender.NotificationSystem
 	nsCancel         context.CancelFunc
 	wCancel          context.CancelFunc
+	sCancel          context.CancelFunc
 	activeBot        bot.BotHandler
 	WidgetServer     *widgets.Server
 	RenderBracket    renderer.BracketRenderer

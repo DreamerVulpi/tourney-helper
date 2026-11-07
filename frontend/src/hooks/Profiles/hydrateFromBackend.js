@@ -82,6 +82,16 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
   const widgets = await LoadWidgetsCfg();
   if (widgets) {
     const b = widgets.bracket ?? {};
+    const s = widgets.scoreboard ?? {};
+    const normalizeSide = (side, fallbackName) => ({
+      name:     side?.name     ?? fallbackName,
+      logoPath: side?.logoPath ?? "",
+      flag:     side?.flag     ?? "",
+      points:   side?.points   ?? 0,
+      showLogo: side?.showLogo ?? true,
+      showFlag: side?.showFlag ?? true,
+    });
+
     store.setWidgets((prev) => ({
       ...(prev ?? {}),
       bracket: {
@@ -93,6 +103,16 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
         bracketMode:     b.bracketMode     ?? "all",
         scale:           typeof b.scale === "number" && b.scale > 0 ? b.scale : 1.0,
         autoRefresh:     b.autoRefresh     ?? false,
+      },
+      scoreboard: {
+        theme:           s.theme           ?? "Default",
+        titleMatch:      s.titleMatch      ?? "CUSTOM NAME",
+        hideLogos:       s.hideLogos       ?? false,
+        hideFlags:       s.hideFlags       ?? false,
+        scale:           typeof s.scale === "number" && s.scale > 0 ? s.scale : 1.0,
+        format:          s.format          ?? "FT2",
+        P1: normalizeSide(s.P1, "Player 1"),
+        P2: normalizeSide(s.P2, "Player 2"),
       },
     }));
   }

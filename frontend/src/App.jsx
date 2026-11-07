@@ -80,6 +80,7 @@ const App = () => {
   // Status of the messaging system
   const [isProcessingNS, setIsProcessing] = useState(false);
   const [isProcessingWB, setIsProcessingWB] = useState(false);
+  const [isProcessingWS, setIsProcessingWS] = useState(false);
   
   // Detail description components for Light/Dark themes 
   const themeClasses = useThemeClasses(getThemeClasses);
@@ -90,6 +91,7 @@ const App = () => {
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
   const [isWidgetBracketRunning, setIsWidgetBracketRunning] = useState(false);
+  const [isWidgetScoreboardRunning, setIsWidgetScoreboardRunning] = useState(false);
 
   // Statement for update modal window
   const { updateInfo, check } = useCheckUpdate();
@@ -193,6 +195,7 @@ const App = () => {
   }, [locale]);
 
   const iframeRef_WidgetBracket = useRef(null);
+  const iframeRef_WidgetScoreboard = useRef(null);
 
   return (
     <div className={`flex flex-col h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}>
@@ -283,13 +286,11 @@ const App = () => {
                   <WidgetScoreboardPanel
                     locale={locale.WidgetBracketPanel}
                     updateConfig={updateConfig}
-                    isProcessing={isProcessingWB}
-                    setIsProcessingWB={setIsProcessingWB}
-                    isWidgetBracketRunning={isWidgetBracketRunning}
-                    setIsWidgetBracketRunning={setIsWidgetBracketRunning}
-                    iframeRef_WidgetBracket={iframeRef_WidgetBracket}
-                    urlValidation={urlValidationWidgetBracket}
-                    setURLValidation={setURLValidationWidgetBracket}
+                    isProcessing={isProcessingWS}
+                    setIsProcessingWS={setIsProcessingWS}
+                    isWidgetScoreboardRunning={isWidgetScoreboardRunning}
+                    setIsWidgetScoreboardRunning={setIsWidgetScoreboardRunning}
+                    iframeRef_WidgetScoreboard={iframeRef_WidgetScoreboard}
                   />
                 )}
               </main>

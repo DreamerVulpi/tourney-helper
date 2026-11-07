@@ -37,6 +37,8 @@ func LoadWidgets(profileName string) (WidgetsCfg, error) {
 	if _, err := toml.DecodeFile(path, &cfg); err != nil {
 		return WidgetsCfg{}, err
 	}
+
+	cfg.EnsureScoreboardDefaults()
 	return cfg, nil
 }
 

@@ -114,6 +114,9 @@ type WidgetBracketPanel struct {
 	FetchData             string
 	AutoRefresh           string
 	ValidationUrlBracket  ValidationUrlBracket
+	FlagsLabel            string
+	FlagPlaceholder       string
+	FlagNames             map[string]string
 }
 
 type IntegrationsPanel struct {

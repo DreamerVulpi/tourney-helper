@@ -46,9 +46,9 @@ func (a *App) LaunchWidgetBracket(
 	cfgWidgets config.WidgetsCfg,
 ) error {
 	a.mu.Lock()
-	if a.wCancel != nil {
+	if a.wCancel != nil || a.sCancel != nil {
 		a.mu.Unlock()
-		err := fmt.Errorf("Widget bracket is already running")
+		err := fmt.Errorf("Widget server is already running")
 		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}

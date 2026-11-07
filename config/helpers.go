@@ -84,6 +84,21 @@ func NewDefaultSettings() SettingsApplicationCfg {
 	}
 }
 
+// EnsureScoreboardDefaults заполняет scoreboard стандартными значениями,
+// если секция ещё ни разу не инициализировалась.
+func (c *WidgetsCfg) EnsureScoreboardDefaults() bool {
+	if c.Scoreboard.Theme != "" ||
+		c.Scoreboard.Scale != 0 ||
+		c.Scoreboard.Format != "" ||
+		c.Scoreboard.P1.Name != "" ||
+		c.Scoreboard.P2.Name != "" {
+		return false
+	}
+
+	c.Scoreboard = NewDefaultWidgets().Scoreboard
+	return true
+}
+
 func NewDefaultWidgets() WidgetsCfg {
 	return WidgetsCfg{
 		Bracket: WidgetBracket{
@@ -97,22 +112,24 @@ func NewDefaultWidgets() WidgetsCfg {
 			AutoRefresh:     false,
 		},
 		Scoreboard: WidgetScoreboard{
-			Theme:           "Default",
-			ClearBackground: false,
-			HideLogos:       false,
-			HideFlags:       false,
-			Scale:           1.0,
-			Format:          "FT2",
+			Theme:      "Default",
+			TitleMatch: "CUSTOM NAME",
+			HideLogos:  false,
+			HideFlags:  false,
+			Scale:      1.0,
+			Format:     "FT2",
 			P1: Side{
-				Name:     "Player1",
+				Name:     "Player 1",
 				LogoPath: "",
+				Flag:     "",
 				Points:   0,
 				ShowLogo: true,
 				ShowFlag: true,
 			},
 			P2: Side{
-				Name:     "Player2",
+				Name:     "Player 2",
 				LogoPath: "",
+				Flag:     "",
 				Points:   0,
 				ShowLogo: true,
 				ShowFlag: true,

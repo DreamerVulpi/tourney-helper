@@ -88,12 +88,27 @@ export function useConfigUpdater({
       // ============================================================
       if (type === "widgets") {
         setWidgets((prev) => {
+          const prevScoreboard = prev?.scoreboard;
+          const dataScoreboard = data.scoreboard;
+
           const newCfg = {
             ...prev,
             ...data,
             bracket: data.bracket
               ? { ...prev?.bracket, ...data.bracket }
               : prev?.bracket,
+            scoreboard: dataScoreboard
+              ? {
+                  ...prevScoreboard,
+                  ...dataScoreboard,
+                  P1: dataScoreboard.P1
+                    ? { ...prevScoreboard?.P1, ...dataScoreboard.P1 }
+                    : prevScoreboard?.P1,
+                  P2: dataScoreboard.P2
+                    ? { ...prevScoreboard?.P2, ...dataScoreboard.P2 }
+                    : prevScoreboard?.P2,
+                }
+              : prevScoreboard,
           };
           debouncedSaveWidgets(newCfg);
           return newCfg;

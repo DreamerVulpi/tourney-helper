@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronDown, Pencil, Search } from "lucide-react";
 import { debounce } from "../../utils/debounce";
+import { HIDDEN_MENU_STYLE, useFloatingMenu } from "./useFloatingMenu.jsx";
 
 export function MultiSelectList({
   selectedValues = [],
@@ -45,6 +47,10 @@ export function MultiSelectList({
   const ref = useRef(null);
   const inputRef = useRef(null);
   const renameInputRef = useRef(null);
+  const { menuRef, menuStyle } = useFloatingMenu({
+    anchorRef: ref,
+    open: open && !editing,
+  });
 
   const openDelayed = useMemo(
     () =>
@@ -57,14 +63,16 @@ export function MultiSelectList({
 
   useEffect(() => {
     const onDocClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
+      const inAnchor = ref.current?.contains(e.target);
+      const inMenu = menuRef.current?.contains(e.target);
+      if (!inAnchor && !inMenu) {
         setOpen(false);
         setQuery("");
       }
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
-  }, []);
+  }, [menuRef]);
 
   // --- Escape ---
   useEffect(() => {
@@ -87,7 +95,10 @@ export function MultiSelectList({
 
   useEffect(() => {
     if (open && searchable) {
-      const t = setTimeout(() => inputRef.current?.focus(), 0);
+      const t = setTimeout(
+        () => inputRef.current?.focus({ preventScroll: true }),
+        0,
+      );
       return () => clearTimeout(t);
     }
   }, [open, searchable]);
@@ -95,7 +106,7 @@ export function MultiSelectList({
   useEffect(() => {
     if (editing) {
       const t = setTimeout(() => {
-        renameInputRef.current?.focus();
+        renameInputRef.current?.focus({ preventScroll: true });
         renameInputRef.current?.select();
       }, 0);
       return () => clearTimeout(t);
@@ -123,7 +134,10 @@ export function MultiSelectList({
 
   const selectedLabels = items
     .filter((i) => selectedValues.includes(i.value))
-    .map((i) => (i.needsReauth ? `⚠ ${i.label}` : i.label))
+    .map((i) => {
+      const label = i.shortLabel ?? i.label;
+      return i.needsReauth ? `⚠ ${label}` : label;
+    })
     .join(", ");
 
   // --- rename ---
@@ -185,7 +199,11 @@ export function MultiSelectList({
 
   console.log("[MSL] BEFORE RETURN items:", items, "filtered:", filtered, "selectedLabels:", selectedLabels);
   return (
-    <div ref={ref} className="relative w-full" style={style}>
+    <div
+      ref={ref}
+      className={`relative w-full ${open ? "z-[999]" : ""}`}
+      style={style}
+    >
       {editing ? (
         <div className="w-full">
           <div
@@ -236,7 +254,8 @@ export function MultiSelectList({
           onDoubleClick={canRename && currentValue ? startRename : undefined}
           style={{ height: style?.height }}
           className={`
-            w-full flex items-center gap-2
+            w-full min-w-0 flex items-center gap-2
+            overflow-hidden
             rounded-xl border px-3
             text-xs font-bold text-left
             ${themeClasses.field}
@@ -272,94 +291,98 @@ export function MultiSelectList({
         </button>
       )}
 
-      {open && !editing && (
-        <div
-          className={`
-            absolute z-50 mt-1 w-full
-            rounded-xl border overflow-hidden
-            ${themeClasses.listMenu}
-          `}
-        >
-          {searchable && (
-            <div
-              className={`flex items-center gap-2 px-3 border-b ${themeClasses.divider}`}
-              style={{ height: searchHeight }}
-            >
-              <Search size={13} className="opacity-50 shrink-0" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={locale?.SearchLabel ?? "Search..."}
-                className="flex-1 bg-transparent outline-none text-xs font-bold placeholder:opacity-40"
-              />
-            </div>
-          )}
-
+      {open && !editing &&
+        createPortal(
           <div
-            className="overflow-y-auto custom-scrollbar"
-            style={{ maxHeight: listMaxHeight - searchHeight }}
+            ref={menuRef}
+            style={menuStyle ?? HIDDEN_MENU_STYLE}
+            className={`
+              rounded-xl border overflow-hidden shadow-xl
+              ${themeClasses.listMenu}
+            `}
           >
-            {filtered.length === 0 ? (
-              <div className="px-3 py-4 text-xs opacity-50 text-center">
-                {locale?.NoClients ?? "No items"}
+            {searchable && (
+              <div
+                className={`flex items-center gap-2 px-3 border-b min-w-0 overflow-hidden ${themeClasses.divider}`}
+                style={{ height: searchHeight }}
+              >
+                <Search size={13} className="opacity-50 shrink-0" />
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={locale?.SearchLabel ?? "Search..."}
+                  className="flex-1 min-w-0 bg-transparent outline-none text-xs font-bold placeholder:opacity-40"
+                />
               </div>
-            ) : (
-              filtered.map((item) => {
-                const checked = selectedValues.includes(item.value);
-                return (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => toggle(item.value)}
-                    style={{ height: itemHeight }}
-                    className={`
-                      w-full flex items-center gap-2
-                      px-3 text-xs font-bold text-left
-                      hover:bg-white/5
-                      ${checked ? "text-blue-500" : ""}
-                    `}
-                  >
-                    <span
+            )}
+
+            <div
+              className="overflow-y-auto custom-scrollbar"
+              style={{ maxHeight: listMaxHeight - searchHeight }}
+            >
+              {filtered.length === 0 ? (
+                <div className="px-3 py-4 text-xs opacity-50 text-center">
+                  {locale?.NoClients ?? "No items"}
+                </div>
+              ) : (
+                filtered.map((item) => {
+                  const checked = selectedValues.includes(item.value);
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => toggle(item.value)}
+                      title={item.shortLabel ? item.label : undefined}
+                      style={{ height: itemHeight }}
                       className={`
-                        w-4 h-4 flex items-center justify-center shrink-0
-                        ${single ? "rounded-full" : "rounded"}
-                        border
-                        ${checked
-                          ? "bg-blue-600 border-blue-600 text-white"
-                          : "border-slate-400/50"
-                        }
+                        w-full flex items-center gap-2
+                        px-3 text-xs font-bold text-left
+                        hover:bg-white/5
+                        ${checked ? "text-blue-500" : ""}
                       `}
                     >
-                      {checked && (
-                        single
-                          ? <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                          : <Check size={11} strokeWidth={3} />
-                      )}
-                    </span>
-
-                    {item.needsReauth && (
                       <span
-                        className="ml-auto shrink-0 text-[8px] font-black uppercase italic text-orange-500"
-                        title={item.status || "Expired"}
+                        className={`
+                          w-4 h-4 flex items-center justify-center shrink-0
+                          ${single ? "rounded-full" : "rounded"}
+                          border
+                          ${checked
+                            ? "bg-blue-600 border-blue-600 text-white"
+                            : "border-slate-400/50"
+                          }
+                        `}
                       >
-                        {item.status || "Expired"}
+                        {checked && (
+                          single
+                            ? <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                            : <Check size={11} strokeWidth={3} />
+                        )}
                       </span>
-                    )}
 
-                    {renderItem ? (
-                      renderItem(item, { checked, single })
-                    ) : (
-                      <span className="truncate">{item.label}</span>
-                    )}
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
+                      {item.needsReauth && (
+                        <span
+                          className="ml-auto shrink-0 text-[8px] font-black uppercase italic text-orange-500"
+                          title={item.status || "Expired"}
+                        >
+                          {item.status || "Expired"}
+                        </span>
+                      )}
+
+                      {renderItem ? (
+                        renderItem(item, { checked, single })
+                      ) : (
+                        <span className="truncate">{item.shortLabel ?? item.label}</span>
+                      )}
+                    </button>
+                  );
+                })
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
