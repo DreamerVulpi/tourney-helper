@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en" class="transparent-bg" style="background: transparent !important;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            color: var(--sb-text);
+            font-family: var(--sb-font-family);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Always-on transparency (bracket-style transparent-bg, no flag). */
+        html.transparent-bg,
+        html.transparent-bg body,
+        html.transparent-bg .scoreboard-wrapper,
+        html.transparent-bg .scoreboard-scale,
+        html.transparent-bg .scoreboard {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+
+        .scoreboard-wrapper {
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scoreboard-scale {
+            transform-origin: center center;
+        }
+
+        .scoreboard {
+            display: flex;
+            align-items: stretch;
+            width: 1000px;
+            max-width: 100%;
+            height: 128px;
+            border: 2px solid var(--sb-bar-border);
+        }
+
+        .side {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 0 18px;
+        }
+
+        .side-right {
+            justify-content: flex-end;
+        }
+
+        .logo {
+            width: 88px;
+            height: 88px;
+            flex: 0 0 88px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: var(--sb-logo-bg);
+            border: 1px solid var(--sb-logo-border);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .flag {
+            width: 52px;
+            height: 34px;
+            flex: 0 0 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: var(--sb-logo-bg);
+            border: 1px solid var(--sb-flag-border);
+        }
+
+        .flag img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .name {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            color: var(--sb-name-color);
+        }
+
+        .team-tag {
+            flex: 0 0 auto;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--sb-team-tag-color, #6fb3ff);
+        }
+
+        .score {
+            min-width: 78px;
+            height: 88px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--sb-score-bg);
+            color: var(--sb-score-color);
+            font-family: var(--sb-score-font);
+            font-size: 46px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .center {
+            width: 190px;
+            flex: 0 0 190px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 0 14px;
+            border-left: 2px solid var(--sb-center-border);
+            border-right: 2px solid var(--sb-center-border);
+        }
+
+        .title {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--sb-title-color);
+        }
+
+        .format {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--sb-format-color);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Base layout keeps direct flex children for simple themes. */
+        .side-content {
+            display: contents;
+        }
+    </style>
+    <style id="theme-style"> {{ .ThemeCSS }}</style>
+</head>
+<body style="background: transparent !important;">
+<div class="scoreboard-wrapper" style="background: transparent !important;">
+    <div class="scoreboard-scale" id="scoreboard-scale" style="background: transparent !important;">
+        <div class="scoreboard" style="background: transparent !important;">
+            <div class="side side-left">
+                <div class="side-content">
+                    <div class="flag hidden" id="p1-flag"><img id="p1-flag-img" alt=""></div>
+                    <div class="logo hidden" id="p1-logo"><img id="p1-logo-img" alt=""></div>
+                    <div class="team-tag" id="p1-team-tag">{{ .Scoreboard.P1.TeamTag }}</div>
+                    <div class="name" id="p1-name">{{ .Scoreboard.P1.Name }}</div>
+                    <div class="score" id="p1-score">{{ .Scoreboard.P1.Points }}</div>
+                </div>
+            </div>
+
+            <div class="center">
+                <div class="title" id="title-match">{{ .Scoreboard.TitleMatch }}</div>
+                <div class="format" id="format">{{ .Scoreboard.Format }}</div>
+            </div>
+
+            <div class="side side-right">
+                <div class="side-content">
+                    <div class="score" id="p2-score">{{ .Scoreboard.P2.Points }}</div>
+                    <div class="name" id="p2-name">{{ .Scoreboard.P2.Name }}</div>
+                    <div class="team-tag" id="p2-team-tag">{{ .Scoreboard.P2.TeamTag }}</div>
+                    <div class="flag hidden" id="p2-flag"><img id="p2-flag-img" alt=""></div>
+                    <div class="logo hidden" id="p2-logo"><img id="p2-logo-img" alt=""></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const initialState = {{ .StateJSON }};
+    const FLAG_BASE = '/widgets/scoreboard/flags/';
+
+    let currentTheme = initialState && initialState.theme ? initialState.theme : 'default';
+
+    function byId(id) {
+        return document.getElementById(id);
+    }
+
+    function setText(id, value) {
+        const el = byId(id);
+        if (el) el.textContent = value == null ? '' : String(value);
+    }
+
+    function resolveLogoUrl(value) {
+        if (!value) return '';
+        if (/^(https?:|data:|blob:)/i.test(value)) return value;
+        return '/widgets/scoreboard/logos/' + encodeURIComponent(value);
+    }
+
+    function applySide(prefix, side, hideLogos, hideFlags) {
+        side = side || {};
+
+        const rawName = (side.name || '').trim();
+        const teamTag = (side.teamTag || '').trim();
+        // If the player name is empty, the team name takes its place.
+        const displayName = rawName || teamTag;
+
+        setText(prefix + '-name', displayName);
+        setText(prefix + '-score', side.points == null ? 0 : side.points);
+
+        const teamEl = byId(prefix + '-team-tag');
+        if (teamEl) {
+            teamEl.textContent = teamTag;
+            // Show the separate team tag only when both name and tag are set.
+            teamEl.classList.toggle('hidden', !teamTag || !rawName);
+        }
+
+        const logoEl = byId(prefix + '-logo');
+        const logoImg = byId(prefix + '-logo-img');
+        const showLogo = !hideLogos && side.showLogo !== false && !!side.logoPath;
+
+        if (logoEl) logoEl.classList.toggle('hidden', !showLogo);
+        if (logoImg) {
+            if (showLogo) {
+                logoImg.src = resolveLogoUrl(side.logoPath);
+            } else {
+                logoImg.removeAttribute('src');
+            }
+        }
+
+        const flagEl = byId(prefix + '-flag');
+        const flagImg = byId(prefix + '-flag-img');
+        // Logo has priority over flag when both are enabled.
+        const showFlag = !hideFlags && side.showFlag !== false && !!side.flag && !showLogo;
+
+        if (flagEl) flagEl.classList.toggle('hidden', !showFlag);
+        if (flagImg) {
+            if (showFlag) {
+                flagImg.src = FLAG_BASE + encodeURIComponent(side.flag) + '.png';
+            } else {
+                flagImg.removeAttribute('src');
+            }
+        }
+    }
+
+    function fitNameFont(id) {
+        const el = byId(id);
+        if (!el) return;
+
+        // Reset to the theme-defined size before measuring.
+        el.style.fontSize = '';
+
+        const base = parseFloat(getComputedStyle(el).fontSize) || 24;
+        const min = Math.max(10, base * 0.65);
+        let size = base;
+
+        while (size > min && el.scrollWidth > el.clientWidth + 1) {
+            size -= 1;
+            el.style.fontSize = size + 'px';
+        }
+    }
+
+    function fitAllNameFonts() {
+        fitNameFont('p1-name');
+        fitNameFont('p2-name');
+    }
+
+    function applyScale(scale) {
+        const parsed = Number(scale);
+        const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+
+        const el = byId('scoreboard-scale');
+        if (el) el.style.transform = 'scale(' + safe + ')';
+    }
+
+    async function applyTheme(name) {
+        const theme = name || 'default';
+        if (theme === currentTheme) return;
+
+        try {
+            const res = await fetch(
+                '/widgets/scoreboard/theme/' + encodeURIComponent(theme),
+                { cache: 'no-store' },
+            );
+            if (!res.ok) return;
+
+            const css = await res.text();
+            const styleEl = byId('theme-style');
+            if (styleEl) styleEl.textContent = css;
+            currentTheme = theme;
+
+            requestAnimationFrame(fitAllNameFonts);
+        } catch (e) {
+            console.warn('[scoreboard] theme load failed:', e);
+        }
+    }
+
+    function applyState(state) {
+        if (!state) return;
+
+        const titleText = state.titleMatch || '';
+        setText('title-match', titleText);
+
+        const titleEl = byId('title-match');
+        const centerEl = titleEl ? titleEl.closest('.center') : null;
+        if (centerEl) {
+            centerEl.classList.toggle('title-empty', !String(titleText).trim());
+        }
+
+        setText('format', state.format || '');
+
+        applySide('p1', state.P1, !!state.hideLogos, !!state.hideFlags);
+        applySide('p2', state.P2, !!state.hideLogos, !!state.hideFlags);
+
+        fitAllNameFonts();
+
+        applyScale(state.scale);
+        applyTheme(state.theme);
+    }
+
+    const PREVIEW_SCALE = 0.55;
+    const isPreview = new URLSearchParams(location.search).has('preview');
+
+    // In the in-app iframe preview, always show the widget at 0.55x.
+    applyState(isPreview ? { ...initialState, scale: PREVIEW_SCALE } : initialState);
+
+    window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || data.type !== 'scoreboard:state-changed') return;
+        applyState(data.state);
+    });
+
+    try {
+        const channel = new BroadcastChannel('scoreboard:state');
+        channel.onmessage = (event) => {
+            const data = event.data;
+            if (!data || data.type !== 'scoreboard:state-changed') return;
+            applyState(data.state);
+        };
+    } catch (e) {
+        console.warn('[scoreboard] BroadcastChannel unavailable:', e);
+    }
+
+    window.addEventListener('storage', (event) => {
+        if (event.key !== 'scoreboard:state' || !event.newValue) return;
+        try {
+            applyState(JSON.parse(event.newValue));
+        } catch (e) {
+            console.warn('[scoreboard] storage parse error:', e);
+        }
+    });
+
+    let lastStateJson = null;
+
+    async function pollState() {
+        try {
+            const res = await fetch('/widgets/scoreboard/state', { cache: 'no-store' });
+            if (!res.ok) return;
+
+            const state = await res.json();
+            const json = JSON.stringify(state);
+            if (json === lastStateJson) return;
+
+            lastStateJson = json;
+            applyState(state);
+        } catch (e) {
+            // server not ready yet
+        }
+    }
+
+    // The preview iframe is driven only by postMessage from the app,
+    // so server-side scale changes don't affect it.
+    if (!isPreview) {
+        pollState();
+        setInterval(pollState, 1000);
+    }
+
+    window.addEventListener('load', fitAllNameFonts);
+
+    let nameFitTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(nameFitTimer);
+        nameFitTimer = setTimeout(fitAllNameFonts, 50);
+    });
+</script>
+</body>
+</html>

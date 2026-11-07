@@ -10,7 +10,7 @@ export const HIDDEN_MENU_STYLE = {
   left: 0,
   visibility: "hidden",
   pointerEvents: "none",
-  zIndex: 9999,
+  zIndex: 90,
 };
 
 export function useFloatingMenu({ anchorRef, open, minWidthRem = 0 }) {
@@ -46,7 +46,7 @@ export function useFloatingMenu({ anchorRef, open, minWidthRem = 0 }) {
       width,
       top: openAbove ? undefined : rect.bottom + VIEWPORT_PADDING,
       bottom: openAbove ? window.innerHeight - rect.top + VIEWPORT_PADDING : undefined,
-      zIndex: 9999,
+      zIndex: 90,
     });
   }, [anchorRef, minWidthRem]);
 

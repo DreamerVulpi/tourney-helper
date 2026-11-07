@@ -112,13 +112,14 @@ func NewDefaultWidgets() WidgetsCfg {
 			AutoRefresh:     false,
 		},
 		Scoreboard: WidgetScoreboard{
-			Theme:      "Default",
+			Theme:      "default",
 			TitleMatch: "CUSTOM NAME",
 			HideLogos:  false,
 			HideFlags:  false,
 			Scale:      1.0,
 			Format:     "FT2",
 			P1: Side{
+				TeamTag:  "",
 				Name:     "Player 1",
 				LogoPath: "",
 				Flag:     "",
@@ -127,6 +128,7 @@ func NewDefaultWidgets() WidgetsCfg {
 				ShowFlag: true,
 			},
 			P2: Side{
+				TeamTag:  "",
 				Name:     "Player 2",
 				LogoPath: "",
 				Flag:     "",

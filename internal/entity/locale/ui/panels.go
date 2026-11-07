@@ -7,6 +7,7 @@ type Ui struct {
 	NotificationSystemPanel NotificationSystemPanel
 	DatabasePanel           DatabasePanel
 	WidgetBracketPanel      WidgetBracketPanel
+	WidgetScoreboardPanel   WidgetScoreboardPanel
 	ProfilesPanel           ProfilesPanel
 	IntegrationsPanel       IntegrationsPanel
 	ValidationAlertModal    ValidationAlertModal
@@ -117,6 +118,70 @@ type WidgetBracketPanel struct {
 	FlagsLabel            string
 	FlagPlaceholder       string
 	FlagNames             map[string]string
+	HideLogosLabel        string
+	HideFlagsLabel        string
+}
+
+type WidgetScoreboardPanel struct {
+	Start             string
+	Stop              string
+	ListOfThemes      string
+	Format            string
+	FormatPlaceholder string
+
+	TitleEventLabel       string
+	TitleEventPlaceholder string
+	TeamNameLabel         string
+	TeamTagPlaceholder    string
+	PlayerNamePlaceholder string
+
+	LogoLabel           string
+	LogoPlaceholder     string
+	LogoPathPlaceholder string
+	AddLogoButton       string
+
+	FlagsLabel      string
+	FlagPlaceholder string
+	FlagNames       map[string]string
+
+	HideLogoTitle string
+	ShowLogoTitle string
+	HideFlagTitle string
+	ShowFlagTitle string
+
+	RenameLogoTitle  string
+	DeleteLogoTitle  string
+	SwitchSidesTitle string
+	ResetScoreTitle  string
+
+	WidgetNotRunning      string
+	ClickStartDescription string
+	LoadScoreboard        string
+	FetchData             string
+
+	// Add logo modal
+	AddLogoModalTitle string
+	ImageUrlLabel     string
+	OrLabel           string
+	ChooseFileButton  string
+	AddingLogo        string
+	AddLogoUrlHint    string
+	AddLogoEmptyError string
+
+	// Delete logo modal
+	DeleteLogoModalTitle    string
+	DeleteLogoModalMessage  string
+	DeleteLogoConfirmButton string
+
+	// Rename logo modal
+	RenameLogoModalTitle string
+	FileNameLabel        string
+	SaveButton           string
+	NameCannotBeEmpty    string
+
+	// Validation modal
+	ErrorTitle    string
+	OkButtonLabel string
 }
 
 type IntegrationsPanel struct {

@@ -2,14 +2,7 @@ package application
 
 import (
 	"fmt"
-	"net/http"
 	"sort"
-
-	"context"
-
-	"errors"
-
-	"time"
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
@@ -46,9 +39,9 @@ func (a *App) LaunchWidgetBracket(
 	cfgWidgets config.WidgetsCfg,
 ) error {
 	a.mu.Lock()
-	if a.wCancel != nil || a.sCancel != nil {
+	if a.bracketRunning {
 		a.mu.Unlock()
-		err := fmt.Errorf("Widget server is already running")
+		err := fmt.Errorf("Widget bracket is already running")
 		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
@@ -113,50 +106,33 @@ func (a *App) LaunchWidgetBracket(
 	logger.Log(entityLogger.Debug,
 		fmt.Sprintf("Widget will open bracket ID: %s", cfgWidgets.Bracket.BracketId))
 
-	_, cancel := context.WithCancel(context.Background())
-	a.mu.Lock()
-	a.RenderBracket = renderer
-	a.wCancel = cancel
-	a.mu.Unlock()
-
 	bracketService := service.NewBracketService(provider, renderer)
 	a.WidgetServer.SetBracketService(bracketService)
 
-	go func() {
-		logger.Log(entityLogger.Info, "Widget server starting on :8080")
+	a.mu.Lock()
+	if a.bracketRunning {
+		a.mu.Unlock()
+		err := fmt.Errorf("Widget bracket is already running")
+		logger.Log(entityLogger.Error, err.Error())
+		return err
+	}
+	a.RenderBracket = renderer
+	a.bracketRunning = true
+	a.mu.Unlock()
 
-		err := a.WidgetServer.Start(":8080")
-		if err != nil && !errors.Is(err, http.ErrServerClosed) && !errors.Is(err, context.DeadlineExceeded) {
-			logger.Log(entityLogger.Error, fmt.Sprintf("Widget server: %v", err))
-		} else if err != nil && errors.Is(err, context.DeadlineExceeded) {
-			logger.Log(entityLogger.Info, "Widget server stopped (context deadline exceeded during shutdown)")
-		}
-	}()
+	a.acquireWidgetServer()
 
 	return nil
 }
 
 func (a *App) StopWidgetBracket() {
 	a.mu.Lock()
-	cancel := a.wCancel
-	a.wCancel = nil
+	if !a.bracketRunning {
+		a.mu.Unlock()
+		return
+	}
+	a.bracketRunning = false
 	a.mu.Unlock()
 
-	if cancel != nil {
-		cancel()
-	}
-
-	ctx, cancelShutdown := context.WithTimeout(
-		context.Background(),
-		5*time.Second,
-	)
-	defer cancelShutdown()
-
-	if err := a.WidgetServer.Stop(ctx); err != nil {
-		if !errors.Is(err, context.DeadlineExceeded) {
-			logger.Log(entityLogger.Error, err.Error())
-		} else {
-			logger.Log(entityLogger.Debug, "Widget server forced to stop due to timeout")
-		}
-	}
+	a.releaseWidgetServer()
 }

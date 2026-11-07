@@ -20,6 +20,7 @@ export interface WidgetBracket {
 }
 
 export interface ScoreboardSide {
+  teamTag: string;
   name: string;
   logoPath: string;
   flag: string;

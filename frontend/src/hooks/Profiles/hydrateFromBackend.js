@@ -84,6 +84,7 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
     const b = widgets.bracket ?? {};
     const s = widgets.scoreboard ?? {};
     const normalizeSide = (side, fallbackName) => ({
+      teamTag:  side?.teamTag  ?? "",
       name:     side?.name     ?? fallbackName,
       logoPath: side?.logoPath ?? "",
       flag:     side?.flag     ?? "",
@@ -105,7 +106,7 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
         autoRefresh:     b.autoRefresh     ?? false,
       },
       scoreboard: {
-        theme:           s.theme           ?? "Default",
+        theme:           s.theme === "Default" ? "default" : (s.theme || "default"),
         titleMatch:      s.titleMatch      ?? "CUSTOM NAME",
         hideLogos:       s.hideLogos       ?? false,
         hideFlags:       s.hideFlags       ?? false,

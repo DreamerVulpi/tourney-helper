@@ -13,7 +13,9 @@ var themesPath = "/themes"
 
 var directories = []string{
 	"bracket" + themesPath,
+	"scoreboard" + themesPath,
 	"scoreboard/flags",
+	"scoreboard/logos",
 }
 
 func InitDirectories() error {

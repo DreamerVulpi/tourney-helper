@@ -6,6 +6,7 @@ import (
 
 	"context"
 
+	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/widgets/handler"
 	"github.com/dreamervulpi/tourney-helper/internal/widgets/service"
 	"github.com/gin-contrib/cors"
@@ -53,12 +54,30 @@ func NewServer() *Server {
 }
 
 func (s *Server) Start(addr string) error {
-	s.httpServer = &http.Server{
+	srv := &http.Server{
 		Addr:    addr,
 		Handler: s.router,
 	}
+	s.httpServer = srv
 
-	return s.httpServer.ListenAndServe()
+	return srv.ListenAndServe()
+}
+
+// StartAsync синхронно создаёт HTTP-сервер и запускает прослушивание в фоне.
+// Возвращает канал с результатом ListenAndServe.
+func (s *Server) StartAsync(addr string) <-chan error {
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: s.router,
+	}
+	s.httpServer = srv
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- srv.ListenAndServe()
+	}()
+
+	return errCh
 }
 
 func (s *Server) Stop(ctx context.Context) error {
@@ -71,4 +90,12 @@ func (s *Server) Stop(ctx context.Context) error {
 
 func (s *Server) SetBracketService(bracketService *service.BracketService) {
 	s.bracket.SetBracketService(bracketService)
+}
+
+func (s *Server) SetScoreboardService(scoreboardService *service.ScoreboardService) {
+	s.scoreboard.SetScoreboardService(scoreboardService)
+}
+
+func (s *Server) SetScoreboardState(state config.WidgetScoreboard) {
+	s.scoreboard.SetState(state)
 }

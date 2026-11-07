@@ -39,13 +39,17 @@ type App struct {
 	switchingProfile bool
 	ns               *sender.NotificationSystem
 	nsCancel         context.CancelFunc
-	wCancel          context.CancelFunc
-	sCancel          context.CancelFunc
 	activeBot        bot.BotHandler
-	WidgetServer     *widgets.Server
-	RenderBracket    renderer.BracketRenderer
-	ThemeProvider    *widgets.ThemeProvider
-	UrlValidator     *validator.Validator
+
+	widgetServerMu          sync.Mutex
+	widgetServerRefs        int
+	bracketRunning          bool
+	scoreboardRunning       bool
+	WidgetServer            *widgets.Server
+	RenderBracket           renderer.BracketRenderer
+	ThemeProvider           *widgets.ThemeProvider
+	ScoreboardThemeProvider *widgets.ThemeProvider
+	UrlValidator            *validator.Validator
 
 	ActiveProfile         string
 	SettingsCfg           config.SettingsApplicationCfg
@@ -56,7 +60,8 @@ type App struct {
 
 func NewApp() *App {
 	return &App{
-		ThemeProvider: widgets.NewThemeProvider(""),
+		ThemeProvider:           widgets.NewThemeProvider(""),
+		ScoreboardThemeProvider: widgets.NewScoreboardThemeProvider(""),
 	}
 }
 
@@ -90,8 +95,8 @@ func (a *App) OpenImportImage() (string, error) {
 		Title: "Select file",
 		Filters: []runtime.FileFilter{
 			{
-				DisplayName: "Import files",
-				Pattern:     "*.png; *.jpeg",
+				DisplayName: "Images",
+				Pattern:     "*.png; *.jpg; *.jpeg; *.webp; *.gif; *.bmp",
 			},
 		},
 	})

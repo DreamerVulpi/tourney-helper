@@ -10,6 +10,7 @@ export function useStartToggle(
   isProcessing,
   setIsProcessing,
   setStatusWidgetScoreboard,
+  widgets,
 ) {
   const toggleStart = async () => {
     if (isProcessing) return;
@@ -33,7 +34,7 @@ export function useStartToggle(
     try {
       setStatusWidgetScoreboard(SERVICE_STATUS.STARTING);
 
-      await LaunchWidgetScoreboard();
+      await LaunchWidgetScoreboard(widgets);
 
       setIsWidgetScoreboardRunning(true);
       setStatusWidgetScoreboard(SERVICE_STATUS.RUNNING);

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/dreamervulpi/tourney-helper/config"
 	entity "github.com/dreamervulpi/tourney-helper/internal/entity/widgets"
 )
 
@@ -15,6 +16,13 @@ type BracketRenderer interface {
 type ThemeAware interface {
 	RenderWithTheme(bracket *entity.Bracket, themeName string) (string, error)
 	ListThemes() ([]string, error)
+}
+
+type ScoreboardRenderer interface {
+	Render(scoreboard config.WidgetScoreboard) (string, error)
+	RenderWithTheme(scoreboard config.WidgetScoreboard, themeName string) (string, error)
+	ListThemes() ([]string, error)
+	GetThemeCSS(name string) (string, error)
 }
 
 func ClearString(s string) string {

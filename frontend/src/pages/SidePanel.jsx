@@ -126,7 +126,7 @@ const SidePanel = ({ locale, updateConfig }) => {
           />
           <NavItem
             icon={<Swords size={20}/>}
-            label={"Scoreboard widget"}
+            label={locale.WidgetOfScoreboardLabel}
             collapsed={sidePanelCollapsed}
             active={activeTab === "widgetScoreboard"}
             onClick={() => setActiveTab("widgetScoreboard")}

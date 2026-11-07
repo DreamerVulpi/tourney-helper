@@ -1,15 +1,15 @@
 package application
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"net/http"
-	"time"
+	"sort"
 
+	"github.com/dreamervulpi/tourney-helper/config"
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	widgetflags "github.com/dreamervulpi/tourney-helper/internal/widgets/flags"
+	scoreboardRenderer "github.com/dreamervulpi/tourney-helper/internal/widgets/renderer/scoreboard"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/service"
 )
 
 // GetListFlags возвращает список флагов стран для выпадающего списка.
@@ -17,57 +17,66 @@ func (a *App) GetListFlags() ([]widgetflags.Info, error) {
 	return widgetflags.List()
 }
 
-// LaunchWidgetScoreboard запускает сервер виджетов для scoreboard.
-// Полноценный рендер виджета будет добавлен отдельной итерацией,
-// сейчас сервер отдаёт заглушку по /widgets/scoreboard.
-func (a *App) LaunchWidgetScoreboard() error {
+// GetListScoreboardThemes возвращает список доступных тем scoreboard.
+func (a *App) GetListScoreboardThemes() ([]string, error) {
+	themes, err := a.ScoreboardThemeProvider.ListThemes()
+	if err != nil {
+		logger.Log(entityLogger.Error, err.Error())
+		return nil, err
+	}
+
+	sort.Strings(themes)
+
+	logger.Log(entityLogger.Debug, fmt.Sprintf(
+		"GetListScoreboardThemes: found %d themes from %s",
+		len(themes),
+		a.ScoreboardThemeProvider.ExternalDir(),
+	))
+
+	return themes, nil
+}
+
+// LaunchWidgetScoreboard запускает сервер виджетов и подготавливает
+// рендер scoreboard с текущим состоянием из конфигурации.
+func (a *App) LaunchWidgetScoreboard(cfgWidgets config.WidgetsCfg) error {
 	a.mu.Lock()
-	if a.wCancel != nil || a.sCancel != nil {
+	if a.scoreboardRunning {
 		a.mu.Unlock()
-		err := fmt.Errorf("Widget server is already running")
+		err := fmt.Errorf("Widget scoreboard is already running")
 		logger.Log(entityLogger.Error, err.Error())
 		return err
 	}
-	_, cancel := context.WithCancel(context.Background())
-	a.sCancel = cancel
 	a.mu.Unlock()
 
-	go func() {
-		logger.Log(entityLogger.Info, "Widget server starting on :8080")
+	renderer := scoreboardRenderer.NewRenderer(a.ScoreboardThemeProvider)
+	scoreboardService := service.NewScoreboardService(renderer)
 
-		err := a.WidgetServer.Start(":8080")
-		if err != nil && !errors.Is(err, http.ErrServerClosed) && !errors.Is(err, context.DeadlineExceeded) {
-			logger.Log(entityLogger.Error, fmt.Sprintf("Widget server: %v", err))
-		} else if err != nil && errors.Is(err, context.DeadlineExceeded) {
-			logger.Log(entityLogger.Info, "Widget server stopped (context deadline exceeded during shutdown)")
-		}
-	}()
+	a.WidgetServer.SetScoreboardService(scoreboardService)
+	a.WidgetServer.SetScoreboardState(cfgWidgets.Scoreboard)
+
+	a.mu.Lock()
+	if a.scoreboardRunning {
+		a.mu.Unlock()
+		err := fmt.Errorf("Widget scoreboard is already running")
+		logger.Log(entityLogger.Error, err.Error())
+		return err
+	}
+	a.scoreboardRunning = true
+	a.mu.Unlock()
+
+	a.acquireWidgetServer()
 
 	return nil
 }
 
 func (a *App) StopWidgetScoreboard() {
 	a.mu.Lock()
-	cancel := a.sCancel
-	a.sCancel = nil
-	a.mu.Unlock()
-
-	if cancel == nil {
+	if !a.scoreboardRunning {
+		a.mu.Unlock()
 		return
 	}
-	cancel()
+	a.scoreboardRunning = false
+	a.mu.Unlock()
 
-	ctx, cancelShutdown := context.WithTimeout(
-		context.Background(),
-		5*time.Second,
-	)
-	defer cancelShutdown()
-
-	if err := a.WidgetServer.Stop(ctx); err != nil {
-		if !errors.Is(err, context.DeadlineExceeded) {
-			logger.Log(entityLogger.Error, err.Error())
-		} else {
-			logger.Log(entityLogger.Debug, "Widget server forced to stop due to timeout")
-		}
-	}
+	a.releaseWidgetServer()
 }

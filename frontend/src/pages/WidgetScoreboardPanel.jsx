@@ -20,9 +20,13 @@ import {
   ImageIcon,
   RotateCcw,
   Eye, EyeOff,
-  Download,
   Globe,
-  User
+  User,
+  Users,
+  ImagePlus,
+  Trash2,
+  Pencil,
+  Link2
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -31,9 +35,14 @@ import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { ActionButton } from "../components/ui/ActionButton.jsx";
 import { useStartToggle } from "../hooks/WidgetScoreboardPanel/useStartToggle.jsx";
 import { useGetListFlags } from "../hooks/WidgetScoreboardPanel/useGetListFlags.jsx";
-import { useGetListThemes } from "../hooks/WidgetBracketPanel/useGetListThemes.jsx";
+import { useGetListScoreboardThemes } from "../hooks/WidgetScoreboardPanel/useGetListScoreboardThemes.jsx";
+import { useGetListLogos } from "../hooks/WidgetScoreboardPanel/useGetListLogos.jsx";
+import AddLogoModal from "../components/modals/AddLogoModal.jsx";
+import ConfirmModal from "../components/modals/ConfirmModal.jsx";
+import PromptModal from "../components/modals/PromptModal.jsx";
+import { ValidationModal } from "../components/ValidationModal.jsx";
+import { DeleteLogo, RenameLogo } from "../../wailsjs/go/application/App.js";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
-import { SectionBlock } from "../components/ui/SectionBlock.jsx";
 import { getThemeClasses } from "../utils/themeClasses.jsx";
 import { useThemeClasses } from "../hooks/App/useThemeClasses";
 import { useAppStore } from "../store/useAppStore";
@@ -47,6 +56,7 @@ const clampScale = (s) => {
 };
 
 const DEFAULT_SIDE = {
+  teamTag: "",
   name: "Player",
   logoPath: "",
   flag: "",
@@ -59,6 +69,9 @@ const defaultSideFor = (side) => ({
   ...DEFAULT_SIDE,
   name: side === "P2" ? "Player 2" : "Player 1",
 });
+
+const stripLogoExtension = (name) =>
+  name ? String(name).replace(/\.[^.]+$/, "") : "";
 
 // Хелпер: частичный апдейт стороны P1/P2 + titleMatch через updateConfig
 const patchScoreboard = (updateConfig, patch) =>
@@ -83,7 +96,7 @@ const WidgetScoreboardPlate = ({
   const scoreboard = widgets?.scoreboard;
 
   // ---- поля из конфига (единый источник истины) ----
-  const themeScoreboard = scoreboard?.theme ?? "Default";
+  const themeScoreboard = scoreboard?.theme || "default";
   const titleMatch = scoreboard?.titleMatch ?? "CUSTOM NAME";
   const hideLogos = scoreboard?.hideLogos ?? false;
   const hideFlags = scoreboard?.hideFlags ?? false;
@@ -95,10 +108,16 @@ const WidgetScoreboardPlate = ({
   const [activeTabP1, setActiveTabP1] = useState("logo");
   const [activeTabP2, setActiveTabP2] = useState("logo");
 
-  const themeOptions = useGetListThemes();
+  const themeOptions = useGetListScoreboardThemes();
   const flagOptions = useGetListFlags(locale.FlagNames);
+  const { logos: logoOptions, reload: reloadLogos } = useGetListLogos();
   const readyScale = clampScale(scale);
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [addLogoModal, setAddLogoModal] = useState({ open: false, side: null });
+  const [logoDelete, setLogoDelete] = useState({ open: false, name: null });
+  const [logoRename, setLogoRename] = useState({ open: false, name: null });
+  const [logoPending, setLogoPending] = useState(false);
+  const [logoError, setLogoError] = useState("");
 
   const handleWidgetScoreboardToggle = useStartToggle(
     isWidgetScoreboardRunning,
@@ -106,19 +125,23 @@ const WidgetScoreboardPlate = ({
     isProcessing,
     setIsProcessingWS,
     setStatusWidgetScoreboard,
+    widgets,
   );
+
+  const scoreboardState = useMemo(() => ({
+    theme: themeScoreboard,
+    titleMatch,
+    hideLogos,
+    hideFlags,
+    scale: readyScale,
+    format,
+    P1: p1,
+    P2: p2,
+  }), [themeScoreboard, titleMatch, hideLogos, hideFlags, readyScale, format, p1, p2]);
 
   // ---------- Обработчики конфига ----------
   const handleThemeChange = useCallback(
     (value) => patchScoreboard(updateConfig, { theme: value }),
-    [updateConfig],
-  );
-  const handleHideLogosChange = useCallback(
-    (value) => patchScoreboard(updateConfig, { hideLogos: value }),
-    [updateConfig],
-  );
-  const handleHideFlagsChange = useCallback(
-    (value) => patchScoreboard(updateConfig, { hideFlags: value }),
     [updateConfig],
   );
   const handleScaleChange = useCallback(
@@ -131,7 +154,10 @@ const WidgetScoreboardPlate = ({
   );
 
   const handleFormatChange = useCallback(
-    (value) => patchScoreboard(updateConfig, { format: value }),
+    (value) => {
+      const next = Array.isArray(value) ? (value[0] ?? "") : value;
+      patchScoreboard(updateConfig, { format: next });
+    },
     [updateConfig],
   );
 
@@ -182,17 +208,84 @@ const WidgetScoreboardPlate = ({
     [scoreboard, updateSide],
   );
 
+  const handleDeleteLogo = useCallback(async () => {
+    const name = logoDelete.name;
+    if (!name) return;
+
+    setLogoPending(true);
+    try {
+      await DeleteLogo(name);
+
+      const patch = {};
+      if (scoreboard?.P1?.logoPath === name) {
+        patch.P1 = { ...scoreboard.P1, logoPath: "" };
+      }
+      if (scoreboard?.P2?.logoPath === name) {
+        patch.P2 = { ...scoreboard.P2, logoPath: "" };
+      }
+      if (Object.keys(patch).length) {
+        patchScoreboard(updateConfig, patch);
+      }
+
+      await reloadLogos();
+      setLogoDelete({ open: false, name: null });
+    } catch (err) {
+      setLogoError(String(err?.message ?? err));
+    } finally {
+      setLogoPending(false);
+    }
+  }, [logoDelete.name, scoreboard, updateConfig, reloadLogos]);
+
+  const handleRenameLogo = useCallback(async (oldName, newName) => {
+    if (!oldName || !newName?.trim()) return;
+
+    setLogoPending(true);
+    try {
+      const info = await RenameLogo(oldName, newName.trim());
+
+      const patch = {};
+      if (scoreboard?.P1?.logoPath === oldName) {
+        patch.P1 = { ...scoreboard.P1, logoPath: info.name };
+      }
+      if (scoreboard?.P2?.logoPath === oldName) {
+        patch.P2 = { ...scoreboard.P2, logoPath: info.name };
+      }
+      if (Object.keys(patch).length) {
+        patchScoreboard(updateConfig, patch);
+      }
+
+      await reloadLogos();
+      setLogoRename({ open: false, name: null });
+    } catch (err) {
+      setLogoError(String(err?.message ?? err));
+    } finally {
+      setLogoPending(false);
+    }
+  }, [scoreboard, updateConfig, reloadLogos]);
+
   // ---------- URL ----------
+  const widgetBaseUrl = "http://localhost:8080/widgets/scoreboard";
+  const baseIframeUrl = `${widgetBaseUrl}?preview=1`;
+
   const scoreboardUrl = useMemo(() => {
     const params = new URLSearchParams();
     params.set("theme", themeScoreboard);
     if (hideLogos) params.set("hideLogos", "1");
     if (hideFlags) params.set("hideFlags", "1");
     if (readyScale !== 1.0) params.set("scale", String(readyScale));
-    return `http://localhost:8080/widgets/scoreboard?${params.toString()}`;
+    return `${widgetBaseUrl}?${params.toString()}`;
   }, [themeScoreboard, hideLogos, hideFlags, readyScale]);
 
-  // ---------- Фиксируем src при старте; при смене темы — перезагружаем ----------
+  // В iframe всегда показываем уменьшенную демонстрацию 0.55x.
+  // Ползунок масштаба влияет только на внешние браузеры.
+  const iframeState = useMemo(
+    () => ({ ...scoreboardState, scale: 0.55 }),
+    [scoreboardState],
+  );
+
+  // ---------- Фиксируем src при старте ----------
+  // Смена любых параметров не перезагружает iframe:
+  // они применяются в реальном времени через postMessage.
   const initialSrcRef = useRef(null);
   useEffect(() => {
     if (!isWidgetScoreboardRunning) {
@@ -200,38 +293,49 @@ const WidgetScoreboardPlate = ({
       setIframeLoaded(false);
       return;
     }
-    initialSrcRef.current = scoreboardUrl;
-    setIframeLoaded(false);
-  }, [isWidgetScoreboardRunning, themeScoreboard]); // флаги НЕ триггерят reload
 
-  // ---------- postMessage на флаги/scale (без перезагрузки) ----------
+    initialSrcRef.current = baseIframeUrl;
+    setIframeLoaded(false);
+  }, [isWidgetScoreboardRunning]);
+
+  // ---------- postMessage полного состояния в iframe ----------
   useEffect(() => {
     if (!isWidgetScoreboardRunning) return;
     const iframe = iframeRef_WidgetScoreboard?.current;
     if (!iframe) return;
 
-    const sendFlags = () => {
+    const sendState = () => {
       iframe.contentWindow?.postMessage(
         {
-          type: "scoreboard:flags-changed",
-          flags: {
-            hideLogos,
-            hideFlags,
-            scale: readyScale,
-          },
+          type: "scoreboard:state-changed",
+          state: iframeState,
         },
         "*",
       );
     };
-    sendFlags();
-    iframe.addEventListener("load", sendFlags);
-    return () => iframe.removeEventListener("load", sendFlags);
+
+    sendState();
+    iframe.addEventListener("load", sendState);
+
+    const syncTimer = setTimeout(() => {
+      fetch("http://localhost:8080/widgets/scoreboard/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(scoreboardState),
+      }).catch((err) => {
+        console.warn("[scoreboard] state sync failed:", err);
+      });
+    }, 150);
+
+    return () => {
+      iframe.removeEventListener("load", sendState);
+      clearTimeout(syncTimer);
+    };
   }, [
-    hideLogos,
-    hideFlags,
-    readyScale,
     isWidgetScoreboardRunning,
     iframeRef_WidgetScoreboard,
+    scoreboardState,
+    iframeState,
   ]);
 
   const isStartDisabled = isProcessing || isWidgetScoreboardRunning;
@@ -239,14 +343,33 @@ const WidgetScoreboardPlate = ({
   const getButtonStyle = getLaunchButtonStyle(isWidgetScoreboardRunning, false);
 
   const EXTRA_TABS = [
-    { id: "logo", icon: ImageIcon, label: "Logo"},
-    { id: "flag", icon: Flag,        label: locale.FlagsLabel ?? "Flags" }
+    { id: "logo", icon: ImageIcon, label: locale.LogoLabel },
+    { id: "flag", icon: Flag,      label: locale.FlagsLabel }
   ]
 
   const renderSideControls = (side, activeTab, setActiveTab) => {
   const data = scoreboard?.[side] ?? defaultSideFor(side);
   const selectedFlag = flagOptions.find((f) => f.value === data.flag);
+  const selectedLogo = logoOptions.find((l) => l.value === data.logoPath);
+  const logoPreview =
+    selectedLogo?.dataUrl ||
+    (/^(https?:|data:|blob:)/i.test(data.logoPath || "") ? data.logoPath : "");
   const isP2 = side === "P2";
+
+  // Блок с тегом команды
+  const teamNameField = (
+    <div key="teamTag" className="w-28 flex-shrink-0">
+      <Field
+        icon={Users}
+        variant="input"
+        label={locale.TeamNameLabel}
+        value={data.teamTag ?? ""}
+        onChange={(val) => updateSide(side, { teamTag: val })}
+        themeClasses={themeClasses}
+        placeholder={locale.TeamTagPlaceholder}
+      />
+    </div>
+  );
 
   // Блок с именем
   const nameField = (
@@ -254,17 +377,23 @@ const WidgetScoreboardPlate = ({
       <Field
         icon={User}
         variant="input"
+        label={side}
         value={data.name}
         onChange={(val) => updateSide(side, { name: val })}
         themeClasses={themeClasses}
-        placeholder="Player name"
+        placeholder={locale.PlayerNamePlaceholder}
       />
     </div>
   );
 
   // Блок с кнопками +/- (они всегда идут перед счетом)
+  // translate-y компенсирует высоту label у Team Name / P1-P2,
+  // чтобы центры полей совпали с линией между + и -.
   const buttonsBlock = (
-    <div key="btns" className="flex flex-col gap-1">
+    <div
+      key="btns"
+      className="flex flex-col items-center gap-1 translate-y-[11px]"
+    >
       <button
         onClick={() => handleScoreChange(side, 1)}
         className="w-7 h-7 flex items-center justify-center bg-green-600/10 text-green-500 rounded-lg border border-green-600/20 hover:bg-green-600/20 transition-colors"
@@ -282,26 +411,29 @@ const WidgetScoreboardPlate = ({
 
   // Блок со счетом
   const scoreBlock = (
-    <span key="pts" className="text-xl font-bold tabular-nums w-6 text-center">
+    <span
+      key="pts"
+      className="text-xl font-bold tabular-nums w-6 text-center translate-y-[11px]"
+    >
       {data.points}
     </span>
   );
 
   // Формируем строку в зависимости от стороны
-  // P1: [Имя] --- [Кнопки] [Счет]
-  // P2: [Счет] [Кнопки] --- [Имя]
+  // P1: [Тег] [Имя] --- [Кнопки] [Счет]
+  // P2: [Счет] [Кнопки] --- [Имя] [Тег]
   const topRow = isP2
-    ? [scoreBlock, buttonsBlock, nameField]
-    : [nameField, buttonsBlock, scoreBlock];
+    ? [scoreBlock, buttonsBlock, nameField, teamNameField]
+    : [teamNameField, nameField, buttonsBlock, scoreBlock];
 
     return (
       <div
-        className={`flex flex-col p-3 rounded-xl border gap-3 ${
+        className={`flex flex-col p-3 rounded-xl border gap-6 ${
           themeClasses?.tempSection || "bg-slate-800 border-slate-700"
         }`}
       >
         {/* Верхняя строка */}
-        <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center justify-between gap-2 -mt-1.5">
           {topRow}
         </div>
 
@@ -312,6 +444,8 @@ const WidgetScoreboardPlate = ({
           onChange={setActiveTab}
           themeClasses={themeClasses}
           className="flex-1 min-h-0"
+          padding="p-3"
+          rounding = "rounded-[1rem]"
         >
           {(tab) =>
             tab === "logo" ? (
@@ -319,14 +453,24 @@ const WidgetScoreboardPlate = ({
                 {/* Квадрат логотипа */}
                 <div className="relative w-18 h-18 flex-shrink-0">
                   <div
-                    className={`w-full h-full rounded-lg border flex items-center justify-center ${
+                    className={`w-full h-full rounded-lg border flex items-center justify-center overflow-hidden ${
                       themeClasses?.field || "bg-slate-900 border-slate-700"
                     }`}
                   >
-                    <ImageIcon
-                      className={data.showLogo !== false ? "text-slate-500 opacity-50" : "text-slate-700 opacity-30"}
-                      size={24}
-                    />
+                    {logoPreview ? (
+                      <img
+                        src={logoPreview}
+                        alt={data.logoPath}
+                        className={`w-full h-full object-contain ${
+                          data.showLogo !== false ? "" : "opacity-30 grayscale"
+                        }`}
+                      />
+                    ) : (
+                      <ImageIcon
+                        className={data.showLogo !== false ? "text-slate-500 opacity-50" : "text-slate-700 opacity-30"}
+                        size={24}
+                      />
+                    )}
                   </div>
                   <button
                     onClick={() => handleToggleVisibility(side, "showLogo")}
@@ -335,7 +479,7 @@ const WidgetScoreboardPlate = ({
                         ? "bg-slate-700 border-slate-600 text-green-400 hover:bg-slate-600"
                         : "bg-slate-800 border-slate-700 text-slate-500 hover:bg-slate-700"
                     }`}
-                    title={data.showLogo !== false ? "Скрыть логотип" : "Показать логотип"}
+                    title={data.showLogo !== false ? locale.HideLogoTitle : locale.ShowLogoTitle}
                   >
                     {data.showLogo !== false ? <Eye size={12} /> : <EyeOff size={12} />}
                   </button>
@@ -343,21 +487,82 @@ const WidgetScoreboardPlate = ({
 
                 {/* Инпуты */}
                 <div className="flex flex-col gap-2 flex-1 min-w-0">
-                  <Field
-                    icon={Globe}
-                    variant="input"
-                    value={data.logoPath}
-                    onChange={(val) => updateSide(side, { logoPath: val })}
-                    themeClasses={themeClasses}
-                    placeholder="Logo path"
-                    height="2rem"
-                  />
+                  {logoOptions.length > 0 ? (
+                    <Field
+                      variant="multiselect"
+                      single
+                      searchable
+                      label={locale.LogoLabel}
+                      value={data.logoPath ? [data.logoPath] : []}
+                      onChange={(values) =>
+                        updateSide(side, { logoPath: values?.[0] ?? "" })
+                      }
+                      items={logoOptions}
+                      themeClasses={themeClasses}
+                      height="1.9rem"
+                      placeholder={locale.LogoPlaceholder}
+                      maxVisible={5}
+                      renderItem={(item) => (
+                        <span className="flex items-center gap-2 min-w-0 flex-1">
+                          {item.dataUrl && (
+                            <img
+                              src={item.dataUrl}
+                              alt=""
+                              className="w-6 h-6 object-contain rounded-sm shrink-0"
+                            />
+                          )}
+                          <span className="truncate flex-1 min-w-0">
+                            {item.label}
+                          </span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            title={locale.RenameLogoTitle}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLogoRename({ open: true, name: item.value });
+                            }}
+                            className="shrink-0 p-1 rounded hover:bg-white/10 cursor-pointer"
+                          >
+                            <Pencil size={12} />
+                          </span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            title={locale.DeleteLogoTitle}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLogoDelete({ open: true, name: item.value });
+                            }}
+                            className="shrink-0 p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
+                          >
+                            <Trash2 size={12} />
+                          </span>
+                        </span>
+                      )}
+                    />
+                  ) : (
+                    <Field
+                      icon={Globe}
+                      variant="input"
+                      value={data.logoPath}
+                      onChange={(val) => updateSide(side, { logoPath: val })}
+                      themeClasses={themeClasses}
+                      placeholder={locale.LogoPathPlaceholder}
+                      height="2rem"
+                    />
+                  )}
                   <Field
                     variant="button"
-                    icon={Download}
-                    labelButton={"Choose file"}
+                    icon={ImagePlus}
+                    labelButton={locale.AddLogoButton}
                     height="2.1rem"
                     themeClasses={themeClasses}
+                    onClick={() =>
+                      setAddLogoModal({ open: true, side })
+                    }
                   />
                 </div>
               </div>
@@ -392,7 +597,7 @@ const WidgetScoreboardPlate = ({
                         ? "bg-slate-700 border-slate-600 text-green-400 hover:bg-slate-600"
                         : "bg-slate-800 border-slate-700 text-slate-500 hover:bg-slate-700"
                     }`}
-                    title={data.showFlag !== false ? "Скрыть флаг" : "Показать флаг"}
+                    title={data.showFlag !== false ? locale.HideFlagTitle : locale.ShowFlagTitle}
                   >
                     {data.showFlag !== false ? <Eye size={12} /> : <EyeOff size={12} />}
                   </button>
@@ -403,13 +608,13 @@ const WidgetScoreboardPlate = ({
                     variant="multiselect"
                     single
                     searchable
-                    label={locale.FlagsLabel ?? "Flags"}
+                    label={locale.FlagsLabel}
                     value={data.flag ? [data.flag] : []}
                     onChange={(values) => updateSide(side, { flag: values?.[0] ?? "" })}
                     items={flagOptions}
                     themeClasses={themeClasses}
                     height="1.9rem"
-                    placeholder={locale.FlagPlaceholder ?? "Country flag"}
+                    placeholder={locale.FlagPlaceholder}
                     maxVisible={5}
                     renderItem={(item) => (
                       <span className="flex items-center gap-2 min-w-0">
@@ -455,7 +660,7 @@ const WidgetScoreboardPlate = ({
             {isWidgetScoreboardRunning && scoreboardUrl && (
               <>
                 <iframe
-                  src={initialSrcRef.current || scoreboardUrl}
+                  src={initialSrcRef.current || baseIframeUrl}
                   ref={iframeRef_WidgetScoreboard}
                   className="absolute inset-0 w-full h-full border-0 rounded-[0.5rem]"
                   title="Scoreboard"
@@ -464,19 +669,14 @@ const WidgetScoreboardPlate = ({
                   style={{ background: "transparent" }}
                 />
 
-                <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 w-80">
-                  <SectionBlock
-                    solid={true}
-                    title={locale.LinkOfWidget}
-                    titleAlign="center"
-                    theme={theme}
-                  >
-                    <Field
-                      variant="copy"
-                      value={scoreboardUrl}
-                      themeClasses={themeClasses}
-                    />
-                  </SectionBlock>
+                <div className="absolute bottom-3 left-3 z-10 w-72">
+                  <Field
+                    variant="copy"
+                    icon={Link2}
+                    value={scoreboardUrl}
+                    height="2rem"
+                    themeClasses={themeClasses}
+                  />
                 </div>
 
                 <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2 w-80">
@@ -499,7 +699,7 @@ const WidgetScoreboardPlate = ({
               <div className="absolute inset-0 flex items-center rounded-[0.5rem] justify-center z-20 bg-slate-900/80 backdrop-blur-sm">
                 <EmptyState
                   icon={Loader2}
-                  title={locale.LoadBracket}
+                  title={locale.LoadScoreboard}
                   description={locale.FetchData}
                 />
               </div>
@@ -512,17 +712,17 @@ const WidgetScoreboardPlate = ({
             {renderSideControls("P1", activeTabP1, setActiveTabP1)}
 
             {/* Центр (Настройки матча) */}
-            <div className="flex flex-col gap-4 pt-1 items-center w-[17rem]">
+            <div className="flex flex-col gap-2 items-center w-[17rem]">
               {/* Title Event */}
               <div className="w-full">
                 <Field
                   variant="input"
-                  label={"Title event"}
+                  label={locale.TitleEventLabel}
                   value={titleMatch}
                   onChange={handleTitleChange}
                   themeClasses={themeClasses}
                   icon={Trophy}
-                  placeholder="Match title"
+                  placeholder={locale.TitleEventPlaceholder}
                 />
               </div>
 
@@ -535,13 +735,13 @@ const WidgetScoreboardPlate = ({
                       single
                       searchable
                       icon={Swords}
-                      label={locale.Format ?? "Format"}
+                      label={locale.Format}
                       value={[format]}
                       onChange={handleFormatChange}
                       items={FORMAT_OPTIONS}
                       themeClasses={themeClasses}
                       height="1.9rem"
-                      placeholder="FT"
+                      placeholder={locale.FormatPlaceholder}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -557,13 +757,13 @@ const WidgetScoreboardPlate = ({
                   </div>
                 </div>
                 
-                <div className="flex flex-row gap-1 w-full mt-1">
+                <div className="flex flex-row gap-1 w-full">
                   <button
                     type="button"
                     onClick={handleSwitchSides}
                     style={{ height: "1.9rem" }}
                     className={`flex-1 flex items-center justify-center rounded-xl border text-xs font-black uppercase italic ${themeClasses.button}`}
-                    title="Сменить стороны"
+                    title={locale.SwitchSidesTitle}
                   >
                     <ArrowLeftRight size={16} className="text-blue-500" />
                   </button>
@@ -572,7 +772,7 @@ const WidgetScoreboardPlate = ({
                     onClick={handleResetScore}
                     style={{ height: "1.9rem" }}
                     className={`flex-1 flex items-center justify-center rounded-xl border text-xs font-black uppercase italic ${themeClasses.button}`}
-                    title="Сбросить счет"
+                    title={locale.ResetScoreTitle}
                   >
                     <RotateCcw size={16} className="text-blue-500" />
                   </button>
@@ -580,7 +780,7 @@ const WidgetScoreboardPlate = ({
               </div>
 
               {/* Start / Stop Кнопка */}
-              <div className="w-full mt-2">
+              <div className="w-full mt-2 flex justify-center">
                 <ActionButton
                   icon={isWidgetScoreboardRunning ? Square : Play}
                   loading={isProcessing}
@@ -588,7 +788,9 @@ const WidgetScoreboardPlate = ({
                     isWidgetScoreboardRunning ? isStopDisabled : isStartDisabled
                   }
                   expandOnHover={isWidgetScoreboardRunning && !isProcessing}
-                  className={`${getButtonStyle} w-full`}
+                  className={`${getButtonStyle} ${
+                    isWidgetScoreboardRunning ? "" : "w-full"
+                  }`}
                   iconClassName="fill-white"
                   onClick={handleWidgetScoreboardToggle}
                 >
@@ -604,6 +806,74 @@ const WidgetScoreboardPlate = ({
           
         </div>
       </div>
+
+      <AddLogoModal
+        isOpen={addLogoModal.open}
+        onClose={() => setAddLogoModal({ open: false, side: null })}
+        onAdded={async (info) => {
+          if (addLogoModal.side && info?.name) {
+            updateSide(addLogoModal.side, { logoPath: info.name });
+          }
+          await reloadLogos();
+        }}
+        themeClasses={themeClasses}
+        locale={locale}
+      />
+
+      <ConfirmModal
+        isOpen={logoDelete.open}
+        onClose={() => setLogoDelete({ open: false, name: null })}
+        onConfirm={handleDeleteLogo}
+        loading={logoPending}
+        title={locale.DeleteLogoModalTitle}
+        message={
+          (() => {
+            const parts = locale.DeleteLogoModalMessage.split("%v");
+            return (
+              <>
+                {parts[0]}
+                <span className="text-red-500 font-black italic">
+                  {logoDelete.name}
+                </span>
+                {parts[1]}
+              </>
+            );
+          })()
+        }
+        confirmLabel={locale.DeleteLogoConfirmButton}
+        icon={Trash2}
+        iconColor="red"
+        iconColorClass="text-red-500"
+        danger
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <PromptModal
+        isOpen={logoRename.open}
+        onClose={() => setLogoRename({ open: false, name: null })}
+        onConfirm={(newName) => handleRenameLogo(logoRename.name, newName)}
+        loading={logoPending}
+        title={locale.RenameLogoModalTitle}
+        label={locale.FileNameLabel}
+        defaultValue={stripLogoExtension(logoRename.name)}
+        confirmLabel={locale.SaveButton}
+        validate={(value) =>
+          value.trim() ? null : locale.NameCannotBeEmpty
+        }
+        icon={Pencil}
+        iconColor="amber"
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <ValidationModal
+        isOpen={!!logoError}
+        onClose={() => setLogoError("")}
+        message={logoError}
+        locale={{ ErrorFillParams: locale.ErrorTitle, OkButtonLabel: locale.OkButtonLabel }}
+        themeClasses={themeClasses}
+      />
     </PanelTemplate>
   );
 };

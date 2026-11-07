@@ -52,6 +52,7 @@ type WidgetBracket struct {
 
 // TODO: Add ShowLogo, ShowFlag
 type Side struct {
+	TeamTag  string `toml:"teamTag" json:"teamTag"`
 	Name     string `toml:"name" json:"name"`
 	LogoPath string `toml:"logoPath" json:"logoPath"`
 	Flag     string `toml:"flag" json:"flag"`

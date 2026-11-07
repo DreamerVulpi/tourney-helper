@@ -1,0 +1,42 @@
+/*
+ * Start.gg theme for tourney-helper scoreboard widget.
+ *
+ * Primary color: #3b4350
+ */
+
+:root {
+    --sb-bg: #f4f5f7;
+    --sb-bar-bg: #ffffff;
+    --sb-bar-border: #3b4350;
+
+    --sb-text: #111111;
+    --sb-muted: #6b7280;
+    --sb-dim: #9ca3af;
+
+    --sb-title-color: #111111;
+    --sb-format-color: #3b4350;
+
+    --sb-name-color: #111111;
+
+    --sb-score-bg: #3b4350;
+    --sb-score-color: #ffffff;
+
+    --sb-logo-bg: #f9fafb;
+    --sb-logo-border: #e5e7eb;
+
+    --sb-flag-border: #e5e7eb;
+
+    --sb-center-border: #e5e7eb;
+
+    --sb-font-family: "Segoe UI", Arial, sans-serif;
+    --sb-score-font: "Consolas", monospace;
+}
+
+html.transparent-bg,
+html.transparent-bg body,
+html.transparent-bg .scoreboard-wrapper,
+html.transparent-bg .scoreboard-scale,
+html.transparent-bg .scoreboard {
+    background: transparent !important;
+    background-image: none !important;
+}

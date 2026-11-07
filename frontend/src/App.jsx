@@ -284,7 +284,7 @@ const App = () => {
                 
                 {activeTab === "widgetScoreboard" && (
                   <WidgetScoreboardPanel
-                    locale={locale.WidgetBracketPanel}
+                    locale={locale.WidgetScoreboardPanel}
                     updateConfig={updateConfig}
                     isProcessing={isProcessingWS}
                     setIsProcessingWS={setIsProcessingWS}

@@ -52,7 +52,7 @@ export function DropdownList({
     : items;
 
   return (
-    <div ref={dropdownRef} className={`relative w-full ${isOpen ? "z-[999]" : ""}`}>
+    <div ref={dropdownRef} className="relative w-full">
       <button
         type="button"
         style={style}

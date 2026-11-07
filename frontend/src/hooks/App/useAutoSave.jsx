@@ -45,13 +45,14 @@ export function useAutoSave() {
               autoRefresh:     cfg.bracket?.autoRefresh     ?? false,
             },
             scoreboard: {
-              theme:           cfg.scoreboard?.theme           || "Default",
+              theme:           cfg.scoreboard?.theme           || "default",
               titleMatch:      cfg.scoreboard?.titleMatch      ?? "",
               hideLogos:       cfg.scoreboard?.hideLogos       ?? false,
               hideFlags:       cfg.scoreboard?.hideFlags       ?? false,
               scale:           cfg.scoreboard?.scale           ?? 1.0,
               format:          cfg.scoreboard?.format          || "FT2",
               P1: {
+                teamTag:  cfg.scoreboard?.P1?.teamTag  ?? "",
                 name:     cfg.scoreboard?.P1?.name     ?? "Player 1",
                 logoPath: cfg.scoreboard?.P1?.logoPath ?? "",
                 flag:     cfg.scoreboard?.P1?.flag     ?? "",
@@ -60,6 +61,7 @@ export function useAutoSave() {
                 showFlag: cfg.scoreboard?.P1?.showFlag ?? true,
               },
               P2: {
+                teamTag:  cfg.scoreboard?.P2?.teamTag  ?? "",
                 name:     cfg.scoreboard?.P2?.name     ?? "Player 2",
                 logoPath: cfg.scoreboard?.P2?.logoPath ?? "",
                 flag:     cfg.scoreboard?.P2?.flag     ?? "",

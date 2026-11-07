@@ -199,11 +199,7 @@ export function MultiSelectList({
 
   console.log("[MSL] BEFORE RETURN items:", items, "filtered:", filtered, "selectedLabels:", selectedLabels);
   return (
-    <div
-      ref={ref}
-      className={`relative w-full ${open ? "z-[999]" : ""}`}
-      style={style}
-    >
+    <div ref={ref} className="relative w-full" style={style}>
       {editing ? (
         <div className="w-full">
           <div

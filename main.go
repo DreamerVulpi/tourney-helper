@@ -18,6 +18,7 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/validator"
 	"github.com/dreamervulpi/tourney-helper/internal/version"
 	widgets "github.com/dreamervulpi/tourney-helper/internal/widgets"
+	scoreboardRenderer "github.com/dreamervulpi/tourney-helper/internal/widgets/renderer/scoreboard"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -72,6 +73,10 @@ func main() {
 	app.ThemeProvider = widget.NewThemeProvider("")
 	if err := app.EnsureThemes(); err != nil {
 		logger.Log(entityLogger.Debug, "themes init: "+err.Error())
+	}
+
+	if err := scoreboardRenderer.EnsureThemes(app.ScoreboardThemeProvider); err != nil {
+		logger.Log(entityLogger.Debug, "scoreboard themes init: "+err.Error())
 	}
 
 	if errGetProfile := app.GetActiveProfile(); errGetProfile != nil {
