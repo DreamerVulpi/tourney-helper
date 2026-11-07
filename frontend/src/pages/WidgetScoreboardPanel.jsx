@@ -9,7 +9,6 @@ import {
   Paintbrush,
   Square,
   Play,
-  ZoomIn,
   Trophy,
   Loader2,
   Plus,
@@ -31,6 +30,7 @@ import {
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
 import { Field } from "../components/ui/Field.jsx";
+import { TabbedRange } from "../components/ui/TabbedRange.jsx";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { ActionButton } from "../components/ui/ActionButton.jsx";
 import { useStartToggle } from "../hooks/WidgetScoreboardPanel/useStartToggle.jsx";
@@ -53,6 +53,18 @@ const clampScale = (s) => {
   const n = parseFloat(s);
   if (!Number.isFinite(n) || n <= 0) return 1.0;
   return Math.max(0.5, Math.min(2.0, n));
+};
+
+const clampGap = (s) => {
+  const n = parseFloat(s);
+  if (!Number.isFinite(n)) return 480;
+  return Math.max(100, Math.min(900, n));
+};
+
+const clampSideWidth = (s) => {
+  const n = parseFloat(s);
+  if (!Number.isFinite(n)) return 460;
+  return Math.max(200, Math.min(1920, n));
 };
 
 const DEFAULT_SIDE = {
@@ -101,6 +113,8 @@ const WidgetScoreboardPlate = ({
   const hideLogos = scoreboard?.hideLogos ?? false;
   const hideFlags = scoreboard?.hideFlags ?? false;
   const scale = scoreboard?.scale ?? 1.0;
+  const sideGap = scoreboard?.sideGap ?? 480;
+  const sideWidth = scoreboard?.sideWidth ?? 460;
   const format = scoreboard?.format ?? "FT2";
   const p1 = scoreboard?.P1 ?? defaultSideFor("P1");
   const p2 = scoreboard?.P2 ?? defaultSideFor("P2");
@@ -112,7 +126,10 @@ const WidgetScoreboardPlate = ({
   const flagOptions = useGetListFlags(locale.FlagNames);
   const { logos: logoOptions, reload: reloadLogos } = useGetListLogos();
   const readyScale = clampScale(scale);
+  const readyGap = clampGap(sideGap);
+  const readySideWidth = clampSideWidth(sideWidth);
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [activeRangeTab, setActiveRangeTab] = useState("scale");
   const [addLogoModal, setAddLogoModal] = useState({ open: false, side: null });
   const [logoDelete, setLogoDelete] = useState({ open: false, name: null });
   const [logoRename, setLogoRename] = useState({ open: false, name: null });
@@ -134,10 +151,12 @@ const WidgetScoreboardPlate = ({
     hideLogos,
     hideFlags,
     scale: readyScale,
+    sideGap: readyGap,
+    sideWidth: readySideWidth,
     format,
     P1: p1,
     P2: p2,
-  }), [themeScoreboard, titleMatch, hideLogos, hideFlags, readyScale, format, p1, p2]);
+  }), [themeScoreboard, titleMatch, hideLogos, hideFlags, readyScale, readyGap, readySideWidth, format, p1, p2]);
 
   // ---------- Обработчики конфига ----------
   const handleThemeChange = useCallback(
@@ -146,6 +165,14 @@ const WidgetScoreboardPlate = ({
   );
   const handleScaleChange = useCallback(
     (value) => patchScoreboard(updateConfig, { scale: clampScale(value) }),
+    [updateConfig],
+  );
+  const handleSideGapChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { sideGap: clampGap(value) }),
+    [updateConfig],
+  );
+  const handleSideWidthChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { sideWidth: clampSideWidth(value) }),
     [updateConfig],
   );
   const handleTitleChange = useCallback(
@@ -638,6 +665,48 @@ const WidgetScoreboardPlate = ({
     );
   };
 
+  const rangeTabs = [
+    {
+      id: "scale",
+      label: locale.ScaleTab,
+      min: 0.5,
+      max: 2.0,
+      step: 0.05,
+      value: readyScale,
+      onChange: handleScaleChange,
+      resetValue: 1.0,
+      formatValue: (value) => `${parseFloat(value).toFixed(2)}×`,
+      rangeMinIcon: Minus,
+      rangeMaxIcon: Plus,
+    },
+    {
+      id: "gap",
+      label: locale.GapTab,
+      min: 100,
+      max: 900,
+      step: 10,
+      value: readyGap,
+      onChange: handleSideGapChange,
+      resetValue: 480,
+      formatValue: (value) => `${Math.round(parseFloat(value))}px`,
+      rangeMinIcon: Minus,
+      rangeMaxIcon: Plus,
+    },
+    {
+      id: "sideWidth",
+      label: locale.PlateWidthTab,
+      min: 200,
+      max: 1920,
+      step: 10,
+      value: readySideWidth,
+      onChange: handleSideWidthChange,
+      resetValue: 460,
+      formatValue: (value) => `${Math.round(parseFloat(value))}px`,
+      rangeMinIcon: Minus,
+      rangeMaxIcon: Plus,
+    },
+  ];
+
   return (
     <PanelTemplate themeClasses={themeClasses}>
       <div className="flex flex-col gap-4 flex-1 min-h-0 w-full">
@@ -679,16 +748,11 @@ const WidgetScoreboardPlate = ({
                   />
                 </div>
 
-                <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2 w-80">
-                  <Field
-                    solid={true}
-                    variant="range"
-                    icon={ZoomIn}
-                    min={0.5}
-                    max={2.0}
-                    step={0.05}
-                    onChange={handleScaleChange}
-                    value={readyScale}
+                <div className="absolute bottom-4 right-4 z-10 w-80">
+                  <TabbedRange
+                    tabs={rangeTabs}
+                    activeTab={activeRangeTab}
+                    onChangeTab={setActiveRangeTab}
                     themeClasses={themeClasses}
                   />
                 </div>

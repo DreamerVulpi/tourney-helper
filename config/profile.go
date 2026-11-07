@@ -39,6 +39,12 @@ func LoadWidgets(profileName string) (WidgetsCfg, error) {
 	}
 
 	cfg.EnsureScoreboardDefaults()
+	if cfg.Scoreboard.SideGap <= 0 {
+		cfg.Scoreboard.SideGap = 480
+	}
+	if cfg.Scoreboard.SideWidth <= 0 {
+		cfg.Scoreboard.SideWidth = 460
+	}
 	return cfg, nil
 }
 

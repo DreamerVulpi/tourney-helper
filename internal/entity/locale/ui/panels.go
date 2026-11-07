@@ -128,6 +128,9 @@ type WidgetScoreboardPanel struct {
 	ListOfThemes      string
 	Format            string
 	FormatPlaceholder string
+	ScaleTab          string
+	GapTab            string
+	PlateWidthTab     string
 
 	TitleEventLabel       string
 	TitleEventPlaceholder string

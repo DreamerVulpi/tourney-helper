@@ -113,6 +113,27 @@ func (p *ThemeProvider) ListThemes() ([]string, error) {
 	return result, nil
 }
 
+// BuiltinThemeCSS returns the CSS of a theme embedded into the binary,
+// ignoring any external file with the same name.
+func (p *ThemeProvider) BuiltinThemeCSS(name string) (string, error) {
+	if name == "" {
+		name = DefaultThemeName
+	}
+
+	name = path.Base(name)
+	if name == "." || name == "/" || name == "" {
+		return "", fmt.Errorf("invalid theme name")
+	}
+
+	builtinPath := fmt.Sprintf("%s/%s.css", p.builtinDir(), name)
+	data, err := builtinThemes.ReadFile(builtinPath)
+	if err != nil {
+		return "", fmt.Errorf("theme %q not found: %w", name, err)
+	}
+
+	return string(data), nil
+}
+
 // GetThemeCSS - get name of theme
 func (p *ThemeProvider) GetThemeCSS(name string) (string, error) {
 	if name == "" {

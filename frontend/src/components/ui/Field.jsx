@@ -22,6 +22,10 @@ function FieldBase({
   max = 1.0,
   step,
   showReset = true,
+  resetValue = 1.0,
+  formatValue,
+  rangeMinIcon,
+  rangeMaxIcon,
   solid = false,
 
   value,
@@ -49,6 +53,14 @@ function FieldBase({
     : height.endsWith("px")
       ? Math.round(parseFloat(height) * 0.45)
       : 16;
+
+  const RangeMinIcon = rangeMinIcon ?? ZoomOut;
+  const RangeMaxIcon = rangeMaxIcon ?? ZoomIn;
+
+  const rangeMin = min ?? 0.5;
+  const rangeMax = max ?? 2.0;
+  const rangeStep = step ?? 0.05;
+  const numericValue = parseFloat(value);
 
   const [showSecret, setShowSecret] = useState(false);
 
@@ -201,16 +213,32 @@ function FieldBase({
                 </span>
             )}
 
-            <ZoomOut
-                size={14}
-                className="shrink-0 opacity-60"
-            />
+            <button
+                type="button"
+                onClick={() =>
+                    onChange(
+                        Math.max(
+                            rangeMin,
+                            Math.min(rangeMax, numericValue - rangeStep),
+                        ),
+                    )
+                }
+                disabled={numericValue <= rangeMin}
+                className="
+                    shrink-0 p-0.5 rounded-md
+                    hover:bg-white/10 active:scale-95
+                    disabled:opacity-30 disabled:cursor-not-allowed
+                    transition-all
+                "
+            >
+                <RangeMinIcon size={14} className="opacity-60" />
+            </button>
 
             <input
                 type="range"
-                min={min ?? 0.5}
-                max={max ?? 2.0}
-                step={step ?? 0.05}
+                min={rangeMin}
+                max={rangeMax}
+                step={rangeStep}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 className={`
@@ -221,20 +249,36 @@ function FieldBase({
                 `}
             />
 
-            <ZoomIn
-                size={14}
-                className="shrink-0 opacity-60"
-            />
+            <button
+                type="button"
+                onClick={() =>
+                    onChange(
+                        Math.max(
+                            rangeMin,
+                            Math.min(rangeMax, numericValue + rangeStep),
+                        ),
+                    )
+                }
+                disabled={numericValue >= rangeMax}
+                className="
+                    shrink-0 p-0.5 rounded-md
+                    hover:bg-white/10 active:scale-95
+                    disabled:opacity-30 disabled:cursor-not-allowed
+                    transition-all
+                "
+            >
+                <RangeMaxIcon size={14} className="opacity-60" />
+            </button>
 
             <span className="text-xs font-black italic tabular-nums min-w-[3.2rem] text-right shrink-0">
-                {parseFloat(value).toFixed(2)}×
+                {formatValue ? formatValue(value) : `${parseFloat(value).toFixed(2)}×`}
             </span>
 
             {showReset && (
                 <button
                     type="button"
-                    onClick={() => onChange(1.0)}
-                    disabled={parseFloat(value) === 1.0}
+                    onClick={() => onChange(resetValue)}
+                    disabled={parseFloat(value) === resetValue}
                     className={`
                         w-5 h-5 flex items-center justify-center rounded-md
                         hover:bg-white/10

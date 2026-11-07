@@ -55,6 +55,8 @@
         15px 100%
     );
     --sb-center-gap: 480px;
+    --sb-side-gap: 480px;
+    --sb-side-width: 460px;
     --sb-team-tag-color: #7cc4ff;
 }
 
@@ -73,17 +75,19 @@ html.transparent-bg .scoreboard {
 
 .scoreboard {
     position: relative;
-    width: 1400px;
-    max-width: 100%;
+    width: calc(var(--sb-side-width) * 2 + var(--sb-side-gap));
+    max-width: none;
     height: auto;
     align-items: center;
-    gap: var(--sb-center-gap);
+    gap: var(--sb-side-gap);
     border: none;
     background: transparent;
 }
 
 .side {
     position: relative;
+    flex: 0 0 var(--sb-side-width);
+    width: var(--sb-side-width);
     height: var(--sb-plate-height);
     padding: 0px 0 0;
     gap: 0;
@@ -142,6 +146,7 @@ html.transparent-bg .scoreboard {
     background: transparent;
     border: none;
     border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 5px rgba(0, 0, 0, 0.55);
 }
 
 .flag img {
@@ -149,6 +154,7 @@ html.transparent-bg .scoreboard {
     height: 24px;
     object-fit: contain;
     border-radius: 2px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 
 /* ============================================================

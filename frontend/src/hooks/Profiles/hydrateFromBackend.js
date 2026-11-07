@@ -111,6 +111,8 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
         hideLogos:       s.hideLogos       ?? false,
         hideFlags:       s.hideFlags       ?? false,
         scale:           typeof s.scale === "number" && s.scale > 0 ? s.scale : 1.0,
+        sideGap:         typeof s.sideGap === "number" && s.sideGap > 0 ? s.sideGap : 480,
+        sideWidth:       typeof s.sideWidth === "number" && s.sideWidth > 0 ? s.sideWidth : 460,
         format:          s.format          ?? "FT2",
         P1: normalizeSide(s.P1, "Player 1"),
         P2: normalizeSide(s.P2, "Player 2"),

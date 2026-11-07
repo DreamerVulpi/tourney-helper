@@ -19,6 +19,11 @@ var templateFS embed.FS
 
 const StartGGThemeName = "startgg"
 
+// startggThemeMarker is written into the external startgg.css. When the
+// external file doesn't contain it, the theme is considered stale and gets
+// replaced with the bundled version.
+const startggThemeMarker = "scoreboard-startgg-theme-v8"
+
 // Renderer — рендерер HTML-виджета scoreboard.
 type Renderer struct {
 	tmpl          *template.Template
@@ -93,16 +98,19 @@ func EnsureThemes(tp *widget.ThemeProvider) error {
 	}
 
 	// startgg.css is an external theme and is restored if missing/deleted.
+	// Older generated files are upgraded to the current bundled version.
 	dst := filepath.Join(dir, StartGGThemeName+".css")
-	if _, err := os.Stat(dst); err == nil {
-		return nil
+	if data, err := os.ReadFile(dst); err == nil {
+		if strings.Contains(string(data), startggThemeMarker) {
+			return nil
+		}
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("stat scoreboard theme %q: %w", dst, err)
+		return fmt.Errorf("read scoreboard theme %q: %w", dst, err)
 	}
 
-	css, err := tp.GetThemeCSS(StartGGThemeName)
+	css, err := tp.BuiltinThemeCSS(StartGGThemeName)
 	if err != nil {
-		return fmt.Errorf("read scoreboard theme %q: %w", StartGGThemeName, err)
+		return fmt.Errorf("read bundled scoreboard theme %q: %w", StartGGThemeName, err)
 	}
 	if err := os.WriteFile(dst, []byte(css), 0o644); err != nil {
 		return fmt.Errorf("write scoreboard theme %q: %w", dst, err)

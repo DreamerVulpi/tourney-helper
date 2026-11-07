@@ -117,6 +117,8 @@ func NewDefaultWidgets() WidgetsCfg {
 			HideLogos:  false,
 			HideFlags:  false,
 			Scale:      1.0,
+			SideGap:    480,
+			SideWidth:  460,
 			Format:     "FT2",
 			P1: Side{
 				TeamTag:  "",

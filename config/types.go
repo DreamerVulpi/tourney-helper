@@ -67,6 +67,8 @@ type WidgetScoreboard struct {
 	HideLogos  bool    `toml:"hideLogos" json:"hideLogos"`
 	HideFlags  bool    `toml:"hideFlags" json:"hideFlags"`
 	Scale      float64 `toml:"scale" json:"scale"`
+	SideGap    float64 `toml:"sideGap" json:"sideGap"`
+	SideWidth  float64 `toml:"sideWidth" json:"sideWidth"`
 	Format     string  `toml:"format" json:"format"`
 	P1         Side    `toml:"P1" json:"P1"`
 	P2         Side    `toml:"P2" json:"P2"`

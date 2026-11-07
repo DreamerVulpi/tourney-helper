@@ -354,6 +354,9 @@ var En = Ui{
 		ListOfThemes:      "Theme",
 		Format:            "Format",
 		FormatPlaceholder: "FT",
+		ScaleTab:          "Scaling",
+		GapTab:            "Spacing",
+		PlateWidthTab:     "Plate Width",
 
 		TitleEventLabel:       "Title event",
 		TitleEventPlaceholder: "Match title",

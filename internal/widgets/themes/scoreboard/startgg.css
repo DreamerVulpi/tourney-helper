@@ -1,7 +1,12 @@
+/* scoreboard-startgg-theme-v8 */
 /*
  * Start.gg theme for tourney-helper scoreboard widget.
  *
- * Primary color: #3b4350
+ * Preserves the original start.gg palette:
+ *   primary  #3b4350
+ *   surface  #ffffff / #f4f5f7
+ *   text     #111111
+ *   borders  #e5e7eb
  */
 
 :root {
@@ -13,23 +18,45 @@
     --sb-muted: #6b7280;
     --sb-dim: #9ca3af;
 
-    --sb-title-color: #111111;
-    --sb-format-color: #3b4350;
+    --sb-title-color: #ffffff;
+    --sb-format-color: #ffffff;
 
     --sb-name-color: #111111;
-
-    --sb-score-bg: #3b4350;
     --sb-score-color: #ffffff;
+    --sb-score-box: #1f9e46;
+    --sb-score-box-shadow: 0 0 10px rgba(31, 158, 70, 0.35);
 
     --sb-logo-bg: #f9fafb;
     --sb-logo-border: #e5e7eb;
 
-    --sb-flag-border: #e5e7eb;
-
-    --sb-center-border: #e5e7eb;
+    --sb-flag-border: transparent;
+    --sb-center-border: transparent;
 
     --sb-font-family: "Segoe UI", Arial, sans-serif;
     --sb-score-font: "Consolas", monospace;
+
+    /* Layout tokens for the scoreboard plates */
+    --sb-plate-left: linear-gradient(135deg, #ffffff 0%, #d9dde3 100%);
+    --sb-plate-right: linear-gradient(135deg, #d9dde3 0%, #ffffff 100%);
+    --sb-plate-border: #3b4350;
+    --sb-plate-height: 64px;
+    --sb-accent: #3b4350;
+    --sb-divider: rgba(59, 67, 80, 0.35);
+    --sb-score-shadow: none;
+    --sb-name-shadow: 1px 1px 0 rgba(59, 67, 80, 0.16);
+    --sb-event-shadow: none;
+    --sb-format-bg: #3b4350;
+    --sb-title-bg: linear-gradient(135deg, #3b4350 0%, #2f3742 100%);
+    --sb-format-clip: polygon(
+        0% 0%,
+        100% 0%,
+        calc(100% - 15px) 100%,
+        15px 100%
+    );
+    --sb-center-gap: 480px;
+    --sb-side-gap: 480px;
+    --sb-side-width: 460px;
+    --sb-team-tag-color: #3b4350;
 }
 
 html.transparent-bg,
@@ -39,4 +66,251 @@ html.transparent-bg .scoreboard-scale,
 html.transparent-bg .scoreboard {
     background: transparent !important;
     background-image: none !important;
+}
+
+/* ============================================================
+ * Layout
+ * ============================================================ */
+
+.scoreboard {
+    position: relative;
+    width: calc(var(--sb-side-width) * 2 + var(--sb-side-gap));
+    max-width: none;
+    height: auto;
+    align-items: center;
+    gap: var(--sb-side-gap);
+    border: none;
+    background: transparent;
+}
+
+.side {
+    position: relative;
+    flex: 0 0 var(--sb-side-width);
+    width: var(--sb-side-width);
+    height: var(--sb-plate-height);
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+    background: var(--sb-plate-left);
+}
+
+.side-left {
+    transform: skewX(25deg);
+}
+
+.side-right {
+    justify-content: stretch;
+    transform: skewX(-25deg);
+    background: var(--sb-plate-right);
+}
+
+.side-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    gap: 12px;
+    padding: 0 24px;
+}
+
+.side-left .side-content {
+    padding: 0 0 0 24px;
+    transform: skewX(-25deg);
+}
+
+.side-right .side-content {
+    padding: 0 24px 0 0;
+    transform: skewX(25deg);
+}
+
+/* ============================================================
+ * Logos / flags
+ * ============================================================ */
+
+.logo {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    background: var(--sb-logo-bg);
+    border: 1px solid var(--sb-logo-border);
+    border-radius: 4px;
+}
+
+.flag {
+    width: 38px;
+    height: 25px;
+    flex: 0 0 38px;
+    background: transparent;
+    border: none;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.22);
+}
+
+.flag img {
+    width: 100%;
+    height: 24px;
+    object-fit: contain;
+    border-radius: 2px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+}
+
+/* ============================================================
+ * Player name / team tag
+ * ============================================================ */
+
+.name {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 10px;
+    text-align: center;
+    line-height: 1;
+    text-transform: uppercase;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--sb-name-color);
+    text-shadow: var(--sb-name-shadow);
+}
+
+.team-tag {
+    max-width: 120px;
+    padding: 0 4px;
+    line-height: 1;
+    font-size: 18px;
+    color: var(--sb-team-tag-color);
+    text-shadow: 1px 1px 0 rgba(59, 67, 80, 0.14);
+}
+
+/* ============================================================
+ * Score
+ * ============================================================ */
+
+.score {
+    position: relative;
+    isolation: isolate;
+    width: 64px;
+    min-width: 64px;
+    flex: 0 0 64px;
+    height: 100%;
+    padding: 0;
+    background: transparent;
+    color: var(--sb-score-color);
+    font-family: var(--sb-score-font);
+    font-size: 32px;
+    font-weight: 700;
+    text-shadow: var(--sb-score-shadow);
+}
+
+/* Green square, skewed into a parallelogram like the plate. */
+.score::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--sb-score-box);
+    border-radius: 3px;
+    box-shadow: var(--sb-score-box-shadow);
+}
+
+.side-left .score::after {
+    transform: skewX(25deg);
+}
+
+.side-right .score::after {
+    transform: skewX(-25deg);
+}
+
+.side-left .score,
+.side-right .score {
+    padding: 0;
+}
+
+/* The green score box already separates the score from the name. */
+.side-left .score::before,
+.side-right .score::before {
+    display: none;
+}
+
+/* ============================================================
+ * Event info
+ * ============================================================ */
+
+.center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: auto;
+    max-width: var(--sb-center-gap);
+    padding: 0;
+    gap: 0;
+    border: none;
+    text-align: center;
+    z-index: 5;
+}
+
+.title {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 30px;
+    margin: 0 auto;
+    padding: 4px 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--sb-title-color);
+    text-shadow: var(--sb-event-shadow);
+}
+
+.center.title-empty .title {
+    display: none;
+}
+
+.center.title-empty {
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.title::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--sb-title-bg);
+    clip-path: var(--sb-format-clip);
+}
+
+.format {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 26px;
+    margin-top: 0;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--sb-format-color);
+}
+
+.format::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--sb-format-bg);
+    clip-path: var(--sb-format-clip);
 }

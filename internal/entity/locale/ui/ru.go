@@ -392,6 +392,9 @@ var Ru = Ui{
 		ListOfThemes:      "Тема",
 		Format:            "Формат",
 		FormatPlaceholder: "FT",
+		ScaleTab:          "Масштабирование",
+		GapTab:            "Отступ",
+		PlateWidthTab:     "Длина плашки",
 
 		TitleEventLabel:       "Название ивента",
 		TitleEventPlaceholder: "Название матча",

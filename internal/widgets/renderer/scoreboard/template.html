@@ -42,6 +42,16 @@
             transform-origin: center center;
         }
 
+        /* Preview in the app: keep the widget above the bottom controls. */
+        html.preview-mode .scoreboard-wrapper {
+            align-items: flex-start;
+            padding-top: 12px;
+        }
+
+        html.preview-mode .scoreboard-scale {
+            transform-origin: top center;
+        }
+
         .scoreboard {
             display: flex;
             align-items: stretch;
@@ -303,12 +313,46 @@
         fitNameFont('p2-name');
     }
 
+    let lastScale = 1;
+
     function applyScale(scale) {
         const parsed = Number(scale);
         const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+        lastScale = safe;
 
         const el = byId('scoreboard-scale');
-        if (el) el.style.transform = 'scale(' + safe + ')';
+        const board = document.querySelector('.scoreboard');
+        if (!el) return;
+
+        // Keep the whole widget visible when the side plates/gap grow
+        // beyond the browser viewport. The configured scale still acts
+        // as an upper bound.
+        const boardWidth = board ? board.offsetWidth : 0;
+        const available = Math.max(0, window.innerWidth - 32);
+        const fitScale = boardWidth > 0 ? available / boardWidth : safe;
+        const effective = Math.max(0.1, Math.min(safe, fitScale));
+
+        el.style.transform = `scale(${effective})`;
+    }
+
+    function applyGap(gap) {
+        const parsed = Number(gap);
+        const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 480;
+
+        document.documentElement.style.setProperty(
+            '--sb-side-gap',
+            safe + 'px',
+        );
+    }
+
+    function applySideWidth(width) {
+        const parsed = Number(width);
+        const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 460;
+
+        document.documentElement.style.setProperty(
+            '--sb-side-width',
+            safe + 'px',
+        );
     }
 
     async function applyTheme(name) {
@@ -352,12 +396,19 @@
 
         fitAllNameFonts();
 
+        applyGap(state.sideGap);
+        applySideWidth(state.sideWidth);
+        // Apply scale after the layout width has been recalculated.
         applyScale(state.scale);
         applyTheme(state.theme);
     }
 
     const PREVIEW_SCALE = 0.55;
     const isPreview = new URLSearchParams(location.search).has('preview');
+
+    if (isPreview) {
+        document.documentElement.classList.add('preview-mode');
+    }
 
     // In the in-app iframe preview, always show the widget at 0.55x.
     applyState(isPreview ? { ...initialState, scale: PREVIEW_SCALE } : initialState);
@@ -418,7 +469,10 @@
     let nameFitTimer = null;
     window.addEventListener('resize', () => {
         clearTimeout(nameFitTimer);
-        nameFitTimer = setTimeout(fitAllNameFonts, 50);
+        nameFitTimer = setTimeout(() => {
+            applyScale(lastScale);
+            fitAllNameFonts();
+        }, 50);
     });
 </script>
 </body>

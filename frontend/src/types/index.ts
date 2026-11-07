@@ -35,6 +35,8 @@ export interface WidgetScoreboard {
   hideLogos: boolean;
   hideFlags: boolean;
   scale: number;
+  sideGap: number;
+  sideWidth: number;
   format: string;
   P1: ScoreboardSide;
   P2: ScoreboardSide;

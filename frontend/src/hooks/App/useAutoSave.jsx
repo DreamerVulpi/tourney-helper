@@ -50,6 +50,8 @@ export function useAutoSave() {
               hideLogos:       cfg.scoreboard?.hideLogos       ?? false,
               hideFlags:       cfg.scoreboard?.hideFlags       ?? false,
               scale:           cfg.scoreboard?.scale           ?? 1.0,
+              sideGap:         cfg.scoreboard?.sideGap         ?? 480,
+              sideWidth:       cfg.scoreboard?.sideWidth       ?? 460,
               format:          cfg.scoreboard?.format          || "FT2",
               P1: {
                 teamTag:  cfg.scoreboard?.P1?.teamTag  ?? "",
