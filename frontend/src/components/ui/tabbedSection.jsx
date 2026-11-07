@@ -15,7 +15,7 @@ export const TabbedSection = ({
   tabs, activeTab, onChange, children, themeClasses,
   padding = "p-6",
   rounding = "rounded-[2.5rem]",
-  spacing = "space-y-6",
+  spacing = "space-y-1",
   className = "",
 }) => {
   return (

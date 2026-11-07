@@ -158,7 +158,7 @@ const SlotCard = ({
 // ============================================================
 // Основной компонент страницы
 // ============================================================
-const IntegrationsPlate = ({ locale, updateConfig, debouncedSaveAuthorizations }) => {
+const IntegrationsPanel = ({ locale, updateConfig, debouncedSaveAuthorizations }) => {
   // ============================================================
   // Стор
   // ============================================================
@@ -509,6 +509,7 @@ const IntegrationsPlate = ({ locale, updateConfig, debouncedSaveAuthorizations }
         themeClasses={themeClasses}
         padding="p-4"
         rounding="rounded-2xl"
+        spacing="space-y-4"
         className="flex-1 min-h-0"
       > 
         <div className="grid grid-cols-16 gap-8 items-stretch flex-1 min-h-0 w-full">
@@ -806,4 +807,4 @@ const IntegrationsPlate = ({ locale, updateConfig, debouncedSaveAuthorizations }
   );
 };
 
-export default IntegrationsPlate;
+export default IntegrationsPanel;

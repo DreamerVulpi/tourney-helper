@@ -45,7 +45,7 @@ const clampScale = (s) => {
   return Math.max(0.5, Math.min(2.0, n));
 };
 
-const WidgetBracketPlate = ({
+const WidgetBracketPanel = ({
   locale,
   updateConfig,
   isProcessing,
@@ -58,7 +58,6 @@ const WidgetBracketPlate = ({
 }) => {
      // ---- store ----
   const theme          = useAppStore((s) => s.theme);
-  const activePlatform = useAppStore((s) => s.activeTournamentPlatform);
   const setStatusWidgetBracket = useAppStore((s) => s.setStatusWidgetBracket);
   
   // ---- производные ----
@@ -550,4 +549,4 @@ const WidgetBracketPlate = ({
   );
 };
 
-export default WidgetBracketPlate;
+export default WidgetBracketPanel;

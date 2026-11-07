@@ -6,7 +6,8 @@ import {
   Send,
   SquareUser,
   UserCog,
-  Users
+  Users,
+  Swords,
 } from "lucide-react";
 import { getThemeClasses } from "../utils/themeClasses";
 import { NavItem } from "../components/SidePanel/navItem";
@@ -27,8 +28,8 @@ const SidePanel = ({ locale, updateConfig }) => {
   const setIsHovered          = useAppStore((s) => s.setIsSidePanelHovered);
 
   const statusNotificationSystem = useAppStore((s) => s.statusNotificationSystem);
-  const statusDatabase           = useAppStore((s) => s.statusDatabase);
   const statusWidgetBracket      = useAppStore((s) => s.statusWidgetBracket);
+  const statusWidgetScoreboard      = useAppStore((s) => s.statusWidgetScoreboard);
 
   const settings = useAppStore((s) => s.settings);
   const isProfilesLocked = useToolsLocked();
@@ -78,7 +79,6 @@ const SidePanel = ({ locale, updateConfig }) => {
           themeClasses.navPanel
         }`}
       >
-        {/* Верхняя группа */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <NavItem
@@ -123,6 +123,15 @@ const SidePanel = ({ locale, updateConfig }) => {
             onClick={() => setActiveTab("widgetBracket")}
             themeClasses={themeClasses}
             status={statusWidgetBracket}
+          />
+          <NavItem
+            icon={<Swords size={20}/>}
+            label={"Scoreboard widget"}
+            collapsed={sidePanelCollapsed}
+            active={activeTab === "widgetScoreboard"}
+            onClick={() => setActiveTab("widgetScoreboard")}
+            themeClasses={themeClasses}
+            status={statusWidgetScoreboard}
           />
         </div>
 

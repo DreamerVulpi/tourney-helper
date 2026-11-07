@@ -1,259 +1,581 @@
-import React, { useState } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+  useState,
+} from "react";
 import {
-  Monitor,
-  Copy,
+  Paintbrush,
   Square,
   Play,
+  List,
+  Wallpaper,
+  ZoomIn,
+  Trophy,
+  Loader2,
+  Plus,
+  Minus,
+  Swords,
+  ArrowLeftRight,
+  Flag,
+  ImageIcon,
   RotateCcw,
-  Eye,
-  FileCode,
-  Save,
-  Wrench
+  Eye, EyeOff,
+  Download,
+  Globe,
+  User
 } from "lucide-react";
+import PanelTemplate from "../components/layout/PanelTemplate.jsx";
+import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
+import { Field } from "../components/ui/Field.jsx";
+import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
+import { ActionButton } from "../components/ui/ActionButton.jsx";
+import { useStartToggle } from "../hooks/WidgetBracketPanel/useStartToggle.jsx";
+import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
+import { useGetListThemes } from "../hooks/WidgetBracketPanel/useGetListThemes.jsx";
+import { EmptyState } from "../components/ui/EmptyState.jsx";
+import { SectionBlock } from "../components/ui/SectionBlock.jsx";
+import { getThemeClasses } from "../utils/themeClasses.jsx";
+import { useThemeClasses } from "../hooks/App/useThemeClasses";
+import { useAppStore } from "../store/useAppStore";
+import { FORMAT_OPTIONS } from "../utils/formatMatches.js"
+import { TabbedSection } from "../components/ui/tabbedSection.jsx";
 
-// Вспомогательные компоненты (предполагается, что они есть в проекте)
-const SbField = ({ label, value, onChange, inputClasses, type = "text" }) => (
-  <div className="space-y-1">
-    <label className="text-[9px] font-black text-slate-500 uppercase italic px-1">
-      {label}
-    </label>
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`w-full rounded-xl p-3 text-xs border font-bold outline-none  focus:border-blue-500/50 ${inputClasses}`}
+const clampScale = (s) => {
+  const n = parseFloat(s);
+  if (!Number.isFinite(n) || n <= 0) return 1.0;
+  return Math.max(0.5, Math.min(2.0, n));
+};
+
+// Хелпер: частичный апдейт стороны P1/P2 + titleMatch через updateConfig
+const patchScoreboard = (updateConfig, patch) =>
+  updateConfig("widgets", { scoreboard: patch });
+
+const WidgetScoreboardPlate = ({
+  locale,
+  updateConfig,
+  isProcessing,
+  setIsProcessingWS,
+  isWidgetScoreboardRunning,
+  setIsWidgetScoreboardRunning,
+  iframeRef_WidgetScoreboard,
+}) => {
+  // ---- store ----
+  const theme = useAppStore((s) => s.theme);
+  const setStatusWidgetScoreboard = useAppStore(
+    (s) => s.setStatusWidgetScoreboard,
+  );
+  const themeClasses = useThemeClasses(getThemeClasses);
+  const widgets = useAppStore((s) => s.widgets);
+  const scoreboard = widgets?.scoreboard;
+
+  // ---- поля из конфига (единый источник истины) ----
+  const themeScoreboard = scoreboard?.theme ?? "Default";
+  const titleMatch = scoreboard?.titleMatch ?? "CUSTOM NAME";
+  const clearBackground = scoreboard?.clearBackground ?? false;
+  const hideLogos = scoreboard?.hideLogos ?? false;
+  const hideFlags = scoreboard?.hideFlags ?? false;
+  const scale = scoreboard?.scale ?? 1.0;
+  const format = scoreboard?.format ?? "FT2";
+  const p1 = scoreboard?.P1 ?? { name: "Player 1", logoPath: "", points: 0 };
+  const p2 = scoreboard?.P2 ?? { name: "Player 2", logoPath: "", points: 0 };
+
+  const [activeTabP1, setActiveTabP1] = useState("logo");
+  const [activeTabP2, setActiveTabP2] = useState("logo");
+
+  const themeOptions = useGetListThemes();
+  const readyScale = clampScale(scale);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+
+  // const handleWidgetScoreboardToggle = useStartToggle(
+  //   isWidgetScoreboardRunning,
+  //   setIsWidgetScoreboardRunning,
+  //   isProcessing,
+  //   setIsProcessingWS,
+  //   setStatusWidgetScoreboard,
+  // );
+
+  // ---------- Обработчики конфига ----------
+  const handleThemeChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { theme: value }),
+    [updateConfig],
+  );
+  const handleHideLogosChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { hideLogos: value }),
+    [updateConfig],
+  );
+  const handleHideFlagsChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { hideFlags: value }),
+    [updateConfig],
+  );
+  const handleScaleChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { scale: clampScale(value) }),
+    [updateConfig],
+  );
+  const handleTitleChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { titleMatch: value }),
+    [updateConfig],
+  );
+
+  const handleFormatChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { format: value }),
+    [updateConfig],
+  );
+
+    // Смена сторон (Swap)
+  const handleSwitchSides = useCallback(() => {
+    // Меняем стороны местами целиком
+    patchScoreboard(updateConfig, {
+      P1: { ...p2 },
+      P2: { ...p1 },
+    });
+  }, [updateConfig, p1, p2]);
+
+  // Сброс счета (Reset)
+  const handleResetScore = useCallback(() => {
+    patchScoreboard(updateConfig, {
+      P1: { ...DEFAULT_SIDE, name: "Player 1" },
+      P2: { ...DEFAULT_SIDE, name: "Player 2" },
+    });
+  }, [updateConfig]);
+
+  // Обновление стороны
+  const updateSide = useCallback(
+    (side, patch) => {
+      const current = scoreboard?.[side] ?? DEFAULT_SIDE;
+      // Отправляем ПОЛНЫЙ объект стороны, чтобы ничего не затиралось
+      patchScoreboard(updateConfig, { 
+        [side]: { ...current, ...patch } 
+      });
+    },
+    [updateConfig, scoreboard],
+  );
+
+  // Переключение видимости (Глазик)
+  const handleToggleVisibility = useCallback(
+    (side, field) => {
+      const current = scoreboard?.[side]?.[field] ?? true;
+      updateSide(side, { [field]: !current });
+    },
+    [scoreboard, updateSide]
+  );
+
+  // Изменение счета
+  const handleScoreChange = useCallback(
+    (side, delta) => {
+      const current = scoreboard?.[side]?.points ?? 0;
+      updateSide(side, { points: Math.max(0, current + delta) });
+    },
+    [scoreboard, updateSide],
+  );
+
+  // ---------- URL ----------
+  const scoreboardUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("theme", themeScoreboard);
+    if (clearBackground) params.set("transparent", "1");
+    if (hideLogos) params.set("hideLogos", "1");
+    if (hideFlags) params.set("hideFlags", "1");
+    if (readyScale !== 1.0) params.set("scale", String(readyScale));
+    return `http://localhost:8080/widgets/scoreboard?${params.toString()}`;
+  }, [themeScoreboard, clearBackground, hideLogos, hideFlags, readyScale]);
+
+  // ---------- Фиксируем src при старте; при смене темы — перезагружаем ----------
+  const initialSrcRef = useRef(null);
+  useEffect(() => {
+    if (!isWidgetScoreboardRunning) {
+      initialSrcRef.current = null;
+      setIframeLoaded(false);
+      return;
+    }
+    initialSrcRef.current = scoreboardUrl;
+    setIframeLoaded(false);
+  }, [isWidgetScoreboardRunning, themeScoreboard]); // флаги НЕ триггерят reload
+
+  // ---------- postMessage на флаги/scale (без перезагрузки) ----------
+  useEffect(() => {
+    if (!isWidgetScoreboardRunning) return;
+    const iframe = iframeRef_WidgetScoreboard?.current;
+    if (!iframe) return;
+
+    const sendFlags = () => {
+      iframe.contentWindow?.postMessage(
+        {
+          type: "scoreboard:flags-changed",
+          flags: {
+            transparent: clearBackground,
+            hideLogos,
+            hideFlags,
+            scale: readyScale,
+          },
+        },
+        "*",
+      );
+    };
+    sendFlags();
+    iframe.addEventListener("load", sendFlags);
+    return () => iframe.removeEventListener("load", sendFlags);
+  }, [
+    clearBackground,
+    hideLogos,
+    hideFlags,
+    readyScale,
+    isWidgetScoreboardRunning,
+    iframeRef_WidgetScoreboard,
+  ]);
+
+  const isStartDisabled = isProcessing || isWidgetScoreboardRunning;
+  const isStopDisabled = isProcessing;
+  const getButtonStyle = getLaunchButtonStyle(isWidgetScoreboardRunning, false);
+
+  const DEFAULT_SIDE = { 
+    name: "Player", 
+    logoPath: "", 
+    points: 0, 
+    showLogo: true, 
+    showFlag: true 
+  };
+
+  const EXTRA_TABS = [
+    { id: "logo", icon: ImageIcon, label: "Logo"},
+    { id: "flag", icon: Flag,        label: "Flag" }
+  ]
+
+  const renderSideControls = (side, activeTab, setActiveTab) => {
+  const data = scoreboard?.[side] ?? DEFAULT_SIDE;
+  const isP2 = side === "P2";
+
+  // Блок с именем
+  const nameField = (
+    <Field
+      icon={User}
+      key="name"
+      variant="input"
+      value={data.name}
+      onChange={(val) => updateSide(side, { name: val })}
+      themeClasses={themeClasses}
+      placeholder="Player name"
     />
-  </div>
-);
+  );
 
-const ControlPad = ({ name, score, color, onPlus, onMinus, cardClasses }) => (
-  <div className={`p-4 rounded-2xl border flex flex-col items-center gap-3 ${cardClasses}`}>
-    <span className="text-[10px] font-black uppercase italic text-slate-500">{name}</span>
-    <div className={`text-4xl font-black italic ${color === "blue" ? "text-blue-500" : "text-red-500"}`}>
-      {score}
+  // Блок с кнопками +/- (они всегда идут перед счетом)
+  const buttonsBlock = (
+    <div key="btns" className="flex flex-col gap-1">
+      <button
+        onClick={() => handleScoreChange(side, 1)}
+        className="w-7 h-7 flex items-center justify-center bg-green-600/10 text-green-500 rounded-lg border border-green-600/20 hover:bg-green-600/20 transition-colors"
+      >
+        <Plus size={14} />
+      </button>
+      <button
+        onClick={() => handleScoreChange(side, -1)}
+        className="w-7 h-7 flex items-center justify-center bg-red-600/10 text-red-500 rounded-lg border border-red-500/20 hover:bg-red-500/20 transition-colors"
+      >
+        <Minus size={14} />
+      </button>
     </div>
-    <div className="flex gap-2 w-full">
-      <button onClick={onMinus} className="flex-1 py-2 bg-slate-500/10 hover:bg-slate-500/20 rounded-lg transition-colors">-</button>
-      <button onClick={onPlus} className="flex-1 py-2 bg-slate-500/10 hover:bg-slate-500/20 rounded-lg transition-colors">+</button>
-    </div>
-  </div>
-);
+  );
 
-const WidgetScoreboardPlate = ({ theme }) => {
-  // Состояния
-  const [isScoreboardOverlayActive, setIsScoreboardOverlayActive] = useState(false);
-  const [sbConfig, setSbConfig] = useState({
-    p1Name: "PLAYER 1",
-    p2Name: "PLAYER 2",
-    p1Score: 0,
-    p2Score: 0,
-    p1Flag: "US",
-    p2Flag: "JP",
-    event: "GRAND FINALS",
-    format: "BO5",
-    showFlags: true,
-    background: "",
-    showDesignTools: false
-  });
+  // Блок со счетом
+  const scoreBlock = (
+    <span key="pts" className="text-xl font-bold tabular-nums w-6 text-center">
+      {data.points}
+    </span>
+  );
 
-  // Логика WIP (можешь переключить в false, когда закончишь)
-  const isWip = true; 
-  const isDark = theme === "dark";
+  // Формируем строку в зависимости от стороны
+  // P1: [Имя] --- [Кнопки] [Счет]
+  // P2: [Счет] [Кнопки] --- [Имя]
+  const topRow = isP2
+    ? [scoreBlock, buttonsBlock, nameField]
+    : [nameField, buttonsBlock, scoreBlock];
 
-  // Стили
-  const inputClasses = isDark 
-    ? "bg-black/20 border-white/10 text-white placeholder:text-white/20" 
-    : "bg-white border-slate-200 text-slate-700";
-    
-  const cardClasses = isDark 
-    ? "bg-[#111] border-white/5" 
-    : "bg-white border-slate-100 shadow-sm";
+    return (
+      <div
+        className={`flex flex-col p-3 rounded-xl border gap-3 ${
+          themeClasses?.tempSection || "bg-slate-800 border-slate-700"
+        }`}
+      >
+        {/* Верхняя строка */}
+        <div className="flex items-center justify-between gap-2">
+          {topRow}
+        </div>
+
+        {/* Табы */}
+        <TabbedSection
+          tabs={EXTRA_TABS}
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          themeClasses={themeClasses}
+          className="flex-1 min-h-0"
+        >
+          {(tab) =>
+            tab === "logo" ? (
+              <div className="flex gap-2 items-start pt-2">
+                {/* Квадрат логотипа */}
+                <div className="relative w-18 h-18 flex-shrink-0">
+                  <div
+                    className={`w-full h-full rounded-lg border flex items-center justify-center ${
+                      themeClasses?.field || "bg-slate-900 border-slate-700"
+                    }`}
+                  >
+                    <ImageIcon
+                      className={data.showLogo !== false ? "text-slate-500 opacity-50" : "text-slate-700 opacity-30"}
+                      size={24}
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleToggleVisibility(side, "showLogo")}
+                    className={`absolute -bottom-1 -right-1 p-1 rounded-md border shadow-sm transition-colors z-10 ${
+                      data.showLogo !== false
+                        ? "bg-slate-700 border-slate-600 text-green-400 hover:bg-slate-600"
+                        : "bg-slate-800 border-slate-700 text-slate-500 hover:bg-slate-700"
+                    }`}
+                    title={data.showLogo !== false ? "Скрыть логотип" : "Показать логотип"}
+                  >
+                    {data.showLogo !== false ? <Eye size={12} /> : <EyeOff size={12} />}
+                  </button>
+                </div>
+
+                {/* Инпуты */}
+                <div className="flex flex-col gap-2 flex-1">
+                  <Field
+                    icon={Globe}
+                    variant="input"
+                    value={data.logoPath}
+                    onChange={(val) => updateSide(side, { logoPath: val })}
+                    themeClasses={themeClasses}
+                    placeholder="Logo path"
+                    height="2rem"
+                  />
+                  <Field
+                    variant="button"
+                    icon={Download}
+                    labelButton={"Choose file"}
+                    height="2.1rem"
+                    themeClasses={themeClasses}
+                  />
+                </div>
+              </div>
+            ) : tab === "flag" ? (
+              <div className="flex gap-2 items-start pt-2">
+                {/* Квадрат флага */}
+                <div className="relative w-18 h-18 flex-shrink-0">
+                  <div
+                    className={`w-full h-full rounded-lg border flex items-center justify-center ${
+                      themeClasses?.field || "bg-slate-900 border-slate-700"
+                    }`}
+                  >
+                    <Flag
+                      className={data.showFlag !== false ? "text-slate-500 opacity-50" : "text-slate-700 opacity-30"}
+                      size={24}
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleToggleVisibility(side, "showFlag")}
+                    className={`absolute -bottom-1 -right-1 p-1 rounded-md border shadow-sm transition-colors z-10 ${
+                      data.showFlag !== false
+                        ? "bg-slate-700 border-slate-600 text-green-400 hover:bg-slate-600"
+                        : "bg-slate-800 border-slate-700 text-slate-500 hover:bg-slate-700"
+                    }`}
+                    title={data.showFlag !== false ? "Скрыть флаг" : "Показать флаг"}
+                  >
+                    {data.showFlag !== false ? <Eye size={12} /> : <EyeOff size={12} />}
+                  </button>
+                </div>
+                
+                <div className="flex flex-col gap-2 flex-1">
+                  <Field
+                    variant="multiselect"
+                    single
+                    searchable
+                    label={locale.Format ?? "Flags"}
+                    value={[format]}
+                    onChange={handleFormatChange}
+                    items={FORMAT_OPTIONS}
+                    themeClasses={themeClasses}
+                    height="1.9rem"
+                    placeholder="FT"
+                    
+                  />
+                </div>
+              </div>
+            ) : null
+          }
+        </TabbedSection>
+      </div>
+    );
+  };
 
   return (
-    <div className="relative w-full h-full min-h-[600px]">
-      
-      {/* --- LAYER 1: WIP OVERLAY --- */}
-      {isWip && (
-        <div className="absolute inset-0 z-[100] flex items-center justify-center backdrop-blur-md bg-black/40 rounded-[2.5rem] duration-500">
-          <div className={`flex flex-col items-center gap-4 p-12 rounded-[3rem] border shadow-2xl ${isDark ? "bg-[#0a0a0a]/90 border-white/10" : "bg-white/90 border-slate-200"}`}>
-            <div className="relative">
-               <Wrench size={40} className="text-blue-500 animate-bounce" />
-               <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-ping" />
-            </div>
-            <div className="text-center space-y-1">
-              <h2 className={`text-7xl font-black uppercase tracking-tighter italic ${isDark ? "text-white" : "text-slate-900"}`}>
-                WIP
-              </h2>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 italic">
-                Scoreboard Editor Under Development
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- LAYER 2: MAIN CONTENT --- */}
-      <div className={`grid grid-cols-12 gap-8  duration-700 ${isWip ? "blur-xl grayscale opacity-40 pointer-events-none scale-[0.98]" : "opacity-100"}`}>
-        <div className="col-span-12 lg:col-span-8 space-y-6">
-          {/* URL Виджета */}
-          <div className={`p-4 rounded-2xl border flex items-center justify-between ${isDark ? "bg-blue-600/5 border-blue-600/20" : "bg-blue-50 border-blue-100"}`}>
-            <div className="flex items-center gap-3">
-              <Monitor size={16} className="text-blue-500" />
-              <span className="text-[10px] font-black uppercase italic text-blue-500">
-                Scoreboard OBS URL
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <input
-                readOnly
-                value="http://localhost:3000/widgets/scoreboard/live"
-                className={`w-80 rounded-xl px-4 py-2 text-[10px] font-mono border italic outline-none ${inputClasses}`}
-              />
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-colors">
-                <Copy size={14} />
-              </button>
-            </div>
-          </div>
-
-          {/* КНОПКА ВКЛ/ВЫКЛ ОВЕРЛЕЙ */}
-          <button
-            onClick={() => {
-              const newState = !isScoreboardOverlayActive;
-              setIsScoreboardOverlayActive(newState);
-            }}
-            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-black uppercase italic text-xs  duration-300 ${
-              isScoreboardOverlayActive
-                ? "bg-red-500 text-white shadow-lg shadow-red-500/20 ring-4 ring-red-500/10"
-                : "bg-green-600 text-white shadow-lg shadow-green-600/20 hover:bg-green-500"
-            }`}
-          >
-            {isScoreboardOverlayActive ? <Square size={18} /> : <Play size={18} />}
-            {isScoreboardOverlayActive ? "Выключить Scoreboard" : "Включить Scoreboard"}
-          </button>
-
-          {/* ПРЕВЬЮ */}
+    <PanelTemplate themeClasses={themeClasses}>
+      <div className="flex flex-col gap-4 flex-1 min-h-0 w-full">
+        <div className="col-span-16 min-h-0 flex flex-col gap-4 h-full">
+          
+          {/* Превью (Iframe) */}
           <div
-            className={`aspect-video rounded-[3rem] border-8 relative overflow-hidden flex items-center justify-center  ${isDark ? "bg-black border-white/5" : "bg-slate-300 border-white shadow-2xl"}`}
-            style={{
-              backgroundImage: sbConfig.background ? `url(${sbConfig.background})` : "none",
-              backgroundSize: "cover",
-            }}
+            className={`relative w-full h-44 shrink-0 rounded-[0.5rem] ${themeClasses.button}`}
           >
-            <div className="w-[90%] h-24 bg-gradient-to-r from-blue-900 via-black to-red-900 border-y-2 border-blue-500/30 flex items-center px-10 justify-between">
-              <div className="flex items-center gap-4">
-                {sbConfig.showFlags && (
-                  <div className="w-10 h-6 bg-slate-800 rounded flex items-center justify-center text-[10px] font-bold text-white uppercase tracking-tighter">
-                    {sbConfig.p1Flag}
-                  </div>
-                )}
-                <span className="text-3xl font-black italic uppercase text-white tracking-tighter">
-                  {sbConfig.p1Name}
-                </span>
+            {!isWidgetScoreboardRunning && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 w-80">
+                <EmptyState
+                  icon={Swords}
+                  title={locale.WidgetNotRunning}
+                  description={locale.ClickStartDescription}
+                />
               </div>
-              <div className="flex items-center gap-6 text-5xl font-black italic text-white bg-black/50 px-6 py-2 rounded-xl">
-                <span className="text-blue-500">{sbConfig.p1Score}</span>
-                <div className="w-px h-10 bg-white/20" />
-                <span className="text-red-500">{sbConfig.p2Score}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-3xl font-black italic uppercase text-white tracking-tighter text-right">
-                  {sbConfig.p2Name}
-                </span>
-                {sbConfig.showFlags && (
-                  <div className="w-10 h-6 bg-slate-800 rounded flex items-center justify-center text-[10px] font-bold text-white uppercase tracking-tighter">
-                    {sbConfig.p2Flag}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="absolute bottom-10 px-6 py-1 bg-blue-600 text-white font-black italic uppercase text-[10px] tracking-widest rounded-full shadow-lg">
-              {sbConfig.event} • {sbConfig.format}
-            </div>
-          </div>
+            )}
 
-          <div className="grid grid-cols-2 gap-6">
-            <ControlPad
-              name={sbConfig.p1Name}
-              score={sbConfig.p1Score}
-              color="blue"
-              onPlus={() => setSbConfig({ ...sbConfig, p1Score: sbConfig.p1Score + 1 })}
-              onMinus={() => setSbConfig({ ...sbConfig, p1Score: Math.max(0, sbConfig.p1Score - 1) })}
-              cardClasses={cardClasses}
-            />
-            <ControlPad
-              name={sbConfig.p2Name}
-              score={sbConfig.p2Score}
-              color="red"
-              onPlus={() => setSbConfig({ ...sbConfig, p2Score: sbConfig.p2Score + 1 })}
-              onMinus={() => setSbConfig({ ...sbConfig, p2Score: Math.max(0, sbConfig.p2Score - 1) })}
-              cardClasses={cardClasses}
-            />
-          </div>
-        </div>
+            {isWidgetScoreboardRunning && scoreboardUrl && (
+              <>
+                <iframe
+                  src={initialSrcRef.current || scoreboardUrl}
+                  ref={iframeRef_WidgetScoreboard}
+                  className="absolute inset-0 w-full h-full border-0 rounded-[0.5rem]"
+                  title="Scoreboard"
+                  allowtransparency="true"
+                  onLoad={() => setIframeLoaded(true)}
+                  style={{ background: "transparent" }}
+                />
 
-        {/* ПРАВАЯ ПАНЕЛЬ НАСТРОЕК */}
-        <div className="col-span-12 lg:col-span-4 space-y-6">
-          <section className={`p-6 rounded-[2rem] border space-y-4 ${cardClasses}`}>
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-blue-600 italic border-b border-white/5 pb-3">
-              Данные матча
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
-              <SbField label="Player 1" value={sbConfig.p1Name} onChange={(v) => setSbConfig({ ...sbConfig, p1Name: v })} inputClasses={inputClasses} />
-              <SbField label="Player 2" value={sbConfig.p2Name} onChange={(v) => setSbConfig({ ...sbConfig, p2Name: v })} inputClasses={inputClasses} />
-              <SbField label="Score 1" type="number" value={sbConfig.p1Score} onChange={(v) => setSbConfig({ ...sbConfig, p1Score: parseInt(v) || 0 })} inputClasses={inputClasses} />
-              <SbField label="Score 2" type="number" value={sbConfig.p2Score} onChange={(v) => setSbConfig({ ...sbConfig, p2Score: parseInt(v) || 0 })} inputClasses={inputClasses} />
-              <div className="col-span-2 space-y-3">
-                <SbField label="Название события" value={sbConfig.event} onChange={(v) => setSbConfig({ ...sbConfig, event: v })} inputClasses={inputClasses} />
-                <SbField label="Формат" value={sbConfig.format} onChange={(v) => setSbConfig({ ...sbConfig, format: v })} inputClasses={inputClasses} />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/20">
-              <span className="text-[9px] font-black uppercase text-slate-500 italic">Показывать флаги</span>
-              <button
-                onClick={() => setSbConfig({ ...sbConfig, showFlags: !sbConfig.showFlags })}
-                className={`w-8 h-4 rounded-full relative transition-colors ${sbConfig.showFlags ? "bg-blue-600" : "bg-slate-600"}`}
-              >
-                <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full  ${sbConfig.showFlags ? "right-0.5" : "left-0.5"}`} />
-              </button>
-            </div>
-
-            <div className="flex flex-col gap-2 pt-4">
-              <button
-                onClick={() => setSbConfig({ ...sbConfig, p1Score: 0, p2Score: 0 })}
-                className="w-full py-3 bg-red-600/10 text-red-500 border border-red-500/20 rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 hover:bg-red-600/20 "
-              >
-                <RotateCcw size={14} /> Reset Match
-              </button>
-              <button
-                onClick={() => setSbConfig({ ...sbConfig, showDesignTools: !sbConfig.showDesignTools })}
-                className={`w-full py-3 rounded-xl font-black text-[10px] uppercase italic border ${inputClasses} flex items-center justify-center gap-2`}
-              >
-                {sbConfig.showDesignTools ? <Eye size={14} /> : <FileCode size={14} />} {sbConfig.showDesignTools ? "Скрыть редактор" : "Дизайн (HTML/CSS)"}
-              </button>
-            </div>
-          </section>
-
-          {sbConfig.showDesignTools && (
-            <section className={`p-6 rounded-[2rem] border space-y-4 slide-in-from-right-4 duration-300 ${cardClasses}`}>
-              <h3 className="text-[10px] font-black uppercase tracking-widest text-green-500 italic border-b border-white/5 pb-2">
-                Custom Theme Engine
-              </h3>
-              <div className="space-y-3">
-                <div className="space-y-1">
-                  <label className="text-[8px] font-black text-slate-500 uppercase italic">Background URL</label>
-                  <input type="text" placeholder="URL..." className={`w-full p-2 text-[10px] rounded-lg border ${inputClasses}`} onChange={(e) => setSbConfig({ ...sbConfig, background: e.target.value })} />
+                <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 w-80">
+                  <SectionBlock
+                    solid={true}
+                    title={locale.LinkOfWidget}
+                    titleAlign="center"
+                    theme={theme}
+                  >
+                    <Field
+                      variant="copy"
+                      value={scoreboardUrl}
+                      themeClasses={themeClasses}
+                    />
+                  </SectionBlock>
                 </div>
-                <textarea placeholder="Custom CSS..." className={`w-full h-24 p-3 text-[10px] font-mono border rounded-lg resize-none outline-none ${inputClasses}`} />
-                <button className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-black text-[10px] uppercase italic flex items-center justify-center gap-2 shadow-lg  active:scale-95">
-                  <Save size={14} /> Сохранить
-                </button>
+
+                <div className="absolute bottom-4 right-4 z-10 flex flex-col gap-2 w-80">
+                  <Field
+                    solid={true}
+                    variant="range"
+                    icon={ZoomIn}
+                    min={0.5}
+                    max={2.0}
+                    step={0.05}
+                    onChange={handleScaleChange}
+                    value={readyScale}
+                    themeClasses={themeClasses}
+                  />
+                </div>
+              </>
+            )}
+
+            {!iframeLoaded && isWidgetScoreboardRunning && scoreboardUrl && (
+              <div className="absolute inset-0 flex items-center rounded-[0.5rem] justify-center z-20 bg-slate-900/80 backdrop-blur-sm">
+                <EmptyState
+                  icon={Loader2}
+                  title={locale.LoadBracket}
+                  description={locale.FetchData}
+                />
               </div>
-            </section>
-          )}
+            )}
+          </div>
+
+          {/* Игроки: P1 — центр — P2 */}
+          <div className="grid grid-cols-[1fr_auto_1fr] gap-8 items-start shrink-0 flex-1">
+            {/* Левая сторона (P1) */}
+            {renderSideControls("P1", activeTabP1, setActiveTabP1)}
+
+            {/* Центр (Настройки матча) */}
+            <div className="flex flex-col gap-4 pt-1 items-center w-[20rem]">
+              {/* Title Event */}
+              <div className="w-full">
+                <Field
+                  variant="input"
+                  label={"Title event"}
+                  value={titleMatch}
+                  onChange={handleTitleChange}
+                  themeClasses={themeClasses}
+                  icon={Trophy}
+                  placeholder="Match title"
+                />
+              </div>
+
+              {/* Format + Кнопки */}
+              <div className="w-full flex flex-col gap-2">
+                <div className="flex flex-row gap-1 w-full mt-1">
+                  <Field
+                    variant="multiselect"
+                    single
+                    searchable
+                    icon={Swords}
+                    label={locale.Format ?? "Format"}
+                    value={[format]}
+                    onChange={handleFormatChange}
+                    items={FORMAT_OPTIONS}
+                    themeClasses={themeClasses}
+                    height="1.9rem"
+                    placeholder="FT"
+                  />
+                  <Field
+                    variant="select"
+                    label={locale.ListOfThemes}
+                    icon={Paintbrush}
+                    onChange={handleThemeChange}
+                    value={themeScoreboard}
+                    themeClasses={themeClasses}
+                    items={themeOptions}
+                  />
+                </div>
+                
+                <div className="flex flex-row gap-1 w-full mt-1">
+                  <button
+                    type="button"
+                    onClick={handleSwitchSides}
+                    style={{ height: "1.9rem" }}
+                    className={`flex-1 flex items-center justify-center rounded-xl border text-xs font-black uppercase italic ${themeClasses.button}`}
+                    title="Сменить стороны"
+                  >
+                    <ArrowLeftRight size={16} className="text-blue-500" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleResetScore}
+                    style={{ height: "1.9rem" }}
+                    className={`flex-1 flex items-center justify-center rounded-xl border text-xs font-black uppercase italic ${themeClasses.button}`}
+                    title="Сбросить счет"
+                  >
+                    <RotateCcw size={16} className="text-blue-500" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Start / Stop Кнопка */}
+              <div className="w-full mt-2">
+                <ActionButton
+                  icon={isWidgetScoreboardRunning ? Square : Play}
+                  loading={isProcessing}
+                  disabled={
+                    isWidgetScoreboardRunning ? isStopDisabled : isStartDisabled
+                  }
+                  expandOnHover={isWidgetScoreboardRunning && !isProcessing}
+                  className={`${getButtonStyle} w-full`}
+                  iconClassName="fill-white"
+                  // onClick={handleWidgetScoreboardToggle}
+                >
+                  {isWidgetScoreboardRunning ? locale.Stop : locale.Start}
+                </ActionButton>
+              </div>
+
+            </div>
+
+            {/* Правая сторона (P2) */}
+            {renderSideControls("P2", activeTabP2, setActiveTabP2)}
+          </div>
+          
         </div>
       </div>
-    </div>
+    </PanelTemplate>
   );
 };
 

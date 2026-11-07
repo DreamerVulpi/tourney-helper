@@ -24,7 +24,7 @@ import { InstallUpdate } from "../wailsjs/go/application/App.js";
 import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
 import { useBracketFlagsSync } from "./hooks/App/useBracketFlagsSync.jsx";
 import { useAppStore } from "./store/useAppStore"
-import IntegrationsPlate from "./pages/IntegrationsPanel.jsx";
+import IntegrationsPanel from "./pages/IntegrationsPanel.jsx";
 import ProfilesPanel from "./pages/ProfilesPanel.jsx";
 import { useToolsLocked } from "./hooks/App/useToolsLocked.jsx";
 import WindowTitleBar from "./components/WindowTitleBar.jsx";
@@ -265,7 +265,7 @@ const App = () => {
                 )}
 
                 {activeTab === "integrations" && (
-                  <IntegrationsPlate
+                  <IntegrationsPanel
                     locale={locale.IntegrationsPanel}
                     updateConfig={updateConfig}
                     debouncedSaveAuthorizations={debouncedSaveAuthorizations}
@@ -278,11 +278,20 @@ const App = () => {
                   />
                 )}
 
-                {/* In future updates */}
-                {/*
-                  {activeTab === "scoreboard" && (
-                    <WidgetScoreboardPanel theme={theme}/>
-                  )} */}
+                
+                {activeTab === "widgetScoreboard" && (
+                  <WidgetScoreboardPanel
+                    locale={locale.WidgetBracketPanel}
+                    updateConfig={updateConfig}
+                    isProcessing={isProcessingWB}
+                    setIsProcessingWB={setIsProcessingWB}
+                    isWidgetBracketRunning={isWidgetBracketRunning}
+                    setIsWidgetBracketRunning={setIsWidgetBracketRunning}
+                    iframeRef_WidgetBracket={iframeRef_WidgetBracket}
+                    urlValidation={urlValidationWidgetBracket}
+                    setURLValidation={setURLValidationWidgetBracket}
+                  />
+                )}
               </main>
 
               <LoggerPlate

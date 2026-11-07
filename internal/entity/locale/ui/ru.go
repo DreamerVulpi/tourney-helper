@@ -109,7 +109,7 @@ var Ru = Ui{
 	WidgetBracketPanel: WidgetBracketPanel{
 		UrlToBracketLabel:     "Ссылка на турнирную сетку",
 		ListOfBracketsLabel:   "Cетка",
-		ListOfThemes:          "Тема оформления",
+		ListOfThemes:          "Тема",
 		Start:                 "Запустить",
 		Stop:                  "Остановить",
 		HideTheStages:         "Скрыть этапы",

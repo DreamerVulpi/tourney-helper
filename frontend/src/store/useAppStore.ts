@@ -35,6 +35,7 @@ interface AppState {
   statusNotificationSystem: string;
   statusDatabase: string;
   statusWidgetBracket: string;
+  statusWidgetScoreboard: string;
 
   // Selection
   activeTournamentPlatform: string;
@@ -71,6 +72,7 @@ interface AppState {
   setStatusNotificationSystem: (s: string) => void;
   setStatusDatabase: (s: string) => void;
   setStatusWidgetBracket: (s: string) => void;
+  setStatusWidgetScoreboard: (s: string) => void;
 
   setActiveTournamentPlatform: (p: string) => void;
   setActiveDeliveryMethod: (m: string) => void;
@@ -120,6 +122,7 @@ export const useAppStore = create<AppState>((set) => ({
   statusNotificationSystem: SERVICE_STATUS.OFF,
   statusDatabase: SERVICE_STATUS.RUNNING,
   statusWidgetBracket: SERVICE_STATUS.OFF,
+  statusWidgetScoreboard: SERVICE_STATUS.OFF,
 
   // Selection
   activeTournamentPlatform: '',
@@ -181,7 +184,8 @@ export const useAppStore = create<AppState>((set) => ({
   setStatusDatabase: (statusDatabase) => set({ statusDatabase }),
   setStatusWidgetBracket: (statusWidgetBracket) =>
     set({ statusWidgetBracket }),
-
+  setStatusWidgetScoreboard: ( statusWidgetScoreboard ) =>
+    set({ statusWidgetScoreboard}),
   setActiveTournamentPlatform: (activeTournamentPlatform) =>
     set({ activeTournamentPlatform }),
   setActiveDeliveryMethod: (activeDeliveryMethod) =>

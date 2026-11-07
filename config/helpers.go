@@ -96,6 +96,28 @@ func NewDefaultWidgets() WidgetsCfg {
 			Scale:           1.0,
 			AutoRefresh:     false,
 		},
+		Scoreboard: WidgetScoreboard{
+			Theme:           "Default",
+			ClearBackground: false,
+			HideLogos:       false,
+			HideFlags:       false,
+			Scale:           1.0,
+			Format:          "FT2",
+			P1: Side{
+				Name:     "Player1",
+				LogoPath: "",
+				Points:   0,
+				ShowLogo: true,
+				ShowFlag: true,
+			},
+			P2: Side{
+				Name:     "Player2",
+				LogoPath: "",
+				Points:   0,
+				ShowLogo: true,
+				ShowFlag: true,
+			},
+		},
 	}
 }
 
