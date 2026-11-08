@@ -45,6 +45,12 @@ func LoadWidgets(profileName string) (WidgetsCfg, error) {
 	if cfg.Scoreboard.SideWidth <= 0 {
 		cfg.Scoreboard.SideWidth = 460
 	}
+	if cfg.Scoreboard.PlateMode == "" {
+		cfg.Scoreboard.PlateMode = "builtin"
+	}
+	if cfg.Scoreboard.MainFontSize <= 0 {
+		cfg.Scoreboard.MainFontSize = 24
+	}
 	return cfg, nil
 }
 

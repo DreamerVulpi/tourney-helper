@@ -1,4 +1,4 @@
-/* scoreboard-startgg-theme-v10 */
+/* scoreboard-startgg-theme-v12 */
 /*
  * Start.gg theme for tourney-helper scoreboard widget.
  *
@@ -189,15 +189,15 @@ html.transparent-bg .scoreboard {
 .score {
     position: relative;
     isolation: isolate;
-    width: 64px;
-    min-width: 64px;
-    flex: 0 0 64px;
+    width: 56px;
+    min-width: 56px;
+    flex: 0 0 56px;
     height: 100%;
     padding: 0;
     background: transparent;
     color: var(--sb-score-color);
     font-family: var(--sb-score-font);
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     text-shadow: var(--sb-score-shadow);
 }

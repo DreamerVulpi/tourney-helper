@@ -43,13 +43,20 @@ export function DropdownList({
     };
   }, [menuRef]);
 
-  const filteredItems = editable
-    ? items.filter(
-        (item) =>
-          item.label.toLowerCase().includes(inputValue.toLowerCase()) ||
-          item.value.toLowerCase().includes(inputValue.toLowerCase()),
-      )
-    : items;
+  const selectedLabel = items.find(
+    (item) => String(item.value) === String(selectedValue),
+  )?.label;
+  const isSearching =
+    editable && inputValue !== (selectedLabel ?? String(selectedValue));
+
+  const filteredItems =
+    editable && isSearching
+      ? items.filter(
+          (item) =>
+            item.label.toLowerCase().includes(inputValue.toLowerCase()) ||
+            item.value.toLowerCase().includes(inputValue.toLowerCase()),
+        )
+      : items;
 
   return (
     <div ref={dropdownRef} className="relative w-full">
@@ -126,7 +133,9 @@ export function DropdownList({
             ref={menuRef}
             style={menuStyle ?? HIDDEN_MENU_STYLE}
             className={`
-              overflow-hidden
+              max-h-64
+              overflow-y-auto
+              custom-scrollbar
               rounded-xl
               border
               shadow-xl

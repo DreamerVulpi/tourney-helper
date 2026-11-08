@@ -7,6 +7,7 @@ import { CopyButton } from "./CopyButton.jsx";
 
 function FieldBase({
   label,
+  labelClassName = "",
   labelPosition = "top", // top | left
   labelWidth = "auto",
 
@@ -207,12 +208,6 @@ function FieldBase({
                 }
             `}
         >
-            {label && (
-                <span className={`text-[10px] font-black uppercase italic shrink-0 ${themeClasses.label}`}>
-                    {label}
-                </span>
-            )}
-
             <button
                 type="button"
                 onClick={() =>
@@ -332,7 +327,6 @@ function FieldBase({
           <input
             type={inputType}
             inputMode={isNumber ? "numeric" : ""}
-            pattern={isNumber ? "[0-9]*" : ""}
             value={value}
             placeholder={placeholder}
             readOnly={readOnly}
@@ -397,6 +391,7 @@ function FieldBase({
             px-1
             shrink-0
             ${themeClasses.label}
+            ${labelClassName}
           `}
         >
           {label}

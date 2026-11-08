@@ -52,26 +52,33 @@ type WidgetBracket struct {
 
 // TODO: Add ShowLogo, ShowFlag
 type Side struct {
-	TeamTag  string `toml:"teamTag" json:"teamTag"`
-	Name     string `toml:"name" json:"name"`
-	LogoPath string `toml:"logoPath" json:"logoPath"`
-	Flag     string `toml:"flag" json:"flag"`
-	Points   int    `toml:"points" json:"points"`
-	ShowLogo bool   `toml:"showLogo" json:"showLogo"`
-	ShowFlag bool   `toml:"showFlag" json:"showFlag"`
+	TeamTag       string `toml:"teamTag" json:"teamTag"`
+	Name          string `toml:"name" json:"name"`
+	LogoPath      string `toml:"logoPath" json:"logoPath"`
+	Flag          string `toml:"flag" json:"flag"`
+	PlateImage    string `toml:"plateImage" json:"plateImage"`
+	Points        int    `toml:"points" json:"points"`
+	ScoreOffsetX  int    `toml:"scoreOffsetX" json:"scoreOffsetX"`
+	ScoreOffsetY  int    `toml:"scoreOffsetY" json:"scoreOffsetY"`
+	ScoreFontSize int    `toml:"scoreFontSize" json:"scoreFontSize"`
+	ShowLogo      bool   `toml:"showLogo" json:"showLogo"`
+	ShowFlag      bool   `toml:"showFlag" json:"showFlag"`
 }
 
 type WidgetScoreboard struct {
-	Theme      string  `toml:"theme" json:"theme"`
-	TitleMatch string  `toml:"titleMatch" json:"titleMatch"`
-	HideLogos  bool    `toml:"hideLogos" json:"hideLogos"`
-	HideFlags  bool    `toml:"hideFlags" json:"hideFlags"`
-	Scale      float64 `toml:"scale" json:"scale"`
-	SideGap    float64 `toml:"sideGap" json:"sideGap"`
-	SideWidth  float64 `toml:"sideWidth" json:"sideWidth"`
-	Format     string  `toml:"format" json:"format"`
-	P1         Side    `toml:"P1" json:"P1"`
-	P2         Side    `toml:"P2" json:"P2"`
+	Theme        string  `toml:"theme" json:"theme"`
+	TitleMatch   string  `toml:"titleMatch" json:"titleMatch"`
+	FontFamily   string  `toml:"fontFamily" json:"fontFamily"`
+	MainFontSize int     `toml:"mainFontSize" json:"mainFontSize"`
+	HideLogos    bool    `toml:"hideLogos" json:"hideLogos"`
+	HideFlags    bool    `toml:"hideFlags" json:"hideFlags"`
+	Scale        float64 `toml:"scale" json:"scale"`
+	SideGap      float64 `toml:"sideGap" json:"sideGap"`
+	SideWidth    float64 `toml:"sideWidth" json:"sideWidth"`
+	PlateMode    string  `toml:"plateMode" json:"plateMode"`
+	Format       string  `toml:"format" json:"format"`
+	P1           Side    `toml:"P1" json:"P1"`
+	P2           Side    `toml:"P2" json:"P2"`
 }
 
 type WidgetsCfg struct {

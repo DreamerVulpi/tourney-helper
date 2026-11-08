@@ -24,7 +24,11 @@ export interface ScoreboardSide {
   name: string;
   logoPath: string;
   flag: string;
+  plateImage: string;
   points: number;
+  scoreOffsetX: number;
+  scoreOffsetY: number;
+  scoreFontSize: number;
   showLogo: boolean;
   showFlag: boolean;
 }
@@ -32,11 +36,14 @@ export interface ScoreboardSide {
 export interface WidgetScoreboard {
   theme: string;
   titleMatch: string;
+  fontFamily: string;
+  mainFontSize: number;
   hideLogos: boolean;
   hideFlags: boolean;
   scale: number;
   sideGap: number;
   sideWidth: number;
+  plateMode: string;
   format: string;
   P1: ScoreboardSide;
   P2: ScoreboardSide;

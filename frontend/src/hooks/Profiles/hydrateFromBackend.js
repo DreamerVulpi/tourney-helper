@@ -84,13 +84,17 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
     const b = widgets.bracket ?? {};
     const s = widgets.scoreboard ?? {};
     const normalizeSide = (side, fallbackName) => ({
-      teamTag:  side?.teamTag  ?? "",
-      name:     side?.name     ?? fallbackName,
-      logoPath: side?.logoPath ?? "",
-      flag:     side?.flag     ?? "",
-      points:   side?.points   ?? 0,
-      showLogo: side?.showLogo ?? true,
-      showFlag: side?.showFlag ?? true,
+      teamTag:    side?.teamTag    ?? "",
+      name:       side?.name       ?? fallbackName,
+      logoPath:   side?.logoPath   ?? "",
+      flag:       side?.flag       ?? "",
+      plateImage:   side?.plateImage   ?? "",
+      points:       side?.points       ?? 0,
+      scoreOffsetX: side?.scoreOffsetX ?? 0,
+      scoreOffsetY: side?.scoreOffsetY ?? 0,
+      scoreFontSize: side?.scoreFontSize ?? 28,
+      showLogo:   side?.showLogo   ?? true,
+      showFlag:   side?.showFlag   ?? true,
     });
 
     store.setWidgets((prev) => ({
@@ -108,11 +112,14 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
       scoreboard: {
         theme:           s.theme === "Default" ? "default" : (s.theme || "default"),
         titleMatch:      s.titleMatch      ?? "CUSTOM NAME",
+        fontFamily:      s.fontFamily      ?? "",
+        mainFontSize:    typeof s.mainFontSize === "number" && s.mainFontSize > 0 ? s.mainFontSize : 24,
         hideLogos:       s.hideLogos       ?? false,
         hideFlags:       s.hideFlags       ?? false,
         scale:           typeof s.scale === "number" && s.scale > 0 ? s.scale : 1.0,
         sideGap:         typeof s.sideGap === "number" && s.sideGap > 0 ? s.sideGap : 480,
         sideWidth:       typeof s.sideWidth === "number" && s.sideWidth > 0 ? s.sideWidth : 460,
+        plateMode:       s.plateMode       || "builtin",
         format:          s.format          ?? "FT2",
         P1: normalizeSide(s.P1, "Player 1"),
         P2: normalizeSide(s.P2, "Player 2"),

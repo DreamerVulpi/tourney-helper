@@ -190,26 +190,26 @@ html.transparent-bg .scoreboard {
 
 .score {
     position: relative;
-    width: 80px;
-    min-width: 80px;
-    flex: 0 0 80px;
+    width: 68px;
+    min-width: 68px;
+    flex: 0 0 68px;
     height: 100%;
     padding: 0;
     background: transparent;
     color: var(--sb-score-color);
     font-family: var(--sb-score-font);
-    font-size: 32px;
+    font-size: 28px;
     font-weight: 700;
     text-shadow: var(--sb-score-shadow);
 }
 
 /* Компенсация скоса разделителя: цифра центрируется в видимом параллелограмме. */
 .side-left .score {
-    padding-left: 14px;
+    padding-left: 18px;
 }
 
 .side-right .score {
-    padding-right: 14px;
+    padding-right: 18px;
 }
 
 .side-left .score::before,

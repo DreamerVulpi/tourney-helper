@@ -25,23 +25,31 @@ import {
   ImagePlus,
   Trash2,
   Pencil,
-  Link2
+  Link2,
+  Layers,
+  Move
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
 import { Field } from "../components/ui/Field.jsx";
 import { TabbedRange } from "../components/ui/TabbedRange.jsx";
+import { ScoreOffsetPad } from "../components/ui/ScoreOffsetPad.jsx";
+import { CompactStepper } from "../components/ui/CompactStepper.jsx";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { ActionButton } from "../components/ui/ActionButton.jsx";
 import { useStartToggle } from "../hooks/WidgetScoreboardPanel/useStartToggle.jsx";
 import { useGetListFlags } from "../hooks/WidgetScoreboardPanel/useGetListFlags.jsx";
 import { useGetListScoreboardThemes } from "../hooks/WidgetScoreboardPanel/useGetListScoreboardThemes.jsx";
 import { useGetListLogos } from "../hooks/WidgetScoreboardPanel/useGetListLogos.jsx";
+import { useGetListPlanks } from "../hooks/WidgetScoreboardPanel/useGetListPlanks.jsx";
+import { useGetSystemFonts } from "../hooks/WidgetScoreboardPanel/useGetSystemFonts.jsx";
 import AddLogoModal from "../components/modals/AddLogoModal.jsx";
+import AddPlankModal from "../components/modals/AddPlankModal.jsx";
+import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import ConfirmModal from "../components/modals/ConfirmModal.jsx";
 import PromptModal from "../components/modals/PromptModal.jsx";
 import { ValidationModal } from "../components/ValidationModal.jsx";
-import { DeleteLogo, RenameLogo } from "../../wailsjs/go/application/App.js";
+import { DeleteLogo, DeletePlank, RenameLogo, RenamePlank } from "../../wailsjs/go/application/App.js";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
 import { getThemeClasses } from "../utils/themeClasses.jsx";
 import { useThemeClasses } from "../hooks/App/useThemeClasses";
@@ -67,12 +75,28 @@ const clampSideWidth = (s) => {
   return Math.max(200, Math.min(1920, n));
 };
 
+const clampScoreFontSize = (s) => {
+  const n = parseInt(s, 10);
+  if (!Number.isFinite(n)) return 28;
+  return Math.max(16, Math.min(72, n));
+};
+
+const clampMainFontSize = (s) => {
+  const n = parseInt(s, 10);
+  if (!Number.isFinite(n)) return 24;
+  return Math.max(10, Math.min(72, n));
+};
+
 const DEFAULT_SIDE = {
   teamTag: "",
   name: "Player",
   logoPath: "",
   flag: "",
+  plateImage: "",
   points: 0,
+  scoreOffsetX: 0,
+  scoreOffsetY: 0,
+  scoreFontSize: 28,
   showLogo: true,
   showFlag: true,
 };
@@ -115,11 +139,15 @@ const WidgetScoreboardPlate = ({
   // ---- поля из конфига (единый источник истины) ----
   const themeScoreboard = scoreboard?.theme || "default";
   const titleMatch = scoreboard?.titleMatch ?? "CUSTOM NAME";
+  const fontFamily = scoreboard?.fontFamily ?? "";
+  const mainFontSize = scoreboard?.mainFontSize ?? 24;
   const hideLogos = scoreboard?.hideLogos ?? false;
   const hideFlags = scoreboard?.hideFlags ?? false;
   const scale = scoreboard?.scale ?? 1.0;
   const sideGap = scoreboard?.sideGap ?? 480;
   const sideWidth = scoreboard?.sideWidth ?? 460;
+  const plateMode =
+    scoreboard?.plateMode === "custom" ? "custom" : "builtin";
   const format = scoreboard?.format ?? "FT2";
   const p1 = scoreboard?.P1 ?? defaultSideFor("P1");
   const p2 = scoreboard?.P2 ?? defaultSideFor("P2");
@@ -127,19 +155,43 @@ const WidgetScoreboardPlate = ({
   const [activeTabP1, setActiveTabP1] = useState("logo");
   const [activeTabP2, setActiveTabP2] = useState("logo");
 
+  useEffect(() => {
+    if (plateMode === "custom") {
+      setActiveTabP1("plank");
+      setActiveTabP2("plank");
+    } else {
+      setActiveTabP1((tab) => (tab === "plank" ? "logo" : tab));
+      setActiveTabP2((tab) => (tab === "plank" ? "logo" : tab));
+    }
+  }, [plateMode]);
+
   const themeOptions = useGetListScoreboardThemes();
   const flagOptions = useGetListFlags(locale.FlagNames);
   const { logos: logoOptions, reload: reloadLogos } = useGetListLogos();
+  const { planks: plankOptions, reload: reloadPlanks } = useGetListPlanks();
+  const systemFonts = useGetSystemFonts();
+  const fontOptions = useMemo(
+    () => [
+      { value: "", label: locale.FontDefaultLabel },
+      ...systemFonts.map((font) => ({ value: font, label: font })),
+    ],
+    [systemFonts, locale.FontDefaultLabel],
+  );
   const readyScale = clampScale(scale);
   const readyGap = clampGap(sideGap);
   const readySideWidth = clampSideWidth(sideWidth);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [activeRangeTab, setActiveRangeTab] = useState("scale");
   const [addLogoModal, setAddLogoModal] = useState({ open: false, side: null });
+  const [addPlankModal, setAddPlankModal] = useState({ open: false, side: null });
   const [logoDelete, setLogoDelete] = useState({ open: false, name: null });
   const [logoRename, setLogoRename] = useState({ open: false, name: null });
   const [logoPending, setLogoPending] = useState(false);
   const [logoError, setLogoError] = useState("");
+  const [plankDelete, setPlankDelete] = useState({ open: false, name: null });
+  const [plankRename, setPlankRename] = useState({ open: false, name: null });
+  const [plankPending, setPlankPending] = useState(false);
+  const [plankError, setPlankError] = useState("");
 
   const handleWidgetScoreboardToggle = useStartToggle(
     isWidgetScoreboardRunning,
@@ -153,15 +205,18 @@ const WidgetScoreboardPlate = ({
   const scoreboardState = useMemo(() => ({
     theme: themeScoreboard,
     titleMatch,
+    fontFamily,
+    mainFontSize,
     hideLogos,
     hideFlags,
     scale: readyScale,
     sideGap: readyGap,
     sideWidth: readySideWidth,
+    plateMode,
     format,
     P1: p1,
     P2: p2,
-  }), [themeScoreboard, titleMatch, hideLogos, hideFlags, readyScale, readyGap, readySideWidth, format, p1, p2]);
+  }), [themeScoreboard, titleMatch, fontFamily, mainFontSize, hideLogos, hideFlags, readyScale, readyGap, readySideWidth, plateMode, format, p1, p2]);
 
   // ---------- Обработчики конфига ----------
   const handleThemeChange = useCallback(
@@ -180,8 +235,20 @@ const WidgetScoreboardPlate = ({
     (value) => patchScoreboard(updateConfig, { sideWidth: clampSideWidth(value) }),
     [updateConfig],
   );
+  const handlePlateModeChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { plateMode: value }),
+    [updateConfig],
+  );
   const handleTitleChange = useCallback(
     (value) => patchScoreboard(updateConfig, { titleMatch: value }),
+    [updateConfig],
+  );
+  const handleFontFamilyChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { fontFamily: value }),
+    [updateConfig],
+  );
+  const handleMainFontSizeChange = useCallback(
+    (value) => patchScoreboard(updateConfig, { mainFontSize: clampMainFontSize(value) }),
     [updateConfig],
   );
 
@@ -295,6 +362,61 @@ const WidgetScoreboardPlate = ({
     }
   }, [scoreboard, updateConfig, reloadLogos]);
 
+  const handleDeletePlank = useCallback(async () => {
+    const name = plankDelete.name;
+    if (!name) return;
+
+    setPlankPending(true);
+    try {
+      await DeletePlank(name);
+
+      const patch = {};
+      if (scoreboard?.P1?.plateImage === name) {
+        patch.P1 = { ...scoreboard.P1, plateImage: "" };
+      }
+      if (scoreboard?.P2?.plateImage === name) {
+        patch.P2 = { ...scoreboard.P2, plateImage: "" };
+      }
+      if (Object.keys(patch).length) {
+        patchScoreboard(updateConfig, patch);
+      }
+
+      await reloadPlanks();
+      setPlankDelete({ open: false, name: null });
+    } catch (err) {
+      setPlankError(String(err?.message ?? err));
+    } finally {
+      setPlankPending(false);
+    }
+  }, [plankDelete.name, scoreboard, updateConfig, reloadPlanks]);
+
+  const handleRenamePlank = useCallback(async (oldName, newName) => {
+    if (!oldName || !newName?.trim()) return;
+
+    setPlankPending(true);
+    try {
+      const info = await RenamePlank(oldName, newName.trim());
+
+      const patch = {};
+      if (scoreboard?.P1?.plateImage === oldName) {
+        patch.P1 = { ...scoreboard.P1, plateImage: info.name };
+      }
+      if (scoreboard?.P2?.plateImage === oldName) {
+        patch.P2 = { ...scoreboard.P2, plateImage: info.name };
+      }
+      if (Object.keys(patch).length) {
+        patchScoreboard(updateConfig, patch);
+      }
+
+      await reloadPlanks();
+      setPlankRename({ open: false, name: null });
+    } catch (err) {
+      setPlankError(String(err?.message ?? err));
+    } finally {
+      setPlankPending(false);
+    }
+  }, [scoreboard, updateConfig, reloadPlanks]);
+
   // ---------- URL ----------
   const widgetBaseUrl = "http://localhost:8080/widgets/scoreboard";
   const baseIframeUrl = `${widgetBaseUrl}?preview=1`;
@@ -376,8 +498,12 @@ const WidgetScoreboardPlate = ({
 
   const EXTRA_TABS = [
     { id: "logo", icon: ImageIcon, label: locale.LogoLabel },
-    { id: "flag", icon: Flag,      label: locale.FlagsLabel }
-  ]
+    { id: "flag", icon: Flag,      label: locale.FlagsLabel },
+    ...(plateMode === "custom"
+      ? [{ id: "plank", icon: ImageIcon, label: locale.PlankLabel }]
+      : []),
+    { id: "score", icon: Move, label: locale.ScoreTab },
+  ];
 
   const renderSideControls = (side, activeTab, setActiveTab) => {
   const data = scoreboard?.[side] ?? defaultSideFor(side);
@@ -665,6 +791,153 @@ const WidgetScoreboardPlate = ({
                   />
                 </div>
               </div>
+            ) : tab === "plank" ? (
+              <div className="flex flex-col gap-2 pt-2 min-w-0">
+                {plankOptions.length > 0 && (
+                  <Field
+                    variant="multiselect"
+                    single
+                    searchable
+                    label={locale.PlankLabel}
+                    value={data.plateImage ? [data.plateImage] : []}
+                    onChange={(values) =>
+                      updateSide(side, { plateImage: values?.[0] ?? "" })
+                    }
+                    items={plankOptions}
+                    locale={locale}
+                    themeClasses={themeClasses}
+                    height="1.9rem"
+                    placeholder={locale.PlankPlaceholder}
+                    maxVisible={5}
+                    renderItem={(item) => (
+                      <span className="flex items-center gap-2 min-w-0 flex-1">
+                        {item.dataUrl && (
+                          <img
+                            src={item.dataUrl}
+                            alt=""
+                            className="w-7 h-4 object-contain rounded-sm shrink-0"
+                          />
+                        )}
+                        <span className="truncate flex-1 min-w-0">
+                          {item.label}
+                        </span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          title={locale.RenamePlankTitle}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPlankRename({ open: true, name: item.value });
+                          }}
+                          className="shrink-0 p-1 rounded hover:bg-white/10 cursor-pointer"
+                        >
+                          <Pencil size={12} />
+                        </span>
+                        <span
+                          role="button"
+                          tabIndex={0}
+                          title={locale.DeletePlankTitle}
+                          onMouseDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPlankDelete({ open: true, name: item.value });
+                          }}
+                          className="shrink-0 p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
+                        >
+                          <Trash2 size={12} />
+                        </span>
+                      </span>
+                    )}
+                  />
+                )}
+
+                <Field
+                  variant="button"
+                  icon={ImagePlus}
+                  labelButton={locale.AddPlankButton}
+                  height="2.1rem"
+                  themeClasses={themeClasses}
+                  onClick={() => setAddPlankModal({ open: true, side })}
+                />
+              </div>
+            ) : tab === "score" ? (
+              <div className="flex flex-col gap-2 pt-2 w-full">
+                <div className="flex flex-row items-start gap-3 w-full">
+                  <div className="flex-shrink-0">
+                    <ScoreOffsetPad
+                      x={data.scoreOffsetX ?? 0}
+                      y={data.scoreOffsetY ?? 0}
+                      max={50}
+                      themeClasses={themeClasses}
+                      resetLabel={locale.ScoreOffsetReset}
+                      onChange={(x, y) =>
+                        updateSide(side, {
+                          scoreOffsetX: x,
+                          scoreOffsetY: y,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2 flex-1 min-w-0">
+                    <Field
+                      variant="combobox"
+                      label={locale.FontLabel}
+                      labelClassName="text-center"
+                      value={fontFamily}
+                      onChange={handleFontFamilyChange}
+                      items={fontOptions}
+                      themeClasses={themeClasses}
+                      height="1.9rem"
+                    />
+
+                    <div className="flex flex-row items-start gap-2 w-full">
+                      <div className="flex flex-col gap-1 items-center flex-1 min-w-0">
+                        <span
+                          className={`text-[10px] font-black uppercase italic text-center ${themeClasses.label}`}
+                        >
+                          {locale.MainFontSizeLabel}
+                        </span>
+                        <CompactStepper
+                          value={clampMainFontSize(mainFontSize)}
+                          min={10}
+                          max={72}
+                          step={1}
+                          onChange={handleMainFontSizeChange}
+                          formatValue={(value) => `${Math.round(value)}px`}
+                          resetValue={24}
+                          resetLabel={locale.ScoreOffsetReset}
+                          themeClasses={themeClasses}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1 items-center flex-1 min-w-0">
+                        <span
+                          className={`text-[10px] font-black uppercase italic text-center ${themeClasses.label}`}
+                        >
+                          {locale.ScoreFontSizeLabel}
+                        </span>
+                        <CompactStepper
+                          value={clampScoreFontSize(data.scoreFontSize ?? 28)}
+                          min={16}
+                          max={72}
+                          step={1}
+                          onChange={(value) =>
+                            updateSide(side, {
+                              scoreFontSize: clampScoreFontSize(value),
+                            })
+                          }
+                          formatValue={(value) => `${Math.round(value)}px`}
+                          resetValue={28}
+                          resetLabel={locale.ScoreOffsetReset}
+                          themeClasses={themeClasses}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : null
           }
         </TabbedSection>
@@ -721,7 +994,7 @@ const WidgetScoreboardPlate = ({
           
           {/* Превью (Iframe) */}
           <div
-            className={`relative w-full h-44 shrink-0 rounded-[0.5rem] ${themeClasses.button}`}
+            className={`relative w-full h-38 shrink-0 rounded-[0.5rem] ${themeClasses.button}`}
           >
             {!isWidgetScoreboardRunning && (
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col gap-2 w-80">
@@ -784,20 +1057,63 @@ const WidgetScoreboardPlate = ({
 
             {/* Центр (Настройки матча) */}
             <div className="flex flex-col gap-2 items-center w-[17rem]">
-              {/* Title Event */}
+              {/* Режим плашек */}
               <div className="w-full">
-                <Field
-                  variant="input"
-                  label={locale.TitleEventLabel}
-                  value={titleMatch}
-                  onChange={handleTitleChange}
+                <ToggleSwitch
+                  label={locale.PlateModeLabel}
+                  value={plateMode}
+                  options={[
+                    {
+                      value: "builtin",
+                      label: locale.BuiltInMode,
+                      icon: Layers,
+                    },
+                    {
+                      value: "custom",
+                      label: locale.CustomMode,
+                      icon: ImageIcon,
+                    },
+                  ]}
+                  color="amber"
                   themeClasses={themeClasses}
-                  icon={Trophy}
-                  placeholder={locale.TitleEventPlaceholder}
+                  onChange={handlePlateModeChange}
                 />
               </div>
 
-              {/* Format + Кнопки */}
+              {/* Title Event + кнопки со стрелками */}
+              <div className="w-full flex flex-row gap-1 items-end">
+                <div className="flex-1 min-w-0">
+                  <Field
+                    variant="input"
+                    label={locale.TitleEventLabel}
+                    value={titleMatch}
+                    onChange={handleTitleChange}
+                    themeClasses={themeClasses}
+                    icon={Trophy}
+                    placeholder={locale.TitleEventPlaceholder}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSwitchSides}
+                  style={{ height: "1.9rem" }}
+                  className={`w-9 shrink-0 flex items-center justify-center rounded-xl border text-xs font-black uppercase italic ${themeClasses.button}`}
+                  title={locale.SwitchSidesTitle}
+                >
+                  <ArrowLeftRight size={16} className="text-blue-500" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetScore}
+                  style={{ height: "1.9rem" }}
+                  className={`w-9 shrink-0 flex items-center justify-center rounded-xl border text-xs font-black uppercase italic ${themeClasses.button}`}
+                  title={locale.ResetScoreTitle}
+                >
+                  <RotateCcw size={16} className="text-blue-500" />
+                </button>
+              </div>
+
+              {/* Format + Theme */}
               <div className="w-full flex flex-col gap-2">
                 <div className="flex flex-row gap-1 w-full mt-1 items-start">
                   <div className="flex-1 min-w-0">
@@ -829,26 +1145,6 @@ const WidgetScoreboardPlate = ({
                   </div>
                 </div>
                 
-                <div className="flex flex-row gap-1 w-full">
-                  <button
-                    type="button"
-                    onClick={handleSwitchSides}
-                    style={{ height: "1.9rem" }}
-                    className={`flex-1 flex items-center justify-center rounded-xl border text-xs font-black uppercase italic ${themeClasses.button}`}
-                    title={locale.SwitchSidesTitle}
-                  >
-                    <ArrowLeftRight size={16} className="text-blue-500" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleResetScore}
-                    style={{ height: "1.9rem" }}
-                    className={`flex-1 flex items-center justify-center rounded-xl border text-xs font-black uppercase italic ${themeClasses.button}`}
-                    title={locale.ResetScoreTitle}
-                  >
-                    <RotateCcw size={16} className="text-blue-500" />
-                  </button>
-                </div>
               </div>
 
               {/* Start / Stop Кнопка */}
@@ -890,6 +1186,21 @@ const WidgetScoreboardPlate = ({
         }}
         themeClasses={themeClasses}
         locale={locale}
+      />
+
+      <AddPlankModal
+        isOpen={addPlankModal.open}
+        onClose={() => setAddPlankModal({ open: false, side: null })}
+        onAdded={async (info) => {
+          if (addPlankModal.side && info?.name) {
+            updateSide(addPlankModal.side, { plateImage: info.name });
+          }
+          await reloadPlanks();
+        }}
+        themeClasses={themeClasses}
+        locale={locale}
+        recommendedWidth={Math.round(readySideWidth)}
+        recommendedHeight={64}
       />
 
       <ConfirmModal
@@ -936,6 +1247,61 @@ const WidgetScoreboardPlate = ({
         icon={Pencil}
         iconColor="amber"
         theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <ConfirmModal
+        isOpen={plankDelete.open}
+        onClose={() => setPlankDelete({ open: false, name: null })}
+        onConfirm={handleDeletePlank}
+        loading={plankPending}
+        title={locale.DeletePlankModalTitle}
+        message={
+          (() => {
+            const parts = locale.DeletePlankModalMessage.split("%v");
+            return (
+              <>
+                {parts[0]}
+                <span className="text-red-500 font-black italic">
+                  {plankDelete.name}
+                </span>
+                {parts[1]}
+              </>
+            );
+          })()
+        }
+        confirmLabel={locale.DeletePlankConfirmButton}
+        icon={Trash2}
+        iconColor="red"
+        iconColorClass="text-red-500"
+        danger
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <PromptModal
+        isOpen={plankRename.open}
+        onClose={() => setPlankRename({ open: false, name: null })}
+        onConfirm={(newName) => handleRenamePlank(plankRename.name, newName)}
+        loading={plankPending}
+        title={locale.RenamePlankModalTitle}
+        label={locale.FileNameLabel}
+        defaultValue={stripLogoExtension(plankRename.name)}
+        confirmLabel={locale.SaveButton}
+        validate={(value) =>
+          value.trim() ? null : locale.NameCannotBeEmpty
+        }
+        icon={Pencil}
+        iconColor="amber"
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <ValidationModal
+        isOpen={!!plankError}
+        onClose={() => setPlankError("")}
+        message={plankError}
+        locale={{ ErrorFillParams: locale.ErrorTitle, OkButtonLabel: locale.OkButtonLabel }}
         themeClasses={themeClasses}
       />
 

@@ -128,12 +128,18 @@ type WidgetScoreboardPanel struct {
 	SearchLabel string
 	NoClients   string
 
-	ListOfThemes      string
-	Format            string
-	FormatPlaceholder string
-	ScaleTab          string
-	GapTab            string
-	PlateWidthTab     string
+	ListOfThemes       string
+	Format             string
+	FormatPlaceholder  string
+	ScaleTab           string
+	GapTab             string
+	PlateWidthTab      string
+	ScoreTab           string
+	ScoreOffsetReset   string
+	ScoreFontSizeLabel string
+	FontLabel          string
+	FontDefaultLabel   string
+	MainFontSizeLabel  string
 
 	TitleEventLabel       string
 	TitleEventPlaceholder string
@@ -146,6 +152,16 @@ type WidgetScoreboardPanel struct {
 	LogoPathPlaceholder string
 	AddLogoButton       string
 
+	PlateModeLabel            string
+	BuiltInMode               string
+	CustomMode                string
+	PlankLabel                string
+	PlankPlaceholder          string
+	AddPlankButton            string
+	AddPlankModalTitle        string
+	AddingPlank               string
+	PlankRecommendedSizeLabel string
+
 	FlagsLabel      string
 	FlagPlaceholder string
 	FlagNames       map[string]string
@@ -157,6 +173,8 @@ type WidgetScoreboardPanel struct {
 
 	RenameLogoTitle  string
 	DeleteLogoTitle  string
+	RenamePlankTitle string
+	DeletePlankTitle string
 	SwitchSidesTitle string
 	ResetScoreTitle  string
 
@@ -178,6 +196,14 @@ type WidgetScoreboardPanel struct {
 	DeleteLogoModalTitle    string
 	DeleteLogoModalMessage  string
 	DeleteLogoConfirmButton string
+
+	// Delete plank modal
+	DeletePlankModalTitle    string
+	DeletePlankModalMessage  string
+	DeletePlankConfirmButton string
+
+	// Rename plank modal
+	RenamePlankModalTitle string
 
 	// Rename logo modal
 	RenameLogoModalTitle string

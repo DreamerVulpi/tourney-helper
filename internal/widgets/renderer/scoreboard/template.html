@@ -151,6 +151,11 @@
             line-height: 1;
         }
 
+        .score-value {
+            display: inline-block;
+            will-change: transform;
+        }
+
         .center {
             width: 190px;
             flex: 0 0 190px;
@@ -189,6 +194,38 @@
         .side-content {
             display: contents;
         }
+
+        /* Custom plate image replaces the built-in plate visuals. */
+        .side.custom-plate {
+            border-bottom: none;
+            background-color: transparent;
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            /* The uploaded image is the plate itself, so the theme must
+               not skew or wrap it. */
+            transform: none;
+        }
+
+        .side.custom-plate .side-content {
+            transform: none !important;
+        }
+
+        /* Do not paint theme plate elements over the custom image. */
+        .side.custom-plate .logo {
+            background: transparent;
+            border-color: transparent;
+        }
+
+        .side.custom-plate .score {
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .side.custom-plate .score::before,
+        .side.custom-plate .score::after {
+            display: none;
+        }
     </style>
     <style id="theme-style"> {{ .ThemeCSS }}</style>
 </head>
@@ -196,13 +233,13 @@
 <div class="scoreboard-wrapper" style="background: transparent !important;">
     <div class="scoreboard-scale" id="scoreboard-scale" style="background: transparent !important;">
         <div class="scoreboard" style="background: transparent !important;">
-            <div class="side side-left">
+            <div class="side side-left" id="p1-side">
                 <div class="side-content">
                     <div class="flag hidden" id="p1-flag"><img id="p1-flag-img" alt=""></div>
                     <div class="logo hidden" id="p1-logo"><img id="p1-logo-img" alt=""></div>
                     <div class="team-tag" id="p1-team-tag">{{ .Scoreboard.P1.TeamTag }}</div>
                     <div class="name" id="p1-name">{{ .Scoreboard.P1.Name }}</div>
-                    <div class="score" id="p1-score">{{ .Scoreboard.P1.Points }}</div>
+                    <div class="score" id="p1-score"><span class="score-value" id="p1-score-value">{{ .Scoreboard.P1.Points }}</span></div>
                 </div>
             </div>
 
@@ -211,9 +248,9 @@
                 <div class="format{{ if not .Scoreboard.Format }} hidden{{ end }}" id="format">{{ .Scoreboard.Format }}</div>
             </div>
 
-            <div class="side side-right">
+            <div class="side side-right" id="p2-side">
                 <div class="side-content">
-                    <div class="score" id="p2-score">{{ .Scoreboard.P2.Points }}</div>
+                    <div class="score" id="p2-score"><span class="score-value" id="p2-score-value">{{ .Scoreboard.P2.Points }}</span></div>
                     <div class="name" id="p2-name">{{ .Scoreboard.P2.Name }}</div>
                     <div class="team-tag" id="p2-team-tag">{{ .Scoreboard.P2.TeamTag }}</div>
                     <div class="flag hidden" id="p2-flag"><img id="p2-flag-img" alt=""></div>
@@ -245,7 +282,13 @@
         return '/widgets/scoreboard/logos/' + encodeURIComponent(value);
     }
 
-    function applySide(prefix, side, hideLogos, hideFlags) {
+    function resolvePlankUrl(value) {
+        if (!value) return '';
+        if (/^(https?:|data:|blob:)/i.test(value)) return value;
+        return '/widgets/scoreboard/planks/' + encodeURIComponent(value);
+    }
+
+    function applySide(prefix, side, hideLogos, hideFlags, plateMode) {
         side = side || {};
 
         const rawName = (side.name || '').trim();
@@ -254,7 +297,31 @@
         const displayName = rawName || teamTag;
 
         setText(prefix + '-name', displayName);
-        setText(prefix + '-score', side.points == null ? 0 : side.points);
+        const scoreValueEl = byId(prefix + '-score-value');
+        const scoreValue = side.points == null ? 0 : side.points;
+        if (scoreValueEl) {
+            scoreValueEl.textContent = String(scoreValue);
+        } else {
+            setText(prefix + '-score', scoreValue);
+        }
+
+        if (scoreValueEl) {
+            const offsetX = Number(side.scoreOffsetX) || 0;
+            const offsetY = Number(side.scoreOffsetY) || 0;
+            // Y is positive upwards in the control, while CSS translateY
+            // grows downwards, so invert it.
+            scoreValueEl.style.transform = `translate(${offsetX}px, ${-offsetY}px)`;
+        }
+
+        const scoreEl = byId(prefix + '-score');
+        const scoreFontSize = Number(side.scoreFontSize);
+        if (scoreEl) {
+            if (Number.isFinite(scoreFontSize) && scoreFontSize > 0) {
+                scoreEl.style.fontSize = scoreFontSize + 'px';
+            } else {
+                scoreEl.style.fontSize = '';
+            }
+        }
 
         const teamEl = byId(prefix + '-team-tag');
         if (teamEl) {
@@ -289,6 +356,59 @@
                 flagImg.removeAttribute('src');
             }
         }
+
+        const sideEl = byId(prefix + '-side');
+        const customPlate = plateMode === 'custom' && !!side.plateImage;
+        if (sideEl) {
+            sideEl.classList.toggle('custom-plate', customPlate);
+
+            if (customPlate) {
+                const url = resolvePlankUrl(side.plateImage);
+                sideEl.style.backgroundImage = `url(${url})`;
+
+                const fitHeight = (img) => {
+                    if (!img || !img.naturalWidth || !img.naturalHeight) return;
+                    const width = sideEl.offsetWidth || 460;
+                    const aspect = img.naturalWidth / img.naturalHeight;
+                    sideEl.style.height = Math.max(1, Math.round(width / aspect)) + 'px';
+                };
+
+                const img = new Image();
+                img.onload = () => fitHeight(img);
+                img.src = url;
+                if (img.complete) fitHeight(img);
+            } else {
+                sideEl.style.backgroundImage = '';
+                sideEl.style.height = '';
+            }
+        }
+    }
+
+    let lastMainFontSize = 0;
+
+    function applyPlayerFont(fontFamily) {
+        const family = (fontFamily || '').trim();
+        const value = family
+            ? `${JSON.stringify(family)}, var(--sb-font-family)`
+            : '';
+
+        ['p1-name', 'p2-name', 'p1-team-tag', 'p2-team-tag', 'p1-score', 'p2-score']
+            .forEach((id) => {
+                const el = byId(id);
+                if (el) el.style.fontFamily = value;
+            });
+    }
+
+    function applyMainFontSize(size) {
+        const parsed = Number(size);
+        const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+        lastMainFontSize = safe;
+
+        const value = safe > 0 ? safe + 'px' : '';
+        ['p1-team-tag', 'p2-team-tag'].forEach((id) => {
+            const el = byId(id);
+            if (el) el.style.fontSize = value;
+        });
     }
 
     function fitNameFont(id) {
@@ -298,7 +418,11 @@
         // Reset to the theme-defined size before measuring.
         el.style.fontSize = '';
 
-        const base = parseFloat(getComputedStyle(el).fontSize) || 24;
+        const computed = parseFloat(getComputedStyle(el).fontSize) || 24;
+        const base = lastMainFontSize > 0 ? lastMainFontSize : computed;
+
+        el.style.fontSize = base + 'px';
+
         const min = Math.max(10, base * 0.65);
         let size = base;
 
@@ -328,9 +452,15 @@
         // beyond the browser viewport. The configured scale still acts
         // as an upper bound.
         const boardWidth = board ? board.offsetWidth : 0;
-        const available = Math.max(0, window.innerWidth - 32);
-        const fitScale = boardWidth > 0 ? available / boardWidth : safe;
-        const effective = Math.max(0.1, Math.min(safe, fitScale));
+        const boardHeight = board ? board.offsetHeight : 0;
+        const availableWidth = Math.max(0, window.innerWidth - 32);
+        const availableHeight = Math.max(0, window.innerHeight - 32);
+        const fitWidth = boardWidth > 0 ? availableWidth / boardWidth : safe;
+        const fitHeight = boardHeight > 0 ? availableHeight / boardHeight : safe;
+        const effective = Math.max(
+            0.1,
+            Math.min(safe, fitWidth, fitHeight),
+        );
 
         el.style.transform = `scale(${effective})`;
     }
@@ -401,13 +531,18 @@
             centerEl.classList.toggle('format-empty', formatEmpty);
         }
 
-        applySide('p1', state.P1, !!state.hideLogos, !!state.hideFlags);
-        applySide('p2', state.P2, !!state.hideLogos, !!state.hideFlags);
+        applyPlayerFont(state.fontFamily);
+        applyMainFontSize(state.mainFontSize);
+
+        // Apply layout variables before measuring custom plate dimensions.
+        applyGap(state.sideGap);
+        applySideWidth(state.sideWidth);
+
+        applySide('p1', state.P1, !!state.hideLogos, !!state.hideFlags, state.plateMode);
+        applySide('p2', state.P2, !!state.hideLogos, !!state.hideFlags, state.plateMode);
 
         fitAllNameFonts();
 
-        applyGap(state.sideGap);
-        applySideWidth(state.sideWidth);
         // Apply scale after the layout width has been recalculated.
         applyScale(state.scale);
         applyTheme(state.theme);
