@@ -206,9 +206,9 @@
                 </div>
             </div>
 
-            <div class="center">
+            <div class="center{{ if not .Scoreboard.TitleMatch }} title-empty{{ end }}{{ if not .Scoreboard.Format }} format-empty{{ end }}">
                 <div class="title" id="title-match">{{ .Scoreboard.TitleMatch }}</div>
-                <div class="format" id="format">{{ .Scoreboard.Format }}</div>
+                <div class="format{{ if not .Scoreboard.Format }} hidden{{ end }}" id="format">{{ .Scoreboard.Format }}</div>
             </div>
 
             <div class="side side-right">
@@ -389,7 +389,17 @@
             centerEl.classList.toggle('title-empty', !String(titleText).trim());
         }
 
-        setText('format', state.format || '');
+        const formatText = state.format || '';
+        setText('format', formatText);
+
+        const formatEmpty = !String(formatText).trim();
+        const formatEl = byId('format');
+        if (formatEl) {
+            formatEl.classList.toggle('hidden', formatEmpty);
+        }
+        if (centerEl) {
+            centerEl.classList.toggle('format-empty', formatEmpty);
+        }
 
         applySide('p1', state.P1, !!state.hideLogos, !!state.hideFlags);
         applySide('p2', state.P2, !!state.hideLogos, !!state.hideFlags);

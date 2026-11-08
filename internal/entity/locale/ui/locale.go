@@ -395,6 +395,11 @@ type HelpPageWidgetBracket struct {
 	WhatCanDo  HelpQA
 }
 
+type HelpPageWidgetScoreboard struct {
+	HowIsWorks HelpQA
+	WhatCanDo  HelpQA
+}
+
 type HelpPageIntegrations struct {
 	HowIsWorks           HelpQA
 	WhatIsThis           HelpQA
@@ -427,6 +432,7 @@ type HelpModal struct {
 	HelpPageNotificationSystem HelpPageNotificationSystem
 	HelpPageDatabase           HelpPageDatabase
 	HelpPageWidgetBracket      HelpPageWidgetBracket
+	HelpPageWidgetScoreboard   HelpPageWidgetScoreboard
 	HelpPageIntegrations       HelpPageIntegrations
 	HelpPageProfiles           HelpPageProfiles
 }

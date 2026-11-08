@@ -5,6 +5,7 @@ import { OpenURL } from "../../../../wailsjs/go/application/App.js"
 import  NotificatonSystemHelpPage  from "./NotificationSystemHelpPage.jsx"  
 import  DatabaseHelpPage  from "./DatabaseHelpPage.jsx"  
 import WidgetBracketHelpPage from "./WidgetBracketHelpPage.jsx";
+import WidgetScoreboardHelpPage from "./WidgetScoreboardHelpPage.jsx";
 import IntegrationsHelpPage from "./IntegrationsHelpPage.jsx";
 import ProfilesHelpPage from "./ProfilesHelpPage.jsx";
 
@@ -16,6 +17,8 @@ const renderHelpPage = (locale, activeTab, themeClasses) => {
       return DatabaseHelpPage(locale.HelpPageDatabase, themeClasses);
     case "widgetBracket":
       return WidgetBracketHelpPage(locale.HelpPageWidgetBracket, themeClasses);
+    case "widgetScoreboard":
+      return WidgetScoreboardHelpPage(locale.HelpPageWidgetScoreboard, themeClasses);
     case "integrations":
       return IntegrationsHelpPage(locale.HelpPageIntegrations, themeClasses);
     case "profiles":

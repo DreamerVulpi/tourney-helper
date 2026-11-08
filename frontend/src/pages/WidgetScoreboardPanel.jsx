@@ -85,6 +85,11 @@ const defaultSideFor = (side) => ({
 const stripLogoExtension = (name) =>
   name ? String(name).replace(/\.[^.]+$/, "") : "";
 
+const FORMAT_SELECT_OPTIONS = [
+  { value: "", label: "—" },
+  ...FORMAT_OPTIONS,
+];
+
 // Хелпер: частичный апдейт стороны P1/P2 + titleMatch через updateConfig
 const patchScoreboard = (updateConfig, patch) =>
   updateConfig("widgets", { scoreboard: patch });
@@ -525,6 +530,7 @@ const WidgetScoreboardPlate = ({
                         updateSide(side, { logoPath: values?.[0] ?? "" })
                       }
                       items={logoOptions}
+                      locale={locale}
                       themeClasses={themeClasses}
                       height="1.9rem"
                       placeholder={locale.LogoPlaceholder}
@@ -639,6 +645,7 @@ const WidgetScoreboardPlate = ({
                     value={data.flag ? [data.flag] : []}
                     onChange={(values) => updateSide(side, { flag: values?.[0] ?? "" })}
                     items={flagOptions}
+                    locale={locale}
                     themeClasses={themeClasses}
                     height="1.9rem"
                     placeholder={locale.FlagPlaceholder}
@@ -802,7 +809,8 @@ const WidgetScoreboardPlate = ({
                       label={locale.Format}
                       value={[format]}
                       onChange={handleFormatChange}
-                      items={FORMAT_OPTIONS}
+                      items={FORMAT_SELECT_OPTIONS}
+                      locale={locale}
                       themeClasses={themeClasses}
                       height="1.9rem"
                       placeholder={locale.FormatPlaceholder}

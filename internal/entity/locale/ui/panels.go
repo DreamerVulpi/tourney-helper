@@ -123,8 +123,11 @@ type WidgetBracketPanel struct {
 }
 
 type WidgetScoreboardPanel struct {
-	Start             string
-	Stop              string
+	Start       string
+	Stop        string
+	SearchLabel string
+	NoClients   string
+
 	ListOfThemes      string
 	Format            string
 	FormatPlaceholder string

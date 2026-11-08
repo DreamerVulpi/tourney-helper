@@ -351,6 +351,8 @@ var En = Ui{
 	WidgetScoreboardPanel: WidgetScoreboardPanel{
 		Start:             "Start",
 		Stop:              "Stop",
+		SearchLabel:       "Search...",
+		NoClients:         "No items",
 		ListOfThemes:      "Theme",
 		Format:            "Format",
 		FormatPlaceholder: "FT",
@@ -531,6 +533,23 @@ var En = Ui{
 					"Automatic update" — refreshes the tournament bracket data once per minute without reloading the page;%v
 					
 					If you need to change the tournament bracket, the final link to the widget will update, so you’ll need to copy it again`,
+				},
+			},
+			HelpPageWidgetScoreboard: HelpPageWidgetScoreboard{
+				HowIsWorks: HelpQA{
+					Question: "How does it work?",
+					Answer:   "The program launches a local server with widgets that can be accessed via links. Some of them require an OAuth client to retrieve tournament data.",
+				},
+				WhatCanDo: HelpQA{
+					Question: "How do I use this going forward?",
+					Answer: `1. Fill in the match data: event title, format (choose "—" to hide it), player names and team tags.
+					2. Optionally add a logo or flag for each side and choose a theme.
+					3. Use the sliders "Scaling", "Spacing" and "Plate Width" to adjust the widget.
+					4. Click "Start" to launch the widget.
+					5. Copy the widget link and add it to OBS or a browser.
+					6. All changes are applied in real time; use "Stop" to stop the widget.
+
+					If both a logo and a flag are set for a side, the logo is shown.`,
 				},
 			},
 			HelpPageIntegrations: HelpPageIntegrations{

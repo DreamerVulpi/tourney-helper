@@ -52,7 +52,7 @@ export function useAutoSave() {
               scale:           cfg.scoreboard?.scale           ?? 1.0,
               sideGap:         cfg.scoreboard?.sideGap         ?? 480,
               sideWidth:       cfg.scoreboard?.sideWidth       ?? 460,
-              format:          cfg.scoreboard?.format          || "FT2",
+              format:          cfg.scoreboard?.format          ?? "FT2",
               P1: {
                 teamTag:  cfg.scoreboard?.P1?.teamTag  ?? "",
                 name:     cfg.scoreboard?.P1?.name     ?? "Player 1",

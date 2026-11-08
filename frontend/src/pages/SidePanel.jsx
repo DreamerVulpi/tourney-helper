@@ -115,6 +115,10 @@ const SidePanel = ({ locale, updateConfig }) => {
             showStatus={false}
           />
 
+          <div
+            className={`border-t my-1 ${themeClasses.divider}`}
+          />
+
           <NavItem
             icon={<GitFork size={20} />}
             label={locale.WidgetOfBracketLabel}

@@ -25,7 +25,9 @@ const LoggerPlate = ({ locale}) => {
         themeClasses.footer
       }`}
     >
-      <div className="h-8 flex items-center justify-between px-8 border-b border-white/5 bg-black/10">
+      <div
+        className={`h-8 flex items-center justify-between px-8 border-b transition-colors duration-300 ${themeClasses.titlebar.base}`}
+      >
         <div className="flex items-center gap-2">
           <Database size={16} style={{ width: "0.875rem", height: "0.875rem", }} className="text-blue-500" />
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
