@@ -42,6 +42,19 @@ type ProfilesPanel struct {
 	ImportSuccessMsg            string
 	ExportSuccessTitle          string
 	ExportSuccessMsg            string
+	ExportWidgetsContent        string
+	ImportWidgetsContent        string
+	ExportWidgetsContentMsg     string
+	ImportWidgetsContentMsg     string
+	ColumnProfileName           string
+	ColumnCreatedAt             string
+	ColumnLastOpenedAt          string
+	NoProfilesTitle             string
+	NoProfilesDescription       string
+	PageLabel                   string
+	PreviousPage                string
+	NextPage                    string
+	ActiveProfileLabel          string
 	ValidationProfile           ValidationProfile
 }
 
@@ -120,6 +133,10 @@ type WidgetBracketPanel struct {
 	FlagNames             map[string]string
 	HideLogosLabel        string
 	HideFlagsLabel        string
+
+	ExternalErrorTitle       string
+	ExternalErrorDescription string
+	RetryLabel               string
 }
 
 type WidgetScoreboardPanel struct {

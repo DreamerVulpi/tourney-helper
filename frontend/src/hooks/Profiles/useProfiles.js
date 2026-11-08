@@ -127,5 +127,30 @@ export function useProfiles() {
       }
   }, [refresh]);
 
-  return { profiles, active, loading, error, refresh, switchTo, add, remove, duplicate, rename, exportCurrent, importNew };
+  // --- Виджеты: контент и настройки ---
+  const exportWidgetsContent = useCallback(async () => {
+    setError(null);
+    try {
+      return await api.exportWidgetsContent();
+    } catch (e) {
+      setError(String(e));
+      throw e;
+    }
+  }, []);
+
+  const importWidgetsContent = useCallback(async () => {
+    setError(null);
+    try {
+      return await api.importWidgetsContent();
+    } catch (e) {
+      setError(String(e));
+      throw e;
+    }
+  }, []);
+
+  return {
+    profiles, active, loading, error, refresh, switchTo, add, remove,
+    duplicate, rename, exportCurrent, importNew,
+    exportWidgetsContent, importWidgetsContent,
+  };
 }

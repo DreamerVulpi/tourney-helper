@@ -108,6 +108,7 @@ func (a *App) LaunchWidgetBracket(
 
 	bracketService := service.NewBracketService(provider, renderer)
 	a.WidgetServer.SetBracketService(bracketService)
+	a.WidgetServer.SetBracketState(cfgWidgets.Bracket)
 
 	a.mu.Lock()
 	if a.bracketRunning {

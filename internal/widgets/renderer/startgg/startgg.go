@@ -82,6 +82,52 @@ func (r *StartGGRenderer) Render(bracket *entity.Bracket) (string, error) {
 //
 // ============================================================
 func (r *StartGGRenderer) BuildView(bracket *entity.Bracket, themeName string) (*entity.BracketView, error) {
+	view, err := r.buildViewWithMessages(bracket, themeName, entity.BracketErrorMessages{}, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return view, nil
+}
+
+func (r *StartGGRenderer) RenderWithTheme(bracket *entity.Bracket, themeName string) (string, error) {
+	return r.RenderWithErrorMessages(bracket, themeName, entity.BracketErrorMessages{})
+}
+
+// RenderWithErrorMessages рендерит сетку и встраивает локализованные тексты
+// ошибки, чтобы страница могла показать их при сбое /data во время работы.
+func (r *StartGGRenderer) RenderWithErrorMessages(
+	bracket *entity.Bracket,
+	themeName string,
+	messages entity.BracketErrorMessages,
+) (string, error) {
+	view, err := r.buildViewWithMessages(bracket, themeName, messages, false)
+	if err != nil {
+		return "", err
+	}
+
+	return r.executeTemplate(*view)
+}
+
+// RenderError рендерит страницу-заглушку с локализованной ошибкой.
+func (r *StartGGRenderer) RenderError(
+	themeName string,
+	messages entity.BracketErrorMessages,
+) (string, error) {
+	view, err := r.buildViewWithMessages(nil, themeName, messages, true)
+	if err != nil {
+		return "", err
+	}
+
+	return r.executeTemplate(*view)
+}
+
+func (r *StartGGRenderer) buildViewWithMessages(
+	bracket *entity.Bracket,
+	themeName string,
+	messages entity.BracketErrorMessages,
+	hasError bool,
+) (*entity.BracketView, error) {
 	themeCSS, err := r.themeProvider.GetThemeCSS(themeName)
 	if err != nil {
 		themeCSS, err = r.themeProvider.GetThemeCSS(widget.DefaultThemeName)
@@ -90,26 +136,27 @@ func (r *StartGGRenderer) BuildView(bracket *entity.Bracket, themeName string) (
 		}
 	}
 
-	view := r.buildView(bracket)
+	var view entity.BracketView
+	if bracket != nil {
+		view = r.buildView(bracket)
+	} else {
+		view = entity.BracketView{
+			Sets:        []entity.SetView{},
+			Connections: []entity.ConnectionView{},
+		}
+	}
+
 	view.SystemCSS = template.CSS(widget.SystemCSS)
 	view.ThemeCSS = template.CSS(themeCSS)
+	view.HasError = hasError
+	view.ErrorTitle = messages.Title
+	view.ErrorDescription = messages.Description
+	view.RetryLabel = messages.RetryLabel
 
 	return &view, nil
 }
 
-func (r *StartGGRenderer) RenderWithTheme(bracket *entity.Bracket, themeName string) (string, error) {
-	themeCSS, err := r.themeProvider.GetThemeCSS(themeName)
-	if err != nil {
-		themeCSS, err = r.themeProvider.GetThemeCSS(widget.DefaultThemeName)
-		if err != nil {
-			return "", fmt.Errorf("load default theme: %w", err)
-		}
-	}
-
-	view := r.buildView(bracket)
-	view.SystemCSS = template.CSS(widget.SystemCSS)
-	view.ThemeCSS = template.CSS(themeCSS)
-
+func (r *StartGGRenderer) executeTemplate(view entity.BracketView) (string, error) {
 	var buf bytes.Buffer
 	if err := r.template.ExecuteTemplate(&buf, "template.html", view); err != nil {
 		return "", fmt.Errorf("execute template: %w", err)

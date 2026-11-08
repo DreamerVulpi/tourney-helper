@@ -45,6 +45,40 @@ const clampScale = (s) => {
   return Math.max(0.5, Math.min(2.0, n));
 };
 
+// Все флаги передаём явно (0/1). Это делает инициализацию виджета
+// детерминированной и не зависит от localStorage браузера.
+const buildBracketURL = (
+  bracketId,
+  {
+    theme,
+    lang,
+    clearBackground,
+    hideStages,
+    bracketMode,
+    scale,
+    autoRefresh,
+    preview = false,
+    cacheBust = false,
+  },
+) => {
+  if (!bracketId) return "";
+
+  const params = new URLSearchParams();
+  params.set("theme", theme || "StartGG");
+  if (lang) params.set("lang", lang);
+  if (preview) params.set("preview", "1");
+
+  params.set("transparent", clearBackground ? "1" : "0");
+  params.set("hideRounds", hideStages ? "1" : "0");
+  params.set("bracketMode", bracketMode || "all");
+  params.set("scale", String(clampScale(scale)));
+  params.set("autoRefresh", autoRefresh ? "1" : "0");
+
+  if (cacheBust) params.set("_ts", String(Date.now()));
+
+  return `http://localhost:8080/widgets/bracket/${bracketId}?${params.toString()}`;
+};
+
 const WidgetBracketPanel = ({
   locale,
   updateConfig,
@@ -58,6 +92,7 @@ const WidgetBracketPanel = ({
 }) => {
      // ---- store ----
   const theme          = useAppStore((s) => s.theme);
+  const lang           = useAppStore((s) => s.lang);
   const setStatusWidgetBracket = useAppStore((s) => s.setStatusWidgetBracket);
   
   // ---- производные ----
@@ -217,72 +252,45 @@ const WidgetBracketPanel = ({
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
 
   // Полный URL с флагами — нужен только для отображения в UI (LinkOfWidget)
-  const bracketUrl = useMemo(() => {
-      if (!bracketId) return "";
-
-      const params = new URLSearchParams();
-      params.set("theme", themeBracket);
-
-      if (clearBackground) params.set("transparent", "1");
-      if (hideStages) params.set("hideRounds", "1");
-      if (bracketMode !== "all") params.set("bracketMode", bracketMode);
-      if (scale !== 1.0) params.set("scale", String(scale));
-      if (autoRefresh) params.set("autoRefresh", "1");
-
-      return `http://localhost:8080/widgets/bracket/${bracketId}?${params.toString()}`;
-  }, [bracketId, themeBracket, clearBackground, hideStages, bracketMode, scale, autoRefresh]);
+  const bracketUrl = useMemo(() => buildBracketURL(bracketId, {
+      theme: themeBracket,
+      lang,
+      clearBackground,
+      hideStages,
+      bracketMode,
+      scale,
+      autoRefresh,
+  }), [bracketId, themeBracket, lang, clearBackground, hideStages, bracketMode, scale, autoRefresh]);
 
 
-  const baseIframeUrl = useMemo(() => {
-      if (!bracketId) return "";
-      return `http://localhost:8080/widgets/bracket/${bracketId}?theme=${themeBracket}`;
-  }, [bracketId, themeBracket]);
+  // ---------- URL iframe на момент старта ----------
+  // Храним в state, а не в ref: iframe должен сразу грузиться с актуальными
+  // флагами и cache-buster'ом, иначе браузер может отдать старую версию
+  // виджета (без центрирования), а повторная установка src приводила к
+  // лишней перезагрузке на baseIframeUrl.
+  const [iframeSrc, setIframeSrc] = useState("");
 
-  // ---------- Фиксируем начальный URL при старте виджета ----------
-  const initialSrcRef = useRef(null);
-
-  // Сбрасываем фиксацию при смене турнира/темы
   useEffect(() => {
-      initialSrcRef.current = null;
-  }, [bracketId, themeBracket]);
-
-  // Фиксируем начальный URL при старте (один раз)
-  useEffect(() => {
-      if (!isWidgetBracketRunning) {
-          initialSrcRef.current = null;
+      if (!isWidgetBracketRunning || !bracketId) {
+          setIframeSrc("");
           setIframeLoaded(false);
           return;
       }
 
-      if (!bracketId) return;
-
-      if (!initialSrcRef.current) {
-          const params = new URLSearchParams();
-          params.set("theme", themeBracket);
-          if (clearBackground) params.set("transparent", "1");
-          if (hideStages) params.set("hideRounds", "1");
-          if (bracketMode !== "all") params.set("bracketMode", bracketMode);
-          if (scale !== 1.0) params.set("scale", String(scale));
-          if (autoRefresh) params.set("autoRefresh", "1");
-          initialSrcRef.current = `http://localhost:8080/widgets/bracket/${bracketId}?${params.toString()}`;
-      }
-
+      setIframeSrc(buildBracketURL(bracketId, {
+          theme: themeBracket,
+          lang,
+          clearBackground,
+          hideStages,
+          bracketMode,
+          scale,
+          autoRefresh,
+          preview: true,
+          cacheBust: true,
+      }));
       setIframeLoaded(false);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isWidgetBracketRunning, bracketId, themeBracket]);
-
-  // Обновляем src iframe при старте виджета, смене турнира или темы.
-  // Смена флагов (bracketMode, hideRounds, transparent, scale) НЕ триггерит
-  // перезагрузку — они уходят через postMessage.
-  useEffect(() => {
-      if (isWidgetBracketRunning && baseIframeUrl) {
-          initialSrcRef.current = baseIframeUrl;
-          setIframeLoaded(false);
-      } else {
-          initialSrcRef.current = null;
-          setIframeLoaded(false);
-      }
-  }, [isWidgetBracketRunning, baseIframeUrl]);
+  }, [isWidgetBracketRunning, bracketId, themeBracket, lang]);
 
  
 
@@ -319,8 +327,32 @@ const WidgetBracketPanel = ({
       readyScale,
       autoRefresh,
       isWidgetBracketRunning,
+      iframeSrc,
       iframeRef_WidgetBracket,
   ]);
+
+  // ---------- Синхронизация зума из виджета ----------
+  // Внутри iframe есть кнопки зума и Ctrl+колесо. Когда пользователь
+  // меняет масштаб там, виджет сообщает об этом хосту, чтобы значение
+  // сохранилось в конфиге и не сбрасывалось при следующем изменении флагов.
+  useEffect(() => {
+      if (!isWidgetBracketRunning) return;
+
+      const handleMessage = (event) => {
+          const data = event.data;
+          if (!data || data.type !== "bracket:zoom-changed") return;
+
+          const next = clampScale(data.scale);
+          if (Math.abs(next - readyScale) < 0.001) return;
+
+          updateConfig("widgets", {
+              bracket: { scale: next },
+          });
+      };
+
+      window.addEventListener("message", handleMessage);
+      return () => window.removeEventListener("message", handleMessage);
+  }, [isWidgetBracketRunning, readyScale, updateConfig]);
     // Start доступен, только если:
   //  - виджет ещё не запущен
   //  - URL валиден
@@ -349,7 +381,7 @@ const WidgetBracketPanel = ({
   return (
     <PanelTemplate themeClasses={themeClasses}>
       <div className="grid grid-cols-16 gap-8 items-stretch flex-1 min-h-0">
-        <div className="col-span-12 min-h-0">
+        <div className="col-span-12 min-h-0 h-full">
           <div className={`relative w-full h-full rounded-[0.5rem] ${themeClasses.button}`}>
             {/* ============================================================
             * 1. Ошибка валидации — приоритет №1
@@ -397,12 +429,12 @@ const WidgetBracketPanel = ({
             {/* ============================================================
             * 4. Iframe — когда виджет запущен, URL валиден, есть bracketUrl
             * ============================================================ */}
-            {urlValidation.valid !== false && isWidgetBracketRunning && bracketUrl && (
+            {urlValidation.valid !== false && isWidgetBracketRunning && bracketUrl && iframeSrc && (
                 <>
                     <iframe
-                        src={initialSrcRef.current || bracketUrl}
+                        src={iframeSrc}
                         ref={iframeRef_WidgetBracket}
-                        className="absolute inset-0 w-full h-full border-0 rounded-[0.5rem]"
+                        className="absolute inset-0 block w-full h-full border-0 rounded-[0.5rem]"
                         title="Tournament Bracket"
                         allowtransparency="true"
                         onLoad={() => setIframeLoaded(true)}

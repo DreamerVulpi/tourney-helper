@@ -16,6 +16,10 @@ import (
 const (
 	WAILS_LOCALHOST1 = "http://wails.localhost:34115"
 	WAILS_LOCALHOST2 = "http://localhost:34115"
+	// Production Wails serves the frontend from http://wails.localhost
+	// (without a port) on Windows.
+	WAILS_PROD       = "http://wails.localhost"
+	WAILS_PROD_HTTPS = "https://wails.localhost"
 	LOCALHOST        = "http://localhost:8080"
 	OTHER_LOCALHOST  = "http://127.0.0.1:8080"
 )
@@ -33,6 +37,8 @@ func NewServer() *Server {
 		AllowOrigins: []string{
 			WAILS_LOCALHOST1,
 			WAILS_LOCALHOST2,
+			WAILS_PROD,
+			WAILS_PROD_HTTPS,
 			LOCALHOST,
 			OTHER_LOCALHOST,
 		},
@@ -90,6 +96,10 @@ func (s *Server) Stop(ctx context.Context) error {
 
 func (s *Server) SetBracketService(bracketService *service.BracketService) {
 	s.bracket.SetBracketService(bracketService)
+}
+
+func (s *Server) SetBracketState(state config.WidgetBracket) {
+	s.bracket.SetBracketState(state)
 }
 
 func (s *Server) SetScoreboardService(scoreboardService *service.ScoreboardService) {

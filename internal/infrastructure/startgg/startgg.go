@@ -19,6 +19,7 @@ import (
 
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
+	entityWidget "github.com/dreamervulpi/tourney-helper/internal/entity/widgets"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 )
@@ -75,13 +76,34 @@ func (c *Client) RunQuery(query []byte) ([]byte, error) {
 	// Sends the request and receives the response of it.
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, errors.Join(errors.New("HTTP Response - "), err)
+		return nil, errors.Join(
+			errors.New("HTTP Response - "),
+			entityWidget.ErrExternalService,
+			err,
+		)
 	}
 	defer res.Body.Close() //nolint:errcheck
 
+	// Upstream/infrastructure failures (Cloudflare, outages, rate limits)
+	// are external and should be reported as such to the widget user.
+	if res.StatusCode >= http.StatusInternalServerError ||
+		res.StatusCode == http.StatusTooManyRequests ||
+		res.StatusCode == http.StatusForbidden ||
+		res.StatusCode == http.StatusRequestTimeout {
+		return nil, fmt.Errorf(
+			"%w: upstream responded with status %d",
+			entityWidget.ErrExternalService,
+			res.StatusCode,
+		)
+	}
+
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.Join(errors.New("read Data - "), err)
+		return nil, errors.Join(
+			errors.New("read Data - "),
+			entityWidget.ErrExternalService,
+			err,
+		)
 	}
 
 	validation, err := validateData(data)

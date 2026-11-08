@@ -40,9 +40,9 @@
 </head>
 <body>
 <div class="bracket-wrapper">
-    <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="bracket-viewport" id="bracket-viewport">
         <div class="bracket-content" id="bracket-content">
+            <svg class="connections" id="connections-svg" xmlns="http://www.w3.org/2000/svg"></svg>
             <div class="bracket-section" id="winners-section">
                 <div class="round-headers" id="winners-headers"></div>
                 <div class="section-nodes" id="winners-nodes"></div>
@@ -57,6 +57,22 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="bracket-error{{ if not .HasError }} hidden{{ end }}" id="bracket-error" role="alert">
+    <div class="bracket-error__box">
+        <div class="bracket-error__title">{{ .ErrorTitle }}</div>
+        <div class="bracket-error__description">{{ .ErrorDescription }}</div>
+        <button type="button" class="bracket-error__retry" id="bracket-error-retry">
+            {{ .RetryLabel }}
+        </button>
+    </div>
+</div>
+
+<div class="zoom-controls" id="zoom-controls">
+    <button type="button" class="zoom-btn" data-zoom="out" title="Zoom out">−</button>
+    <button type="button" class="zoom-btn zoom-btn--level" id="zoom-level" data-zoom="reset" title="Reset zoom">100%</button>
+    <button type="button" class="zoom-btn" data-zoom="in" title="Zoom in">+</button>
 </div>
 
 <script>
@@ -531,15 +547,19 @@
 
     function renderConnections() {
         const svg = document.getElementById('connections-svg');
-        const wrapper = document.querySelector('.bracket-wrapper');
+        const content = document.getElementById('bracket-content');
 
-        if (!svg || !wrapper) return;
+        if (!svg || !content) return;
 
         svg.innerHTML = '';
 
-        const wrapperRect = wrapper.getBoundingClientRect();
-        const width  = wrapper.scrollWidth;
-        const height = wrapper.scrollHeight;
+        // SVG живёт внутри .bracket-content, поэтому работает в тех же
+        // (не масштабированных) координатах, что и ноды. При зуме всё
+        // масштабируется вместе через transform на .bracket-viewport.
+        const scale = currentScale > 0 ? currentScale : 1;
+        const contentRect = content.getBoundingClientRect();
+        const width  = content.offsetWidth;
+        const height = content.offsetHeight;
 
         svg.setAttribute('width', width);
         svg.setAttribute('height', height);
@@ -566,10 +586,12 @@
             const fromRect = fromEl.getBoundingClientRect();
             const toRect   = toEl.getBoundingClientRect();
 
-            const x1 = fromRect.right - wrapperRect.left;
-            const y1 = fromRect.top + fromRect.height / 2 - wrapperRect.top;
-            const x2 = toRect.left - wrapperRect.left;
-            const y2 = toRect.top + toRect.height / 2 - wrapperRect.top;
+            // Переводим экранные (уже масштабированные) координаты
+            // в локальные координаты контента.
+            const x1 = (fromRect.right - contentRect.left) / scale;
+            const y1 = (fromRect.top + fromRect.height / 2 - contentRect.top) / scale;
+            const x2 = (toRect.left - contentRect.left) / scale;
+            const y2 = (toRect.top + toRect.height / 2 - contentRect.top) / scale;
 
             const midX = (x1 + x2) / 2;
 
@@ -589,9 +611,63 @@
     // Init
     // ============================================================
 
+    function getBracketMode() {
+        const root = document.documentElement;
+        if (root.classList.contains('bracket-mode-winners')) return 'winners';
+        if (root.classList.contains('bracket-mode-losers'))  return 'losers';
+        return 'all';
+    }
+
+    // Центрируем сетку в области просмотра. Если сетка меньше экрана —
+    // выравниваем по центру, если больше — центрируем прокрутку.
+    function layoutViewport(recenterScroll = false) {
+        const wrapper  = document.querySelector('.bracket-wrapper');
+        const viewport = document.getElementById('bracket-viewport');
+        const content  = document.getElementById('bracket-content');
+
+        if (!wrapper || !viewport || !content) return;
+
+        const scale    = currentScale > 0 ? currentScale : 1;
+        const contentW = content.offsetWidth * scale;
+        const contentH = content.offsetHeight * scale;
+        const viewW    = wrapper.clientWidth;
+        const viewH    = wrapper.clientHeight;
+
+        const left = contentW < viewW ? (viewW - contentW) / 2 : 0;
+        const top  = contentH < viewH ? (viewH - contentH) / 2 : 0;
+
+        viewport.style.left = `${left}px`;
+        viewport.style.top  = `${top}px`;
+
+        if (!recenterScroll) return;
+
+        const maxScrollLeft = wrapper.scrollWidth  - wrapper.clientWidth;
+        const maxScrollTop  = wrapper.scrollHeight - wrapper.clientHeight;
+
+        if (maxScrollLeft > 0) wrapper.scrollLeft = maxScrollLeft / 2;
+        if (maxScrollTop  > 0) wrapper.scrollTop  = maxScrollTop  / 2;
+    }
+
+    function clearLayout() {
+        ['winners-nodes', 'final-nodes', 'losers-nodes',
+         'winners-headers', 'final-headers', 'losers-headers'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '';
+        });
+
+        const svg = document.getElementById('connections-svg');
+        if (svg) svg.innerHTML = '';
+    }
+
     function init() {
+        // init() вызывается повторно (загрузка, auto-refresh, смена режима),
+        // поэтому чистим контейнеры, чтобы не дублировать ноды.
+        clearLayout();
+
         readConfig();
         TOTAL_COLUMNS = computeTotalColumns();
+
+        const mode = getBracketMode();
 
         const winnersColumns = computeSectionColumns('winners');
         const finalColumns   = computeSectionColumns('final');
@@ -600,10 +676,13 @@
         // X-сдвиги (в колонках):
         //   winners — 0
         //   final   — сразу после winners
-        //   losers  — выравниваем по ПРАВОМУ краю с final
+        //   losers  — выравниваем по ПРАВОМУ краю с final,
+        //             а в режиме "losers" начинаем с 0
         const winnersXOffset = 0;
         const finalXOffset   = winnersColumns;
-        const losersXOffset  = Math.max(0, (finalXOffset + finalColumns) - losersColumns);
+        const losersXOffset  = mode === 'losers'
+            ? 0
+            : Math.max(0, (finalXOffset + finalColumns) - losersColumns);
 
         // Сначала рендерим winners, чтобы узнать высоту и root Y.
         const winnersResult = renderSection(
@@ -618,34 +697,66 @@
         // Но секция final абсолютная, внутри неё offsetY уже применён
         // к нодам, так что top секции = 0 (выравнивание ушло в ноды).
         const finalYOffset = 0;
-        renderFinalSection(winnersRootY, finalXOffset, finalYOffset);
+        const finalResult = renderFinalSection(winnersRootY, finalXOffset, finalYOffset);
 
-        // Losers: Y — под winners + отступ между рядами.
+        // Losers: в режиме "losers" показываем их в начале (сверху),
+        // в остальных режимах — под winners + отступ между рядами.
         const ROWS_GAP = NODE_GAP * 4;
-        const losersYOffset = winnersHeight + ROWS_GAP;
+        const losersYOffset = mode === 'losers' ? 0 : winnersHeight + ROWS_GAP;
 
-        renderSection(
+        const losersResult = renderSection(
             'losers', 'losers-nodes', 'losers-headers',
             losersXOffset, losersYOffset
         );
 
-        // Общая ширина/высота .bracket-content — чтобы скролл знал размеры.
+        // Общая ширина/высота .bracket-content — по видимым секциям.
         const content = document.getElementById('bracket-content');
         if (content) {
-            const totalWidth  = (finalXOffset + finalColumns) * COLUMN_STEP - LINK_WIDTH;
-            const losersResult = document.getElementById('losers-nodes')?.style?.height;
-            const losersHeight = parseFloat(losersResult || '0') || 0;
-            const totalHeight  = losersYOffset + losersHeight;
+            const winnersVisible = mode !== 'losers';
+            const losersVisible  = mode !== 'winners';
 
-            content.style.width  = `${totalWidth}px`;
-            content.style.height = `${totalHeight}px`;
+            const visible = [];
+            if (winnersVisible) {
+                if (winnersResult) visible.push(winnersResult);
+                if (finalResult)   visible.push(finalResult);
+            }
+            if (losersVisible && losersResult) {
+                visible.push(losersResult);
+            }
+
+            let totalWidth  = 0;
+            let totalHeight = 0;
+
+            visible.forEach(res => {
+                totalWidth  = Math.max(totalWidth,  res.xOffset * COLUMN_STEP + res.width);
+                totalHeight = Math.max(totalHeight, res.yOffset + res.height);
+            });
+
+            content.style.width  = `${Math.max(totalWidth, 1)}px`;
+            content.style.height = `${Math.max(totalHeight, 1)}px`;
         }
+
+        layoutViewport(true);
 
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 renderConnections();
             });
         });
+    }
+
+    // Полная пересборка разметки (нужна при смене режима отображения,
+    // потому что меняются смещения и размеры секций).
+    function rebuildLayout() {
+        ['winners-section', 'final-section', 'losers-section'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.classList.remove('hidden');
+                el.style.display = '';
+            }
+        });
+
+        init();
     }
 
     // ============================================================
@@ -734,16 +845,83 @@
         content.addEventListener('mouseleave', clearHighlight);
     }
 
-    function applyScale(scale) {
-        const viewport = document.getElementById('bracket-viewport');
-        if (!viewport) return;
+    // ============================================================
+    // Zoom
+    // ============================================================
 
+    const ZOOM_MIN = 0.5;
+    const ZOOM_MAX = 2.0;
+    const ZOOM_STEP = 0.1;
+
+    let currentScale = 1.0;
+
+    function clampScale(scale) {
         let s = parseFloat(scale);
         if (isNaN(s) || s <= 0) s = 1.0;
-        s = Math.max(0.5, Math.min(2.0, s));
+        return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, s));
+    }
 
-        viewport.style.transform = `scale(${s})`;
-        viewport.style.transformOrigin = 'top left';
+    function updateZoomLabel() {
+        const label = document.getElementById('zoom-level');
+        if (label) label.textContent = `${Math.round(currentScale * 100)}%`;
+    }
+
+    function applyScale(scale) {
+        const viewport = document.getElementById('bracket-viewport');
+
+        currentScale = clampScale(scale);
+
+        if (viewport) {
+            viewport.style.transform = `scale(${currentScale})`;
+            viewport.style.transformOrigin = 'top left';
+        }
+
+        updateZoomLabel();
+    }
+
+    function setZoom(scale) {
+        applyScale(scale);
+        notifyZoom(currentScale);
+        // SVG связей живёт внутри масштабируемого контента,
+        // поэтому перерисовка не обязательна, но гарантирует
+        // точное выравнивание после любых изменений layout.
+        layoutViewport(true);
+        requestAnimationFrame(renderConnections);
+    }
+
+    function notifyZoom(scale) {
+        if (window.parent && window.parent !== window) {
+            window.parent.postMessage(
+                { type: 'bracket:zoom-changed', scale },
+                '*',
+            );
+        }
+    }
+
+    function bindZoomControls() {
+        const controls = document.getElementById('zoom-controls');
+        if (!controls) return;
+
+        controls.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-zoom]');
+            if (!btn) return;
+
+            switch (btn.dataset.zoom) {
+                case 'in':    setZoom(currentScale + ZOOM_STEP); break;
+                case 'out':   setZoom(currentScale - ZOOM_STEP); break;
+                case 'reset': setZoom(1.0); break;
+            }
+        });
+
+        // Ctrl + колесо мыши — зум, обычное колесо — прокрутка сетки.
+        window.addEventListener('wheel', (e) => {
+            if (!e.ctrlKey) return;
+            e.preventDefault();
+            const factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+            setZoom(currentScale * factor);
+        }, { passive: false });
+
+        updateZoomLabel();
     }
 
     // ============================================================
@@ -770,6 +948,32 @@
         console.log('[bracket] auto-refresh disabled');
     }
 
+    // ============================================================
+    // Error overlay
+    // ============================================================
+
+    function showBracketError() {
+        const el = document.getElementById('bracket-error');
+        if (el) el.classList.remove('hidden');
+    }
+
+    function hideBracketError() {
+        const el = document.getElementById('bracket-error');
+        if (el) el.classList.add('hidden');
+    }
+
+    function setupBracketError() {
+        const retry = document.getElementById('bracket-error-retry');
+        if (!retry) return;
+
+        retry.addEventListener('click', () => {
+            retry.disabled = true;
+            refreshBracketData().finally(() => {
+                retry.disabled = false;
+            });
+        });
+    }
+
     async function refreshBracketData() {
         const pathParts = window.location.pathname.split('/').filter(Boolean);
         const bracketId = pathParts[pathParts.length - 1];
@@ -785,13 +989,24 @@
         try {
             const res = await fetch(url, { cache: 'no-store' });
             if (!res.ok) {
-                console.warn('[bracket] refresh failed:', res.status);
+                let code = '';
+                try {
+                    const info = await res.json();
+                    code = info && info.code ? info.code : '';
+                } catch (e) {}
+
+                if (code === 'external' || res.status === 503) {
+                    showBracketError();
+                }
+
+                console.warn('[bracket] refresh failed:', res.status, code);
                 return;
             }
 
             const data = await res.json();
             console.log('[bracket] new data received');
 
+            hideBracketError();
             applyNewData(data);
         } catch (err) {
             console.warn('[bracket] refresh error:', err);
@@ -810,25 +1025,7 @@
             connections.push(...data.connections);
         }
 
-        document.getElementById('winners-nodes').innerHTML = '';
-        document.getElementById('final-nodes').innerHTML = '';
-        document.getElementById('losers-nodes').innerHTML = '';
-
-        document.getElementById('winners-headers').innerHTML = '';
-        document.getElementById('final-headers').innerHTML = '';
-        document.getElementById('losers-headers').innerHTML = '';
-
-        document.getElementById('connections-svg').innerHTML = '';
-
-        ['winners-section', 'final-section', 'losers-section'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.classList.remove('hidden');
-                el.style.display = '';
-            }
-        });
-
-        init();
+        rebuildLayout();
     }
 
     // ============================================================
@@ -864,7 +1061,19 @@
     }
 
     function applyFlagsAndRedraw(flags) {
+        const prevMode = getBracketMode();
+
         applyFlags(flags);
+
+        // Смена режима меняет расположение секций (например, losers
+        // в режиме "losers" переносится наверх), поэтому нужна
+        // полная пересборка разметки.
+        if (prevMode !== getBracketMode()) {
+            rebuildLayout();
+            return;
+        }
+
+        layoutViewport();
         renderConnections();
 
         requestAnimationFrame(() => {
@@ -877,18 +1086,31 @@
     (function applyInitialFlags() {
         const params = new URLSearchParams(location.search);
 
-        const bracketMode = params.get('bracketMode') || 'all';
-        const autoRefresh = params.has('autoRefresh');
+        if (params.has('preview')) {
+            document.documentElement.classList.add('preview-mode');
+        }
 
+        // Явные 0/1 в URL имеют приоритет; параметр без значения
+        // по-прежнему считается включённым (обратная совместимость).
+        const boolParam = (name) => {
+            if (!params.has(name)) return false;
+            const value = params.get(name);
+            return value !== '0' && value !== 'false';
+        };
+
+        const bracketMode = params.get('bracketMode') || 'all';
+
+        // URL — источник истины при инициализации. localStorage используется
+        // только для старых ссылок, где флаги вообще не переданы.
         if (params.has('transparent') || params.has('hideRounds') ||
             params.has('bracketMode') || params.has('scale') ||
             params.has('autoRefresh')) {
             applyFlags({
-                transparent:  params.has('transparent'),
-                hideRounds:   params.has('hideRounds'),
+                transparent: boolParam('transparent'),
+                hideRounds:  boolParam('hideRounds'),
                 bracketMode,
-                scale:        params.get('scale') ? parseFloat(params.get('scale')) : 1.0,
-                autoRefresh,
+                scale:       params.get('scale') ? parseFloat(params.get('scale')) : 1.0,
+                autoRefresh: boolParam('autoRefresh'),
             });
             return;
         }
@@ -945,9 +1167,33 @@
         }
     }
 
+    // Флаги из бэкенда считаются валидными только если они инициализированы.
+    // Нулевые значения (bracketMode == "", scale == 0) означают, что
+    // программа ещё не передала состояние — такие данные игнорируем,
+    // чтобы не перетереть корректные флаги из URL/программы.
+    function flagsAreUsable(flags) {
+        if (!flags || typeof flags !== 'object') return false;
+
+        if (flags.bracketMode !== 'all' &&
+            flags.bracketMode !== 'winners' &&
+            flags.bracketMode !== 'losers') {
+            return false;
+        }
+
+        if (typeof flags.scale !== 'number' || !(flags.scale > 0)) {
+            return false;
+        }
+
+        return true;
+    }
+
     async function pollFlags() {
         const flags = await fetchFlagsFromBackend();
         if (!flags) return;
+
+        if (!flagsAreUsable(flags)) {
+            return;
+        }
 
         const json = JSON.stringify(flags);
         if (json === lastFlagsJson) return;
@@ -966,12 +1212,17 @@
 
     window.addEventListener('resize', () => {
         clearTimeout(window.resizeTimer);
-        window.resizeTimer = setTimeout(renderConnections, 50);
+        window.resizeTimer = setTimeout(() => {
+            layoutViewport();
+            renderConnections();
+        }, 50);
     });
 
     window.addEventListener('load', () => {
         init();
         setupPlayerHighlight();
+        bindZoomControls();
+        setupBracketError();
         refreshBracketData();
     });
 </script>

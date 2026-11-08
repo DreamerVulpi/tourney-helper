@@ -38,6 +38,16 @@ func LoadWidgets(profileName string) (WidgetsCfg, error) {
 		return WidgetsCfg{}, err
 	}
 
+	applyWidgetsDefaults(&cfg)
+	return cfg, nil
+}
+
+func SaveWidgets(profileName string, cfg WidgetsCfg) error {
+	path := filepath.Join(GetProfileConfigsDir(profileName), WidgetsFile)
+	return writeTOML(path, cfg)
+}
+
+func applyWidgetsDefaults(cfg *WidgetsCfg) {
 	cfg.EnsureScoreboardDefaults()
 	if cfg.Scoreboard.SideGap <= 0 {
 		cfg.Scoreboard.SideGap = 480
@@ -51,12 +61,6 @@ func LoadWidgets(profileName string) (WidgetsCfg, error) {
 	if cfg.Scoreboard.MainFontSize <= 0 {
 		cfg.Scoreboard.MainFontSize = 24
 	}
-	return cfg, nil
-}
-
-func SaveWidgets(profileName string, cfg WidgetsCfg) error {
-	path := filepath.Join(GetProfileConfigsDir(profileName), WidgetsFile)
-	return writeTOML(path, cfg)
 }
 
 // ============================================================

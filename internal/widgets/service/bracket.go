@@ -52,9 +52,27 @@ func (s *BracketService) GetBracketView(ctx context.Context, id string, theme st
 }
 
 func (s *BracketService) RenderWithTheme(ctx context.Context, id string, theme string) (string, error) {
+	return s.RenderWithMessages(ctx, id, theme, entity.BracketErrorMessages{})
+}
+
+// RenderWithMessages рендерит сетку, встраивая локализованные тексты ошибки.
+func (s *BracketService) RenderWithMessages(
+	ctx context.Context,
+	id string,
+	theme string,
+	messages entity.BracketErrorMessages,
+) (string, error) {
 	bracket, err := s.provider.GetBracket(ctx, id)
 	if err != nil {
 		return "", fmt.Errorf("get bracket: %w", err)
+	}
+
+	if ea, ok := s.renderer.(renderer.ErrorAware); ok {
+		html, err := ea.RenderWithErrorMessages(bracket, theme, messages)
+		if err != nil {
+			return "", fmt.Errorf("render bracket with theme %q: %w", theme, err)
+		}
+		return html, nil
 	}
 
 	if ta, ok := s.renderer.(renderer.ThemeAware); ok {
@@ -71,6 +89,17 @@ func (s *BracketService) RenderWithTheme(ctx context.Context, id string, theme s
 	}
 
 	return html, nil
+}
+
+// RenderError рендерит страницу с локализованной ошибкой внешнего сервиса.
+func (s *BracketService) RenderError(
+	theme string,
+	messages entity.BracketErrorMessages,
+) (string, error) {
+	if ea, ok := s.renderer.(renderer.ErrorAware); ok {
+		return ea.RenderError(theme, messages)
+	}
+	return "", fmt.Errorf("renderer does not support error rendering")
 }
 
 func (s *BracketService) ListThemes() ([]string, error) {

@@ -69,4 +69,16 @@ type BracketView struct {
 	Connections []ConnectionView
 	SystemCSS   template.CSS
 	ThemeCSS    template.CSS
+
+	HasError         bool
+	ErrorTitle       string
+	ErrorDescription string
+	RetryLabel       string
+}
+
+// BracketErrorMessages contains localized texts for the widget error overlay.
+type BracketErrorMessages struct {
+	Title       string
+	Description string
+	RetryLabel  string
 }

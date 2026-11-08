@@ -5,6 +5,7 @@ import { Modal } from "./Modal.jsx";
 export function SuccessModal({
   isOpen,
   onClose,
+  title,
   message,
   locale,
   themeClasses,
@@ -15,7 +16,7 @@ export function SuccessModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={locale.ImportSuccessTitle}
+      title={title || locale.ImportSuccessTitle}
       icon={CheckCircle2}
       iconColor="green"
       themeClasses={themeClasses}
