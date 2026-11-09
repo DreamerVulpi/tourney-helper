@@ -49,6 +49,7 @@ export function ModalContainer({
         position === "anchored" ? "" : "flex items-center justify-center p-4"
       }`}
       style={{ zIndex: layer }}
+      data-modal-layer={Number(layer) || 0}
     >
       {position !== "anchored" && overlay && (
         <div

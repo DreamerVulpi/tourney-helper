@@ -40,13 +40,21 @@ export function useFloatingMenu({ anchorRef, open, minWidthRem = 0 }) {
     const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_PADDING;
     const openAbove = spaceBelow < menuHeight;
 
+    // Dropdowns rendered inside a modal must be stacked above that modal.
+    // Outside modals keep the regular layer so they don't overlap overlays.
+    const modalEl = anchor.closest("[data-modal-layer]");
+    const modalLayer = modalEl
+      ? Number(modalEl.getAttribute("data-modal-layer")) || 0
+      : 0;
+    const zIndex = modalLayer > 0 ? modalLayer + 2 : 90;
+
     setMenuStyle({
       position: "fixed",
       left,
       width,
       top: openAbove ? undefined : rect.bottom + VIEWPORT_PADDING,
       bottom: openAbove ? window.innerHeight - rect.top + VIEWPORT_PADDING : undefined,
-      zIndex: 90,
+      zIndex,
     });
   }, [anchorRef, minWidthRem]);
 
