@@ -14,7 +14,7 @@ import (
 )
 
 func (a *App) GetVersion() string {
-	return strings.Replace(version.Current, "v", "", 1)
+	return strings.TrimPrefix(version.Current, "v")
 }
 
 func (a *App) GetUiLocale(lang string) ui.Ui {
