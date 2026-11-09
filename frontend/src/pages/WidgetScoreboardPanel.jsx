@@ -104,7 +104,7 @@ const DEFAULT_SIDE = {
   scoreFontSize: 28,
   showLogo: true,
   showFlag: true,
-  showReset: true,
+  showReset: false,
 };
 
 const defaultSideFor = (side) => ({
@@ -305,7 +305,7 @@ const WidgetScoreboardPlate = ({
   // Переключение видимости (Глазик)
   const handleToggleVisibility = useCallback(
     (side, field) => {
-      const current = scoreboard?.[side]?.[field] ?? true;
+      const current = scoreboard?.[side]?.[field] ?? (field === "showReset" ? false : true);
       updateSide(side, { [field]: !current });
     },
     [scoreboard, updateSide]
@@ -944,7 +944,7 @@ const WidgetScoreboardPlate = ({
                 <div className="relative w-18 h-18 flex-shrink-0">
                   <div
                     className={`w-full h-full rounded-lg border flex items-center justify-center overflow-hidden ${
-                      data.showReset !== false ? "" : "opacity-30"
+                      data.showReset === true ? "" : "opacity-30"
                     } ${themeClasses?.field || "bg-slate-900 border-slate-700"}`}
                   >
                     <ResetIconPreview
@@ -957,17 +957,17 @@ const WidgetScoreboardPlate = ({
                   <button
                     onClick={() => handleToggleVisibility(side, "showReset")}
                     className={`absolute -bottom-1 -right-1 p-1 rounded-md border shadow-sm transition-colors z-10 ${
-                      data.showReset !== false
+                      data.showReset === true
                         ? "bg-slate-700 border-slate-600 text-green-400 hover:bg-slate-600"
                         : "bg-slate-800 border-slate-700 text-slate-500 hover:bg-slate-700"
                     }`}
                     title={
-                      data.showReset !== false
+                      data.showReset === true
                         ? locale.HideResetTitle
                         : locale.ShowResetTitle
                     }
                   >
-                    {data.showReset !== false ? (
+                    {data.showReset === true ? (
                       <Eye size={12} />
                     ) : (
                       <EyeOff size={12} />

@@ -70,7 +70,7 @@ export function useAutoSave() {
                 scoreFontSize: cfg.scoreboard?.P1?.scoreFontSize ?? 28,
                 showLogo:   cfg.scoreboard?.P1?.showLogo   ?? true,
                 showFlag:   cfg.scoreboard?.P1?.showFlag   ?? true,
-                showReset:  cfg.scoreboard?.P1?.showReset  ?? true,
+                showReset:  cfg.scoreboard?.P1?.showReset  ?? false,
               },
               P2: {
                 teamTag:    cfg.scoreboard?.P2?.teamTag    ?? "",
@@ -86,7 +86,7 @@ export function useAutoSave() {
                 scoreFontSize: cfg.scoreboard?.P2?.scoreFontSize ?? 28,
                 showLogo:   cfg.scoreboard?.P2?.showLogo   ?? true,
                 showFlag:   cfg.scoreboard?.P2?.showFlag   ?? true,
-                showReset:  cfg.scoreboard?.P2?.showReset  ?? true,
+                showReset:  cfg.scoreboard?.P2?.showReset  ?? false,
               },
             },
           };

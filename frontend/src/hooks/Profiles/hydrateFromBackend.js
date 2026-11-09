@@ -106,7 +106,7 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
       scoreFontSize: side?.scoreFontSize ?? 28,
       showLogo:   side?.showLogo   ?? true,
       showFlag:   side?.showFlag   ?? true,
-      showReset:  side?.showReset  ?? true,
+      showReset:  side?.showReset  ?? false,
     });
 
     store.setWidgets((prev) => ({

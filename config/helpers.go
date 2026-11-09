@@ -135,7 +135,7 @@ func NewDefaultWidgets() WidgetsCfg {
 				ScoreFontSize: 28,
 				ShowLogo:      true,
 				ShowFlag:      true,
-				ShowReset:     true,
+				ShowReset:     false,
 			},
 			P2: Side{
 				TeamTag:       "",
@@ -149,7 +149,7 @@ func NewDefaultWidgets() WidgetsCfg {
 				ScoreFontSize: 28,
 				ShowLogo:      true,
 				ShowFlag:      true,
-				ShowReset:     true,
+				ShowReset:     false,
 			},
 		},
 	}

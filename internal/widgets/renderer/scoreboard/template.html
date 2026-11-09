@@ -672,7 +672,7 @@
         const resetIconData = String(side.resetIconData || '').trim()
             || (resetIcon === DEFAULT_RESET_ICON ? DEFAULT_RESET_ICON_DATA : '');
         const resetIsLucide = resetIcon.startsWith('lucide:');
-        const showReset = side.showReset !== false && !!resetIcon && (!resetIsLucide || !!resetIconData);
+        const showReset = side.showReset === true && !!resetIcon && (!resetIsLucide || !!resetIconData);
 
         if (resetEl) resetEl.classList.toggle('hidden', !showReset);
 
