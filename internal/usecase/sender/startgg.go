@@ -22,6 +22,11 @@ import (
 
 var startggTemplateSlug = regexp.MustCompile(`tournament/[^/]+/event/[^/]+`)
 
+// start.gg ограничивает каждый запрос 1000 возвращаемыми объектами.
+// GetSets тянет вложенных участников/аккаунты, поэтому держим perPage
+// с запасом, чтобы не упереться в лимит сложности.
+const setsPerPage = 30
+
 type StartggSetAdapter struct {
 	sender.StartggSetAdapter
 }
@@ -167,14 +172,14 @@ func (s *StartggSetAdapter) GetSetsData(ctx context.Context, slug string) ([]sen
 		}
 
 		var pages int
-		if total <= 60 {
+		if total <= setsPerPage {
 			pages = 1
 		} else {
-			pages = int(math.Ceil(float64(total) / 60.0))
+			pages = int(math.Ceil(float64(total) / float64(setsPerPage)))
 		}
 
 		for i := 0; i < pages; i++ {
-			sets, err := s.Client.GetSets(phaseGroupInfo.Id, i+1, 60, states)
+			sets, err := s.Client.GetSets(phaseGroupInfo.Id, i+1, setsPerPage, states)
 			if err != nil {
 				log.Printf("GetSetsData | Startgg | Can't get data of sets: %v", err)
 				continue

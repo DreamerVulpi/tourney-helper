@@ -40,6 +40,7 @@ body {
     max-height: 1080px;
     height: 100%;
     overflow: auto;
+    cursor: grab;
 }
 
 .bracket-viewport {
@@ -336,10 +337,10 @@ iframe {
     pointer-events: auto;
 }
 
-/* В режиме превью поднимаем кнопки выше, чтобы их не перекрывал
- * ползунок масштабирования приложения. */
+/* В режиме превью кнопки зума скрыты: масштаб настраивается
+ * ползунком самого приложения. */
 html.preview-mode .zoom-controls {
-    bottom: 84px;
+    display: none !important;
 }
 
 .zoom-btn {
@@ -447,4 +448,362 @@ html.preview-mode .zoom-controls {
 .bracket-error__retry:disabled {
     opacity: 0.6;
     cursor: default;
+}
+
+/* ================================================================
+ * Next bracket plate
+ * ================================================================
+ * Плашка под финальным матчем секции: показывает, в какую сетку
+ * (phase group / phase) переходит победитель/проигравший.
+ */
+
+.next-bracket-plate {
+    position: absolute;
+    width: var(--node-width);
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 10px;
+    border: 1px solid var(--set-border, #444);
+    border-left: 3px solid var(--primary, #155dfc);
+    border-radius: var(--set-radius, 0);
+    background: var(--set-bg, #1b1b1b);
+    color: var(--text-color, #f1f5f9);
+    font-family: var(--font-family, sans-serif);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.next-bracket-plate__row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.next-bracket-plate__side {
+    font-size: 10px;
+    font-weight: 800;
+    opacity: 0.65;
+}
+
+.next-bracket-plate__arrow {
+    color: var(--primary, #155dfc);
+    font-weight: 800;
+}
+
+.next-bracket-plate__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* ================================================================
+ * Drag to pan
+ * ================================================================ */
+
+html.bracket-dragging,
+html.bracket-dragging * {
+    cursor: grabbing !important;
+    user-select: none !important;
+}
+
+/* Пока тащим — не даём контенту реагировать на hover/клики. */
+html.bracket-dragging .bracket-content,
+html.bracket-dragging .previous-bracket-plate,
+html.bracket-dragging .zoom-controls {
+    pointer-events: none !important;
+}
+
+/* ================================================================
+ * Previous bracket plate (navigation back)
+ * ================================================================ */
+
+.previous-bracket-plate {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 360px;
+    padding: 8px 12px;
+    border: 1px solid var(--set-border, #444);
+    border-left: 3px solid var(--primary, #155dfc);
+    border-radius: var(--set-radius, 0);
+    background: var(--set-bg, #1b1b1b);
+    color: var(--text-color, #f1f5f9);
+    font-family: var(--font-family, sans-serif);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, filter 0.15s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+/* Показываем только при наведении на область виджета — как zoom-кнопки. */
+.bracket-wrapper:hover ~ .previous-bracket-plate,
+.previous-bracket-plate:hover {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.previous-bracket-plate:hover {
+    filter: brightness(1.08);
+}
+
+.previous-bracket-plate__arrow {
+    flex: 0 0 auto;
+    color: var(--primary, #155dfc);
+    font-weight: 800;
+}
+
+.previous-bracket-plate__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Clickable row inside the next-bracket plate */
+.next-bracket-plate__row--link {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.next-bracket-plate__row--link:hover .next-bracket-plate__name {
+    text-decoration: underline;
+}
+
+/* ================================================================
+ * Player search
+ * ================================================================ */
+
+.player-search {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 280px;
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--set-border, #444);
+    border-radius: 10px;
+    background: var(--set-bg, #1b1b1b);
+    color: var(--text-color, #f1f5f9);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%);
+    transition: opacity 0.18s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.bracket-wrapper:hover ~ .player-search,
+.player-search:hover,
+.player-search:focus-within,
+html.player-search-active .player-search {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* В режиме превью приложения поиск в левом верхнем углу,
+ * чтобы не перекрываться с оверлеями программы. */
+html.preview-mode .player-search {
+    left: 16px;
+    transform: none;
+}
+
+/* В превью плашка «назад» смещается под поиск. */
+html.preview-mode .previous-bracket-plate {
+    top: 64px;
+}
+
+.player-search__icon {
+    flex: 0 0 auto;
+    opacity: 0.7;
+}
+
+.player-search input {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.player-search input::placeholder {
+    color: var(--text-muted, #a0aab8);
+}
+
+.player-search__clear {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.7;
+}
+
+.player-search__clear:hover {
+    background: rgba(255, 255, 255, 0.12);
+    opacity: 1;
+}
+
+.player-search.has-value .player-search__clear {
+    display: flex;
+}
+
+.player-search--not-found {
+    border-color: var(--score-bg-loser, #c0392b);
+}
+
+/* ================================================================
+ * Player path view
+ * ================================================================ */
+
+html.player-search-active .bracket-wrapper {
+    visibility: hidden;
+}
+
+.player-path {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    padding: 56px 24px 32px;
+    overflow: auto;
+    font-family: var(--font-family, sans-serif);
+    color: var(--text-color, #f1f5f9);
+}
+
+.player-path.hidden {
+    display: none;
+}
+
+.player-path__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: max-content;
+    min-width: 100%;
+    margin: 0 auto;
+}
+
+.player-path__header {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-align: center;
+}
+
+.player-path__row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: max-content;
+    max-width: 100%;
+}
+
+.player-path__row-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--primary, #155dfc);
+}
+
+.player-path__track {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.path-card {
+    flex: 0 0 auto;
+    width: var(--node-width);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.path-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+}
+
+.path-card__round {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--text-muted, #a0aab8);
+}
+
+.path-card__result {
+    flex: 0 0 auto;
+    min-width: 18px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 800;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.path-card__result--win {
+    color: #ffffff;
+    background: var(--score-bg-winner, #1f9e46);
+}
+
+.path-card__result--loss {
+    color: #ffffff;
+    background: var(--score-bg-loser, #4a5568);
+}
+
+.path-card .set {
+    width: 100%;
+}
+
+.path-arrow {
+    flex: 0 0 auto;
+    color: var(--primary, #155dfc);
+    font-size: 18px;
+    font-weight: 800;
+    opacity: 0.85;
 }

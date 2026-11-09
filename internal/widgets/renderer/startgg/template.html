@@ -75,6 +75,20 @@
     <button type="button" class="zoom-btn" data-zoom="in" title="Zoom in">+</button>
 </div>
 
+<div class="player-path hidden" id="player-path">
+    <div class="player-path__inner" id="player-path-inner"></div>
+</div>
+
+<div class="player-search" id="player-search">
+    <svg class="player-search__icon" width="14" height="14" viewBox="0 0 24 24"
+         fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+    <input id="player-search-input" type="text" autocomplete="off" spellcheck="false" />
+    <button type="button" class="player-search__clear" id="player-search-clear">×</button>
+</div>
+
 <script>
     // ============================================================
     // CSS variables
@@ -155,6 +169,11 @@
                 {{ range .Players }}
                 { slot: {{ .Slot }}, id: "{{ .Id | js }}", prefix: "{{ .Prefix | js }}", nickname: "{{ .Nickname | js }}", score: {{ .Score }} },
                 {{ end }}
+            ],
+            nextBrackets: [
+                {{ range .NextBrackets }}
+                { side: "{{ .Side }}", label: "{{ .Label | js }}", phaseName: "{{ .PhaseName | js }}", displayIdentifier: "{{ .DisplayIdentifier | js }}", phaseGroupId: {{ .PhaseGroupID }} },
+                {{ end }}
             ]
         },
         {{ end }}
@@ -165,6 +184,85 @@
         { fromSetID: "{{ .FromSetID | js }}", fromSlot: {{ .FromSlot }}, toSetID: "{{ .ToSetID | js }}", toSlot: {{ .ToSlot }}, condition: "{{ .Condition }}" },
         {{ end }}
     ];
+
+    const BRACKET_ID = {{ .Id }};
+    const BRACKET_LABEL = "{{ .Label | js }}";
+
+    const PLAYER_SEARCH_LANG = (new URLSearchParams(window.location.search)
+        .get('lang') || '').toUpperCase();
+    const PLAYER_SEARCH_LABELS = PLAYER_SEARCH_LANG.startsWith('RU')
+        ? {
+            placeholder: 'Поиск игрока...',
+            clearTitle: 'Очистить',
+            path: 'Путь',
+            winners: 'Виннеры',
+            losers: 'Лузеры',
+            final: 'Гранд-финал',
+            notFound: 'Игрок не найден',
+        }
+        : {
+            placeholder: 'Search player...',
+            clearTitle: 'Clear',
+            path: 'Path',
+            winners: 'Winners',
+            losers: 'Losers',
+            final: 'Grand Final',
+            notFound: 'Player not found',
+        };
+
+    let refreshPlayerSearch = null;
+
+    // ============================================================
+    // Bracket navigation
+    // ============================================================
+
+    function navigateToBracket(targetId, fromId, fromName) {
+        if (!targetId) return;
+
+        const parts = window.location.pathname.split('/').filter(Boolean);
+        if (!parts.length) return;
+
+        parts[parts.length - 1] = String(targetId);
+
+        const params = new URLSearchParams(window.location.search);
+        params.delete('_ts');
+        params.delete('from');
+        params.delete('fromName');
+
+        if (fromId) {
+            params.set('from', String(fromId));
+            if (fromName) params.set('fromName', fromName);
+        }
+
+        const query = params.toString();
+        window.location.assign(`/${parts.join('/')}${query ? `?${query}` : ''}`);
+    }
+
+    function setupPreviousBracketPlate() {
+        const params = new URLSearchParams(window.location.search);
+        const fromId = params.get('from');
+        if (!fromId) return;
+
+        const fromName = params.get('fromName') || `Phase group ${fromId}`;
+
+        const plate = document.createElement('button');
+        plate.type = 'button';
+        plate.className = 'previous-bracket-plate';
+        plate.title = fromName;
+
+        const arrow = document.createElement('span');
+        arrow.className = 'previous-bracket-plate__arrow';
+        arrow.textContent = '←';
+
+        const name = document.createElement('span');
+        name.className = 'previous-bracket-plate__name';
+        name.textContent = fromName;
+
+        plate.append(arrow, name);
+        plate.addEventListener('click', () => navigateToBracket(fromId, null, null));
+
+        document.body.appendChild(plate);
+    }
 
     // ============================================================
     // Stream platform detection
@@ -184,32 +282,46 @@
     // Set element
     // ============================================================
 
-    function createSetElement(setData) {
-        const wrapper = document.createElement('div');
-        wrapper.className = 'set-wrapper';
+    function getWinnerId(setData) {
+        // В начальном HTML winnerId — строка, а после /data (JSON) — число.
+        // Приводим оба id к строке, иначе строгое сравнение ломается и
+        // подсветка победителя пропадает после первого автообновления.
+        const rawWinnerId = setData.winnerId;
+        return rawWinnerId !== undefined &&
+            rawWinnerId !== null &&
+            rawWinnerId !== '' &&
+            rawWinnerId !== 0 &&
+            rawWinnerId !== '0'
+                ? String(rawWinnerId)
+                : '';
+    }
 
-        const div = document.createElement('div');
-        div.className = 'set';
-        div.id = `set-${setData.id}`;
-        div.dataset.setId = setData.id;
-        div.dataset.state = setData.state;
-
+    function buildPlayersDiv(setData, targetPlayerId) {
         const playersDiv = document.createElement('div');
         playersDiv.className = 'set-players';
 
-        const winnerId = setData.winnerId || '';
+        const winnerId = getWinnerId(setData);
+        const targetId =
+            targetPlayerId !== undefined && targetPlayerId !== null
+                ? String(targetPlayerId)
+                : '';
 
         setData.players.forEach(player => {
             const isEmpty = !player.nickname || player.nickname === "";
-            const playerId = player.id || '';
+            const playerId =
+                player.id !== undefined && player.id !== null
+                    ? String(player.id)
+                    : '';
             const isWinner = !isEmpty && winnerId !== '' && playerId === winnerId;
             const isLoser = !isEmpty && winnerId !== '' && playerId !== winnerId;
+            const isTarget = !isEmpty && targetId !== '' && playerId === targetId;
 
             const playerDiv = document.createElement('div');
             playerDiv.className = 'player'
                 + (isEmpty  ? ' empty'  : '')
                 + (isWinner ? ' winner' : '')
-                + (isLoser  ? ' loser'  : '');
+                + (isLoser  ? ' loser'  : '')
+                + (isTarget ? ' highlighted' : '');
             playerDiv.dataset.slot = player.slot;
 
             playerDiv.innerHTML = `
@@ -223,7 +335,20 @@
             playersDiv.appendChild(playerDiv);
         });
 
-        div.appendChild(playersDiv);
+        return playersDiv;
+    }
+
+    function createSetElement(setData) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'set-wrapper';
+
+        const div = document.createElement('div');
+        div.className = 'set';
+        div.id = `set-${setData.id}`;
+        div.dataset.setId = setData.id;
+        div.dataset.state = setData.state;
+
+        div.appendChild(buildPlayersDiv(setData, null));
 
         if (setData.stream) {
             const liveDiv = document.createElement('div');
@@ -241,6 +366,322 @@
 
         wrapper.appendChild(div);
         return wrapper;
+    }
+
+    // ============================================================
+    // Next bracket plate
+    // ============================================================
+
+    function createNextBracketPlate(nextBrackets, currentPhaseGroupId) {
+        const plate = document.createElement('div');
+        plate.className = 'next-bracket-plate';
+
+        nextBrackets.forEach(target => {
+            const isExternal = target.phaseGroupId &&
+                Number(target.phaseGroupId) !== Number(currentPhaseGroupId);
+
+            const row = document.createElement(isExternal ? 'button' : 'div');
+            row.className = 'next-bracket-plate__row';
+
+            if (isExternal) {
+                row.type = 'button';
+                row.classList.add('next-bracket-plate__row--link');
+                row.addEventListener('click', () => {
+                    navigateToBracket(
+                        target.phaseGroupId,
+                        BRACKET_ID,
+                        BRACKET_LABEL,
+                    );
+                });
+            }
+
+            if (nextBrackets.length > 1) {
+                const side = document.createElement('span');
+                side.className = 'next-bracket-plate__side';
+                side.textContent = target.side === 'loser' ? 'L' : 'W';
+                row.appendChild(side);
+            }
+
+            const arrow = document.createElement('span');
+            arrow.className = 'next-bracket-plate__arrow';
+            arrow.textContent = '→';
+
+            const name = document.createElement('span');
+            name.className = 'next-bracket-plate__name';
+            name.textContent =
+                target.label ||
+                target.phaseName ||
+                target.displayIdentifier ||
+                '';
+            name.title = name.textContent;
+
+            row.append(arrow, name);
+            plate.appendChild(row);
+        });
+
+        return plate;
+    }
+
+    // Рендерит плашки "куда ведёт следующий бой" под финальными нодами
+    // секции. Возвращает максимальную нижнюю границу в пикселях, чтобы
+    // можно было расширить высоту секции.
+    function appendNextBracketPlates(roots, container) {
+        let maxBottom = 0;
+
+        roots.forEach(root => {
+            const allTargets = root.nextBrackets || [];
+            const winnerTargets = allTargets.filter(t => t.side === 'winner');
+            // Показываем путь победителя; если его нет — путь проигравшего.
+            const targets = winnerTargets.length ? winnerTargets : allTargets;
+            if (!targets.length) return;
+
+            const plate = createNextBracketPlate(targets, BRACKET_ID);
+            const left = (root.x || 0) * COLUMN_STEP;
+            const top = ((root.y || 0) + 1) * (NODE_HEIGHT + NODE_GAP);
+
+            plate.style.left = `${left}px`;
+            plate.style.top = `${top}px`;
+            container.appendChild(plate);
+
+            const bottom = top + plate.offsetHeight;
+            if (bottom > maxBottom) maxBottom = bottom;
+        });
+
+        return maxBottom;
+    }
+
+    // ============================================================
+    // Player search / path
+    // ============================================================
+
+    function clearPlayerSearchView() {
+        document.documentElement.classList.remove('player-search-active');
+
+        const path = document.getElementById('player-path');
+        if (path) path.classList.add('hidden');
+
+        const inner = document.getElementById('player-path-inner');
+        if (inner) inner.innerHTML = '';
+    }
+
+    function findPlayerPath(query) {
+        const q = String(query || '').trim().toLowerCase();
+        if (!q) return null;
+
+        const exact = new Map();
+        const partial = new Map();
+
+        const add = (map, player, setData) => {
+            const id = player.id !== undefined && player.id !== null
+                ? String(player.id)
+                : '';
+            if (!id) return;
+
+            let entry = map.get(id);
+            if (!entry) {
+                entry = { id, nickname: player.nickname, sets: [] };
+                map.set(id, entry);
+            }
+            if (!entry.sets.includes(setData)) {
+                entry.sets.push(setData);
+            }
+        };
+
+        allSets.forEach(setData => {
+            const players = setData.players || [];
+
+            // Бай/пустой слот — не считаем полноценным боем.
+            const filled = players.filter(p => p.nickname && p.nickname.trim());
+            if (filled.length < 2) return;
+
+            players.forEach(player => {
+                const name = String(player.nickname || '').trim().toLowerCase();
+                if (!name) return;
+
+                if (name === q) {
+                    add(exact, player, setData);
+                } else if (name.includes(q)) {
+                    add(partial, player, setData);
+                }
+            });
+        });
+
+        const pool = exact.size ? exact : partial;
+        if (!pool.size) return null;
+
+        let best = null;
+        pool.forEach(entry => {
+            if (!best || entry.sets.length > best.sets.length) {
+                best = entry;
+            }
+        });
+
+        return best;
+    }
+
+    function sortPathSets(section, sets) {
+        const result = sets.slice();
+
+        if (section === 'losers') {
+            // Раунды лузеров отрицательные: -1, -2, ... — от ранних к поздним.
+            result.sort((a, b) =>
+                (b.round - a.round) || ((a.position || 0) - (b.position || 0)),
+            );
+        } else {
+            result.sort((a, b) =>
+                (a.round - b.round) || ((a.position || 0) - (b.position || 0)),
+            );
+        }
+
+        return result;
+    }
+
+    function createPathCard(setData, targetPlayerId) {
+        const card = document.createElement('div');
+        card.className = 'path-card';
+
+        const head = document.createElement('div');
+        head.className = 'path-card__head';
+
+        const round = document.createElement('div');
+        round.className = 'path-card__round';
+        round.textContent = setData.fullRoundText || '';
+        round.title = round.textContent;
+        head.appendChild(round);
+
+        const winnerId = getWinnerId(setData);
+        if (winnerId) {
+            const won = String(winnerId) === String(targetPlayerId);
+            const result = document.createElement('span');
+            result.className = 'path-card__result ' +
+                (won ? 'path-card__result--win' : 'path-card__result--loss');
+            result.textContent = won ? 'W' : 'L';
+            head.appendChild(result);
+        }
+
+        const set = document.createElement('div');
+        set.className = 'set';
+        set.dataset.state = setData.state;
+        set.appendChild(buildPlayersDiv(setData, targetPlayerId));
+
+        card.append(head, set);
+        return card;
+    }
+
+    function renderPlayerPath(playerData) {
+        const inner = document.getElementById('player-path-inner');
+        if (!inner) return;
+
+        inner.innerHTML = '';
+
+        const header = document.createElement('div');
+        header.className = 'player-path__header';
+        header.textContent = PLAYER_SEARCH_LABELS.path + ': ' + playerData.nickname;
+        inner.appendChild(header);
+
+        const groups = [
+            { key: 'winners', title: PLAYER_SEARCH_LABELS.winners },
+            { key: 'losers', title: PLAYER_SEARCH_LABELS.losers },
+            { key: 'final', title: PLAYER_SEARCH_LABELS.final },
+        ];
+
+        let rendered = 0;
+
+        groups.forEach(group => {
+            const sets = sortPathSets(
+                group.key,
+                playerData.sets.filter(setData => setData.section === group.key),
+            );
+            if (!sets.length) return;
+
+            rendered += sets.length;
+
+            const row = document.createElement('div');
+            row.className = 'player-path__row';
+
+            const title = document.createElement('div');
+            title.className = 'player-path__row-title';
+            title.textContent = group.title;
+            row.appendChild(title);
+
+            const track = document.createElement('div');
+            track.className = 'player-path__track';
+
+            sets.forEach((setData, index) => {
+                if (index > 0) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'path-arrow';
+                    arrow.textContent = '→';
+                    track.appendChild(arrow);
+                }
+                track.appendChild(createPathCard(setData, playerData.id));
+            });
+
+            row.appendChild(track);
+            inner.appendChild(row);
+        });
+
+        if (!rendered) {
+            const empty = document.createElement('div');
+            empty.className = 'player-path__header';
+            empty.textContent = PLAYER_SEARCH_LABELS.notFound;
+            inner.appendChild(empty);
+        }
+    }
+
+    function setupPlayerSearch() {
+        const search = document.getElementById('player-search');
+        const input = document.getElementById('player-search-input');
+        const clear = document.getElementById('player-search-clear');
+
+        if (!search || !input || !clear) return;
+
+        input.placeholder = PLAYER_SEARCH_LABELS.placeholder;
+        clear.title = PLAYER_SEARCH_LABELS.clearTitle;
+        clear.setAttribute('aria-label', PLAYER_SEARCH_LABELS.clearTitle);
+
+        const update = () => {
+            const value = input.value.trim();
+            search.classList.toggle('has-value', !!value);
+
+            if (!value) {
+                search.classList.remove('player-search--not-found');
+                clearPlayerSearchView();
+                return;
+            }
+
+            const player = findPlayerPath(value);
+            if (!player) {
+                search.classList.add('player-search--not-found');
+                clearPlayerSearchView();
+                return;
+            }
+
+            search.classList.remove('player-search--not-found');
+            renderPlayerPath(player);
+
+            const path = document.getElementById('player-path');
+            if (path) path.classList.remove('hidden');
+            document.documentElement.classList.add('player-search-active');
+        };
+
+        refreshPlayerSearch = update;
+
+        input.addEventListener('input', update);
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                input.value = '';
+                update();
+                input.blur();
+            }
+        });
+
+        clear.addEventListener('click', () => {
+            input.value = '';
+            update();
+            input.focus();
+        });
     }
 
     // ============================================================
@@ -467,8 +908,11 @@
             }
         });
 
+        const plateBottom = appendNextBracketPlates(roots, container);
+
         const width  = (maxDepth + 1) * COLUMN_STEP - LINK_WIDTH;
-        const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
+        const baseHeight = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
+        const height = Math.max(baseHeight, plateBottom);
 
         container.style.width  = `${width}px`;
         container.style.height = `${height}px`;
@@ -530,8 +974,11 @@
             }
         });
 
+        const plateBottom = appendNextBracketPlates(roots, container);
+
         const width  = (maxDepth + 1) * COLUMN_STEP - LINK_WIDTH;
-        const height = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
+        const baseHeight = (maxY + 1) * (NODE_HEIGHT + NODE_GAP) - NODE_GAP;
+        const height = Math.max(baseHeight, plateBottom);
 
         container.style.width  = `${width}px`;
         container.style.height = `${height}px`;
@@ -585,6 +1032,13 @@
 
             const fromRect = fromEl.getBoundingClientRect();
             const toRect   = toEl.getBoundingClientRect();
+
+            // Скрытая секция (display: none) даёт нулевые rect'ы —
+            // не рисуем для неё вырожденные линии.
+            if ((fromRect.width === 0 && fromRect.height === 0) ||
+                (toRect.width === 0 && toRect.height === 0)) {
+                return;
+            }
 
             // Переводим экранные (уже масштабированные) координаты
             // в локальные координаты контента.
@@ -738,11 +1192,18 @@
 
         layoutViewport(true);
 
+        // Рисуем сразу по готовому layout, затем перерисовываем после
+        // кадров и с небольшой задержкой: смена режима/секций может менять
+        // скроллбары, размеры контента и положение viewport уже после
+        // первого расчёта — из-за этого линии оставались на старых местах.
+        renderConnections();
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                renderConnections();
-            });
+            renderConnections();
+            requestAnimationFrame(renderConnections);
         });
+        setTimeout(renderConnections, 120);
+
+        if (refreshPlayerSearch) refreshPlayerSearch();
     }
 
     // Полная пересборка разметки (нужна при смене режима отображения,
@@ -925,6 +1386,79 @@
     }
 
     // ============================================================
+    // Drag to pan
+    // ============================================================
+
+    function setupDragPan() {
+        const wrapper = document.querySelector('.bracket-wrapper');
+        if (!wrapper) return;
+
+        let dragging = false;
+        let startX = 0;
+        let startY = 0;
+        let startScrollLeft = 0;
+        let startScrollTop = 0;
+
+        const isInteractive = (target) => {
+            if (!target || !(target instanceof Element)) return false;
+            return !!target.closest(
+                'button, a, input, select, textarea, [data-no-drag], .bracket-error, .player-search, .player-path',
+            );
+        };
+
+        const stop = () => {
+            if (!dragging) return;
+            dragging = false;
+            document.documentElement.classList.remove('bracket-dragging');
+        };
+
+        document.addEventListener('mousedown', (event) => {
+            if (event.button !== 0) return;
+            if (document.documentElement.classList.contains('player-search-active')) return;
+            if (isInteractive(event.target)) return;
+
+            const rect = wrapper.getBoundingClientRect();
+
+            // Не перехватываем клики по скроллбарам — они должны работать.
+            const onVerticalScrollbar = event.clientX >= rect.left + wrapper.clientWidth;
+            const onHorizontalScrollbar = event.clientY >= rect.top + wrapper.clientHeight;
+            if (onVerticalScrollbar || onHorizontalScrollbar) return;
+
+            dragging = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            startScrollLeft = wrapper.scrollLeft;
+            startScrollTop = wrapper.scrollTop;
+
+            document.documentElement.classList.add('bracket-dragging');
+
+            // Сбрасываем подсветку игрока, иначе она «залипнет» на время drag.
+            const content = document.getElementById('bracket-content');
+            if (content) content.dispatchEvent(new MouseEvent('mouseleave'));
+
+            event.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (!dragging) return;
+            if (event.buttons === 0) {
+                stop();
+                return;
+            }
+
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+
+            wrapper.scrollLeft = startScrollLeft - dx;
+            wrapper.scrollTop = startScrollTop - dy;
+        });
+
+        document.addEventListener('mouseup', stop);
+        document.addEventListener('mouseleave', stop);
+        window.addEventListener('blur', stop);
+    }
+
+    // ============================================================
     // Auto-refresh
     // ============================================================
 
@@ -971,6 +1505,32 @@
             refreshBracketData().finally(() => {
                 retry.disabled = false;
             });
+        });
+    }
+
+    // Перерисовываем связи при любом изменении размеров контента/секций
+    // (смена режима, появление скроллбаров, hide-rounds, данные и т.п.).
+    function setupConnectionsResizeObserver() {
+        if (typeof ResizeObserver === 'undefined') return;
+
+        const content = document.getElementById('bracket-content');
+        if (!content) return;
+
+        let frame = null;
+        const schedule = () => {
+            if (frame !== null) return;
+            frame = requestAnimationFrame(() => {
+                frame = null;
+                renderConnections();
+            });
+        };
+
+        const observer = new ResizeObserver(schedule);
+        observer.observe(content);
+
+        ['winners-nodes', 'final-nodes', 'losers-nodes'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) observer.observe(el);
         });
     }
 
@@ -1222,7 +1782,11 @@
         init();
         setupPlayerHighlight();
         bindZoomControls();
+        setupDragPan();
         setupBracketError();
+        setupPreviousBracketPlate();
+        setupPlayerSearch();
+        setupConnectionsResizeObserver();
         refreshBracketData();
     });
 </script>

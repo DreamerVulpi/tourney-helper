@@ -8,6 +8,16 @@ type EntrantSource struct {
 	Condition string
 }
 
+// ProgressionTarget describes where a participant advances after the set
+// (for example, into a phase group of the next bracket).
+type ProgressionTarget struct {
+	Side              string `json:"side"` // "winner" or "loser"
+	PhaseGroupID      int64  `json:"phaseGroupId"`
+	PhaseName         string `json:"phaseName"`
+	DisplayIdentifier string `json:"displayIdentifier"`
+	Label             string `json:"label"`
+}
+
 type Slot struct {
 	Id           int64
 	Prefix       string
@@ -26,54 +36,60 @@ type Set struct {
 	WinnerId      int64
 	Position      int
 	Slots         []Slot
+
+	Progressions []ProgressionTarget
 }
 
 type Bracket struct {
-	Id   int64
-	Sets []Set
+	Id    int64
+	Label string
+	Sets  []Set
 }
 
 type PlayerView struct {
-	Slot     int
-	Id       string
-	Prefix   string
-	Nickname string
-	Score    string
+	Slot     int    `json:"slot"`
+	Id       string `json:"id"`
+	Prefix   string `json:"prefix"`
+	Nickname string `json:"nickname"`
+	Score    string `json:"score"`
 }
 
 type SetView struct {
-	Id            string
-	State         int
-	Stream        string
-	Position      int
-	Section       string // "winners", "losers", "final"
-	Round         int    // for debug
-	FullRoundText string
-	WinnerId      int64
-	Players       []PlayerView
+	Id            string       `json:"id"`
+	State         int          `json:"state"`
+	Stream        string       `json:"stream"`
+	Position      int          `json:"position"`
+	Section       string       `json:"section"` // "winners", "losers", "final"
+	Round         int          `json:"round"`   // for debug
+	FullRoundText string       `json:"fullRoundText"`
+	WinnerId      int64        `json:"winnerId"`
+	Players       []PlayerView `json:"players"`
+
+	NextBrackets []ProgressionTarget `json:"nextBrackets"`
 }
 
 type ConnectionView struct {
-	FromSetID string
-	ToSetID   string
+	FromSetID string `json:"fromSetID"`
+	ToSetID   string `json:"toSetID"`
 
-	FromSlot int
-	ToSlot   int
+	FromSlot int `json:"fromSlot"`
+	ToSlot   int `json:"toSlot"`
 
-	Condition string
+	Condition string `json:"condition"`
 }
 
 type BracketView struct {
-	Id          int64
-	Sets        []SetView
-	Connections []ConnectionView
-	SystemCSS   template.CSS
-	ThemeCSS    template.CSS
+	Id          int64            `json:"id"`
+	Label       string           `json:"label"`
+	Sets        []SetView        `json:"sets"`
+	Connections []ConnectionView `json:"connections"`
+	SystemCSS   template.CSS     `json:"systemCSS"`
+	ThemeCSS    template.CSS     `json:"themeCSS"`
 
-	HasError         bool
-	ErrorTitle       string
-	ErrorDescription string
-	RetryLabel       string
+	HasError         bool   `json:"hasError"`
+	ErrorTitle       string `json:"errorTitle"`
+	ErrorDescription string `json:"errorDescription"`
+	RetryLabel       string `json:"retryLabel"`
 }
 
 // BracketErrorMessages contains localized texts for the widget error overlay.

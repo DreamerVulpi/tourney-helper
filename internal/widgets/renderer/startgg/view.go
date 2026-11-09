@@ -49,8 +49,9 @@ func classifySection(set entity.Set) string {
 
 func (r *StartGGRenderer) buildView(bracket *entity.Bracket) entity.BracketView {
 	view := entity.BracketView{
-		Id:   bracket.Id,
-		Sets: make([]entity.SetView, 0, len(bracket.Sets)),
+		Id:    bracket.Id,
+		Label: bracket.Label,
+		Sets:  make([]entity.SetView, 0, len(bracket.Sets)),
 	}
 
 	assignPositions(bracket)
@@ -99,6 +100,7 @@ func buildSetView(set entity.Set) entity.SetView {
 		FullRoundText: set.FullRoundText,
 		WinnerId:      set.WinnerId,
 		Players:       make([]entity.PlayerView, 0, len(set.Slots)),
+		NextBrackets:  set.Progressions,
 	}
 
 	for i, slot := range set.Slots {
