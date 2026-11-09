@@ -22,7 +22,7 @@ const StartGGThemeName = "startgg"
 // startggThemeMarker is written into the external startgg.css. When the
 // external file doesn't contain it, the theme is considered stale and gets
 // replaced with the bundled version.
-const startggThemeMarker = "scoreboard-startgg-theme-v12"
+const startggThemeMarker = "scoreboard-startgg-theme-v15"
 
 // Renderer — рендерер HTML-виджета scoreboard.
 type Renderer struct {

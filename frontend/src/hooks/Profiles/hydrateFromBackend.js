@@ -86,6 +86,8 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
     const normalizeSide = (side, fallbackName) => ({
       teamTag:    side?.teamTag    ?? "",
       name:       side?.name       ?? fallbackName,
+      resetIcon:     side?.resetIcon     ?? "",
+      resetIconData: side?.resetIconData ?? "",
       logoPath:   side?.logoPath   ?? "",
       flag:       side?.flag       ?? "",
       plateImage:   side?.plateImage   ?? "",
@@ -95,6 +97,7 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
       scoreFontSize: side?.scoreFontSize ?? 28,
       showLogo:   side?.showLogo   ?? true,
       showFlag:   side?.showFlag   ?? true,
+      showReset:  side?.showReset  ?? true,
     });
 
     store.setWidgets((prev) => ({

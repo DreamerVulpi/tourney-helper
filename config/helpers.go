@@ -126,6 +126,8 @@ func NewDefaultWidgets() WidgetsCfg {
 			P1: Side{
 				TeamTag:       "",
 				Name:          "Player 1",
+				ResetIcon:     "",
+				ResetIconData: "",
 				LogoPath:      "",
 				Flag:          "",
 				PlateImage:    "",
@@ -133,10 +135,13 @@ func NewDefaultWidgets() WidgetsCfg {
 				ScoreFontSize: 28,
 				ShowLogo:      true,
 				ShowFlag:      true,
+				ShowReset:     true,
 			},
 			P2: Side{
 				TeamTag:       "",
 				Name:          "Player 2",
+				ResetIcon:     "",
+				ResetIconData: "",
 				LogoPath:      "",
 				Flag:          "",
 				PlateImage:    "",
@@ -144,6 +149,7 @@ func NewDefaultWidgets() WidgetsCfg {
 				ScoreFontSize: 28,
 				ShowLogo:      true,
 				ShowFlag:      true,
+				ShowReset:     true,
 			},
 		},
 	}

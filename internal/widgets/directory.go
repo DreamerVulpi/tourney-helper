@@ -16,6 +16,7 @@ var directories = []string{
 	"scoreboard" + themesPath,
 	"scoreboard/flags",
 	"scoreboard/logos",
+	"scoreboard/icons",
 	"scoreboard/planks",
 }
 

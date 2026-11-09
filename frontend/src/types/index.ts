@@ -22,6 +22,8 @@ export interface WidgetBracket {
 export interface ScoreboardSide {
   teamTag: string;
   name: string;
+  resetIcon: string;
+  resetIconData: string;
   logoPath: string;
   flag: string;
   plateImage: string;
@@ -31,6 +33,7 @@ export interface ScoreboardSide {
   scoreFontSize: number;
   showLogo: boolean;
   showFlag: boolean;
+  showReset: boolean;
 }
 
 export interface WidgetScoreboard {

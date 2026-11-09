@@ -59,6 +59,8 @@ export function useAutoSave() {
               P1: {
                 teamTag:    cfg.scoreboard?.P1?.teamTag    ?? "",
                 name:       cfg.scoreboard?.P1?.name       ?? "Player 1",
+                resetIcon:     cfg.scoreboard?.P1?.resetIcon     ?? "",
+                resetIconData: cfg.scoreboard?.P1?.resetIconData ?? "",
                 logoPath:   cfg.scoreboard?.P1?.logoPath   ?? "",
                 flag:       cfg.scoreboard?.P1?.flag       ?? "",
                 plateImage:   cfg.scoreboard?.P1?.plateImage   ?? "",
@@ -68,10 +70,13 @@ export function useAutoSave() {
                 scoreFontSize: cfg.scoreboard?.P1?.scoreFontSize ?? 28,
                 showLogo:   cfg.scoreboard?.P1?.showLogo   ?? true,
                 showFlag:   cfg.scoreboard?.P1?.showFlag   ?? true,
+                showReset:  cfg.scoreboard?.P1?.showReset  ?? true,
               },
               P2: {
                 teamTag:    cfg.scoreboard?.P2?.teamTag    ?? "",
                 name:       cfg.scoreboard?.P2?.name       ?? "Player 2",
+                resetIcon:     cfg.scoreboard?.P2?.resetIcon     ?? "",
+                resetIconData: cfg.scoreboard?.P2?.resetIconData ?? "",
                 logoPath:   cfg.scoreboard?.P2?.logoPath   ?? "",
                 flag:       cfg.scoreboard?.P2?.flag       ?? "",
                 plateImage:   cfg.scoreboard?.P2?.plateImage   ?? "",
@@ -81,6 +86,7 @@ export function useAutoSave() {
                 scoreFontSize: cfg.scoreboard?.P2?.scoreFontSize ?? 28,
                 showLogo:   cfg.scoreboard?.P2?.showLogo   ?? true,
                 showFlag:   cfg.scoreboard?.P2?.showFlag   ?? true,
+                showReset:  cfg.scoreboard?.P2?.showReset  ?? true,
               },
             },
           };

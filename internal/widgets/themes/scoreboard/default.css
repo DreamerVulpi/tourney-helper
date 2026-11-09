@@ -22,6 +22,11 @@
 
     --sb-name-color: #ffffff;
     --sb-score-color: #ffffff;
+    --sb-reset-color: #ffffff;
+    --sb-reset-bg: rgba(0, 110, 255, 0.25);
+    --sb-reset-border: rgba(213, 237, 249, 0.45);
+    --sb-reset-radius: 3px;
+    --sb-reset-shadow: 0 0 10px rgba(0, 163, 255, 0.35);
 
     --sb-logo-bg: rgba(255, 255, 255, 0.08);
     --sb-logo-border: rgba(213, 237, 249, 0.35);

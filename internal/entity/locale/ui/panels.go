@@ -145,18 +145,34 @@ type WidgetScoreboardPanel struct {
 	SearchLabel string
 	NoClients   string
 
-	ListOfThemes       string
-	Format             string
-	FormatPlaceholder  string
-	ScaleTab           string
-	GapTab             string
-	PlateWidthTab      string
-	ScoreTab           string
-	ScoreOffsetReset   string
-	ScoreFontSizeLabel string
-	FontLabel          string
-	FontDefaultLabel   string
-	MainFontSizeLabel  string
+	ListOfThemes            string
+	Format                  string
+	FormatPlaceholder       string
+	ScaleTab                string
+	GapTab                  string
+	PlateWidthTab           string
+	ScoreTab                string
+	ResetTab                string
+	ResetIconLabel          string
+	SelectResetIcon         string
+	SearchIconsPlaceholder  string
+	CustomIconsLabel        string
+	NoIconLabel             string
+	AddIconButton           string
+	AddIconModalTitle       string
+	AddingIcon              string
+	AddIconEmptyError       string
+	RenameIconTitle         string
+	DeleteIconTitle         string
+	DeleteIconModalTitle    string
+	DeleteIconModalMessage  string
+	DeleteIconConfirmButton string
+	RenameIconModalTitle    string
+	ScoreOffsetReset        string
+	ScoreFontSizeLabel      string
+	FontLabel               string
+	FontDefaultLabel        string
+	MainFontSizeLabel       string
 
 	TitleEventLabel       string
 	TitleEventPlaceholder string
@@ -183,10 +199,12 @@ type WidgetScoreboardPanel struct {
 	FlagPlaceholder string
 	FlagNames       map[string]string
 
-	HideLogoTitle string
-	ShowLogoTitle string
-	HideFlagTitle string
-	ShowFlagTitle string
+	HideLogoTitle  string
+	ShowLogoTitle  string
+	HideFlagTitle  string
+	ShowFlagTitle  string
+	HideResetTitle string
+	ShowResetTitle string
 
 	RenameLogoTitle  string
 	DeleteLogoTitle  string

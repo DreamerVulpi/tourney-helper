@@ -1,4 +1,4 @@
-/* scoreboard-startgg-theme-v12 */
+/* scoreboard-startgg-theme-v15 */
 /*
  * Start.gg theme for tourney-helper scoreboard widget.
  *
@@ -23,6 +23,11 @@
 
     --sb-name-color: #111111;
     --sb-score-color: #ffffff;
+    --sb-reset-color: #ffffff;
+    --sb-reset-bg: #3b4350;
+    --sb-reset-border: #2f3742;
+    --sb-reset-radius: 3px;
+    --sb-reset-shadow: 0 2px 6px rgba(59, 67, 80, 0.25);
     --sb-score-box: #1f9e46;
     --sb-score-box-shadow: 0 0 10px rgba(31, 158, 70, 0.35);
 

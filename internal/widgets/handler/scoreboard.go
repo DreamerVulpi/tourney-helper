@@ -8,6 +8,7 @@ import (
 
 	"github.com/dreamervulpi/tourney-helper/config"
 	"github.com/dreamervulpi/tourney-helper/internal/widgets/flags"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/icons"
 	"github.com/dreamervulpi/tourney-helper/internal/widgets/logos"
 	"github.com/dreamervulpi/tourney-helper/internal/widgets/planks"
 	"github.com/dreamervulpi/tourney-helper/internal/widgets/service"
@@ -50,6 +51,7 @@ func (h *ScoreboardHandler) RegisterRoutes(r *gin.RouterGroup) {
 	r.GET("/scoreboard/flags/:code", h.GetFlag)
 	r.GET("/scoreboard/logos/:name", h.GetLogo)
 	r.GET("/scoreboard/planks/:name", h.GetPlank)
+	r.GET("/scoreboard/icons/:name", h.GetIcon)
 }
 
 func (h *ScoreboardHandler) GetScoreboard(c *gin.Context) {
@@ -123,6 +125,19 @@ func (h *ScoreboardHandler) GetLogo(c *gin.Context) {
 	name := c.Param("name")
 
 	data, err := logos.Read(name)
+	if err != nil {
+		c.Status(http.StatusNotFound)
+		return
+	}
+
+	c.Data(http.StatusOK, logoContentType(name), data)
+}
+
+// GetIcon отдаёт изображение пользовательской иконки.
+func (h *ScoreboardHandler) GetIcon(c *gin.Context) {
+	name := c.Param("name")
+
+	data, err := icons.Read(name)
 	if err != nil {
 		c.Status(http.StatusNotFound)
 		return

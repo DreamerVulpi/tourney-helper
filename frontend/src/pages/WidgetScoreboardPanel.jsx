@@ -42,14 +42,17 @@ import { useGetListFlags } from "../hooks/WidgetScoreboardPanel/useGetListFlags.
 import { useGetListScoreboardThemes } from "../hooks/WidgetScoreboardPanel/useGetListScoreboardThemes.jsx";
 import { useGetListLogos } from "../hooks/WidgetScoreboardPanel/useGetListLogos.jsx";
 import { useGetListPlanks } from "../hooks/WidgetScoreboardPanel/useGetListPlanks.jsx";
+import { useGetListIcons } from "../hooks/WidgetScoreboardPanel/useGetListIcons.jsx";
 import { useGetSystemFonts } from "../hooks/WidgetScoreboardPanel/useGetSystemFonts.jsx";
 import AddLogoModal from "../components/modals/AddLogoModal.jsx";
 import AddPlankModal from "../components/modals/AddPlankModal.jsx";
+import AddIconModal from "../components/modals/AddIconModal.jsx";
+import { ResetIconPicker, ResetIconPreview } from "../components/ui/ResetIconPicker.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import ConfirmModal from "../components/modals/ConfirmModal.jsx";
 import PromptModal from "../components/modals/PromptModal.jsx";
 import { ValidationModal } from "../components/ValidationModal.jsx";
-import { DeleteLogo, DeletePlank, RenameLogo, RenamePlank } from "../../wailsjs/go/application/App.js";
+import { DeleteIcon, DeleteLogo, DeletePlank, RenameIcon, RenameLogo, RenamePlank } from "../../wailsjs/go/application/App.js";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
 import { getThemeClasses } from "../utils/themeClasses.jsx";
 import { useThemeClasses } from "../hooks/App/useThemeClasses";
@@ -90,6 +93,8 @@ const clampMainFontSize = (s) => {
 const DEFAULT_SIDE = {
   teamTag: "",
   name: "Player",
+  resetIcon: "",
+  resetIconData: "",
   logoPath: "",
   flag: "",
   plateImage: "",
@@ -99,6 +104,7 @@ const DEFAULT_SIDE = {
   scoreFontSize: 28,
   showLogo: true,
   showFlag: true,
+  showReset: true,
 };
 
 const defaultSideFor = (side) => ({
@@ -169,6 +175,7 @@ const WidgetScoreboardPlate = ({
   const flagOptions = useGetListFlags(locale.FlagNames);
   const { logos: logoOptions, reload: reloadLogos } = useGetListLogos();
   const { planks: plankOptions, reload: reloadPlanks } = useGetListPlanks();
+  const { icons: iconOptions, reload: reloadIcons } = useGetListIcons();
   const systemFonts = useGetSystemFonts();
   const fontOptions = useMemo(
     () => [
@@ -184,6 +191,7 @@ const WidgetScoreboardPlate = ({
   const [activeRangeTab, setActiveRangeTab] = useState("scale");
   const [addLogoModal, setAddLogoModal] = useState({ open: false, side: null });
   const [addPlankModal, setAddPlankModal] = useState({ open: false, side: null });
+  const [addIconModal, setAddIconModal] = useState({ open: false, side: null });
   const [logoDelete, setLogoDelete] = useState({ open: false, name: null });
   const [logoRename, setLogoRename] = useState({ open: false, name: null });
   const [logoPending, setLogoPending] = useState(false);
@@ -192,6 +200,10 @@ const WidgetScoreboardPlate = ({
   const [plankRename, setPlankRename] = useState({ open: false, name: null });
   const [plankPending, setPlankPending] = useState(false);
   const [plankError, setPlankError] = useState("");
+  const [iconDelete, setIconDelete] = useState({ open: false, name: null });
+  const [iconRename, setIconRename] = useState({ open: false, name: null });
+  const [iconPending, setIconPending] = useState(false);
+  const [iconError, setIconError] = useState("");
 
   const handleWidgetScoreboardToggle = useStartToggle(
     isWidgetScoreboardRunning,
@@ -417,6 +429,69 @@ const WidgetScoreboardPlate = ({
     }
   }, [scoreboard, updateConfig, reloadPlanks]);
 
+  const handleDeleteIcon = useCallback(async () => {
+    const name = iconDelete.name;
+    if (!name) return;
+
+    setIconPending(true);
+    try {
+      await DeleteIcon(name);
+
+      const patch = {};
+      if (scoreboard?.P1?.resetIcon === name) {
+        patch.P1 = { ...scoreboard.P1, resetIcon: "", resetIconData: "" };
+      }
+      if (scoreboard?.P2?.resetIcon === name) {
+        patch.P2 = { ...scoreboard.P2, resetIcon: "", resetIconData: "" };
+      }
+      if (Object.keys(patch).length) {
+        patchScoreboard(updateConfig, patch);
+      }
+
+      await reloadIcons();
+      setIconDelete({ open: false, name: null });
+    } catch (err) {
+      setIconError(String(err?.message ?? err));
+    } finally {
+      setIconPending(false);
+    }
+  }, [iconDelete.name, scoreboard, updateConfig, reloadIcons]);
+
+  const handleRenameIcon = useCallback(async (oldName, newName) => {
+    if (!oldName || !newName?.trim()) return;
+
+    setIconPending(true);
+    try {
+      const info = await RenameIcon(oldName, newName.trim());
+
+      const patch = {};
+      if (scoreboard?.P1?.resetIcon === oldName) {
+        patch.P1 = {
+          ...scoreboard.P1,
+          resetIcon: info.name,
+          resetIconData: "",
+        };
+      }
+      if (scoreboard?.P2?.resetIcon === oldName) {
+        patch.P2 = {
+          ...scoreboard.P2,
+          resetIcon: info.name,
+          resetIconData: "",
+        };
+      }
+      if (Object.keys(patch).length) {
+        patchScoreboard(updateConfig, patch);
+      }
+
+      await reloadIcons();
+      setIconRename({ open: false, name: null });
+    } catch (err) {
+      setIconError(String(err?.message ?? err));
+    } finally {
+      setIconPending(false);
+    }
+  }, [scoreboard, updateConfig, reloadIcons]);
+
   // ---------- URL ----------
   const widgetBaseUrl = "http://localhost:8080/widgets/scoreboard";
   const baseIframeUrl = `${widgetBaseUrl}?preview=1`;
@@ -502,6 +577,7 @@ const WidgetScoreboardPlate = ({
     ...(plateMode === "custom"
       ? [{ id: "plank", icon: ImageIcon, label: locale.PlankLabel }]
       : []),
+    { id: "reset", icon: RotateCcw, label: locale.ResetTab },
     { id: "score", icon: Move, label: locale.ScoreTab },
   ];
 
@@ -531,7 +607,7 @@ const WidgetScoreboardPlate = ({
 
   // Блок с именем
   const nameField = (
-    <div key="name" className="flex-1 min-w-0">
+    <div key="name" className={`flex-1 min-w-0 ${isP2 ? "pl-4" : "pr-4"}`}>
       <Field
         icon={User}
         variant="input"
@@ -586,12 +662,12 @@ const WidgetScoreboardPlate = ({
 
     return (
       <div
-        className={`flex flex-col p-3 rounded-xl border gap-6 ${
+        className={`flex flex-col min-w-0 p-3 rounded-xl border gap-6 ${
           themeClasses?.tempSection || "bg-slate-800 border-slate-700"
         }`}
       >
         {/* Верхняя строка */}
-        <div className="flex items-center justify-between gap-2 -mt-1.5">
+        <div className="flex items-center justify-between gap-1 -mt-1.5">
           {topRow}
         </div>
 
@@ -861,6 +937,73 @@ const WidgetScoreboardPlate = ({
                   onClick={() => setAddPlankModal({ open: true, side })}
                 />
               </div>
+            ) : tab === "reset" ? (
+              <div className="flex gap-2 items-start pt-2">
+                <div className="relative w-18 h-18 flex-shrink-0">
+                  <div
+                    className={`w-full h-full rounded-lg border flex items-center justify-center overflow-hidden ${
+                      data.showReset !== false ? "" : "opacity-30"
+                    } ${themeClasses?.field || "bg-slate-900 border-slate-700"}`}
+                  >
+                    <ResetIconPreview
+                      value={data.resetIcon ?? ""}
+                      iconData={data.resetIconData ?? ""}
+                      customIcons={iconOptions}
+                      size={30}
+                    />
+                  </div>
+                  <button
+                    onClick={() => handleToggleVisibility(side, "showReset")}
+                    className={`absolute -bottom-1 -right-1 p-1 rounded-md border shadow-sm transition-colors z-10 ${
+                      data.showReset !== false
+                        ? "bg-slate-700 border-slate-600 text-green-400 hover:bg-slate-600"
+                        : "bg-slate-800 border-slate-700 text-slate-500 hover:bg-slate-700"
+                    }`}
+                    title={
+                      data.showReset !== false
+                        ? locale.HideResetTitle
+                        : locale.ShowResetTitle
+                    }
+                  >
+                    {data.showReset !== false ? (
+                      <Eye size={12} />
+                    ) : (
+                      <EyeOff size={12} />
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-2 flex-1 min-w-0">
+                  <ResetIconPicker
+                    value={data.resetIcon ?? ""}
+                    iconData={data.resetIconData ?? ""}
+                    customIcons={iconOptions}
+                    onChange={({ icon, iconData }) =>
+                      updateSide(side, {
+                        resetIcon: icon,
+                        resetIconData: iconData,
+                      })
+                    }
+                    onRenameCustom={(item) =>
+                      setIconRename({ open: true, name: item.value })
+                    }
+                    onDeleteCustom={(item) =>
+                      setIconDelete({ open: true, name: item.value })
+                    }
+                    locale={locale}
+                    themeClasses={themeClasses}
+                  />
+
+                  <Field
+                    variant="button"
+                    icon={ImagePlus}
+                    labelButton={locale.AddIconButton}
+                    height="2.1rem"
+                    themeClasses={themeClasses}
+                    onClick={() => setAddIconModal({ open: true, side })}
+                  />
+                </div>
+              </div>
             ) : tab === "score" ? (
               <div className="flex flex-col gap-2 pt-2 w-full">
                 <div className="flex flex-row items-start gap-3 w-full">
@@ -1051,7 +1194,7 @@ const WidgetScoreboardPlate = ({
           </div>
 
           {/* Игроки: P1 — центр — P2 */}
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-3 items-start shrink-0 flex-1">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-3 items-start shrink-0 flex-1 min-w-0">
             {/* Левая сторона (P1) */}
             {renderSideControls("P1", activeTabP1, setActiveTabP1)}
 
@@ -1201,6 +1344,77 @@ const WidgetScoreboardPlate = ({
         locale={locale}
         recommendedWidth={Math.round(readySideWidth)}
         recommendedHeight={64}
+      />
+
+      <AddIconModal
+        isOpen={addIconModal.open}
+        onClose={() => setAddIconModal({ open: false, side: null })}
+        onAdded={async (info) => {
+          if (addIconModal.side && info?.name) {
+            updateSide(addIconModal.side, {
+              resetIcon: info.name,
+              resetIconData: "",
+            });
+          }
+          await reloadIcons();
+        }}
+        themeClasses={themeClasses}
+        locale={locale}
+      />
+
+      <ConfirmModal
+        isOpen={iconDelete.open}
+        onClose={() => setIconDelete({ open: false, name: null })}
+        onConfirm={handleDeleteIcon}
+        loading={iconPending}
+        title={locale.DeleteIconModalTitle}
+        message={
+          (() => {
+            const parts = locale.DeleteIconModalMessage.split("%v");
+            return (
+              <>
+                {parts[0]}
+                <span className="text-red-500 font-black italic">
+                  {iconDelete.name}
+                </span>
+                {parts[1]}
+              </>
+            );
+          })()
+        }
+        confirmLabel={locale.DeleteIconConfirmButton}
+        icon={Trash2}
+        iconColor="red"
+        iconColorClass="text-red-500"
+        danger
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <PromptModal
+        isOpen={iconRename.open}
+        onClose={() => setIconRename({ open: false, name: null })}
+        onConfirm={(newName) => handleRenameIcon(iconRename.name, newName)}
+        loading={iconPending}
+        title={locale.RenameIconModalTitle}
+        label={locale.FileNameLabel}
+        defaultValue={stripLogoExtension(iconRename.name)}
+        confirmLabel={locale.SaveButton}
+        validate={(value) =>
+          value.trim() ? null : locale.NameCannotBeEmpty
+        }
+        icon={Pencil}
+        iconColor="amber"
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <ValidationModal
+        isOpen={!!iconError}
+        onClose={() => setIconError("")}
+        message={iconError}
+        locale={{ ErrorFillParams: locale.ErrorTitle, OkButtonLabel: locale.OkButtonLabel }}
+        themeClasses={themeClasses}
       />
 
       <ConfirmModal

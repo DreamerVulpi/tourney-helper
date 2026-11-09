@@ -123,6 +123,60 @@
             color: var(--sb-name-color);
         }
 
+        .reset-icon {
+            --sb-reset-size: clamp(20px, calc(var(--sb-main-size, 24px) * 1.25), 48px);
+            position: relative;
+            isolation: isolate;
+            width: var(--sb-reset-size);
+            height: var(--sb-reset-size);
+            flex: 0 0 var(--sb-reset-size);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: calc(var(--sb-reset-size) * 0.16);
+            color: var(--sb-reset-color, var(--sb-name-color));
+        }
+
+        .reset-icon::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background: var(--sb-reset-bg, transparent);
+            border: 1px solid var(--sb-reset-border, transparent);
+            border-radius: var(--sb-reset-radius, 3px);
+            box-shadow: var(--sb-reset-shadow, none);
+            transform: skewX(25deg);
+        }
+
+        .side-right .reset-icon::before {
+            transform: skewX(-25deg);
+        }
+
+        .reset-icon-mask {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: currentColor;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
+
+        .reset-icon img {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
         .team-tag {
             flex: 0 0 auto;
             max-width: 140px;
@@ -239,6 +293,10 @@
                     <div class="logo hidden" id="p1-logo"><img id="p1-logo-img" alt=""></div>
                     <div class="team-tag" id="p1-team-tag">{{ .Scoreboard.P1.TeamTag }}</div>
                     <div class="name" id="p1-name">{{ .Scoreboard.P1.Name }}</div>
+                    <div class="reset-icon hidden" id="p1-reset">
+                        <span class="reset-icon-mask" id="p1-reset-mask"></span>
+                        <img id="p1-reset-img" alt="">
+                    </div>
                     <div class="score" id="p1-score"><span class="score-value" id="p1-score-value">{{ .Scoreboard.P1.Points }}</span></div>
                 </div>
             </div>
@@ -251,6 +309,10 @@
             <div class="side side-right" id="p2-side">
                 <div class="side-content">
                     <div class="score" id="p2-score"><span class="score-value" id="p2-score-value">{{ .Scoreboard.P2.Points }}</span></div>
+                    <div class="reset-icon hidden" id="p2-reset">
+                        <span class="reset-icon-mask" id="p2-reset-mask"></span>
+                        <img id="p2-reset-img" alt="">
+                    </div>
                     <div class="name" id="p2-name">{{ .Scoreboard.P2.Name }}</div>
                     <div class="team-tag" id="p2-team-tag">{{ .Scoreboard.P2.TeamTag }}</div>
                     <div class="flag hidden" id="p2-flag"><img id="p2-flag-img" alt=""></div>
@@ -264,6 +326,268 @@
 <script>
     const initialState = {{ .StateJSON }};
     const FLAG_BASE = '/widgets/scoreboard/flags/';
+    const DEFAULT_RESET_ICON = 'lucide:Crown';
+    const DEFAULT_RESET_ICON_DATA = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY3Jvd24iIGFyaWEtaGlkZGVuPSJ0cnVlIj48cGF0aCBkPSJNMTEuNTYyIDMuMjY2YS41LjUgMCAwIDEgLjg3NiAwTDE1LjM5IDguODdhMSAxIDAgMCAwIDEuNTE2LjI5NEwyMS4xODMgNS41YS41LjUgMCAwIDEgLjc5OC41MTlsLTIuODM0IDEwLjI0NmExIDEgMCAwIDEtLjk1Ni43MzRINS44MWExIDEgMCAwIDEtLjk1Ny0uNzM0TDIuMDIgNi4wMmEuNS41IDAgMCAxIC43OTgtLjUxOWw0LjI3NiAzLjY2NGExIDEgMCAwIDAgMS41MTYtLjI5NHoiPjwvcGF0aD48cGF0aCBkPSJNNSAyMWgxNCI+PC9wYXRoPjwvc3ZnPg==';
+
+    const FLAG_CODES = {
+        ad: "AND",
+        ae: "ARE",
+        af: "AFG",
+        ag: "ATG",
+        ai: "AIA",
+        al: "ALB",
+        am: "ARM",
+        ao: "AGO",
+        aq: "ATA",
+        ar: "ARG",
+        as: "ASM",
+        at: "AUT",
+        au: "AUS",
+        aw: "ABW",
+        ax: "ALA",
+        az: "AZE",
+        ba: "BIH",
+        bb: "BRB",
+        bd: "BGD",
+        be: "BEL",
+        bf: "BFA",
+        bg: "BGR",
+        bh: "BHR",
+        bi: "BDI",
+        bj: "BEN",
+        bl: "BLM",
+        bm: "BMU",
+        bn: "BRN",
+        bo: "BOL",
+        bq: "BES",
+        br: "BRA",
+        bs: "BHS",
+        bt: "BTN",
+        bv: "BVT",
+        bw: "BWA",
+        by: "BLR",
+        bz: "BLZ",
+        ca: "CAN",
+        cc: "CCK",
+        cd: "COD",
+        cf: "CAF",
+        cg: "COG",
+        ch: "CHE",
+        ci: "CIV",
+        ck: "COK",
+        cl: "CHL",
+        cm: "CMR",
+        cn: "CHN",
+        co: "COL",
+        cr: "CRI",
+        cu: "CUB",
+        cv: "CPV",
+        cw: "CUW",
+        cx: "CXR",
+        cy: "CYP",
+        cz: "CZE",
+        de: "DEU",
+        dj: "DJI",
+        dk: "DNK",
+        dm: "DMA",
+        do: "DOM",
+        dz: "DZA",
+        ec: "ECU",
+        ee: "EST",
+        eg: "EGY",
+        eh: "ESH",
+        er: "ERI",
+        es: "ESP",
+        et: "ETH",
+        eu: "EUR",
+        fi: "FIN",
+        fj: "FJI",
+        fk: "FLK",
+        fm: "FSM",
+        fo: "FRO",
+        fr: "FRA",
+        ga: "GAB",
+        gb: "GBR",
+        gd: "GRD",
+        ge: "GEO",
+        gf: "GUF",
+        gg: "GGY",
+        gh: "GHA",
+        gi: "GIB",
+        gl: "GRL",
+        gm: "GMB",
+        gn: "GIN",
+        gp: "GLP",
+        gq: "GNQ",
+        gr: "GRC",
+        gs: "SGS",
+        gt: "GTM",
+        gu: "GUM",
+        gw: "GNB",
+        gy: "GUY",
+        hk: "HKG",
+        hm: "HMD",
+        hn: "HND",
+        hr: "HRV",
+        ht: "HTI",
+        hu: "HUN",
+        id: "IDN",
+        ie: "IRL",
+        il: "ISR",
+        im: "IMN",
+        in: "IND",
+        io: "IOT",
+        iq: "IRQ",
+        ir: "IRN",
+        is: "ISL",
+        it: "ITA",
+        je: "JEY",
+        jm: "JAM",
+        jo: "JOR",
+        jp: "JPN",
+        ke: "KEN",
+        kg: "KGZ",
+        kh: "KHM",
+        ki: "KIR",
+        km: "COM",
+        kn: "KNA",
+        kp: "PRK",
+        kr: "KOR",
+        kw: "KWT",
+        ky: "CYM",
+        kz: "KAZ",
+        la: "LAO",
+        lb: "LBN",
+        lc: "LCA",
+        li: "LIE",
+        lk: "LKA",
+        lr: "LBR",
+        ls: "LSO",
+        lt: "LTU",
+        lu: "LUX",
+        lv: "LVA",
+        ly: "LBY",
+        ma: "MAR",
+        mc: "MCO",
+        md: "MDA",
+        me: "MNE",
+        mf: "MAF",
+        mg: "MDG",
+        mh: "MHL",
+        mk: "MKD",
+        ml: "MLI",
+        mm: "MMR",
+        mn: "MNG",
+        mo: "MAC",
+        mp: "MNP",
+        mq: "MTQ",
+        mr: "MRT",
+        ms: "MSR",
+        mt: "MLT",
+        mu: "MUS",
+        mv: "MDV",
+        mw: "MWI",
+        mx: "MEX",
+        my: "MYS",
+        mz: "MOZ",
+        na: "NAM",
+        nc: "NCL",
+        ne: "NER",
+        nf: "NFK",
+        ng: "NGA",
+        ni: "NIC",
+        nl: "NLD",
+        no: "NOR",
+        np: "NPL",
+        nr: "NRU",
+        nu: "NIU",
+        nz: "NZL",
+        om: "OMN",
+        pa: "PAN",
+        pe: "PER",
+        pf: "PYF",
+        pg: "PNG",
+        ph: "PHL",
+        pk: "PAK",
+        pl: "POL",
+        pm: "SPM",
+        pn: "PCN",
+        pr: "PRI",
+        ps: "PSE",
+        pt: "PRT",
+        pw: "PLW",
+        py: "PRY",
+        qa: "QAT",
+        re: "REU",
+        ro: "ROU",
+        rs: "SRB",
+        ru: "RUS",
+        rw: "RWA",
+        sa: "SAU",
+        sb: "SLB",
+        sc: "SYC",
+        sd: "SDN",
+        se: "SWE",
+        sg: "SGP",
+        sh: "SHN",
+        si: "SVN",
+        sj: "SJM",
+        sk: "SVK",
+        sl: "SLE",
+        sm: "SMR",
+        sn: "SEN",
+        so: "SOM",
+        sr: "SUR",
+        ss: "SSD",
+        st: "STP",
+        sv: "SLV",
+        sx: "SXM",
+        sy: "SYR",
+        sz: "SWZ",
+        tc: "TCA",
+        td: "TCD",
+        tf: "ATF",
+        tg: "TGO",
+        th: "THA",
+        tj: "TJK",
+        tk: "TKL",
+        tl: "TLS",
+        tm: "TKM",
+        tn: "TUN",
+        to: "TON",
+        tr: "TUR",
+        tt: "TTO",
+        tv: "TUV",
+        tw: "TWN",
+        tz: "TZA",
+        ua: "UKR",
+        ug: "UGA",
+        um: "UMI",
+        un: "UNO",
+        us: "USA",
+        uy: "URY",
+        uz: "UZB",
+        va: "VAT",
+        vc: "VCT",
+        ve: "VEN",
+        vg: "VGB",
+        vi: "VIR",
+        vn: "VNM",
+        vu: "VUT",
+        wf: "WLF",
+        ws: "WSM",
+        xk: "XKX",
+        ye: "YEM",
+        yt: "MYT",
+        za: "ZAF",
+        zm: "ZMB",
+        zw: "ZWE",
+    };
+
+    function flagCountryCode(code) {
+        const key = String(code || '').trim().toLowerCase().replace(/\.png$/, '');
+        return FLAG_CODES[key] || key.toUpperCase();
+    }
 
     let currentTheme = initialState && initialState.theme ? initialState.theme : 'default';
 
@@ -286,6 +610,12 @@
         if (!value) return '';
         if (/^(https?:|data:|blob:)/i.test(value)) return value;
         return '/widgets/scoreboard/planks/' + encodeURIComponent(value);
+    }
+
+    function resolveIconUrl(value) {
+        if (!value) return '';
+        if (/^(https?:|data:|blob:)/i.test(value)) return value;
+        return '/widgets/scoreboard/icons/' + encodeURIComponent(value);
     }
 
     function applySide(prefix, side, hideLogos, hideFlags, plateMode) {
@@ -323,16 +653,63 @@
             }
         }
 
+        const showLogo = !hideLogos && side.showLogo !== false && !!side.logoPath;
+        // Logo has priority over flag when both are enabled.
+        const showFlag = !hideFlags && side.showFlag !== false && !!side.flag && !showLogo;
+
         const teamEl = byId(prefix + '-team-tag');
         if (teamEl) {
-            teamEl.textContent = teamTag;
+            const tagText = showFlag ? flagCountryCode(side.flag) : teamTag;
+            teamEl.textContent = tagText;
             // Show the separate team tag only when both name and tag are set.
-            teamEl.classList.toggle('hidden', !teamTag || !rawName);
+            teamEl.classList.toggle('hidden', !tagText || !rawName);
+        }
+
+        const resetEl = byId(prefix + '-reset');
+        const resetMask = byId(prefix + '-reset-mask');
+        const resetImg = byId(prefix + '-reset-img');
+        const resetIcon = String(side.resetIcon || '').trim() || DEFAULT_RESET_ICON;
+        const resetIconData = String(side.resetIconData || '').trim()
+            || (resetIcon === DEFAULT_RESET_ICON ? DEFAULT_RESET_ICON_DATA : '');
+        const resetIsLucide = resetIcon.startsWith('lucide:');
+        const showReset = side.showReset !== false && !!resetIcon && (!resetIsLucide || !!resetIconData);
+
+        if (resetEl) resetEl.classList.toggle('hidden', !showReset);
+
+        if (!showReset) {
+            if (resetMask) {
+                resetMask.style.display = 'none';
+                resetMask.style.webkitMaskImage = '';
+                resetMask.style.maskImage = '';
+            }
+            if (resetImg) {
+                resetImg.style.display = 'none';
+                resetImg.removeAttribute('src');
+            }
+        } else if (resetIsLucide) {
+            if (resetMask) {
+                resetMask.style.display = 'block';
+                resetMask.style.webkitMaskImage = `url("${resetIconData}")`;
+                resetMask.style.maskImage = `url("${resetIconData}")`;
+            }
+            if (resetImg) {
+                resetImg.style.display = 'none';
+                resetImg.removeAttribute('src');
+            }
+        } else {
+            if (resetMask) {
+                resetMask.style.display = 'none';
+                resetMask.style.webkitMaskImage = '';
+                resetMask.style.maskImage = '';
+            }
+            if (resetImg) {
+                resetImg.style.display = 'block';
+                resetImg.src = resolveIconUrl(resetIcon);
+            }
         }
 
         const logoEl = byId(prefix + '-logo');
         const logoImg = byId(prefix + '-logo-img');
-        const showLogo = !hideLogos && side.showLogo !== false && !!side.logoPath;
 
         if (logoEl) logoEl.classList.toggle('hidden', !showLogo);
         if (logoImg) {
@@ -345,8 +722,6 @@
 
         const flagEl = byId(prefix + '-flag');
         const flagImg = byId(prefix + '-flag-img');
-        // Logo has priority over flag when both are enabled.
-        const showFlag = !hideFlags && side.showFlag !== false && !!side.flag && !showLogo;
 
         if (flagEl) flagEl.classList.toggle('hidden', !showFlag);
         if (flagImg) {
@@ -405,6 +780,11 @@
         lastMainFontSize = safe;
 
         const value = safe > 0 ? safe + 'px' : '';
+        if (safe > 0) {
+            document.documentElement.style.setProperty('--sb-main-size', value);
+        } else {
+            document.documentElement.style.removeProperty('--sb-main-size');
+        }
         ['p1-team-tag', 'p2-team-tag'].forEach((id) => {
             const el = byId(id);
             if (el) el.style.fontSize = value;
