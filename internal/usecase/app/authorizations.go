@@ -12,6 +12,13 @@ import (
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
 
+func (a *App) oauthBaseURL() string {
+	if a.OAuthServer == nil {
+		return ""
+	}
+	return a.OAuthServer.BaseURL()
+}
+
 func (a *App) checkStartggSlot(ctx context.Context, slot config.ClientCredentials, index int) config.AuthStatus {
 	if slot.ClientID == "" || slot.SecretClient == "" {
 		return config.AuthStatusUnauthorized
@@ -20,7 +27,7 @@ func (a *App) checkStartggSlot(ctx context.Context, slot config.ClientCredential
 	tokenPath := config.GetClientTokenPath(a.ActiveProfile, "startgg", index)
 
 	client := &auth.AuthClient{
-		Config:         auth.GetStartggOauth2(slot.ClientID, slot.SecretClient),
+		Config:         auth.GetStartggOauth2(slot.ClientID, slot.SecretClient, a.oauthBaseURL()+"/startgg/callback"),
 		TokenFile:      tokenPath,
 		CallbackPath:   "/startgg/callback",
 		CallbackServer: a.OAuthServer,
@@ -50,7 +57,7 @@ func (a *App) checkDiscordSlot(ctx context.Context, slot config.ClientCredential
 	tokenPath := config.GetClientTokenPath(a.ActiveProfile, "discord", index)
 
 	client := &auth.AuthClient{
-		Config:         auth.GetDiscordOauth2(slot.ClientID, slot.SecretClient),
+		Config:         auth.GetDiscordOauth2(slot.ClientID, slot.SecretClient, a.oauthBaseURL()+"/discord/callback"),
 		TokenFile:      tokenPath,
 		CallbackPath:   "/discord/callback",
 		CallbackServer: a.OAuthServer,

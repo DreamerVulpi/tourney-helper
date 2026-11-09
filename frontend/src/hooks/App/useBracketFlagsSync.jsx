@@ -5,6 +5,7 @@ import { useAppStore } from "../../store/useAppStore";
 export function useBracketFlagsSync() {
   const bracket = useAppStore((s) => s.widgets?.bracket);
   const isLoaded = useAppStore((s) => s.isLoaded);
+  const widgetBaseUrl = useAppStore((s) => s.widgetBaseUrl);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -34,12 +35,14 @@ export function useBracketFlagsSync() {
     }
 
 
-    fetch("http://localhost:8080/widgets/bracket/flags", {
+    if (!widgetBaseUrl) return;
+
+    fetch(`${widgetBaseUrl}/widgets/bracket/flags`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(flags),
     }).catch((err) => {
       console.warn("[bracket-sync] POST flags failed:", err);
     });
-  }, [bracket, isLoaded]);
+  }, [bracket, isLoaded, widgetBaseUrl]);
 }

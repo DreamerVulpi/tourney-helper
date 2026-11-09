@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 
@@ -13,8 +14,10 @@ import (
 )
 
 type OAuthCallbackServer struct {
-	server *http.Server
-	mux    *http.ServeMux
+	server   *http.Server
+	mux      *http.ServeMux
+	listener net.Listener
+	baseURL  string
 
 	texts pages.Pages
 
@@ -92,13 +95,41 @@ func (o *OAuthCallbackServer) router(w http.ResponseWriter, r *http.Request) {
 	handler(w, r)
 }
 
-func (o *OAuthCallbackServer) Start() {
+func (o *OAuthCallbackServer) Start() error {
+	ln, err := net.Listen("tcp", o.server.Addr)
+	if err != nil {
+		// The default port is busy (for example, another app instance is
+		// already running). Fall back to an ephemeral port so each instance
+		// gets its own isolated callback endpoint.
+		ln, err = net.Listen("tcp", "127.0.0.1:0")
+		if err != nil {
+			return fmt.Errorf("listen OAuth callback server: %w", err)
+		}
+	}
+
+	o.mu.Lock()
+	o.listener = ln
+	o.baseURL = "http://" + ln.Addr().String()
+	o.mu.Unlock()
+
+	logger.Log(entityLogger.Info, fmt.Sprintf("OAuth callback server listening on %s", o.baseURL))
+
 	go func() {
-		err := o.server.ListenAndServe()
+		err := o.server.Serve(ln)
 		if err != nil && err != http.ErrServerClosed {
 			logger.Log(entityLogger.Error, fmt.Sprintf("OAuth callback server error: %v\n", err))
 		}
 	}()
+
+	return nil
+}
+
+// BaseURL returns the actual address the callback server is listening on.
+// It may differ from the requested address when the default port is busy.
+func (o *OAuthCallbackServer) BaseURL() string {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return o.baseURL
 }
 
 func (o *OAuthCallbackServer) Register(path string, state string, codeChan chan string) {

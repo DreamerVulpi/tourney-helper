@@ -198,6 +198,9 @@ const IntegrationsPanel = ({ locale, updateConfig, debouncedSaveAuthorizations }
 
   const setAuthFlags = useAppStore((s) => s.setAuthFlags);
 
+  const oauthBaseUrl = useAppStore((s) => s.oauthBaseUrl);
+  const oauthCallbackBaseUrl = oauthBaseUrl || "http://127.0.0.1:7310";
+
   // ============================================================
   // Тема
   // ============================================================
@@ -611,7 +614,7 @@ const IntegrationsPanel = ({ locale, updateConfig, debouncedSaveAuthorizations }
                         <Field
                           label={locale.Platform.RedirectURL}
                           variant="copy"
-                          value={`http://127.0.0.1:7310/${activeAuthorizationSettings}/callback`}
+                          value={`${oauthCallbackBaseUrl}/${activeAuthorizationSettings}/callback`}
                           icon={HardDriveDownload}
                           themeClasses={themeClasses}
                         />
@@ -667,7 +670,7 @@ const IntegrationsPanel = ({ locale, updateConfig, debouncedSaveAuthorizations }
                           <Field
                             label={locale.Platform.RedirectURL}
                             variant="copy"
-                            value="http://127.0.0.1:7310/discord/callback"
+                            value={`${oauthCallbackBaseUrl}/discord/callback`}
                             icon={HardDriveDownload}
                             themeClasses={themeClasses}
                           />

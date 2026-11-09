@@ -88,7 +88,9 @@ func main() {
 	}
 
 	app.OAuthServer = auth.NewOAuthCallbackServer(auth.Addr, locale.Lang(app.SettingsCfg.Language))
-	app.OAuthServer.Start()
+	if err := app.OAuthServer.Start(); err != nil {
+		logger.Log(entityLogger.Error, "OAuth callback server: "+err.Error())
+	}
 
 	errWailsRun := wails.Run(&options.App{
 		Title:     "TourneyHelper",

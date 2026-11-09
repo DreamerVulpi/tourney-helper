@@ -5,6 +5,8 @@ import {
   LoadAuthorizations,
   RestoreClientStatuses,
   GetActiveProfileName,
+  GetOAuthBaseURL,
+  GetWidgetBaseURL,
 } from "../../../wailsjs/go/application/App.js";
 import { useAppStore } from "../../store/useAppStore";
 import { pruneSelections } from "../../utils/integrations.js";
@@ -14,6 +16,13 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
 
   const activeProfile = await GetActiveProfileName();
   store.setActiveProfile(activeProfile || "");
+
+  const [oauthBaseUrl, widgetBaseUrl] = await Promise.all([
+    GetOAuthBaseURL(),
+    GetWidgetBaseURL(),
+  ]);
+  store.setOAuthBaseUrl(oauthBaseUrl || "");
+  store.setWidgetBaseUrl(widgetBaseUrl || "");
 
   const settings = await LoadSettingsApp();
   

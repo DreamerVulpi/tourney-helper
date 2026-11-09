@@ -13,18 +13,28 @@ import (
 
 // acquireWidgetServer увеличивает счётчик активных виджетов и запускает
 // общий HTTP-сервер, если он ещё не запущен.
-func (a *App) acquireWidgetServer() {
+func (a *App) acquireWidgetServer() error {
 	a.widgetServerMu.Lock()
 	defer a.widgetServerMu.Unlock()
 
 	a.widgetServerRefs++
 	if a.widgetServerRefs > 1 {
-		return
+		return nil
 	}
 
-	logger.Log(entityLogger.Info, "Widget server starting on :8080")
+	errCh, err := a.WidgetServer.StartAsync(":8080")
+	if err != nil {
+		// Default port is busy (another app instance). Use an ephemeral
+		// port so every instance gets its own isolated widget server.
+		errCh, err = a.WidgetServer.StartAsync(":0")
+		if err != nil {
+			a.widgetServerRefs--
+			return fmt.Errorf("start widget server: %w", err)
+		}
+	}
 
-	errCh := a.WidgetServer.StartAsync(":8080")
+	logger.Log(entityLogger.Info, "Widget server starting on "+a.WidgetServer.BaseURL())
+
 	go func() {
 		err := <-errCh
 		if err != nil && !errors.Is(err, http.ErrServerClosed) && !errors.Is(err, context.DeadlineExceeded) {
@@ -33,6 +43,8 @@ func (a *App) acquireWidgetServer() {
 			logger.Log(entityLogger.Info, "Widget server stopped (context deadline exceeded during shutdown)")
 		}
 	}()
+
+	return nil
 }
 
 // releaseWidgetServer уменьшает счётчик активных виджетов и останавливает

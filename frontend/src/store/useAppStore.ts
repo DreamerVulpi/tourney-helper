@@ -24,6 +24,10 @@ interface AppState {
   // Initialization
   isLoaded: boolean;
 
+  // Local server URLs (unique per application instance)
+  oauthBaseUrl: string;
+  widgetBaseUrl: string;
+
   // Profile
   activeProfile: string;
 
@@ -65,6 +69,9 @@ interface AppState {
   ) => void;
 
   setActiveProfile: (p: string) => void;
+
+  setOAuthBaseUrl: (url: string) => void;
+  setWidgetBaseUrl: (url: string) => void;
 
   setSidePanelCollapsed: (v: boolean) => void;
   setIsSidePanelHovered: (v: boolean) => void;
@@ -113,6 +120,10 @@ export const useAppStore = create<AppState>((set) => ({
 
   // Profile
   activeProfile: '',
+
+  // Local server URLs
+  oauthBaseUrl: '',
+  widgetBaseUrl: '',
 
   // Side panel
   sidePanelCollapsed: false,
@@ -175,6 +186,9 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
   setActiveProfile: (activeProfile) => set({ activeProfile }),
+
+  setOAuthBaseUrl: (oauthBaseUrl) => set({ oauthBaseUrl }),
+  setWidgetBaseUrl: (widgetBaseUrl) => set({ widgetBaseUrl }),
 
   setSidePanelCollapsed: (sidePanelCollapsed) => set({ sidePanelCollapsed }),
   setIsSidePanelHovered: (isSidePanelHovered) => set({ isSidePanelHovered }),

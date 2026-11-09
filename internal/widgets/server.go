@@ -1,7 +1,9 @@
 package widget
 
 import (
+	"net"
 	"net/http"
+	"sync"
 	"time"
 
 	"context"
@@ -29,6 +31,9 @@ type Server struct {
 	router     *gin.Engine
 	bracket    *handler.Handler
 	scoreboard *handler.ScoreboardHandler
+
+	mu      sync.RWMutex
+	baseURL string
 }
 
 func NewServer() *Server {
@@ -60,38 +65,69 @@ func NewServer() *Server {
 }
 
 func (s *Server) Start(addr string) error {
-	srv := &http.Server{
-		Addr:    addr,
-		Handler: s.router,
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
 	}
-	s.httpServer = srv
 
-	return srv.ListenAndServe()
+	srv := &http.Server{Handler: s.router}
+
+	s.mu.Lock()
+	s.httpServer = srv
+	s.baseURL = baseURLFromListener(ln)
+	s.mu.Unlock()
+
+	return srv.Serve(ln)
 }
 
 // StartAsync синхронно создаёт HTTP-сервер и запускает прослушивание в фоне.
-// Возвращает канал с результатом ListenAndServe.
-func (s *Server) StartAsync(addr string) <-chan error {
-	srv := &http.Server{
-		Addr:    addr,
-		Handler: s.router,
+// Возвращает канал с результатом Serve.
+func (s *Server) StartAsync(addr string) (<-chan error, error) {
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		return nil, err
 	}
+
+	srv := &http.Server{Handler: s.router}
+
+	s.mu.Lock()
 	s.httpServer = srv
+	s.baseURL = baseURLFromListener(ln)
+	s.mu.Unlock()
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- srv.ListenAndServe()
+		errCh <- srv.Serve(ln)
 	}()
 
-	return errCh
+	return errCh, nil
+}
+
+// BaseURL returns the URL the widget server is actually listening on.
+func (s *Server) BaseURL() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.baseURL
+}
+
+func baseURLFromListener(ln net.Listener) string {
+	_, port, err := net.SplitHostPort(ln.Addr().String())
+	if err != nil {
+		return ""
+	}
+	return "http://127.0.0.1:" + port
 }
 
 func (s *Server) Stop(ctx context.Context) error {
-	if s.httpServer == nil {
+	s.mu.RLock()
+	srv := s.httpServer
+	s.mu.RUnlock()
+
+	if srv == nil {
 		return nil
 	}
 
-	return s.httpServer.Shutdown(ctx)
+	return srv.Shutdown(ctx)
 }
 
 func (s *Server) SetBracketService(bracketService *service.BracketService) {

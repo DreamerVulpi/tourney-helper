@@ -1,8 +1,10 @@
 import {
   LaunchWidgetScoreboard,
   StopWidgetScoreboard,
+  GetWidgetBaseURL,
 } from "../../../wailsjs/go/application/App.js";
 import { SERVICE_STATUS } from "../../utils/listStatus.js";
+import { useAppStore } from "../../store/useAppStore";
 
 export function useStartToggle(
   isWidgetScoreboardRunning,
@@ -35,6 +37,9 @@ export function useStartToggle(
       setStatusWidgetScoreboard(SERVICE_STATUS.STARTING);
 
       await LaunchWidgetScoreboard(widgets);
+
+      const baseUrl = await GetWidgetBaseURL();
+      useAppStore.getState().setWidgetBaseUrl(baseUrl || "");
 
       setIsWidgetScoreboardRunning(true);
       setStatusWidgetScoreboard(SERVICE_STATUS.RUNNING);

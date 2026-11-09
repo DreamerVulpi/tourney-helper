@@ -1,8 +1,10 @@
 import {
   LaunchWidgetBracket,
   StopWidgetBracket,
+  GetWidgetBaseURL,
 } from "../../../wailsjs/go/application/App.js";
 import { SERVICE_STATUS } from "../../utils/listStatus.js";
+import { useAppStore } from "../../store/useAppStore";
 
 export function useStartToggle(
   isWidgetBracketRunning,
@@ -52,6 +54,9 @@ export function useStartToggle(
       setStatusWidgetBracket(SERVICE_STATUS.STARTING);
 
       await LaunchWidgetBracket(platform, slotIndex, authorizations, widgets);
+
+      const baseUrl = await GetWidgetBaseURL();
+      useAppStore.getState().setWidgetBaseUrl(baseUrl || "");
 
       setIsWidgetBracketRunning(true);
       setStatusWidgetBracket(SERVICE_STATUS.RUNNING);

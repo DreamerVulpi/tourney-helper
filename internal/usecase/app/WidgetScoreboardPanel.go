@@ -64,7 +64,13 @@ func (a *App) LaunchWidgetScoreboard(cfgWidgets config.WidgetsCfg) error {
 	a.scoreboardRunning = true
 	a.mu.Unlock()
 
-	a.acquireWidgetServer()
+	if err := a.acquireWidgetServer(); err != nil {
+		a.mu.Lock()
+		a.scoreboardRunning = false
+		a.mu.Unlock()
+		logger.Log(entityLogger.Error, err.Error())
+		return err
+	}
 
 	return nil
 }

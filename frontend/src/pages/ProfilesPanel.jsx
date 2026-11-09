@@ -112,7 +112,7 @@ const ProfilesPanel = ({ locale }) => {
   const handleImport = useCallback(async () => {
     try {
         const name = await importNew();
-        console.log("[handleImport] name:", name, "type:", typeof name);
+        if (!name) return;
         showSuccess(locale.ImportSuccessTitle, locale.ImportSuccessMsg);
     } catch (e) {
         console.error("[handleImport] error:", e);

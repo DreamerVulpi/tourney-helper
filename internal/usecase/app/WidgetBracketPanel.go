@@ -121,7 +121,13 @@ func (a *App) LaunchWidgetBracket(
 	a.bracketRunning = true
 	a.mu.Unlock()
 
-	a.acquireWidgetServer()
+	if err := a.acquireWidgetServer(); err != nil {
+		a.mu.Lock()
+		a.bracketRunning = false
+		a.mu.Unlock()
+		logger.Log(entityLogger.Error, err.Error())
+		return err
+	}
 
 	return nil
 }

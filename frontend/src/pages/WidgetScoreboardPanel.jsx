@@ -135,6 +135,7 @@ const WidgetScoreboardPlate = ({
 }) => {
   // ---- store ----
   const theme = useAppStore((s) => s.theme);
+  const widgetServerBaseUrl = useAppStore((s) => s.widgetBaseUrl);
   const setStatusWidgetScoreboard = useAppStore(
     (s) => s.setStatusWidgetScoreboard,
   );
@@ -493,7 +494,7 @@ const WidgetScoreboardPlate = ({
   }, [scoreboard, updateConfig, reloadIcons]);
 
   // ---------- URL ----------
-  const widgetBaseUrl = "http://localhost:8080/widgets/scoreboard";
+  const widgetBaseUrl = `${widgetServerBaseUrl}/widgets/scoreboard`;
   const baseIframeUrl = `${widgetBaseUrl}?preview=1`;
 
   const scoreboardUrl = useMemo(() => {
@@ -547,7 +548,7 @@ const WidgetScoreboardPlate = ({
     iframe.addEventListener("load", sendState);
 
     const syncTimer = setTimeout(() => {
-      fetch("http://localhost:8080/widgets/scoreboard/state", {
+      fetch(`${widgetBaseUrl}/state`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(scoreboardState),
@@ -565,6 +566,7 @@ const WidgetScoreboardPlate = ({
     iframeRef_WidgetScoreboard,
     scoreboardState,
     iframeState,
+    widgetBaseUrl,
   ]);
 
   const isStartDisabled = isProcessing || isWidgetScoreboardRunning;

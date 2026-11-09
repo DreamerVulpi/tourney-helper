@@ -48,6 +48,7 @@ const clampScale = (s) => {
 // Все флаги передаём явно (0/1). Это делает инициализацию виджета
 // детерминированной и не зависит от localStorage браузера.
 const buildBracketURL = (
+  baseUrl,
   bracketId,
   {
     theme,
@@ -61,7 +62,7 @@ const buildBracketURL = (
     cacheBust = false,
   },
 ) => {
-  if (!bracketId) return "";
+  if (!baseUrl || !bracketId) return "";
 
   const params = new URLSearchParams();
   params.set("theme", theme || "StartGG");
@@ -76,7 +77,7 @@ const buildBracketURL = (
 
   if (cacheBust) params.set("_ts", String(Date.now()));
 
-  return `http://localhost:8080/widgets/bracket/${bracketId}?${params.toString()}`;
+  return `${baseUrl}/widgets/bracket/${bracketId}?${params.toString()}`;
 };
 
 const WidgetBracketPanel = ({
@@ -93,6 +94,7 @@ const WidgetBracketPanel = ({
      // ---- store ----
   const theme          = useAppStore((s) => s.theme);
   const lang           = useAppStore((s) => s.lang);
+  const widgetBaseUrl  = useAppStore((s) => s.widgetBaseUrl);
   const setStatusWidgetBracket = useAppStore((s) => s.setStatusWidgetBracket);
   
   // ---- производные ----
@@ -252,7 +254,7 @@ const WidgetBracketPanel = ({
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
 
   // Полный URL с флагами — нужен только для отображения в UI (LinkOfWidget)
-  const bracketUrl = useMemo(() => buildBracketURL(bracketId, {
+  const bracketUrl = useMemo(() => buildBracketURL(widgetBaseUrl, bracketId, {
       theme: themeBracket,
       lang,
       clearBackground,
@@ -260,7 +262,7 @@ const WidgetBracketPanel = ({
       bracketMode,
       scale,
       autoRefresh,
-  }), [bracketId, themeBracket, lang, clearBackground, hideStages, bracketMode, scale, autoRefresh]);
+  }), [widgetBaseUrl, bracketId, themeBracket, lang, clearBackground, hideStages, bracketMode, scale, autoRefresh]);
 
 
   // ---------- URL iframe на момент старта ----------
@@ -277,7 +279,7 @@ const WidgetBracketPanel = ({
           return;
       }
 
-      setIframeSrc(buildBracketURL(bracketId, {
+      setIframeSrc(buildBracketURL(widgetBaseUrl, bracketId, {
           theme: themeBracket,
           lang,
           clearBackground,
@@ -290,7 +292,7 @@ const WidgetBracketPanel = ({
       }));
       setIframeLoaded(false);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isWidgetBracketRunning, bracketId, themeBracket, lang]);
+  }, [isWidgetBracketRunning, widgetBaseUrl, bracketId, themeBracket, lang]);
 
  
 

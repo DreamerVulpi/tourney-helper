@@ -269,12 +269,8 @@ iframe {
  *   --scrollbar-thumb-hover
  */
 
-.bracket-wrapper {
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb, rgba(160, 160, 160, 0.35))
-                     var(--scrollbar-track, transparent);
-}
-
+/* Не используем scrollbar-width/scrollbar-color: в Chromium они
+ * отключают ::-webkit-scrollbar и возвращают системные стрелки. */
 .bracket-wrapper::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -693,6 +689,7 @@ html.preview-mode .previous-bracket-plate {
 
 html.player-search-active .bracket-wrapper {
     visibility: hidden;
+    overflow: hidden !important;
 }
 
 .player-path {
@@ -707,6 +704,51 @@ html.player-search-active .bracket-wrapper {
 
 .player-path.hidden {
     display: none;
+}
+
+/* Скроллбар вьюера пути — в стиле темы, без системных стрелок.
+ * Не задаём scrollbar-width/scrollbar-color: в Chromium они отключают
+ * ::-webkit-scrollbar, из-за чего возвращаются системные стрелки. */
+.player-path::-webkit-scrollbar,
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.player-path::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, transparent);
+    border-radius: 0;
+}
+
+.player-path::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, rgba(160, 160, 160, 0.35));
+    border-radius: 0;
+    border: none;
+}
+
+.player-path::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover, rgba(200, 200, 200, 0.55));
+}
+
+.player-path::-webkit-scrollbar-corner,
+html::-webkit-scrollbar-corner,
+body::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track, transparent);
+}
+
+.player-path::-webkit-scrollbar-button,
+html::-webkit-scrollbar-button,
+body::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+    width: 0;
 }
 
 .player-path__inner {
