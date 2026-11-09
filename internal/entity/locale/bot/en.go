@@ -38,6 +38,7 @@ var En = Lang{
 		FinalsFormat:             "**Finals format**",
 		FormatDescription:        "** (First to %v win)**",
 		FT:                       "FT%v",
+		BO:                       "BO%v",
 		Stage:                    "**Stage**",
 		RandomStage:              "Randomly selected **ALWAYS** if the opponent did not continue the set by pressing the \"Rematch\" button",
 		Rounds:                   "**Rounds in 1 match**",

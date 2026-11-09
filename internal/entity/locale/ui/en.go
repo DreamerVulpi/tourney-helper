@@ -488,8 +488,8 @@ var En = Ui{
 	SidePanel: SidePanel{
 		NotificationSystemLabel: "Sending Notifications",
 		DatabaseLabel:           "Player Database",
-		WidgetOfBracketLabel:    "Bracket Widget",
-		WidgetOfScoreboardLabel: "Bracket Scoreboard",
+		WidgetOfBracketLabel:    "Widget bracket",
+		WidgetOfScoreboardLabel: "Widget scoreboard",
 		IntegrationsLabel:       "Integrations",
 		VersionLabel:            "Version:",
 		LogsLabel:               "Logs",

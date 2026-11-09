@@ -1,6 +1,54 @@
 package config
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// MatchFormat is a match format label such as "FT2" or "BO3".
+// Older configs stored a plain integer (e.g. 2), which is normalized to "FT2".
+type MatchFormat string
+
+func (m *MatchFormat) UnmarshalTOML(value any) error {
+	switch v := value.(type) {
+	case int64:
+		*m = MatchFormat(fmt.Sprintf("FT%d", v))
+	case string:
+		*m = normalizeMatchFormat(v)
+	default:
+		return fmt.Errorf("invalid match format: %v", value)
+	}
+	return nil
+}
+
+func (m *MatchFormat) UnmarshalJSON(data []byte) error {
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		*m = normalizeMatchFormat(text)
+		return nil
+	}
+
+	var number int
+	if err := json.Unmarshal(data, &number); err != nil {
+		return err
+	}
+	*m = MatchFormat(fmt.Sprintf("FT%d", number))
+	return nil
+}
+
+func normalizeMatchFormat(value string) MatchFormat {
+	value = strings.ToUpper(strings.TrimSpace(value))
+	if value == "" {
+		return ""
+	}
+	if _, err := strconv.Atoi(value); err == nil {
+		return MatchFormat("FT" + value)
+	}
+	return MatchFormat(value)
+}
 
 type AuthStatus string
 
@@ -94,11 +142,11 @@ type WidgetsCfg struct {
 // ============================================================
 
 type RulesMatches struct {
-	StandardFormat int    `toml:"standardFormat" json:"standardFormat"`
-	FinalsFormat   int    `toml:"finalsFormat" json:"finalsFormat"`
-	Stage          string `toml:"stage" json:"stage"`
-	Rounds         int    `toml:"rounds" json:"rounds"`
-	Duration       int    `toml:"duration" json:"duration"`
+	StandardFormat MatchFormat `toml:"standardFormat" json:"standardFormat"`
+	FinalsFormat   MatchFormat `toml:"finalsFormat" json:"finalsFormat"`
+	Stage          string      `toml:"stage" json:"stage"`
+	Rounds         int         `toml:"rounds" json:"rounds"`
+	Duration       int         `toml:"duration" json:"duration"`
 }
 
 type StreamLobby struct {

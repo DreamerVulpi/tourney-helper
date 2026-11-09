@@ -146,7 +146,7 @@ export const useAppStore = create<AppState>((set) => ({
   tools: {
     notificationSystem: {
       urlToTournament: "",
-      rules: { standardFormat: 2, finalsFormat: 3, rounds: 3, duration: 60, stage: "Random" },
+      rules: { standardFormat: "FT2", finalsFormat: "FT3", rounds: 3, duration: 60, stage: "Random" },
       stream: { area: "Any", language: "EN", conn: "Wired", crossplatform: false, passcode: "0000", linkToLobby: "" },
       logo: { img: "" },
       tournamentSlug: "",

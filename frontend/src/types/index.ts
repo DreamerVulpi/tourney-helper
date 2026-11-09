@@ -62,8 +62,8 @@ export interface ToolsCfg {
 }
 
 export interface RulesMatches {
-  standardFormat: number;
-  finalsFormat: number;
+  standardFormat: string;
+  finalsFormat: string;
   stage: string;
   rounds: number;
   duration: number;

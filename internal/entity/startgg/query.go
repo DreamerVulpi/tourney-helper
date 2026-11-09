@@ -163,6 +163,7 @@ const (
 				page: $page
 				perPage: $perPage
 				sortType: STANDARD
+				filters: {state: $states}
 			){
 			pageInfo{
 				total

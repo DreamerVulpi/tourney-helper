@@ -160,8 +160,8 @@ func NewDefaultTools() ToolsCfg {
 		NotificationSystem: NotificationSystem{
 			UrlToTournament: "",
 			Rules: RulesMatches{
-				StandardFormat: 2,
-				FinalsFormat:   3,
+				StandardFormat: "FT2",
+				FinalsFormat:   "FT3",
 				Stage:          "Any",
 				Rounds:         3,
 				Duration:       60,

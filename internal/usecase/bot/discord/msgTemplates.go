@@ -3,6 +3,7 @@ package discord
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -12,6 +13,21 @@ import (
 	entitySender "github.com/dreamervulpi/tourney-helper/internal/entity/sender"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 )
+
+func formatDisplay(local entityLocale.Lang, raw string) string {
+	value := strings.ToUpper(strings.TrimSpace(raw))
+	if value == "" {
+		value = "FT2"
+	}
+
+	if strings.HasPrefix(value, "BO") {
+		return fmt.Sprintf(local.InviteMessage.BO, strings.TrimPrefix(value, "BO"))
+	}
+
+	number := strings.TrimPrefix(value, "FT")
+	return fmt.Sprintf(local.InviteMessage.FT, number) +
+		fmt.Sprintf(local.InviteMessage.FormatDescription, number)
+}
 
 const (
 	ColorDefault = 0x3498db // Blue: standard matches and information messages (Hex: #3498db)
@@ -133,7 +149,7 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 			{Name: local.InviteMessage.Discord, Value: discordDisplay, Inline: true},
 			{Name: local.InviteMessage.CheckIn, Value: set.FullInviteLink},
 			{Name: local.InviteMessage.SettingsHeader},
-			{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, format) + fmt.Sprintf(local.InviteMessage.FormatDescription, format), Inline: true},
+			{Name: local.InviteMessage.StandardFormat, Value: formatDisplay(local, string(format)), Inline: true},
 			{Name: local.InviteMessage.Stage, Value: fieldStage(local, s.params.rulesMatches.Stage), Inline: true},
 			{Name: local.InviteMessage.Rounds, Value: fmt.Sprintf("%v", s.params.rulesMatches.Rounds), Inline: true},
 			{Name: local.InviteMessage.Duration, Value: fmt.Sprintf(local.InviteMessage.DurationCount, s.params.rulesMatches.Duration), Inline: true},
@@ -155,7 +171,7 @@ func (s *DiscordSender) prepareMsgSetData(opponent entitySender.Participant, set
 			{Name: local.StreamLobbyMessage.StreamLink, Value: stream},
 			{Name: local.StreamLobbyMessage.MessageHeader, Value: set.FullInviteLink},
 			{Name: local.StreamLobbyMessage.ParamsHeader},
-			{Name: local.InviteMessage.StandardFormat, Value: fmt.Sprintf(local.InviteMessage.FT, format) + fmt.Sprintf(local.InviteMessage.FormatDescription, format), Inline: true},
+			{Name: local.InviteMessage.StandardFormat, Value: formatDisplay(local, string(format)), Inline: true},
 			{Name: local.StreamLobbyMessage.Area, Value: fieldArea(local, s.params.streamLobby.Area), Inline: true},
 			{Name: local.StreamLobbyMessage.Language, Value: fieldLanguage(local, s.params.streamLobby.Language), Inline: true},
 			{Name: local.StreamLobbyMessage.TypeConnection, Value: fieldConnection(local, s.params.streamLobby.Conn), Inline: true},

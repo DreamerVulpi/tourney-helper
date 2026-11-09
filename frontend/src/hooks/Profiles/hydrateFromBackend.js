@@ -67,8 +67,8 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
       notificationSystem: {
         urlToTournament: ns.urlToTournament ?? "",
         rules: {
-          standardFormat: Number(ns.rules?.standardFormat) || 2,
-          finalsFormat:   Number(ns.rules?.finalsFormat)   || 3,
+          standardFormat: normalizeFormat(ns.rules?.standardFormat, "FT2"),
+          finalsFormat:   normalizeFormat(ns.rules?.finalsFormat,   "FT3"),
           rounds:         Number(ns.rules?.rounds)         || 3,
           duration:       Number(ns.rules?.duration)       || 60,
           stage:          ns.rules?.stage ?? "Random",
@@ -197,6 +197,12 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
   }));
 
   store.setSelectionsHydrated(true);
+}
+
+function normalizeFormat(value, fallback) {
+  if (value === null || value === undefined || value === "") return fallback;
+  if (typeof value === "number") return `FT${value}`;
+  return String(value).toUpperCase();
 }
 
 function normalizePlatform(platform) {

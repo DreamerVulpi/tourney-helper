@@ -44,6 +44,7 @@ type InviteMessage struct {
 	FinalsFormat             string
 	FormatDescription        string
 	FT                       string
+	BO                       string
 	Stage                    string
 	RandomStage              string
 	Rounds                   string
