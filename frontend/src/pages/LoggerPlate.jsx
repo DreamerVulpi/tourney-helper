@@ -53,7 +53,6 @@ const LoggerPlate = ({ locale}) => {
             <button
               type="button"
               onClick={handleOpenLogsFolder}
-              title={locale.OpenLogsFolder}
               className={`flex shrink-0 items-center justify-center gap-1.5 h-6 px-2 rounded-md text-[9px] font-black uppercase italic tracking-wider whitespace-nowrap text-slate-500 transition-colors ${themeClasses.titlebar.buttonHover}`}
             >
               <FolderOpen size={12} />
@@ -62,7 +61,6 @@ const LoggerPlate = ({ locale}) => {
             <button
               type="button"
               onClick={handleExportCurrentLog}
-              title={locale.ExportCurrentLog}
               className={`flex shrink-0 items-center justify-center gap-1.5 h-6 px-2 rounded-md text-[9px] font-black uppercase italic tracking-wider whitespace-nowrap text-slate-500 transition-colors ${themeClasses.titlebar.buttonHover}`}
             >
               <FileUp size={12} />
