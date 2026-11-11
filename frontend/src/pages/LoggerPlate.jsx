@@ -42,16 +42,19 @@ const LoggerPlate = ({ locale}) => {
         className={`h-8 flex items-center px-8 border-b transition-colors duration-300 ${themeClasses.titlebar.base}`}
       >
         <div className="flex items-center gap-2">
-          <Database size={16} style={{ width: "0.875rem", height: "0.875rem", }} className="text-blue-500" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
-            {locale.Label}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <Database size={12} className="shrink-0 text-blue-500" />
+            <span className="text-[9px] font-black uppercase italic tracking-wider text-slate-500 whitespace-nowrap">
+              {locale.Label}
+            </span>
+          </div>
+          <div className="h-3 w-px shrink-0 ml-1 bg-slate-500/30" />
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={handleOpenLogsFolder}
               title={locale.OpenLogsFolder}
-              className={`flex shrink-0 items-center justify-center gap-1.5 h-6 px-2 rounded-md text-[9px] font-black uppercase italic tracking-wider whitespace-nowrap transition-colors ${themeClasses.titlebar.buttonHover}`}
+              className={`flex shrink-0 items-center justify-center gap-1.5 h-6 px-2 rounded-md text-[9px] font-black uppercase italic tracking-wider whitespace-nowrap text-slate-500 transition-colors ${themeClasses.titlebar.buttonHover}`}
             >
               <FolderOpen size={12} />
               <span>{locale.OpenLogsFolder}</span>
@@ -60,7 +63,7 @@ const LoggerPlate = ({ locale}) => {
               type="button"
               onClick={handleExportCurrentLog}
               title={locale.ExportCurrentLog}
-              className={`flex shrink-0 items-center justify-center gap-1.5 h-6 px-2 rounded-md text-[9px] font-black uppercase italic tracking-wider whitespace-nowrap transition-colors ${themeClasses.titlebar.buttonHover}`}
+              className={`flex shrink-0 items-center justify-center gap-1.5 h-6 px-2 rounded-md text-[9px] font-black uppercase italic tracking-wider whitespace-nowrap text-slate-500 transition-colors ${themeClasses.titlebar.buttonHover}`}
             >
               <FileUp size={12} />
               <span>{locale.ExportCurrentLog}</span>
