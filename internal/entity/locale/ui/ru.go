@@ -525,6 +525,8 @@ var Ru = Ui{
 	LogPanel: LogPanel{
 		Label:                            "Логи",
 		ClearButtonLabel:                 "Очистить",
+		OpenLogsFolder:                   "Открыть папку логов",
+		ExportCurrentLog:                 "Экспортировать текущий лог",
 		LocaleLoaded:                     "Локаль загружена",
 		LocaleNotLoaded:                  "Локаль не загружена",
 		MainConfigSuccessfulLoaded:       "Основная конфигурация загружено успешно",

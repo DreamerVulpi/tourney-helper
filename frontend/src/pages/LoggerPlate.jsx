@@ -1,10 +1,11 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Database } from "lucide-react";
+import { Database, FolderOpen, FileUp } from "lucide-react";
 import { createLoadLogs } from "../hooks/App/useLogs.jsx";
 import { useThemeClasses } from "../hooks/App/useThemeClasses"
 import { getThemeClasses } from "../utils/themeClasses";
 import { useAppStore } from "../store/useAppStore";
+import { OpenLogsFolder, ExportCurrentLog } from "../../wailsjs/go/application/App.js";
 
 const LoggerPlate = ({ locale}) => {
   const theme = useAppStore((s) => s.theme);
@@ -19,6 +20,18 @@ const LoggerPlate = ({ locale}) => {
         return () => clearInterval(interval);
     }, [loadLogs]);
 
+  const handleOpenLogsFolder = useCallback(() => {
+    OpenLogsFolder().catch((e) => {
+      console.error("[logs] failed to open folder:", e);
+    });
+  }, []);
+
+  const handleExportCurrentLog = useCallback(() => {
+    ExportCurrentLog().catch((e) => {
+      console.error("[logs] failed to export current log:", e);
+    });
+  }, []);
+
   return (
     <footer
       className={`h-40 border-t backdrop-blur-xl z-40 overflow-hidden flex flex-col ${
@@ -26,13 +39,33 @@ const LoggerPlate = ({ locale}) => {
       }`}
     >
       <div
-        className={`h-8 flex items-center justify-between px-8 border-b transition-colors duration-300 ${themeClasses.titlebar.base}`}
+        className={`h-8 flex items-center px-8 border-b transition-colors duration-300 ${themeClasses.titlebar.base}`}
       >
         <div className="flex items-center gap-2">
           <Database size={16} style={{ width: "0.875rem", height: "0.875rem", }} className="text-blue-500" />
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
             {locale.Label}
           </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleOpenLogsFolder}
+              title={locale.OpenLogsFolder}
+              className={`flex shrink-0 items-center justify-center gap-1.5 h-6 px-2 rounded-md text-[9px] font-black uppercase italic tracking-wider whitespace-nowrap transition-colors ${themeClasses.titlebar.buttonHover}`}
+            >
+              <FolderOpen size={12} />
+              <span>{locale.OpenLogsFolder}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleExportCurrentLog}
+              title={locale.ExportCurrentLog}
+              className={`flex shrink-0 items-center justify-center gap-1.5 h-6 px-2 rounded-md text-[9px] font-black uppercase italic tracking-wider whitespace-nowrap transition-colors ${themeClasses.titlebar.buttonHover}`}
+            >
+              <FileUp size={12} />
+              <span>{locale.ExportCurrentLog}</span>
+            </button>
+          </div>
         </div>
       </div>
 

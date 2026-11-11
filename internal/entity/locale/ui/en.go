@@ -477,6 +477,8 @@ var En = Ui{
 	LogPanel: LogPanel{
 		Label:                            "Logs",
 		ClearButtonLabel:                 "Clear",
+		OpenLogsFolder:                   "Open logs folder",
+		ExportCurrentLog:                 "Export current log",
 		LocaleLoaded:                     "Locale is loaded",
 		LocaleNotLoaded:                  "Locale isn't loaded",
 		MainConfigSuccessfulLoaded:       "Main configuration loaded successfully",

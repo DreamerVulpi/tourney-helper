@@ -89,6 +89,8 @@ type NotificationSystemPanel struct {
 type LogPanel struct {
 	Label                            string
 	ClearButtonLabel                 string
+	OpenLogsFolder                   string
+	ExportCurrentLog                 string
 	LocaleLoaded                     string
 	LocaleNotLoaded                  string
 	MainConfigSuccessfulLoaded       string
