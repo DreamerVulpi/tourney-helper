@@ -60,6 +60,29 @@ export const TabbedSection = ({
     };
   }, [updateScrollState]);
 
+  useEffect(() => {
+    const el = tabsRef.current;
+    if (!el) return;
+
+    const active = el.querySelector('[data-tab-active="true"]');
+    if (!active) return;
+
+    const padding = 12;
+    const containerRect = el.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+
+    let delta = 0;
+    if (activeRect.left < containerRect.left + padding) {
+      delta = activeRect.left - containerRect.left - padding;
+    } else if (activeRect.right > containerRect.right - padding) {
+      delta = activeRect.right - containerRect.right + padding;
+    }
+
+    if (delta !== 0) {
+      el.scrollBy({ left: delta, behavior: "smooth" });
+    }
+  }, [activeTab]);
+
   const scrollTabs = (direction) => {
     const el = tabsRef.current;
     if (!el) return;
@@ -97,7 +120,7 @@ export const TabbedSection = ({
         <div
           ref={tabsRef}
           onScroll={updateScrollState}
-          className="flex flex-1 min-w-0 items-center gap-3 overflow-x-auto no-scrollbar"
+          className="flex flex-1 min-w-0 items-center gap-3 overflow-x-auto no-scrollbar px-1.5 py-1"
         >
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -108,6 +131,7 @@ export const TabbedSection = ({
                 onClick={() => {
                   onChange(tab.id);
                 }}
+                data-tab-active={isActive ? "true" : "false"}
                 className={`
                   flex shrink-0 items-center gap-2 transition-all duration-200
                   ${isActive ? "opacity-100 scale-105" : "opacity-40 hover:opacity-70"}
