@@ -102,9 +102,9 @@ var En = Lang{
 		Stopped:   "Stopped.",
 	},
 	DonateField: Field{
-		Name:  "Ko-Fi",
-		Emoji: "☕",
-		URL:   "https://ko-fi.com/dreamervulpi",
+		Name:  "DonatePay",
+		Emoji: "💸",
+		URL:   "https://new.donatepay.ru/@dreamervulpi",
 	},
 	SubscribeField: Field{
 		Name:  "Subscribe",

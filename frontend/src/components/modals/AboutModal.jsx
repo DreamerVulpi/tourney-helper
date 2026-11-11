@@ -1,10 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Field } from "../ui/Field.jsx";
 import { Modal } from "../modals/Modal.jsx";
-import { Book, Bug, Coins, GitBranch, HandCoins, Info, Recycle, RecycleIcon, RotateCcw, Rss, Settings, Upload } from "lucide-react";
+import { Book, Bug, Coins, GitBranch, HandCoins, Info, Recycle, RecycleIcon, RotateCcw, Rss, Upload } from "lucide-react";
 import { MessageBox } from "./MessageBox.jsx";
 import { GetVersion, OpenURL } from "../../../wailsjs/go/application/App.js"
 import { useCheckUpdate } from "../../hooks/App/useCheckUpdate.jsx"
+import ProjectLogo from "../../../../branding/icons/64.png";
+
+const ProjectLogoIcon = ({ className = "", size = 36 }) => (
+  <img
+    src={ProjectLogo}
+    alt="TourneyHelper"
+    width={size}
+    height={size}
+    className={className}
+  />
+);
 
 const AboutModal = ({
   isOpen,
@@ -24,9 +35,9 @@ const AboutModal = ({
   },[]);
 
   const content = (
-    <div className={`p-6 max-h-[70vh] overflow-y-auto space-y-6`}>
+    <div className={`p-6 max-h-[80vh] overflow-y-auto space-y-6`}>
       <MessageBox
-        icon={Settings}
+        icon={ProjectLogoIcon}
         iconColor={"text-blue-500"}
         borderClass={
           "bg-blue-500/5 border-blue-500/20"

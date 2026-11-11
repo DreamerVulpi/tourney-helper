@@ -14,7 +14,7 @@
     <a href="https://github.com/DreamerVulpi/tourney-helper/issues"><img src="https://img.shields.io/badge/🪲 Report a bug-Issues-red" alt="ReportBug"></a>
 </p>
 <p align="center">
-    <a href="https://ko-fi.com/dreamervulpi"><img src="https://img.shields.io/badge/Donate-Ko--Fi-pink?logo=ko-fi" alt="Donate"></a>
+    <a href="https://new.donatepay.ru/@dreamervulpi"><img src="https://img.shields.io/badge/💸 Donate-DonatePay-darkgreen.svg" alt="DonatePay"></a>
     <a href="https://boosty.to/dreamervulpi"><img src="https://img.shields.io/badge/Subscription-Boosty-orange?logo=boosty" alt="Subscribe"></a>
 </p>
 
