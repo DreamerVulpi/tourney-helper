@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   UserPlus,
   CopyPlus,
+  Pencil,
   Share,
   Trash2,
   FileDown,
@@ -63,6 +64,8 @@ const ProfilesPanel = ({ locale }) => {
   const [profileToDelete, setProfileToDelete] = useState("");
   const [duplicatePromptOpen, setDuplicatePromptOpen] = useState(false);
   const [duplicateSource, setDuplicateSource] = useState("");
+  const [renamePromptOpen, setRenamePromptOpen] = useState(false);
+  const [renameSource, setRenameSource] = useState("");
   const [pendingAction, setPendingAction] = useState(null);
   const confirmMsgParts = locale.ValidationProfile?.ConfirmMsg?.split("%v");
 
@@ -86,7 +89,7 @@ const ProfilesPanel = ({ locale }) => {
 
   const {
     profiles, active,
-    switchTo, add, remove, duplicate,
+    switchTo, add, remove, duplicate, rename,
     exportCurrent, importNew,
     exportWidgetsContent, importWidgetsContent,
   } = useProfiles();
@@ -160,6 +163,17 @@ const ProfilesPanel = ({ locale }) => {
     return null;
   }, [active, profiles, locale]);
 
+  const validateRenameName = useCallback((newName) => {
+    const trimmed = newName.trim();
+    if (!trimmed) return locale.ValidationProfile.NameCannotBeEmpty;
+    if (trimmed.length > 17) return locale.ValidationProfile.NameTooLong;
+    if (!PROFILE_NAME_RE.test(trimmed)) return locale.ValidationProfile.InvalidCharacters;
+    if (trimmed !== renameSource && profiles.some((p) => p.name === trimmed)) {
+      return locale.ValidationProfile?.NameAlreadyExists;
+    }
+    return null;
+  }, [renameSource, profiles, locale]);
+
   const nextProfileName = (existing) => {
     let n = 1;
     while (existing.includes(`Profile #${n}`)) n++;
@@ -206,6 +220,28 @@ const ProfilesPanel = ({ locale }) => {
     }
   }, [active, duplicateSource, duplicate, showError, locale]);
 
+  const confirmRename = useCallback(async (target) => {
+    const newName = String(target ?? "").trim();
+    if (!renameSource) return;
+
+    if (!newName || newName === renameSource) {
+      setRenamePromptOpen(false);
+      setRenameSource("");
+      return;
+    }
+
+    setPendingAction("rename");
+    try {
+      await rename(renameSource, newName);
+      setRenamePromptOpen(false);
+      setRenameSource("");
+    } catch (e) {
+      showError(String(e?.message ?? e ?? locale.ValidationProfile.UnableRenameProfile));
+    } finally {
+      setPendingAction(null);
+    }
+  }, [renameSource, rename, showError, locale]);
+
   const handleSwitchRow = useCallback(async (profile) => {
     if (!profile?.name || profile.name === active) return;
     try {
@@ -227,6 +263,13 @@ const ProfilesPanel = ({ locale }) => {
     if (!source) return;
     setDuplicateSource(source);
     setDuplicatePromptOpen(true);
+  }, [active]);
+
+  const handleRenameProfile = useCallback((profileName) => {
+    const source = profileName || active;
+    if (!source) return;
+    setRenameSource(source);
+    setRenamePromptOpen(true);
   }, [active]);
 
   const formatDateTime = useCallback((value) => {
@@ -280,13 +323,19 @@ const ProfilesPanel = ({ locale }) => {
     },
     {
       key: "actions",
-      size: 0.95,
+      size: 1.15,
       header: "",
       render: (p) => (
         <div
-          className="flex items-center justify-end gap-1.5"
+          className="flex items-center justify-end gap-1"
           onClick={(event) => event.stopPropagation()}
         >
+          <IconAction
+            icon={<Pencil size={13} />}
+            label={locale.Rename}
+            onClick={() => handleRenameProfile(p.name)}
+            className="bg-blue-600/10 text-blue-500 border-blue-500/20 hover:bg-blue-600 hover:text-white"
+          />
           <IconAction
             icon={<Trash2 size={13} />}
             label={locale.Delete}
@@ -315,6 +364,7 @@ const ProfilesPanel = ({ locale }) => {
     formatDateTime,
     handleDeleteProfile,
     handleDuplicateProfile,
+    handleRenameProfile,
     handleExport,
   ]);
 
@@ -539,6 +589,23 @@ const ProfilesPanel = ({ locale }) => {
       validate={validateProfileName}
       icon={CopyPlus}
       iconColor="amber"
+      theme={theme}
+      themeClasses={themeClasses}
+    />
+
+    <PromptModal
+      isOpen={renamePromptOpen}
+      onClose={() => { setRenamePromptOpen(false); setRenameSource(""); }}
+      onConfirm={confirmRename}
+      loading={pendingAction === "rename"}
+      title={locale.RenameProfile}
+      label={locale.NameNewProfileLabel}
+      placeholder={locale.PlaceholderProfile}
+      defaultValue={renameSource}
+      confirmLabel={locale.ConfirmButtonRenameLabel}
+      validate={validateRenameName}
+      icon={Pencil}
+      iconColor="blue"
       theme={theme}
       themeClasses={themeClasses}
     />

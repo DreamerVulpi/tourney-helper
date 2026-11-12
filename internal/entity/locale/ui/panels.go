@@ -27,13 +27,16 @@ type ProfilesPanel struct {
 	Add                         string
 	Delete                      string
 	Duplicate                   string
+	Rename                      string
 	Share                       string
 	ImportProfile               string
 	Placeholder                 string
 	DuplicateProfile            string
+	RenameProfile               string
 	NameNewProfileLabel         string
 	PlaceholderProfile          string
 	ConfirmButtonDuplicateLabel string
+	ConfirmButtonRenameLabel    string
 	SearchLabel                 string
 	NoItemsLabel                string
 	ErrorFillParams             string

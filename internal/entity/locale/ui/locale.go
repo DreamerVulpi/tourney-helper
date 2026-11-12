@@ -10,6 +10,7 @@ type ValidationProfile struct {
 	UnableCreateProfile string
 	UnableDeleteProfile string
 	UnableCopyProfile   string
+	UnableRenameProfile string
 	UnableSwitchProfile string
 	ConfirmMsg          string
 	ConfirmButtonLabel  string

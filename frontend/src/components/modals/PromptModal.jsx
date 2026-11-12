@@ -4,6 +4,13 @@ import { Pencil } from "lucide-react";
 import { Modal } from "./Modal.jsx";
 import { Field } from "../ui/Field.jsx";
 
+const BUTTON_COLORS = {
+  amber: "bg-amber-600 hover:bg-amber-500",
+  blue: "bg-blue-600 hover:bg-blue-500",
+  green: "bg-green-600 hover:bg-green-500",
+  red: "bg-red-600 hover:bg-red-500",
+};
+
 const PromptModal = ({
   isOpen,
   onClose,
@@ -51,7 +58,7 @@ const PromptModal = ({
         w-full flex items-center justify-center gap-3
         h-[56px] rounded-xl
         font-black uppercase italic tracking-wider text-white
-        bg-amber-600 hover:bg-amber-500
+        ${BUTTON_COLORS[iconColor] ?? BUTTON_COLORS.amber}
         ${loading ? "opacity-50 cursor-not-allowed" : ""}
       `}
     >
