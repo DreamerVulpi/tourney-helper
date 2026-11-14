@@ -43,6 +43,7 @@ func LoadWidgets(profileName string) (WidgetsCfg, error) {
 }
 
 func SaveWidgets(profileName string, cfg WidgetsCfg) error {
+	cfg.SyncActiveSlots()
 	path := filepath.Join(GetProfileConfigsDir(profileName), WidgetsFile)
 	return writeTOML(path, cfg)
 }
@@ -61,6 +62,7 @@ func applyWidgetsDefaults(cfg *WidgetsCfg) {
 	if cfg.Scoreboard.MainFontSize <= 0 {
 		cfg.Scoreboard.MainFontSize = 24
 	}
+	cfg.EnsureSlots()
 }
 
 // ============================================================

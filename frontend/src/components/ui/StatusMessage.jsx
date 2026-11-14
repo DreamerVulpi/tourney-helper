@@ -59,6 +59,7 @@ function StatusMessageBase({
     className = "",
     theme = "dark",        // "dark" | "light"
     animate = true,        // slide-in анимация
+    compact = false,       // компактный вариант (меньше высота/шрифт)
 }) {
     const cfg = VARIANTS[variant] ?? VARIANTS.warning;
     const Icon = CustomIcon ?? cfg.icon;
@@ -71,10 +72,8 @@ function StatusMessageBase({
                 flex
                 items-center
                 gap-2
-                px-4
-                py-2
                 border
-                rounded-xl
+                ${compact ? "px-2.5 py-1 rounded-lg" : "px-4 py-2 rounded-xl"}
                 ${cfg.text}
                 ${palette.bg}
                 ${palette.border}
@@ -82,9 +81,9 @@ function StatusMessageBase({
                 ${className}
             `}
         >
-            <Icon size={14} className="shrink-0" />
+            <Icon size={compact ? 12 : 14} className="shrink-0" />
 
-            <span className="font-bold uppercase italic tracking-tight leading-tight">
+            <span className={`font-bold uppercase italic tracking-tight leading-tight ${compact ? "text-[10px]" : ""}`}>
                 {text}
             </span>
         </div>

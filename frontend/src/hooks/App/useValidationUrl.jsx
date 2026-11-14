@@ -26,6 +26,7 @@ export function UrlValidationMessage({ validation, theme, locale }) {
                 variant="success"
                 text={text}
                 theme={theme}
+                compact
             />
         );
     }
@@ -36,6 +37,7 @@ export function UrlValidationMessage({ validation, theme, locale }) {
                 variant="warning"
                 text={locale.UnsupportedPlatform || "Unsupported platform"}
                 theme={theme}
+                compact
             />
         );
     }
@@ -50,6 +52,7 @@ export function UrlValidationMessage({ validation, theme, locale }) {
             variant="warning"
             text={text}
             theme={theme}
+            compact
         />
     );
 }

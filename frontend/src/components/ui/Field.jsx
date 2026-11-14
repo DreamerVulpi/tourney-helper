@@ -117,7 +117,7 @@ function FieldBase({
             border
             border-dashed
             px-3
-            ${themeClasses.field}
+            ${solid ? themeClasses.solidField : themeClasses.field}
           `}
         >
           <div className="flex items-center justify-center w-full gap-2">

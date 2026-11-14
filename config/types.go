@@ -136,6 +136,13 @@ type WidgetScoreboard struct {
 type WidgetsCfg struct {
 	Bracket    WidgetBracket    `toml:"bracket" json:"bracket"`
 	Scoreboard WidgetScoreboard `toml:"scoreboard" json:"scoreboard"`
+
+	BracketSlots         []WidgetBracket    `toml:"bracketSlots" json:"bracketSlots"`
+	ScoreboardSlots      []WidgetScoreboard `toml:"scoreboardSlots" json:"scoreboardSlots"`
+	BracketSlotNames     []string           `toml:"bracketSlotNames" json:"bracketSlotNames"`
+	ScoreboardSlotNames  []string           `toml:"scoreboardSlotNames" json:"scoreboardSlotNames"`
+	ActiveBracketSlot    int                `toml:"activeBracketSlot" json:"activeBracketSlot"`
+	ActiveScoreboardSlot int                `toml:"activeScoreboardSlot" json:"activeScoreboardSlot"`
 }
 
 // ============================================================

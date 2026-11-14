@@ -56,6 +56,12 @@ export interface WidgetScoreboard {
 export interface WidgetsCfg {
   bracket: WidgetBracket;
   scoreboard: WidgetScoreboard;
+  bracketSlots: WidgetBracket[];
+  scoreboardSlots: WidgetScoreboard[];
+  bracketSlotNames: string[];
+  scoreboardSlotNames: string[];
+  activeBracketSlot: number;
+  activeScoreboardSlot: number;
 }
 
 export interface ToolsCfg {

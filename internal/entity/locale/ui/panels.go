@@ -139,6 +139,18 @@ type WidgetBracketPanel struct {
 	HideLogosLabel        string
 	HideFlagsLabel        string
 
+	SlotLabel              string
+	SlotNameLabel          string
+	RenameSlotTitle        string
+	ResetSlotTitle         string
+	ResetSlotModalTitle    string
+	ResetSlotModalMessage  string
+	ResetSlotConfirmButton string
+	ResetSlotNameButton    string
+	RenameSlotModalTitle   string
+	SaveButton             string
+	NameCannotBeEmpty      string
+
 	ExternalErrorTitle       string
 	ExternalErrorDescription string
 	RetryLabel               string
@@ -150,36 +162,47 @@ type WidgetScoreboardPanel struct {
 	SearchLabel string
 	NoClients   string
 
-	ListOfThemes            string
-	Format                  string
-	FormatPlaceholder       string
-	ScaleTab                string
-	GapTab                  string
-	PlateWidthTab           string
-	ScoreTab                string
-	ResetTab                string
-	ResetIconLabel          string
-	ResetIconScaleLabel     string
-	SelectResetIcon         string
-	SearchIconsPlaceholder  string
-	CustomIconsLabel        string
-	NoIconLabel             string
-	AddIconButton           string
-	AddButton               string
-	AddIconModalTitle       string
-	AddingIcon              string
-	AddIconEmptyError       string
-	RenameIconTitle         string
-	DeleteIconTitle         string
-	DeleteIconModalTitle    string
-	DeleteIconModalMessage  string
-	DeleteIconConfirmButton string
-	RenameIconModalTitle    string
-	ScoreOffsetReset        string
-	ScoreFontSizeLabel      string
-	FontLabel               string
-	FontDefaultLabel        string
-	MainFontSizeLabel       string
+	ListOfThemes              string
+	Format                    string
+	FormatPlaceholder         string
+	ScaleTab                  string
+	GapTab                    string
+	PlateWidthTab             string
+	ScoreTab                  string
+	ResetTab                  string
+	SlotLabel                 string
+	SlotNameLabel             string
+	RenameSlotTitle           string
+	ResetSlotTitle            string
+	ActiveSlotResetBlocked    string
+	WidgetRunningResetBlocked string
+	ResetSlotModalTitle       string
+	ResetSlotModalMessage     string
+	ResetSlotConfirmButton    string
+	ResetSlotNameButton       string
+	RenameSlotModalTitle      string
+	ResetIconLabel            string
+	ResetIconScaleLabel       string
+	SelectResetIcon           string
+	SearchIconsPlaceholder    string
+	CustomIconsLabel          string
+	NoIconLabel               string
+	AddIconButton             string
+	AddButton                 string
+	AddIconModalTitle         string
+	AddingIcon                string
+	AddIconEmptyError         string
+	RenameIconTitle           string
+	DeleteIconTitle           string
+	DeleteIconModalTitle      string
+	DeleteIconModalMessage    string
+	DeleteIconConfirmButton   string
+	RenameIconModalTitle      string
+	ScoreOffsetReset          string
+	ScoreFontSizeLabel        string
+	FontLabel                 string
+	FontDefaultLabel          string
+	MainFontSizeLabel         string
 
 	TitleEventLabel       string
 	TitleEventPlaceholder string

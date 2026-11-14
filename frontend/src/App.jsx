@@ -49,7 +49,7 @@ const App = () => {
     debouncedSaveTools,
   } = useAutoSave();
 
-  const { updateConfig } = useConfigUpdater({
+  const { updateConfig, selectWidgetSlot, renameWidgetSlot, resetWidgetSlot } = useConfigUpdater({
     isLoaded,
     debouncedSaveSettings,
     debouncedSaveWidgets,
@@ -257,6 +257,9 @@ const App = () => {
                   <WidgetBracketPanel
                     locale={locale.WidgetBracketPanel}
                     updateConfig={updateConfig}
+                    selectWidgetSlot={selectWidgetSlot}
+                    renameWidgetSlot={renameWidgetSlot}
+                    resetWidgetSlot={resetWidgetSlot}
                     isProcessing={isProcessingWB}
                     setIsProcessingWB={setIsProcessingWB}
                     isWidgetBracketRunning={isWidgetBracketRunning}
@@ -286,6 +289,9 @@ const App = () => {
                   <WidgetScoreboardPanel
                     locale={locale.WidgetScoreboardPanel}
                     updateConfig={updateConfig}
+                    selectWidgetSlot={selectWidgetSlot}
+                    renameWidgetSlot={renameWidgetSlot}
+                    resetWidgetSlot={resetWidgetSlot}
                     isProcessing={isProcessingWS}
                     setIsProcessingWS={setIsProcessingWS}
                     isWidgetScoreboardRunning={isWidgetScoreboardRunning}

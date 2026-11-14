@@ -27,7 +27,8 @@ import {
   Pencil,
   Link2,
   Layers,
-  Move
+  Move,
+  Boxes
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -58,6 +59,7 @@ import { getThemeClasses } from "../utils/themeClasses.jsx";
 import { useThemeClasses } from "../hooks/App/useThemeClasses";
 import { useAppStore } from "../store/useAppStore";
 import { FORMAT_OPTIONS } from "../utils/formatMatches.js"
+import { DEFAULT_SCOREBOARD_SIDE as DEFAULT_SIDE, defaultScoreboardSide as defaultSideFor } from "../utils/widgetDefaults.js";
 import { TabbedSection } from "../components/ui/tabbedSection.jsx";
 
 const clampScale = (s) => {
@@ -96,29 +98,6 @@ const clampResetIconScale = (s) => {
   return Math.max(0.5, Math.min(2.5, n));
 };
 
-const DEFAULT_SIDE = {
-  teamTag: "",
-  name: "Player",
-  resetIcon: "",
-  resetIconData: "",
-  resetIconScale: 1,
-  logoPath: "",
-  flag: "",
-  plateImage: "",
-  points: 0,
-  scoreOffsetX: 0,
-  scoreOffsetY: 0,
-  scoreFontSize: 28,
-  showLogo: true,
-  showFlag: true,
-  showReset: false,
-};
-
-const defaultSideFor = (side) => ({
-  ...DEFAULT_SIDE,
-  name: side === "P2" ? "Player 2" : "Player 1",
-});
-
 const stripLogoExtension = (name) =>
   name ? String(name).replace(/\.[^.]+$/, "") : "";
 
@@ -134,6 +113,9 @@ const patchScoreboard = (updateConfig, patch) =>
 const WidgetScoreboardPlate = ({
   locale,
   updateConfig,
+  selectWidgetSlot,
+  renameWidgetSlot,
+  resetWidgetSlot,
   isProcessing,
   setIsProcessingWS,
   isWidgetScoreboardRunning,
@@ -165,6 +147,24 @@ const WidgetScoreboardPlate = ({
   const format = scoreboard?.format ?? "FT2";
   const p1 = scoreboard?.P1 ?? defaultSideFor("P1");
   const p2 = scoreboard?.P2 ?? defaultSideFor("P2");
+  const activeScoreboardSlot = widgets?.activeScoreboardSlot ?? 0;
+  const scoreboardSlotNames = widgets?.scoreboardSlotNames ?? [];
+  const slotDisplayName = (index) => {
+    const stored = String(scoreboardSlotNames[index] ?? "").trim();
+    const fallback = `Slot ${index + 1}`;
+    if (!stored || stored === fallback) {
+      return `${locale.SlotLabel} ${index + 1}`;
+    }
+    return stored;
+  };
+  const scoreboardSlotItems = useMemo(
+    () =>
+      Array.from({ length: 5 }, (_, index) => ({
+        value: String(index),
+        label: slotDisplayName(index),
+      })),
+    [scoreboardSlotNames, locale.SlotLabel],
+  );
 
   const [activeTabP1, setActiveTabP1] = useState("logo");
   const [activeTabP2, setActiveTabP2] = useState("logo");
@@ -212,6 +212,8 @@ const WidgetScoreboardPlate = ({
   const [iconRename, setIconRename] = useState({ open: false, name: null });
   const [iconPending, setIconPending] = useState(false);
   const [iconError, setIconError] = useState("");
+  const [slotRename, setSlotRename] = useState({ open: false, index: null });
+  const [slotReset, setSlotReset] = useState({ open: false, index: null });
 
   const handleWidgetScoreboardToggle = useStartToggle(
     isWidgetScoreboardRunning,
@@ -499,6 +501,25 @@ const WidgetScoreboardPlate = ({
       setIconPending(false);
     }
   }, [scoreboard, updateConfig, reloadIcons]);
+
+  const handleRenameSlot = useCallback(
+    (newName) => {
+      if (slotRename.index === null) return;
+      renameWidgetSlot?.("scoreboard", slotRename.index, newName);
+      setSlotRename({ open: false, index: null });
+    },
+    [slotRename.index, renameWidgetSlot],
+  );
+
+  const handleResetSlot = useCallback(() => {
+    if (slotReset.index === null) return;
+    resetWidgetSlot?.(
+      "scoreboard",
+      slotReset.index,
+      `${locale.SlotLabel} ${slotReset.index + 1}`,
+    );
+    setSlotReset({ open: false, index: null });
+  }, [slotReset.index, resetWidgetSlot, locale.SlotLabel]);
 
   // ---------- URL ----------
   const widgetBaseUrl = `${widgetServerBaseUrl}/widgets/scoreboard`;
@@ -1197,7 +1218,7 @@ const WidgetScoreboardPlate = ({
                   style={{ background: "transparent" }}
                 />
 
-                <div className="absolute bottom-3 left-3 z-10 w-72">
+                <div className="absolute bottom-4 left-3 z-10 w-72">
                   <Field
                     variant="copy"
                     icon={Link2}
@@ -1215,6 +1236,29 @@ const WidgetScoreboardPlate = ({
                     themeClasses={themeClasses}
                   />
                 </div>
+
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 w-72">
+                  <ToggleSwitch
+                    label={locale.PlateModeLabel}
+                    value={plateMode}
+                    options={[
+                      {
+                        value: "builtin",
+                        label: locale.BuiltInMode,
+                        icon: Layers,
+                      },
+                      {
+                        value: "custom",
+                        label: locale.CustomMode,
+                        icon: ImageIcon,
+                      },
+                    ]}
+                    color="amber"
+                    compact
+                    themeClasses={themeClasses}
+                    onChange={handlePlateModeChange}
+                  />
+                </div>
               </>
             )}
 
@@ -1227,6 +1271,7 @@ const WidgetScoreboardPlate = ({
                 />
               </div>
             )}
+
           </div>
 
           {/* Игроки: P1 — центр — P2 */}
@@ -1236,26 +1281,64 @@ const WidgetScoreboardPlate = ({
 
             {/* Центр (Настройки матча) */}
             <div className="flex flex-col gap-2 items-center w-[17rem]">
-              {/* Режим плашек */}
+              {/* Слот виджета */}
               <div className="w-full">
-                <ToggleSwitch
-                  label={locale.PlateModeLabel}
-                  value={plateMode}
-                  options={[
-                    {
-                      value: "builtin",
-                      label: locale.BuiltInMode,
-                      icon: Layers,
-                    },
-                    {
-                      value: "custom",
-                      label: locale.CustomMode,
-                      icon: ImageIcon,
-                    },
-                  ]}
-                  color="amber"
+                <Field
+                  variant="multiselect"
+                  single
+                  label={locale.SlotLabel}
+                  icon={Boxes}
+                  value={[String(activeScoreboardSlot)]}
+                  onChange={(values) =>
+                    selectWidgetSlot?.(
+                      "scoreboard",
+                      Number(values?.[0] ?? 0),
+                    )
+                  }
+                  items={scoreboardSlotItems}
+                  locale={locale}
                   themeClasses={themeClasses}
-                  onChange={handlePlateModeChange}
+                  height="1.9rem"
+                  maxVisible={5}
+                  renderItem={(item) => (
+                    <span className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="truncate flex-1 min-w-0">
+                        {item.label}
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        title={locale.RenameSlotTitle}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSlotRename({
+                            open: true,
+                            index: Number(item.value),
+                          });
+                        }}
+                        className="shrink-0 p-1 rounded hover:bg-white/10 cursor-pointer"
+                      >
+                        <Pencil size={12} />
+                      </span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        title={locale.ResetSlotTitle}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSlotReset({
+                            open: true,
+                            index: Number(item.value),
+                          });
+                        }}
+                        className="shrink-0 p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
+                      >
+                        <RotateCcw size={12} />
+                      </span>
+                    </span>
+                  )}
                 />
               </div>
 
@@ -1396,6 +1479,59 @@ const WidgetScoreboardPlate = ({
         }}
         themeClasses={themeClasses}
         locale={locale}
+      />
+
+      <PromptModal
+        isOpen={slotRename.open}
+        onClose={() => setSlotRename({ open: false, index: null })}
+        onConfirm={handleRenameSlot}
+        title={locale.RenameSlotModalTitle}
+        label={locale.SlotNameLabel}
+        defaultValue={
+          slotRename.index === null ? "" : slotDisplayName(slotRename.index)
+        }
+        confirmLabel={locale.SaveButton}
+        validate={(value) =>
+          value.trim() ? null : locale.NameCannotBeEmpty
+        }
+        resetValue={
+          slotRename.index === null
+            ? undefined
+            : `${locale.SlotLabel} ${slotRename.index + 1}`
+        }
+        resetLabel={locale.ResetSlotNameButton}
+        icon={Pencil}
+        iconColor="amber"
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <ConfirmModal
+        isOpen={slotReset.open}
+        onClose={() => setSlotReset({ open: false, index: null })}
+        onConfirm={handleResetSlot}
+        title={locale.ResetSlotModalTitle}
+        message={
+          (() => {
+            const parts = locale.ResetSlotModalMessage.split("%v");
+            const index = slotReset.index ?? 0;
+            const name = slotDisplayName(index);
+            return (
+              <>
+                {parts[0]}
+                <span className="text-red-500 font-black italic">{name}</span>
+                {parts[1]}
+              </>
+            );
+          })()
+        }
+        confirmLabel={locale.ResetSlotConfirmButton}
+        icon={RotateCcw}
+        iconColor="red"
+        iconColorClass="text-red-500"
+        danger
+        theme={theme}
+        themeClasses={themeClasses}
       />
 
       <ConfirmModal

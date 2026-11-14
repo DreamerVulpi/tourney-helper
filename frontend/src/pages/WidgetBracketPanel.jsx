@@ -21,6 +21,10 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  Link2,
+  Boxes,
+  Pencil,
+  RotateCcw,
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -31,7 +35,8 @@ import { useStartToggle } from "../hooks/WidgetBracketPanel/useStartToggle.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import { useGetListThemes } from "../hooks/WidgetBracketPanel/useGetListThemes.jsx";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
-import { SectionBlock } from "../components/ui/SectionBlock.jsx";
+import PromptModal from "../components/modals/PromptModal.jsx";
+import ConfirmModal from "../components/modals/ConfirmModal.jsx";
 import { ValidateTournamentURL, ParseTournamentURLForWidget } from "../../wailsjs/go/application/App.js"
 import { debounce } from "../utils/debounce.jsx";
 import { UrlValidationMessage } from "../hooks/App/useValidationUrl.jsx";
@@ -83,6 +88,9 @@ const buildBracketURL = (
 const WidgetBracketPanel = ({
   locale,
   updateConfig,
+  selectWidgetSlot,
+  renameWidgetSlot,
+  resetWidgetSlot,
   isProcessing,
   setIsProcessingWB,
   isWidgetBracketRunning,
@@ -103,6 +111,25 @@ const WidgetBracketPanel = ({
   const widgets = useAppStore((s) => s.widgets);
   const bracket = widgets?.bracket;
 
+  const activeBracketSlot = widgets?.activeBracketSlot ?? 0;
+  const bracketSlotNames = widgets?.bracketSlotNames ?? [];
+  const slotDisplayName = (index) => {
+    const stored = String(bracketSlotNames[index] ?? "").trim();
+    const fallback = `Slot ${index + 1}`;
+    if (!stored || stored === fallback) {
+      return `${locale.SlotLabel} ${index + 1}`;
+    }
+    return stored;
+  };
+  const bracketSlotItems = useMemo(
+    () =>
+      Array.from({ length: 5 }, (_, index) => ({
+        value: String(index),
+        label: slotDisplayName(index),
+      })),
+    [bracketSlotNames, locale.SlotLabel],
+  );
+
   const urlToTournament = bracket?.urlToTournament ?? "";
   const bracketId       = bracket?.bracketId       ?? "";
   const themeBracket    = bracket?.theme           ?? "StartGG";
@@ -110,6 +137,8 @@ const WidgetBracketPanel = ({
   const themeOptions = useGetListThemes();
 
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [slotRename, setSlotRename] = useState({ open: false, index: null });
+  const [slotReset, setSlotReset] = useState({ open: false, index: null });
 
   const clearBackground = bracket?.clearBackground ?? false;
   const hideStages      = bracket?.hideStages      ?? false;
@@ -131,6 +160,25 @@ const WidgetBracketPanel = ({
     setStatusWidgetBracket,
     { ref: bracketRef, authorizations, widgets },
   );
+
+  const handleRenameSlot = useCallback(
+    (newName) => {
+      if (slotRename.index === null) return;
+      renameWidgetSlot?.("bracket", slotRename.index, newName);
+      setSlotRename({ open: false, index: null });
+    },
+    [slotRename.index, renameWidgetSlot],
+  );
+
+  const handleResetSlot = useCallback(() => {
+    if (slotReset.index === null) return;
+    resetWidgetSlot?.(
+      "bracket",
+      slotReset.index,
+      `${locale.SlotLabel} ${slotReset.index + 1}`,
+    );
+    setSlotReset({ open: false, index: null });
+  }, [slotReset.index, resetWidgetSlot, locale.SlotLabel]);
 
   const readyScale = clampScale(scale);
 
@@ -460,20 +508,16 @@ const WidgetBracketPanel = ({
                         />
                     </div>
 
-                    <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 w-80">
+                    <div className="absolute bottom-4 left-3 z-10 w-72">
                       {isWidgetBracketRunning && bracketUrl && (
-                        <SectionBlock
+                        <Field
                           solid={true}
-                          title={locale.LinkOfWidget}
-                          titleAlign="center"
-                          theme={theme}
-                        >
-                          <Field
-                            variant="copy"
-                            value={bracketUrl}
-                            themeClasses={themeClasses}
-                          />
-                        </SectionBlock>
+                          variant="copy"
+                          icon={Link2}
+                          value={bracketUrl}
+                          height="2rem"
+                          themeClasses={themeClasses}
+                        />
                       )}
                     </div>
 
@@ -511,7 +555,61 @@ const WidgetBracketPanel = ({
 
         {/* Правая часть */}
         <div className="col-span-4 flex flex-col h-full">
-          <div className="space-y-4">
+          <div className="space-y-2">
+            <Field
+              variant="multiselect"
+              single
+              label={locale.SlotLabel}
+              icon={Boxes}
+              value={[String(activeBracketSlot)]}
+              onChange={(values) =>
+                selectWidgetSlot?.("bracket", Number(values?.[0] ?? 0))
+              }
+              items={bracketSlotItems}
+              locale={locale}
+              themeClasses={themeClasses}
+              height="1.9rem"
+              maxVisible={5}
+              renderItem={(item) => (
+                <span className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="truncate flex-1 min-w-0">
+                    {item.label}
+                  </span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    title={locale.RenameSlotTitle}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSlotRename({
+                        open: true,
+                        index: Number(item.value),
+                      });
+                    }}
+                    className="shrink-0 p-1 rounded hover:bg-white/10 cursor-pointer"
+                  >
+                    <Pencil size={12} />
+                  </span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    title={locale.ResetSlotTitle}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSlotReset({
+                        open: true,
+                        index: Number(item.value),
+                      });
+                    }}
+                    className="shrink-0 p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
+                  >
+                    <RotateCcw size={12} />
+                  </span>
+                </span>
+              )}
+            />
             <div className="space-y-2">
                 <Field
                     label={locale.UrlToBracketLabel + "*"}
@@ -579,6 +677,57 @@ const WidgetBracketPanel = ({
           </ButtonFooter>
         </div>
       </div>
+
+      <PromptModal
+        isOpen={slotRename.open}
+        onClose={() => setSlotRename({ open: false, index: null })}
+        onConfirm={handleRenameSlot}
+        title={locale.RenameSlotModalTitle}
+        label={locale.SlotNameLabel}
+        defaultValue={
+          slotRename.index === null ? "" : slotDisplayName(slotRename.index)
+        }
+        confirmLabel={locale.SaveButton}
+        validate={(value) =>
+          value.trim() ? null : locale.NameCannotBeEmpty
+        }
+        resetValue={
+          slotRename.index === null
+            ? undefined
+            : `${locale.SlotLabel} ${slotRename.index + 1}`
+        }
+        resetLabel={locale.ResetSlotNameButton}
+        icon={Pencil}
+        iconColor="amber"
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <ConfirmModal
+        isOpen={slotReset.open}
+        onClose={() => setSlotReset({ open: false, index: null })}
+        onConfirm={handleResetSlot}
+        title={locale.ResetSlotModalTitle}
+        message={(() => {
+          const parts = locale.ResetSlotModalMessage.split("%v");
+          const index = slotReset.index ?? 0;
+          const name = slotDisplayName(index);
+          return (
+            <>
+              {parts[0]}
+              <span className="text-red-500 font-black italic">{name}</span>
+              {parts[1]}
+            </>
+          );
+        })()}
+        confirmLabel={locale.ResetSlotConfirmButton}
+        icon={RotateCcw}
+        iconColor="red"
+        iconColorClass="text-red-500"
+        danger
+        theme={theme}
+        themeClasses={themeClasses}
+      />
     </PanelTemplate>
   );
 };

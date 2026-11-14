@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, RotateCcw } from "lucide-react";
 
 import { Modal } from "./Modal.jsx";
 import { Field } from "../ui/Field.jsx";
@@ -22,6 +22,8 @@ const PromptModal = ({
   defaultValue = "",
   confirmLabel = "Save",
   validate,
+  resetValue,
+  resetLabel = "Reset",
   icon: Icon = Pencil,
   iconColor = "blue",
   theme = "dark",
@@ -88,6 +90,20 @@ const PromptModal = ({
           placeholder={placeholder}
           themeClasses={themeClasses}
         />
+        {resetValue !== undefined && (
+          <button
+            type="button"
+            onClick={() => {
+              setValue(String(resetValue));
+              setError(null);
+            }}
+            className="flex items-center gap-2 px-1 text-[10px] font-black uppercase italic opacity-60 hover:opacity-100 transition-opacity"
+          >
+            <RotateCcw size={12} />
+            {resetLabel}
+          </button>
+        )}
+
         {error && (
           <div className="text-xs text-red-500 font-bold px-1">{error}</div>
         )}

@@ -394,11 +394,13 @@ type HelpQA struct {
 type HelpPageWidgetBracket struct {
 	HowIsWorks HelpQA
 	WhatCanDo  HelpQA
+	Slots      HelpQA
 }
 
 type HelpPageWidgetScoreboard struct {
 	HowIsWorks HelpQA
 	WhatCanDo  HelpQA
+	Slots      HelpQA
 }
 
 type HelpPageIntegrations struct {
