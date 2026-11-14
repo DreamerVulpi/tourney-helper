@@ -24,6 +24,10 @@ interface AppState {
   // Initialization
   isLoaded: boolean;
 
+  // Local server URLs (unique per application instance)
+  oauthBaseUrl: string;
+  widgetBaseUrl: string;
+
   // Profile
   activeProfile: string;
 
@@ -35,6 +39,7 @@ interface AppState {
   statusNotificationSystem: string;
   statusDatabase: string;
   statusWidgetBracket: string;
+  statusWidgetScoreboard: string;
 
   // Selection
   activeTournamentPlatform: string;
@@ -65,12 +70,16 @@ interface AppState {
 
   setActiveProfile: (p: string) => void;
 
+  setOAuthBaseUrl: (url: string) => void;
+  setWidgetBaseUrl: (url: string) => void;
+
   setSidePanelCollapsed: (v: boolean) => void;
   setIsSidePanelHovered: (v: boolean) => void;
 
   setStatusNotificationSystem: (s: string) => void;
   setStatusDatabase: (s: string) => void;
   setStatusWidgetBracket: (s: string) => void;
+  setStatusWidgetScoreboard: (s: string) => void;
 
   setActiveTournamentPlatform: (p: string) => void;
   setActiveDeliveryMethod: (m: string) => void;
@@ -112,6 +121,10 @@ export const useAppStore = create<AppState>((set) => ({
   // Profile
   activeProfile: '',
 
+  // Local server URLs
+  oauthBaseUrl: '',
+  widgetBaseUrl: '',
+
   // Side panel
   sidePanelCollapsed: false,
   isSidePanelHovered: false,
@@ -120,6 +133,7 @@ export const useAppStore = create<AppState>((set) => ({
   statusNotificationSystem: SERVICE_STATUS.OFF,
   statusDatabase: SERVICE_STATUS.RUNNING,
   statusWidgetBracket: SERVICE_STATUS.OFF,
+  statusWidgetScoreboard: SERVICE_STATUS.OFF,
 
   // Selection
   activeTournamentPlatform: '',
@@ -132,7 +146,7 @@ export const useAppStore = create<AppState>((set) => ({
   tools: {
     notificationSystem: {
       urlToTournament: "",
-      rules: { standardFormat: 2, finalsFormat: 3, rounds: 3, duration: 60, stage: "Random" },
+      rules: { standardFormat: "FT2", finalsFormat: "FT3", rounds: 3, duration: 60, stage: "Random" },
       stream: { area: "Any", language: "EN", conn: "Wired", crossplatform: false, passcode: "0000", linkToLobby: "" },
       logo: { img: "" },
       tournamentSlug: "",
@@ -173,6 +187,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   setActiveProfile: (activeProfile) => set({ activeProfile }),
 
+  setOAuthBaseUrl: (oauthBaseUrl) => set({ oauthBaseUrl }),
+  setWidgetBaseUrl: (widgetBaseUrl) => set({ widgetBaseUrl }),
+
   setSidePanelCollapsed: (sidePanelCollapsed) => set({ sidePanelCollapsed }),
   setIsSidePanelHovered: (isSidePanelHovered) => set({ isSidePanelHovered }),
 
@@ -181,7 +198,8 @@ export const useAppStore = create<AppState>((set) => ({
   setStatusDatabase: (statusDatabase) => set({ statusDatabase }),
   setStatusWidgetBracket: (statusWidgetBracket) =>
     set({ statusWidgetBracket }),
-
+  setStatusWidgetScoreboard: ( statusWidgetScoreboard ) =>
+    set({ statusWidgetScoreboard}),
   setActiveTournamentPlatform: (activeTournamentPlatform) =>
     set({ activeTournamentPlatform }),
   setActiveDeliveryMethod: (activeDeliveryMethod) =>

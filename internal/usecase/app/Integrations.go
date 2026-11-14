@@ -22,7 +22,7 @@ type platformSpec struct {
 	DisplayName  string // "Discord" / "Startgg"
 	CallbackPath string // "/discord/callback"
 	RedirectPath string // "/discord/redirect"
-	OAuthConfig  func(clientID, clientSecret string) *oauth2.Config
+	OAuthConfig  func(clientID, clientSecret, redirectURL string) *oauth2.Config
 	AssignClient func(a *App, client *auth.AuthClient) // куда положить готовый клиент
 }
 
@@ -145,8 +145,12 @@ func (a *App) authorizePlatform(platformID, clientID, clientSecret string, slotI
 	runtime.EventsEmit(a.ctx, "auth:pending", spec.ID, slotIndex)
 
 	tokenPath := config.GetClientTokenPath(a.ActiveProfile, spec.ID, slotIndex)
+	baseURL := a.oauthBaseURL()
+	if baseURL == "" {
+		return a.authorizeError(spec.ID, slotIndex, "callback_server", fmt.Errorf("OAuth callback server is not running"))
+	}
 	client := &auth.AuthClient{
-		Config:         spec.OAuthConfig(clientID, clientSecret),
+		Config:         spec.OAuthConfig(clientID, clientSecret, baseURL+spec.CallbackPath),
 		TokenFile:      tokenPath,
 		CallbackPath:   spec.CallbackPath,
 		CallbackServer: a.OAuthServer,
@@ -177,7 +181,7 @@ func (a *App) authorizePlatform(platformID, clientID, clientSecret string, slotI
 		a.authorizeSuccess(spec.ID, slotIndex)
 	}()
 
-	redirectURL := fmt.Sprintf("http://127.0.0.1:7310%s", spec.RedirectPath)
+	redirectURL := baseURL + spec.RedirectPath
 	if err := exec.Command("rundll32", "url.dll,FileProtocolHandler", redirectURL).Start(); err != nil {
 		return a.authorizeError(spec.ID, slotIndex, "launch_browser", err)
 	}

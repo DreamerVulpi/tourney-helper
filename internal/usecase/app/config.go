@@ -14,7 +14,7 @@ import (
 )
 
 func (a *App) GetVersion() string {
-	return strings.Replace(version.Current, "v", "", 1)
+	return strings.TrimPrefix(version.Current, "v")
 }
 
 func (a *App) GetUiLocale(lang string) ui.Ui {
@@ -117,9 +117,32 @@ func (a *App) LoadWidgetsCfg() (config.WidgetsCfg, error) {
 }
 
 func (a *App) SaveWidgetsCfg(cfg config.WidgetsCfg) error {
+	preserveBracketSlots := len(cfg.BracketSlots) == 0
+	preserveScoreboardSlots := len(cfg.ScoreboardSlots) == 0
+
+	a.mu.Lock()
+	if preserveBracketSlots {
+		cfg.BracketSlots = append([]config.WidgetBracket(nil), a.WidgetsCfg.BracketSlots...)
+		cfg.ActiveBracketSlot = a.WidgetsCfg.ActiveBracketSlot
+	}
+	if preserveScoreboardSlots {
+		cfg.ScoreboardSlots = append([]config.WidgetScoreboard(nil), a.WidgetsCfg.ScoreboardSlots...)
+		cfg.ActiveScoreboardSlot = a.WidgetsCfg.ActiveScoreboardSlot
+	}
+	if len(cfg.BracketSlotNames) == 0 {
+		cfg.BracketSlotNames = append([]string(nil), a.WidgetsCfg.BracketSlotNames...)
+	}
+	if len(cfg.ScoreboardSlotNames) == 0 {
+		cfg.ScoreboardSlotNames = append([]string(nil), a.WidgetsCfg.ScoreboardSlotNames...)
+	}
+	a.mu.Unlock()
+
+	cfg.SyncActiveSlots()
+
 	if err := config.SaveWidgets(a.ActiveProfile, cfg); err != nil {
 		return err
 	}
+
 	a.mu.Lock()
 	a.WidgetsCfg = cfg
 	a.mu.Unlock()

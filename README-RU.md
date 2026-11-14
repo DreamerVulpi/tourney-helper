@@ -8,20 +8,19 @@
 </p>
 <p align="center">
     <a href="https://pkg.go.dev/github.com/dreamervulpi/tourney-helper"><img src="https://img.shields.io/badge/Go.dev-reference-007d9c?logo=go&logoColor=white" alt="Go.dev"></a>
-    <a href="https://github.com/DreamerVulpi/tourney-helper/releases"><img src="https://img.shields.io/badge/Версия-0.5.0-blue" alt="Version"></a>
+    <a href="https://github.com/DreamerVulpi/tourney-helper/releases"><img src="https://img.shields.io/badge/Версия-0.6.0-blue" alt="Version"></a>
     <a href="https://dreamervulpi.github.io/tourney-helper-website/"><img src="https://img.shields.io/badge/Сайт проекта-blue" alt="Version"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/📄 Лицензия-MIT-green?logo=&logoColor=white" alt="Licenses"></a>
     <a href="https://github.com/DreamerVulpi/tourney-helper/issues"><img src="https://img.shields.io/badge/🪲 Сообщить_о_баге-BUG-red" alt="ReportBug"></a>
 </p>
 <p align="center">
     <a href="https://new.donatepay.ru/@dreamervulpi"><img src="https://img.shields.io/badge/💸 Пожертвовать-DonatePay-darkgreen.svg" alt="DonatePay"></a>
-    <a href="https://ko-fi.com/dreamervulpi"><img src="https://img.shields.io/badge/Donate-Ko--Fi-pink?logo=ko-fi" alt="Donate"></a>
     <a href="https://boosty.to/dreamervulpi"><img src="https://img.shields.io/badge/Подписка-Boosty-orange?logo=boosty" alt="Subscribe"></a>
 </p>
 
 ## 💡 Особенности
 
-### На текущей версии ```0.5.0```
+### На текущей версии ```0.6.0```
 * Поддержка получения данных с турнирной платформы [start.gg](https://www.start.gg/);
 * Поддержка отправки сообщений через [Discord](https://discord.com/);
 * Поддержка получения игровых ID по следующим играм: Tekken 8 и Street Fighter 6;
@@ -62,8 +61,21 @@
 * Поддержка сторонних тем (файл-пример находится в `widgets/bracket/themes/startgg.css`);
 * Каждая сгенерированная ссылка работает по исходным данным независимо друг от друга (настройки применяются на все ссылки);
 
+### 🏆 Виджет счетов
+* Отображение счетов без сторонних интеграций;
+* Возможность указать страну, игровую команду и/или свой логотип команды;
+* Возможность указать ресет свои отдельным логотипом или готовой иконкой;
+* Возможность указать название ивента и/или формат матча;
+* Возможность произвести смену сторон или сбросить настройки по умолчанию;
+* Возможность масштабировать, изменять отступ между плашками и их длину;
+* Возможность вручную отрегулировать расположение очков под свой дизайн (шрифт, размер шрифта и очков);
+* Поддержка дизайна встроенных плашек через css и своих в виде картинок с автоматической версткой текста;
+* Поддержка сторонних тем (файл-пример находится в `widgets/scoreboard/themes/startgg.css`);
+* Единая ссылка для использования виджета;
+
 ### 👥 Система профилей и интеграций
 * Возможность создавать/дублировать/экспортировать/импортировать готовые конфигурации всех виджетов и инструментов, включая авторизации;
+* Возможность импортировать/экспортировать контент виджетов;
 * При выборе OAuth клиента для выбора доступны только свободные во избежания нагрузки интеграций по API;
 * В одном профиле доступно 5 слотов под каждую интеграцию для гибкости и удобства использования;
 * В случае запуска одного из виджетов или инструментов система блокирует доступ к профилю во избежание непреднамеренной порчи данных;

@@ -48,13 +48,13 @@ export function NavItem({
       ${
         content
           ? collapsed
-            ? "w-full h-12 p-0 justify-center rounded-2xl"
-            : "w-full h-12 p-0 pl-3 justify-start gap-2 rounded-2xl"
+            ? "w-full h-11 p-0 justify-center rounded-2xl"
+            : "w-full h-11 p-0 pl-3 justify-start gap-2 rounded-2xl"
           : iconOnly
-            ? "w-9 h-12 p-0 gap-0 justify-center mx-auto rounded-xl"
+            ? "w-9 h-11 p-0 gap-0 justify-center mx-auto rounded-xl"
             : collapsed
-              ? "w-12 h-12 p-0 gap-0 justify-center mx-auto rounded-2xl"
-              : "w-full p-4 gap-4 rounded-2xl"
+              ? "w-12 h-11 p-0 gap-0 justify-center mx-auto rounded-2xl"
+              : "w-full p-3.5 gap-4 rounded-2xl"
       }
 
       ${

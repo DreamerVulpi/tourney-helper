@@ -1,25 +1,6 @@
-export const listFT = [
-  {
-    label: "FT1",
-    value: 1,
-  },
-  {
-    label: "FT2",
-    value: 2,
-  },
-  {
-    label: "FT3",
-    value: 3,
-  },
-  {
-    label: "FT4",
-    value: 4,
-  },
-  {
-    label: "FT5",
-    value: 5,
-  },
-]
+import { FORMAT_OPTIONS } from "../formatMatches.js";
+
+export const listFormats = FORMAT_OPTIONS;
 
 export const durationItems = [
   {

@@ -11,7 +11,6 @@ func (c *Client) GetSetsWithScore(phaseGroupID int64, perPage int) ([]startgg.Wi
 				"phaseGroupId": phaseGroupID,
 				"page":         page,
 				"perPage":      perPage,
-				"states":       []int{1, 2, 3},
 			}
 
 			results, err := GetData[startgg.WidgetPhaseGroupSetsResponse](c, startgg.GetSetsWithScore, variables)

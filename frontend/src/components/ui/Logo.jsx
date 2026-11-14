@@ -20,11 +20,11 @@ export function ProgramLogo({ theme, collapsed }) {
               shrink-0
             "
           >
-          <div className="p-2 bg-blue-600/10 rounded-lg shrink-0">
+          <div className="p-1 bg-blue-600/10 rounded-lg shrink-0">
             <img
               src={Logo}
               alt="Tourney Helper"
-              className="w-6 h-6"
+              className="w-4.5 h-4.5"
             />
           </div>
 

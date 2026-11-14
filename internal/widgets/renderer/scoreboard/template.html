@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en" class="transparent-bg" style="background: transparent !important;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scoreboard</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            color: var(--sb-text);
+            font-family: var(--sb-font-family);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Always-on transparency (bracket-style transparent-bg, no flag). */
+        html.transparent-bg,
+        html.transparent-bg body,
+        html.transparent-bg .scoreboard-wrapper,
+        html.transparent-bg .scoreboard-scale,
+        html.transparent-bg .scoreboard {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+
+        .scoreboard-wrapper {
+            width: 100%;
+            height: 100%;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scoreboard-scale {
+            transform-origin: center center;
+        }
+
+        /* Preview in the app: keep the widget above the bottom controls. */
+        html.preview-mode .scoreboard-wrapper {
+            align-items: flex-start;
+            padding-top: 12px;
+        }
+
+        html.preview-mode .scoreboard-scale {
+            transform-origin: top center;
+        }
+
+        .scoreboard {
+            display: flex;
+            align-items: stretch;
+            width: 1000px;
+            max-width: 100%;
+            height: 128px;
+            border: 2px solid var(--sb-bar-border);
+        }
+
+        .side {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 0 18px;
+        }
+
+        .side-right {
+            justify-content: flex-end;
+        }
+
+        .logo {
+            width: 88px;
+            height: 88px;
+            flex: 0 0 88px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: var(--sb-logo-bg);
+            border: 1px solid var(--sb-logo-border);
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .flag {
+            width: 52px;
+            height: 34px;
+            flex: 0 0 52px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: var(--sb-logo-bg);
+            border: 1px solid var(--sb-flag-border);
+        }
+
+        .flag img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .name {
+            flex: 1 1 auto;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            color: var(--sb-name-color);
+        }
+
+        .reset-icon {
+            --sb-reset-size: var(--sb-logo-size, 42px);
+            position: relative;
+            isolation: isolate;
+            width: var(--sb-reset-size);
+            height: var(--sb-reset-size);
+            flex: 0 0 var(--sb-reset-size);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: calc(var(--sb-reset-size) * 0.16);
+            color: var(--sb-reset-color, var(--sb-name-color));
+        }
+
+        .reset-icon::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background: var(--sb-reset-bg, transparent);
+            border: 1px solid var(--sb-reset-border, transparent);
+            border-radius: var(--sb-reset-radius, 3px);
+            box-shadow: var(--sb-reset-shadow, none);
+            transform: skewX(25deg);
+        }
+
+        .side-right .reset-icon::before {
+            transform: skewX(-25deg);
+        }
+
+        .reset-icon-mask {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: currentColor;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center;
+            mask-position: center;
+            -webkit-mask-size: contain;
+            mask-size: contain;
+        }
+
+        .reset-icon img {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .side.reset-overflow {
+            overflow: visible;
+        }
+
+        .reset-icon.custom {
+            z-index: 2;
+            padding: 0;
+        }
+
+        .reset-icon.custom::before {
+            display: none;
+        }
+
+        .reset-icon.custom img {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: auto;
+            height: calc(var(--sb-reset-size) * 1.7);
+            max-width: none;
+            max-height: none;
+            object-fit: contain;
+            transform: translate(-50%, -50%);
+        }
+
+        .team-tag {
+            flex: 0 0 auto;
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: var(--sb-team-tag-color, #6fb3ff);
+        }
+
+        .score {
+            min-width: 78px;
+            height: 88px;
+            padding: 0 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--sb-score-bg);
+            color: var(--sb-score-color);
+            font-family: var(--sb-score-font);
+            font-size: 46px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .score-value {
+            display: inline-block;
+            will-change: transform;
+        }
+
+        .center {
+            width: 190px;
+            flex: 0 0 190px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 0 14px;
+            border-left: 2px solid var(--sb-center-border);
+            border-right: 2px solid var(--sb-center-border);
+        }
+
+        .title {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--sb-title-color);
+        }
+
+        .format {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--sb-format-color);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Base layout keeps direct flex children for simple themes. */
+        .side-content {
+            display: contents;
+        }
+
+        /* Custom plate image replaces the built-in plate visuals. */
+        .side.custom-plate {
+            border-bottom: none;
+            background-color: transparent;
+            background-size: 100% 100%;
+            background-position: center;
+            background-repeat: no-repeat;
+            /* The uploaded image is the plate itself, so the theme must
+               not skew or wrap it. */
+            transform: none;
+        }
+
+        .side.custom-plate .side-content {
+            transform: none !important;
+        }
+
+        /* Do not paint theme plate elements over the custom image. */
+        .side.custom-plate .logo {
+            background: transparent;
+            border-color: transparent;
+        }
+
+        .side.custom-plate .score {
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        .side.custom-plate .score::before,
+        .side.custom-plate .score::after {
+            display: none;
+        }
+    </style>
+    <style id="theme-style"> {{ .ThemeCSS }}</style>
+</head>
+<body style="background: transparent !important;">
+<div class="scoreboard-wrapper" style="background: transparent !important;">
+    <div class="scoreboard-scale" id="scoreboard-scale" style="background: transparent !important;">
+        <div class="scoreboard" style="background: transparent !important;">
+            <div class="side side-left" id="p1-side">
+                <div class="side-content">
+                    <div class="flag hidden" id="p1-flag"><img id="p1-flag-img" alt=""></div>
+                    <div class="logo hidden" id="p1-logo"><img id="p1-logo-img" alt=""></div>
+                    <div class="team-tag" id="p1-team-tag">{{ .Scoreboard.P1.TeamTag }}</div>
+                    <div class="name" id="p1-name">{{ .Scoreboard.P1.Name }}</div>
+                    <div class="reset-icon hidden" id="p1-reset">
+                        <span class="reset-icon-mask" id="p1-reset-mask"></span>
+                        <img id="p1-reset-img" alt="">
+                    </div>
+                    <div class="score" id="p1-score"><span class="score-value" id="p1-score-value">{{ .Scoreboard.P1.Points }}</span></div>
+                </div>
+            </div>
+
+            <div class="center{{ if not .Scoreboard.TitleMatch }} title-empty{{ end }}{{ if not .Scoreboard.Format }} format-empty{{ end }}">
+                <div class="title" id="title-match">{{ .Scoreboard.TitleMatch }}</div>
+                <div class="format{{ if not .Scoreboard.Format }} hidden{{ end }}" id="format">{{ .Scoreboard.Format }}</div>
+            </div>
+
+            <div class="side side-right" id="p2-side">
+                <div class="side-content">
+                    <div class="score" id="p2-score"><span class="score-value" id="p2-score-value">{{ .Scoreboard.P2.Points }}</span></div>
+                    <div class="reset-icon hidden" id="p2-reset">
+                        <span class="reset-icon-mask" id="p2-reset-mask"></span>
+                        <img id="p2-reset-img" alt="">
+                    </div>
+                    <div class="name" id="p2-name">{{ .Scoreboard.P2.Name }}</div>
+                    <div class="team-tag" id="p2-team-tag">{{ .Scoreboard.P2.TeamTag }}</div>
+                    <div class="flag hidden" id="p2-flag"><img id="p2-flag-img" alt=""></div>
+                    <div class="logo hidden" id="p2-logo"><img id="p2-logo-img" alt=""></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const initialState = {{ .StateJSON }};
+    const FLAG_BASE = '/widgets/scoreboard/flags/';
+    const DEFAULT_RESET_ICON = 'lucide:Crown';
+    const DEFAULT_RESET_ICON_DATA = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImJsYWNrIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgY2xhc3M9Imx1Y2lkZSBsdWNpZGUtY3Jvd24iIGFyaWEtaGlkZGVuPSJ0cnVlIj48cGF0aCBkPSJNMTEuNTYyIDMuMjY2YS41LjUgMCAwIDEgLjg3NiAwTDE1LjM5IDguODdhMSAxIDAgMCAwIDEuNTE2LjI5NEwyMS4xODMgNS41YS41LjUgMCAwIDEgLjc5OC41MTlsLTIuODM0IDEwLjI0NmExIDEgMCAwIDEtLjk1Ni43MzRINS44MWExIDEgMCAwIDEtLjk1Ny0uNzM0TDIuMDIgNi4wMmEuNS41IDAgMCAxIC43OTgtLjUxOWw0LjI3NiAzLjY2NGExIDEgMCAwIDAgMS41MTYtLjI5NHoiPjwvcGF0aD48cGF0aCBkPSJNNSAyMWgxNCI+PC9wYXRoPjwvc3ZnPg==';
+
+    const FLAG_CODES = {
+        ad: "AND",
+        ae: "ARE",
+        af: "AFG",
+        ag: "ATG",
+        ai: "AIA",
+        al: "ALB",
+        am: "ARM",
+        ao: "AGO",
+        aq: "ATA",
+        ar: "ARG",
+        as: "ASM",
+        at: "AUT",
+        au: "AUS",
+        aw: "ABW",
+        ax: "ALA",
+        az: "AZE",
+        ba: "BIH",
+        bb: "BRB",
+        bd: "BGD",
+        be: "BEL",
+        bf: "BFA",
+        bg: "BGR",
+        bh: "BHR",
+        bi: "BDI",
+        bj: "BEN",
+        bl: "BLM",
+        bm: "BMU",
+        bn: "BRN",
+        bo: "BOL",
+        bq: "BES",
+        br: "BRA",
+        bs: "BHS",
+        bt: "BTN",
+        bv: "BVT",
+        bw: "BWA",
+        by: "BLR",
+        bz: "BLZ",
+        ca: "CAN",
+        cc: "CCK",
+        cd: "COD",
+        cf: "CAF",
+        cg: "COG",
+        ch: "CHE",
+        ci: "CIV",
+        ck: "COK",
+        cl: "CHL",
+        cm: "CMR",
+        cn: "CHN",
+        co: "COL",
+        cr: "CRI",
+        cu: "CUB",
+        cv: "CPV",
+        cw: "CUW",
+        cx: "CXR",
+        cy: "CYP",
+        cz: "CZE",
+        de: "DEU",
+        dj: "DJI",
+        dk: "DNK",
+        dm: "DMA",
+        do: "DOM",
+        dz: "DZA",
+        ec: "ECU",
+        ee: "EST",
+        eg: "EGY",
+        eh: "ESH",
+        er: "ERI",
+        es: "ESP",
+        et: "ETH",
+        eu: "EUR",
+        fi: "FIN",
+        fj: "FJI",
+        fk: "FLK",
+        fm: "FSM",
+        fo: "FRO",
+        fr: "FRA",
+        ga: "GAB",
+        gb: "GBR",
+        gd: "GRD",
+        ge: "GEO",
+        gf: "GUF",
+        gg: "GGY",
+        gh: "GHA",
+        gi: "GIB",
+        gl: "GRL",
+        gm: "GMB",
+        gn: "GIN",
+        gp: "GLP",
+        gq: "GNQ",
+        gr: "GRC",
+        gs: "SGS",
+        gt: "GTM",
+        gu: "GUM",
+        gw: "GNB",
+        gy: "GUY",
+        hk: "HKG",
+        hm: "HMD",
+        hn: "HND",
+        hr: "HRV",
+        ht: "HTI",
+        hu: "HUN",
+        id: "IDN",
+        ie: "IRL",
+        il: "ISR",
+        im: "IMN",
+        in: "IND",
+        io: "IOT",
+        iq: "IRQ",
+        ir: "IRN",
+        is: "ISL",
+        it: "ITA",
+        je: "JEY",
+        jm: "JAM",
+        jo: "JOR",
+        jp: "JPN",
+        ke: "KEN",
+        kg: "KGZ",
+        kh: "KHM",
+        ki: "KIR",
+        km: "COM",
+        kn: "KNA",
+        kp: "PRK",
+        kr: "KOR",
+        kw: "KWT",
+        ky: "CYM",
+        kz: "KAZ",
+        la: "LAO",
+        lb: "LBN",
+        lc: "LCA",
+        li: "LIE",
+        lk: "LKA",
+        lr: "LBR",
+        ls: "LSO",
+        lt: "LTU",
+        lu: "LUX",
+        lv: "LVA",
+        ly: "LBY",
+        ma: "MAR",
+        mc: "MCO",
+        md: "MDA",
+        me: "MNE",
+        mf: "MAF",
+        mg: "MDG",
+        mh: "MHL",
+        mk: "MKD",
+        ml: "MLI",
+        mm: "MMR",
+        mn: "MNG",
+        mo: "MAC",
+        mp: "MNP",
+        mq: "MTQ",
+        mr: "MRT",
+        ms: "MSR",
+        mt: "MLT",
+        mu: "MUS",
+        mv: "MDV",
+        mw: "MWI",
+        mx: "MEX",
+        my: "MYS",
+        mz: "MOZ",
+        na: "NAM",
+        nc: "NCL",
+        ne: "NER",
+        nf: "NFK",
+        ng: "NGA",
+        ni: "NIC",
+        nl: "NLD",
+        no: "NOR",
+        np: "NPL",
+        nr: "NRU",
+        nu: "NIU",
+        nz: "NZL",
+        om: "OMN",
+        pa: "PAN",
+        pe: "PER",
+        pf: "PYF",
+        pg: "PNG",
+        ph: "PHL",
+        pk: "PAK",
+        pl: "POL",
+        pm: "SPM",
+        pn: "PCN",
+        pr: "PRI",
+        ps: "PSE",
+        pt: "PRT",
+        pw: "PLW",
+        py: "PRY",
+        qa: "QAT",
+        re: "REU",
+        ro: "ROU",
+        rs: "SRB",
+        ru: "RUS",
+        rw: "RWA",
+        sa: "SAU",
+        sb: "SLB",
+        sc: "SYC",
+        sd: "SDN",
+        se: "SWE",
+        sg: "SGP",
+        sh: "SHN",
+        si: "SVN",
+        sj: "SJM",
+        sk: "SVK",
+        sl: "SLE",
+        sm: "SMR",
+        sn: "SEN",
+        so: "SOM",
+        sr: "SUR",
+        ss: "SSD",
+        st: "STP",
+        sv: "SLV",
+        sx: "SXM",
+        sy: "SYR",
+        sz: "SWZ",
+        tc: "TCA",
+        td: "TCD",
+        tf: "ATF",
+        tg: "TGO",
+        th: "THA",
+        tj: "TJK",
+        tk: "TKL",
+        tl: "TLS",
+        tm: "TKM",
+        tn: "TUN",
+        to: "TON",
+        tr: "TUR",
+        tt: "TTO",
+        tv: "TUV",
+        tw: "TWN",
+        tz: "TZA",
+        ua: "UKR",
+        ug: "UGA",
+        um: "UMI",
+        un: "UNO",
+        us: "USA",
+        uy: "URY",
+        uz: "UZB",
+        va: "VAT",
+        vc: "VCT",
+        ve: "VEN",
+        vg: "VGB",
+        vi: "VIR",
+        vn: "VNM",
+        vu: "VUT",
+        wf: "WLF",
+        ws: "WSM",
+        xk: "XKX",
+        ye: "YEM",
+        yt: "MYT",
+        za: "ZAF",
+        zm: "ZMB",
+        zw: "ZWE",
+    };
+
+    function flagCountryCode(code) {
+        const key = String(code || '').trim().toLowerCase().replace(/\.png$/, '');
+        return FLAG_CODES[key] || key.toUpperCase();
+    }
+
+    let currentTheme = initialState && initialState.theme ? initialState.theme : 'default';
+
+    function byId(id) {
+        return document.getElementById(id);
+    }
+
+    function setText(id, value) {
+        const el = byId(id);
+        if (el) el.textContent = value == null ? '' : String(value);
+    }
+
+    function resolveLogoUrl(value) {
+        if (!value) return '';
+        if (/^(https?:|data:|blob:)/i.test(value)) return value;
+        return '/widgets/scoreboard/logos/' + encodeURIComponent(value);
+    }
+
+    function resolvePlankUrl(value) {
+        if (!value) return '';
+        if (/^(https?:|data:|blob:)/i.test(value)) return value;
+        return '/widgets/scoreboard/planks/' + encodeURIComponent(value);
+    }
+
+    function resolveIconUrl(value) {
+        if (!value) return '';
+        if (/^(https?:|data:|blob:)/i.test(value)) return value;
+        return '/widgets/scoreboard/icons/' + encodeURIComponent(value);
+    }
+
+    function applySide(prefix, side, hideLogos, hideFlags, plateMode) {
+        side = side || {};
+
+        const rawName = (side.name || '').trim();
+        const teamTag = (side.teamTag || '').trim();
+        // If the player name is empty, the team name takes its place.
+        const displayName = rawName || teamTag;
+
+        setText(prefix + '-name', displayName);
+        const scoreValueEl = byId(prefix + '-score-value');
+        const scoreValue = side.points == null ? 0 : side.points;
+        if (scoreValueEl) {
+            scoreValueEl.textContent = String(scoreValue);
+        } else {
+            setText(prefix + '-score', scoreValue);
+        }
+
+        if (scoreValueEl) {
+            const offsetX = Number(side.scoreOffsetX) || 0;
+            const offsetY = Number(side.scoreOffsetY) || 0;
+            // Y is positive upwards in the control, while CSS translateY
+            // grows downwards, so invert it.
+            scoreValueEl.style.transform = `translate(${offsetX}px, ${-offsetY}px)`;
+        }
+
+        const scoreEl = byId(prefix + '-score');
+        const scoreFontSize = Number(side.scoreFontSize);
+        if (scoreEl) {
+            if (Number.isFinite(scoreFontSize) && scoreFontSize > 0) {
+                scoreEl.style.fontSize = scoreFontSize + 'px';
+            } else {
+                scoreEl.style.fontSize = '';
+            }
+        }
+
+        const showLogo = !hideLogos && side.showLogo !== false && !!side.logoPath;
+        // Logo has priority over flag when both are enabled.
+        const showFlag = !hideFlags && side.showFlag !== false && !!side.flag && !showLogo;
+
+        const teamEl = byId(prefix + '-team-tag');
+        if (teamEl) {
+            const tagText = showFlag ? flagCountryCode(side.flag) : teamTag;
+            teamEl.textContent = tagText;
+            // Show the separate team tag only when both name and tag are set.
+            teamEl.classList.toggle('hidden', !tagText || !rawName);
+        }
+
+        const resetEl = byId(prefix + '-reset');
+        const resetMask = byId(prefix + '-reset-mask');
+        const resetImg = byId(prefix + '-reset-img');
+        const resetIcon = String(side.resetIcon || '').trim() || DEFAULT_RESET_ICON;
+        const resetIconData = String(side.resetIconData || '').trim()
+            || (resetIcon === DEFAULT_RESET_ICON ? DEFAULT_RESET_ICON_DATA : '');
+        const resetIsLucide = resetIcon.startsWith('lucide:');
+        const showReset = side.showReset === true && !!resetIcon && (!resetIsLucide || !!resetIconData);
+        const resetScaleValue = Number(side.resetIconScale);
+        const resetScale = Number.isFinite(resetScaleValue) && resetScaleValue > 0
+            ? resetScaleValue
+            : 1;
+        const logoSizeValue = parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue('--sb-logo-size'),
+        );
+        const baseResetSize = Number.isFinite(logoSizeValue) && logoSizeValue > 0
+            ? logoSizeValue
+            : 42;
+
+        if (resetEl) {
+            resetEl.style.setProperty(
+                '--sb-reset-size',
+                (baseResetSize * resetScale).toFixed(2) + 'px',
+            );
+            resetEl.classList.toggle('hidden', !showReset);
+        }
+
+        if (!showReset) {
+            if (resetMask) {
+                resetMask.style.display = 'none';
+                resetMask.style.webkitMaskImage = '';
+                resetMask.style.maskImage = '';
+            }
+            if (resetImg) {
+                resetImg.style.display = 'none';
+                resetImg.removeAttribute('src');
+            }
+        } else if (resetIsLucide) {
+            if (resetMask) {
+                resetMask.style.display = 'block';
+                resetMask.style.webkitMaskImage = `url("${resetIconData}")`;
+                resetMask.style.maskImage = `url("${resetIconData}")`;
+            }
+            if (resetImg) {
+                resetImg.style.display = 'none';
+                resetImg.removeAttribute('src');
+            }
+        } else {
+            if (resetMask) {
+                resetMask.style.display = 'none';
+                resetMask.style.webkitMaskImage = '';
+                resetMask.style.maskImage = '';
+            }
+            if (resetImg) {
+                resetImg.style.display = 'block';
+                resetImg.src = resolveIconUrl(resetIcon);
+            }
+        }
+
+        const logoEl = byId(prefix + '-logo');
+        const logoImg = byId(prefix + '-logo-img');
+
+        if (logoEl) logoEl.classList.toggle('hidden', !showLogo);
+        if (logoImg) {
+            if (showLogo) {
+                logoImg.src = resolveLogoUrl(side.logoPath);
+            } else {
+                logoImg.removeAttribute('src');
+            }
+        }
+
+        const flagEl = byId(prefix + '-flag');
+        const flagImg = byId(prefix + '-flag-img');
+
+        if (flagEl) flagEl.classList.toggle('hidden', !showFlag);
+        if (flagImg) {
+            if (showFlag) {
+                flagImg.src = FLAG_BASE + encodeURIComponent(side.flag) + '.png';
+            } else {
+                flagImg.removeAttribute('src');
+            }
+        }
+
+        const sideEl = byId(prefix + '-side');
+        const customPlate = plateMode === 'custom' && !!side.plateImage;
+        const customReset = showReset && !resetIsLucide;
+        const resetOverflow = showReset && (!resetIsLucide || resetScale > 1);
+        if (resetEl) resetEl.classList.toggle('custom', customReset);
+        if (sideEl) {
+            sideEl.classList.toggle('custom-plate', customPlate);
+            sideEl.classList.toggle('reset-overflow', resetOverflow);
+
+            if (customPlate) {
+                const url = resolvePlankUrl(side.plateImage);
+                sideEl.style.backgroundImage = `url(${url})`;
+
+                const fitHeight = (img) => {
+                    if (!img || !img.naturalWidth || !img.naturalHeight) return;
+                    const width = sideEl.offsetWidth || 460;
+                    const aspect = img.naturalWidth / img.naturalHeight;
+                    sideEl.style.height = Math.max(1, Math.round(width / aspect)) + 'px';
+                };
+
+                const img = new Image();
+                img.onload = () => fitHeight(img);
+                img.src = url;
+                if (img.complete) fitHeight(img);
+            } else {
+                sideEl.style.backgroundImage = '';
+                sideEl.style.height = '';
+            }
+        }
+    }
+
+    let lastMainFontSize = 0;
+
+    function applyPlayerFont(fontFamily) {
+        const family = (fontFamily || '').trim();
+        const value = family
+            ? `${JSON.stringify(family)}, var(--sb-font-family)`
+            : '';
+
+        ['p1-name', 'p2-name', 'p1-team-tag', 'p2-team-tag', 'p1-score', 'p2-score']
+            .forEach((id) => {
+                const el = byId(id);
+                if (el) el.style.fontFamily = value;
+            });
+    }
+
+    function applyMainFontSize(size) {
+        const parsed = Number(size);
+        const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+        lastMainFontSize = safe;
+
+        const value = safe > 0 ? safe + 'px' : '';
+        if (safe > 0) {
+            document.documentElement.style.setProperty('--sb-main-size', value);
+        } else {
+            document.documentElement.style.removeProperty('--sb-main-size');
+        }
+        ['p1-team-tag', 'p2-team-tag'].forEach((id) => {
+            const el = byId(id);
+            if (el) el.style.fontSize = value;
+        });
+    }
+
+    function fitNameFont(id) {
+        const el = byId(id);
+        if (!el) return;
+
+        // Reset to the theme-defined size before measuring.
+        el.style.fontSize = '';
+
+        const computed = parseFloat(getComputedStyle(el).fontSize) || 24;
+        const base = lastMainFontSize > 0 ? lastMainFontSize : computed;
+
+        el.style.fontSize = base + 'px';
+
+        const min = Math.max(10, base * 0.65);
+        let size = base;
+
+        while (size > min && el.scrollWidth > el.clientWidth + 1) {
+            size -= 1;
+            el.style.fontSize = size + 'px';
+        }
+    }
+
+    function fitAllNameFonts() {
+        fitNameFont('p1-name');
+        fitNameFont('p2-name');
+    }
+
+    let lastScale = 1;
+
+    function applyScale(scale) {
+        const parsed = Number(scale);
+        const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+        lastScale = safe;
+
+        const el = byId('scoreboard-scale');
+        const board = document.querySelector('.scoreboard');
+        if (!el) return;
+
+        // Keep the whole widget visible when the side plates/gap grow
+        // beyond the browser viewport. The configured scale still acts
+        // as an upper bound.
+        const boardWidth = board ? board.offsetWidth : 0;
+        const boardHeight = board ? board.offsetHeight : 0;
+        const availableWidth = Math.max(0, window.innerWidth - 32);
+        const availableHeight = Math.max(0, window.innerHeight - 32);
+        const fitWidth = boardWidth > 0 ? availableWidth / boardWidth : safe;
+        const fitHeight = boardHeight > 0 ? availableHeight / boardHeight : safe;
+        const effective = Math.max(
+            0.1,
+            Math.min(safe, fitWidth, fitHeight),
+        );
+
+        el.style.transform = `scale(${effective})`;
+    }
+
+    function applyGap(gap) {
+        const parsed = Number(gap);
+        const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 480;
+
+        document.documentElement.style.setProperty(
+            '--sb-side-gap',
+            safe + 'px',
+        );
+    }
+
+    function applySideWidth(width) {
+        const parsed = Number(width);
+        const safe = Number.isFinite(parsed) && parsed > 0 ? parsed : 460;
+
+        document.documentElement.style.setProperty(
+            '--sb-side-width',
+            safe + 'px',
+        );
+    }
+
+    async function applyTheme(name) {
+        const theme = name || 'default';
+        if (theme === currentTheme) return;
+
+        try {
+            const res = await fetch(
+                '/widgets/scoreboard/theme/' + encodeURIComponent(theme),
+                { cache: 'no-store' },
+            );
+            if (!res.ok) return;
+
+            const css = await res.text();
+            const styleEl = byId('theme-style');
+            if (styleEl) styleEl.textContent = css;
+            currentTheme = theme;
+
+            requestAnimationFrame(fitAllNameFonts);
+        } catch (e) {
+            console.warn('[scoreboard] theme load failed:', e);
+        }
+    }
+
+    function applyState(state) {
+        if (!state) return;
+
+        const titleText = state.titleMatch || '';
+        setText('title-match', titleText);
+
+        const titleEl = byId('title-match');
+        const centerEl = titleEl ? titleEl.closest('.center') : null;
+        if (centerEl) {
+            centerEl.classList.toggle('title-empty', !String(titleText).trim());
+        }
+
+        const formatText = state.format || '';
+        setText('format', formatText);
+
+        const formatEmpty = !String(formatText).trim();
+        const formatEl = byId('format');
+        if (formatEl) {
+            formatEl.classList.toggle('hidden', formatEmpty);
+        }
+        if (centerEl) {
+            centerEl.classList.toggle('format-empty', formatEmpty);
+        }
+
+        applyPlayerFont(state.fontFamily);
+        applyMainFontSize(state.mainFontSize);
+
+        // Apply layout variables before measuring custom plate dimensions.
+        applyGap(state.sideGap);
+        applySideWidth(state.sideWidth);
+
+        applySide('p1', state.P1, !!state.hideLogos, !!state.hideFlags, state.plateMode);
+        applySide('p2', state.P2, !!state.hideLogos, !!state.hideFlags, state.plateMode);
+
+        fitAllNameFonts();
+
+        // Apply scale after the layout width has been recalculated.
+        applyScale(state.scale);
+        applyTheme(state.theme);
+    }
+
+    const PREVIEW_SCALE = 0.55;
+    const isPreview = new URLSearchParams(location.search).has('preview');
+
+    if (isPreview) {
+        document.documentElement.classList.add('preview-mode');
+    }
+
+    // In the in-app iframe preview, always show the widget at 0.55x.
+    applyState(isPreview ? { ...initialState, scale: PREVIEW_SCALE } : initialState);
+
+    window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || data.type !== 'scoreboard:state-changed') return;
+        applyState(data.state);
+    });
+
+    try {
+        const channel = new BroadcastChannel('scoreboard:state');
+        channel.onmessage = (event) => {
+            const data = event.data;
+            if (!data || data.type !== 'scoreboard:state-changed') return;
+            applyState(data.state);
+        };
+    } catch (e) {
+        console.warn('[scoreboard] BroadcastChannel unavailable:', e);
+    }
+
+    window.addEventListener('storage', (event) => {
+        if (event.key !== 'scoreboard:state' || !event.newValue) return;
+        try {
+            applyState(JSON.parse(event.newValue));
+        } catch (e) {
+            console.warn('[scoreboard] storage parse error:', e);
+        }
+    });
+
+    let lastStateJson = null;
+
+    async function pollState() {
+        try {
+            const res = await fetch('/widgets/scoreboard/state', { cache: 'no-store' });
+            if (!res.ok) return;
+
+            const state = await res.json();
+            const json = JSON.stringify(state);
+            if (json === lastStateJson) return;
+
+            lastStateJson = json;
+            applyState(state);
+        } catch (e) {
+            // server not ready yet
+        }
+    }
+
+    // The preview iframe is driven only by postMessage from the app,
+    // so server-side scale changes don't affect it.
+    if (!isPreview) {
+        pollState();
+        setInterval(pollState, 1000);
+    }
+
+    window.addEventListener('load', fitAllNameFonts);
+
+    let nameFitTimer = null;
+    window.addEventListener('resize', () => {
+        clearTimeout(nameFitTimer);
+        nameFitTimer = setTimeout(() => {
+            applyScale(lastScale);
+            fitAllNameFonts();
+        }, 50);
+    });
+</script>
+</body>
+</html>

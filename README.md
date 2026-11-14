@@ -8,19 +8,19 @@
 </p>
 <p align="center">
     <a href="https://pkg.go.dev/github.com/dreamervulpi/tourney-helper"><img src="https://img.shields.io/badge/Go.dev-reference-007d9c?logo=go&logoColor=white" alt="Go.dev"></a>
-    <a href="https://github.com/DreamerVulpi/tourney-helper/releases"><img src="https://img.shields.io/badge/Version-0.5.0-blue" alt="Version project"></a>
+    <a href="https://github.com/DreamerVulpi/tourney-helper/releases"><img src="https://img.shields.io/badge/Version-0.6.0-blue" alt="Version project"></a>
     <a href="https://dreamervulpi.github.io/tourney-helper-website/"><img src="https://img.shields.io/badge/Project website-blue" alt="Project website"></a>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/📄 License-MIT-green?logo=&logoColor=white" alt="License"></a>
     <a href="https://github.com/DreamerVulpi/tourney-helper/issues"><img src="https://img.shields.io/badge/🪲 Report a bug-Issues-red" alt="ReportBug"></a>
 </p>
 <p align="center">
-    <a href="https://ko-fi.com/dreamervulpi"><img src="https://img.shields.io/badge/Donate-Ko--Fi-pink?logo=ko-fi" alt="Donate"></a>
+    <a href="https://new.donatepay.ru/@dreamervulpi"><img src="https://img.shields.io/badge/💸 Donate-DonatePay-darkgreen.svg" alt="DonatePay"></a>
     <a href="https://boosty.to/dreamervulpi"><img src="https://img.shields.io/badge/Subscription-Boosty-orange?logo=boosty" alt="Subscribe"></a>
 </p>
 
 ## 💡 Features
 
-### Current version ```0.5.0```
+### Current version ```0.6.0```
 * Support for retrieving data from the [start.gg](https://www.start.gg/) tournament platform;
 * Support for sending messages via [Discord](https://discord.com/);
 * Support for retrieving game IDs for the following games: Tekken 8 and Street Fighter 6;
@@ -53,7 +53,7 @@
 * Support for your own ranking league with the ability to reset all players’ rankings with a single click;
 * Support for a ban list with automatic removal of bans upon expiration;
 
-### 🏆 Bracket Widget
+### 🏆 Bracket widget
 * Displays the tournament bracket based on supported integrations;
 * Hovering over a player displays their progress path;
 * Displaying matches for live broadcasts;
@@ -61,8 +61,21 @@
 * Support for custom themes (a sample file is located in `widgets/bracket/themes/startgg.css`);
 * Each generated link operates based on the source data independently of the others (settings apply to all links);
 
+### 🏆 Scoreboard widget
+* Displays scores without third-party integrations;
+* Option to specify a country, sports team, and/or your own team logo;
+* Option to set a custom logo or a pre-made icon for the reset button;
+* Option to specify the event name and/or match format;
+* Ability to switch sides or reset to default settings;
+* Ability to scale, adjust the spacing between tiles, and change their length;
+* Ability to manually adjust the score display to match your design (font, font size, and score digits);
+* Support for customizing built-in tiles via CSS and using custom tiles as images with automatic text layout;
+* Support for third-party themes (a sample file is located in `widgets/scoreboard/themes/startgg.css`);
+* A single link for using the widget;
+
 ### 👥 Profile and Integration System
 * Ability to create, duplicate, export, and import pre-configured settings for all widgets and tools, including authentication;
+* The ability to import/export widget content;
 * When selecting an OAuth client, only available integrations are displayed to avoid overloading the API;
 * Each profile offers 5 slots for each integration, ensuring flexibility and ease of use;
 * When one of the widgets or tools is launched, the system blocks access to the profile to prevent accidental data corruption;

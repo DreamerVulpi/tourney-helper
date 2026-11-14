@@ -341,7 +341,7 @@ func TestGetSetsData_MultiplePages(t *testing.T) {
 				Id: 100,
 				Sets: startgg.SetsPageInfo{
 					PageInfo: startgg.PageInfo{
-						Total: 120,
+						Total: 60,
 					},
 				},
 			},

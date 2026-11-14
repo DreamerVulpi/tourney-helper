@@ -19,8 +19,49 @@ export interface WidgetBracket {
   clientId: string | null;
 }
 
+export interface ScoreboardSide {
+  teamTag: string;
+  name: string;
+  resetIcon: string;
+  resetIconData: string;
+  resetIconScale: number;
+  logoPath: string;
+  flag: string;
+  plateImage: string;
+  points: number;
+  scoreOffsetX: number;
+  scoreOffsetY: number;
+  scoreFontSize: number;
+  showLogo: boolean;
+  showFlag: boolean;
+  showReset: boolean;
+}
+
+export interface WidgetScoreboard {
+  theme: string;
+  titleMatch: string;
+  fontFamily: string;
+  mainFontSize: number;
+  hideLogos: boolean;
+  hideFlags: boolean;
+  scale: number;
+  sideGap: number;
+  sideWidth: number;
+  plateMode: string;
+  format: string;
+  P1: ScoreboardSide;
+  P2: ScoreboardSide;
+}
+
 export interface WidgetsCfg {
   bracket: WidgetBracket;
+  scoreboard: WidgetScoreboard;
+  bracketSlots: WidgetBracket[];
+  scoreboardSlots: WidgetScoreboard[];
+  bracketSlotNames: string[];
+  scoreboardSlotNames: string[];
+  activeBracketSlot: number;
+  activeScoreboardSlot: number;
 }
 
 export interface ToolsCfg {
@@ -28,8 +69,8 @@ export interface ToolsCfg {
 }
 
 export interface RulesMatches {
-  standardFormat: number;
-  finalsFormat: number;
+  standardFormat: string;
+  finalsFormat: string;
   stage: string;
   rounds: number;
   duration: number;

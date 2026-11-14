@@ -1,6 +1,54 @@
 package config
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// MatchFormat is a match format label such as "FT2" or "BO3".
+// Older configs stored a plain integer (e.g. 2), which is normalized to "FT2".
+type MatchFormat string
+
+func (m *MatchFormat) UnmarshalTOML(value any) error {
+	switch v := value.(type) {
+	case int64:
+		*m = MatchFormat(fmt.Sprintf("FT%d", v))
+	case string:
+		*m = normalizeMatchFormat(v)
+	default:
+		return fmt.Errorf("invalid match format: %v", value)
+	}
+	return nil
+}
+
+func (m *MatchFormat) UnmarshalJSON(data []byte) error {
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		*m = normalizeMatchFormat(text)
+		return nil
+	}
+
+	var number int
+	if err := json.Unmarshal(data, &number); err != nil {
+		return err
+	}
+	*m = MatchFormat(fmt.Sprintf("FT%d", number))
+	return nil
+}
+
+func normalizeMatchFormat(value string) MatchFormat {
+	value = strings.ToUpper(strings.TrimSpace(value))
+	if value == "" {
+		return ""
+	}
+	if _, err := strconv.Atoi(value); err == nil {
+		return MatchFormat("FT" + value)
+	}
+	return MatchFormat(value)
+}
 
 type AuthStatus string
 
@@ -50,8 +98,51 @@ type WidgetBracket struct {
 	AutoRefresh     bool    `toml:"autoRefresh" json:"autoRefresh"`
 }
 
+// TODO: Add ShowLogo, ShowFlag
+type Side struct {
+	TeamTag        string  `toml:"teamTag" json:"teamTag"`
+	Name           string  `toml:"name" json:"name"`
+	ResetIcon      string  `toml:"resetIcon" json:"resetIcon"`
+	ResetIconData  string  `toml:"resetIconData" json:"resetIconData"`
+	ResetIconScale float64 `toml:"resetIconScale" json:"resetIconScale"`
+	LogoPath       string  `toml:"logoPath" json:"logoPath"`
+	Flag           string  `toml:"flag" json:"flag"`
+	PlateImage     string  `toml:"plateImage" json:"plateImage"`
+	Points         int     `toml:"points" json:"points"`
+	ScoreOffsetX   int     `toml:"scoreOffsetX" json:"scoreOffsetX"`
+	ScoreOffsetY   int     `toml:"scoreOffsetY" json:"scoreOffsetY"`
+	ScoreFontSize  int     `toml:"scoreFontSize" json:"scoreFontSize"`
+	ShowLogo       bool    `toml:"showLogo" json:"showLogo"`
+	ShowFlag       bool    `toml:"showFlag" json:"showFlag"`
+	ShowReset      bool    `toml:"showReset" json:"showReset"`
+}
+
+type WidgetScoreboard struct {
+	Theme        string  `toml:"theme" json:"theme"`
+	TitleMatch   string  `toml:"titleMatch" json:"titleMatch"`
+	FontFamily   string  `toml:"fontFamily" json:"fontFamily"`
+	MainFontSize int     `toml:"mainFontSize" json:"mainFontSize"`
+	HideLogos    bool    `toml:"hideLogos" json:"hideLogos"`
+	HideFlags    bool    `toml:"hideFlags" json:"hideFlags"`
+	Scale        float64 `toml:"scale" json:"scale"`
+	SideGap      float64 `toml:"sideGap" json:"sideGap"`
+	SideWidth    float64 `toml:"sideWidth" json:"sideWidth"`
+	PlateMode    string  `toml:"plateMode" json:"plateMode"`
+	Format       string  `toml:"format" json:"format"`
+	P1           Side    `toml:"P1" json:"P1"`
+	P2           Side    `toml:"P2" json:"P2"`
+}
+
 type WidgetsCfg struct {
-	Bracket WidgetBracket `toml:"bracket" json:"bracket"`
+	Bracket    WidgetBracket    `toml:"bracket" json:"bracket"`
+	Scoreboard WidgetScoreboard `toml:"scoreboard" json:"scoreboard"`
+
+	BracketSlots         []WidgetBracket    `toml:"bracketSlots" json:"bracketSlots"`
+	ScoreboardSlots      []WidgetScoreboard `toml:"scoreboardSlots" json:"scoreboardSlots"`
+	BracketSlotNames     []string           `toml:"bracketSlotNames" json:"bracketSlotNames"`
+	ScoreboardSlotNames  []string           `toml:"scoreboardSlotNames" json:"scoreboardSlotNames"`
+	ActiveBracketSlot    int                `toml:"activeBracketSlot" json:"activeBracketSlot"`
+	ActiveScoreboardSlot int                `toml:"activeScoreboardSlot" json:"activeScoreboardSlot"`
 }
 
 // ============================================================
@@ -59,11 +150,11 @@ type WidgetsCfg struct {
 // ============================================================
 
 type RulesMatches struct {
-	StandardFormat int    `toml:"standardFormat" json:"standardFormat"`
-	FinalsFormat   int    `toml:"finalsFormat" json:"finalsFormat"`
-	Stage          string `toml:"stage" json:"stage"`
-	Rounds         int    `toml:"rounds" json:"rounds"`
-	Duration       int    `toml:"duration" json:"duration"`
+	StandardFormat MatchFormat `toml:"standardFormat" json:"standardFormat"`
+	FinalsFormat   MatchFormat `toml:"finalsFormat" json:"finalsFormat"`
+	Stage          string      `toml:"stage" json:"stage"`
+	Rounds         int         `toml:"rounds" json:"rounds"`
+	Duration       int         `toml:"duration" json:"duration"`
 }
 
 type StreamLobby struct {

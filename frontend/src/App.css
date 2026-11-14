@@ -75,3 +75,11 @@
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out;
 }
+
+.window-titlebar {
+  --wails-draggable: drag; 
+}
+
+.window-titlebar__controls {
+  --wails-draggable: no-drag; 
+}

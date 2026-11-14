@@ -14,6 +14,7 @@ function ToggleSwitchBase({
 
   color = "blue",
   solid = false,
+  compact = false,
 
   themeClasses,
 }) {
@@ -65,7 +66,7 @@ function ToggleSwitchBase({
           w-full
           flex
           flex-col
-          p-3
+          ${compact ? "p-2" : "p-3"}
           rounded-xl
           border
           gap-2

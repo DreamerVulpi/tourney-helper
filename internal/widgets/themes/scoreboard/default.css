@@ -1,0 +1,331 @@
+/*
+ * Default theme for tourney-helper scoreboard widget.
+ *
+ * Inspired by the "newStyle" scoreboard:
+ *  - two skewed gradient plates;
+ *  - light blue bottom accent;
+ *  - glowing scores and uppercase player names;
+ *  - centered event title with a trapezoid format badge.
+ */
+
+:root {
+    --sb-bg: #111111;
+    --sb-bar-bg: #1b1b1b;
+    --sb-bar-border: #444444;
+
+    --sb-text: #f1f5f9;
+    --sb-muted: #a0aab8;
+    --sb-dim: #6a7380;
+
+    --sb-title-color: #d5edf9;
+    --sb-format-color: #ffffff;
+
+    --sb-name-color: #ffffff;
+    --sb-score-color: #ffffff;
+    --sb-reset-color: #ffffff;
+    --sb-reset-bg: rgba(0, 110, 255, 0.25);
+    --sb-reset-border: rgba(213, 237, 249, 0.45);
+    --sb-reset-radius: 3px;
+    --sb-reset-shadow: 0 0 10px rgba(0, 163, 255, 0.35);
+
+    --sb-logo-bg: rgba(255, 255, 255, 0.08);
+    --sb-logo-border: rgba(213, 237, 249, 0.35);
+
+    --sb-flag-border: transparent;
+    --sb-center-border: transparent;
+
+    --sb-font-family: "Segoe UI", Arial, sans-serif;
+    --sb-score-font: "Segoe UI", Arial, sans-serif;
+
+    /* newStyle-inspired tokens */
+    --sb-plate-left: linear-gradient(135deg, rgba(0, 110, 255, 1) 0%, rgba(0, 9, 18, 1) 100%);
+    --sb-plate-right: linear-gradient(135deg, rgba(0, 9, 18, 1) 0%, rgba(0, 110, 255, 1) 100%);
+    --sb-plate-border: #d5edf9;
+    --sb-plate-height: 64px;
+    --sb-logo-size: 42px;
+    --sb-accent: #006eff;
+    --sb-divider: rgba(213, 237, 249, 0.4);
+    --sb-score-shadow: 0 0 10px rgba(0, 163, 255, 0.8);
+    --sb-name-shadow: 2px 2px 0 #006eff;
+    --sb-event-shadow: 0 0 10px rgba(0, 110, 255, 1);
+    --sb-format-bg: #000912;
+    --sb-title-bg: linear-gradient(
+        135deg,
+        rgba(0, 110, 255, 0.95) 0%,
+        rgba(0, 9, 18, 0.95) 100%
+    );
+    --sb-format-clip: polygon(
+        0% 0%,
+        100% 0%,
+        calc(100% - 15px) 100%,
+        15px 100%
+    );
+    --sb-center-gap: 480px;
+    --sb-side-gap: 480px;
+    --sb-side-width: 460px;
+    --sb-team-tag-color: #7cc4ff;
+}
+
+html.transparent-bg,
+html.transparent-bg body,
+html.transparent-bg .scoreboard-wrapper,
+html.transparent-bg .scoreboard-scale,
+html.transparent-bg .scoreboard {
+    background: transparent !important;
+    background-image: none !important;
+}
+
+/* ============================================================
+ * Layout
+ * ============================================================ */
+
+.scoreboard {
+    position: relative;
+    width: calc(var(--sb-side-width) * 2 + var(--sb-side-gap));
+    max-width: none;
+    height: auto;
+    align-items: center;
+    gap: var(--sb-side-gap);
+    border: none;
+    background: transparent;
+}
+
+.side {
+    position: relative;
+    flex: 0 0 var(--sb-side-width);
+    width: var(--sb-side-width);
+    height: var(--sb-plate-height);
+    padding: 0px 0 0;
+    gap: 0;
+    overflow: hidden;
+    border-bottom: 4px solid var(--sb-plate-border);
+    background: var(--sb-plate-left);
+}
+
+.side-left {
+    transform: skewX(25deg);
+}
+
+.side-right {
+    justify-content: stretch;
+    transform: skewX(-25deg);
+    background: var(--sb-plate-right);
+}
+
+.side-content {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    gap: 12px;
+    padding: 0 24px;
+}
+
+.side-left .side-content {
+    padding: 0 0 0 24px;
+    transform: skewX(-25deg);
+}
+
+.side-right .side-content {
+    padding: 0 24px 0 0;
+    transform: skewX(25deg);
+}
+
+/* ============================================================
+ * Logos / flags
+ * ============================================================ */
+
+.logo {
+    width: var(--sb-logo-size);
+    height: var(--sb-logo-size);
+    flex: 0 0 var(--sb-logo-size);
+    background: var(--sb-logo-bg);
+    border: 1px solid var(--sb-logo-border);
+    border-radius: 4px;
+}
+
+.flag {
+    width: 46px;
+    height: 30px;
+    flex: 0 0 46px;
+    background: transparent;
+    border: none;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18), 0 2px 5px rgba(0, 0, 0, 0.55);
+}
+
+.flag img {
+    width: 100%;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 2px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+}
+
+/* ============================================================
+ * Player name
+ * ============================================================ */
+
+.name {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 0 10px;
+    text-align: center;
+    line-height: 1;
+    text-transform: uppercase;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--sb-name-color);
+    text-shadow: var(--sb-name-shadow);
+}
+
+.team-tag {
+    max-width: 120px;
+    padding: 0 4px;
+    line-height: 1;
+    font-size: 18px;
+    color: var(--sb-team-tag-color);
+    text-shadow: 0 0 8px rgba(0, 110, 255, 0.9);
+}
+
+/* ============================================================
+ * Score
+ * ============================================================ */
+
+.score {
+    position: relative;
+    width: 68px;
+    min-width: 68px;
+    flex: 0 0 68px;
+    height: 100%;
+    padding: 0;
+    background: transparent;
+    color: var(--sb-score-color);
+    font-family: var(--sb-score-font);
+    font-size: 28px;
+    font-weight: 700;
+    text-shadow: var(--sb-score-shadow);
+}
+
+/* Компенсация скоса разделителя: цифра центрируется в видимом параллелограмме. */
+.side-left .score {
+    padding-left: 18px;
+}
+
+.side-right .score {
+    padding-right: 18px;
+}
+
+.side-left .score::before,
+.side-right .score::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    width: 2px;
+    height: calc(100% + 8px);
+    background: var(--sb-divider);
+}
+
+.side-left .score::before {
+    left: 0;
+    transform: skewX(25deg);
+    transform-origin: top;
+}
+
+.side-right .score::before {
+    right: 0;
+    transform: skewX(-25deg);
+    transform-origin: top;
+}
+
+/* ============================================================
+ * Event info
+ * ============================================================ */
+
+.center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: auto;
+    max-width: var(--sb-center-gap);
+    padding: 0;
+    gap: 0;
+    border: none;
+    text-align: center;
+    z-index: 5;
+}
+
+.title {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 30px;
+    margin: 0 auto;
+    padding: 4px 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--sb-title-color);
+    text-shadow: var(--sb-event-shadow);
+}
+
+.center.title-empty .title {
+    display: none;
+}
+
+/* Без названия ивента формат поднимается на уровень верхнего края плашек. */
+.center.title-empty {
+    top: 0;
+    transform: translateX(-50%);
+}
+
+/* Без формата название ивента поднимается на уровень верхнего края плашек. */
+.center.format-empty {
+    top: 0;
+    transform: translateX(-50%);
+}
+
+.title::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--sb-title-bg);
+    clip-path: var(--sb-format-clip);
+}
+
+.format {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 26px;
+    margin-top: 0;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--sb-format-color);
+}
+
+.format::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--sb-format-bg);
+    clip-path: var(--sb-format-clip);
+}

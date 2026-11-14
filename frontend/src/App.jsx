@@ -24,9 +24,10 @@ import { InstallUpdate } from "../wailsjs/go/application/App.js";
 import { EventsOn, EventsOff } from "../wailsjs/runtime/runtime.js"
 import { useBracketFlagsSync } from "./hooks/App/useBracketFlagsSync.jsx";
 import { useAppStore } from "./store/useAppStore"
-import IntegrationsPlate from "./pages/IntegrationsPanel.jsx";
+import IntegrationsPanel from "./pages/IntegrationsPanel.jsx";
 import ProfilesPanel from "./pages/ProfilesPanel.jsx";
 import { useToolsLocked } from "./hooks/App/useToolsLocked.jsx";
+import WindowTitleBar from "./components/WindowTitleBar.jsx";
 
 const App = () => {
   // ---- UI ----
@@ -48,7 +49,7 @@ const App = () => {
     debouncedSaveTools,
   } = useAutoSave();
 
-  const { updateConfig } = useConfigUpdater({
+  const { updateConfig, selectWidgetSlot, renameWidgetSlot, resetWidgetSlot } = useConfigUpdater({
     isLoaded,
     debouncedSaveSettings,
     debouncedSaveWidgets,
@@ -79,6 +80,7 @@ const App = () => {
   // Status of the messaging system
   const [isProcessingNS, setIsProcessing] = useState(false);
   const [isProcessingWB, setIsProcessingWB] = useState(false);
+  const [isProcessingWS, setIsProcessingWS] = useState(false);
   
   // Detail description components for Light/Dark themes 
   const themeClasses = useThemeClasses(getThemeClasses);
@@ -89,6 +91,7 @@ const App = () => {
   // Status of projects
   const [isMailingRunning, setIsMailingRunning] = useState(false);
   const [isWidgetBracketRunning, setIsWidgetBracketRunning] = useState(false);
+  const [isWidgetScoreboardRunning, setIsWidgetScoreboardRunning] = useState(false);
 
   // Statement for update modal window
   const { updateInfo, check } = useCheckUpdate();
@@ -192,43 +195,43 @@ const App = () => {
   }, [locale]);
 
   const iframeRef_WidgetBracket = useRef(null);
+  const iframeRef_WidgetScoreboard = useRef(null);
 
   return (
-    <div
-    className={`grid grid-cols-[auto_1fr] grid-rows-[4rem_1fr] h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}
-  >
-    {!locale ? (
-      <div className="col-span-2 h-screen w-screen bg-[#050505] flex flex-col items-center justify-center gap-4">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-
-        <span className="font-mono text-xs text-slate-400">
-          Loading localization...
-        </span>
-      </div>
-      ) : (
-        <>
-          <div className="row-span-2 min-h-0">
-            <SidePanel
-              locale={locale.SidePanel}
-              updateConfig={updateConfig}
-            />
+    <div className={`flex flex-col h-screen min-w-[80rem] max-w-full overflow-hidden transition-colors duration-300 ${themeClasses.app}`}>
+      <WindowTitleBar/>
+      <div className="flex-1 min-h-0 overflow-hidden">
+        {!locale ? (
+          <div className="h-full w-full bg-[#050505] flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <span className="font-mono text-xs text-slate-400">
+              Loading localization...
+            </span>
           </div>
-          <HeaderPlate
-            locale={locale.HeaderPanel}
-            updateConfig={updateConfig}
-            updateInfo={updateInfo}
-            check={check}
-            handleInstallUpdate={handleInstallUpdate}
-            updateProgressOpen={updateProgressOpen}
-            updateStatus={updateStatus}
-            updateMessage={updateMessage}
-            updateProgress={updateProgress}
-            setUpdateProgressOpen={setUpdateProgressOpen}
-            setUpdateMessage={setUpdateMessage}
-            setUpdateProgress={setUpdateProgress}
-          />
+        ) : (
+          <div className="grid grid-cols-[auto_1fr] grid-rows-[4rem_1fr] h-full w-full overflow-hidden">
+            <div className="row-span-2 min-h-0">
+              <SidePanel
+                locale={locale.SidePanel}
+                updateConfig={updateConfig}
+              />
+            </div>
+            <HeaderPlate
+              locale={locale.HeaderPanel}
+              updateConfig={updateConfig}
+              updateInfo={updateInfo}
+              check={check}
+              handleInstallUpdate={handleInstallUpdate}
+              updateProgressOpen={updateProgressOpen}
+              updateStatus={updateStatus}
+              updateMessage={updateMessage}
+              updateProgress={updateProgress}
+              setUpdateProgressOpen={setUpdateProgressOpen}
+              setUpdateMessage={setUpdateMessage}
+              setUpdateProgress={setUpdateProgress}
+            />
 
-          {/* MainWindow */}
+            {/* MainWindow */}
             <div className="flex flex-col min-w-0 min-h-0 overflow-hidden">
               <main className="flex-1 overflow-y-auto p-8 relative">
                 {activeTab === "notifications" && (
@@ -254,6 +257,9 @@ const App = () => {
                   <WidgetBracketPanel
                     locale={locale.WidgetBracketPanel}
                     updateConfig={updateConfig}
+                    selectWidgetSlot={selectWidgetSlot}
+                    renameWidgetSlot={renameWidgetSlot}
+                    resetWidgetSlot={resetWidgetSlot}
                     isProcessing={isProcessingWB}
                     setIsProcessingWB={setIsProcessingWB}
                     isWidgetBracketRunning={isWidgetBracketRunning}
@@ -265,7 +271,7 @@ const App = () => {
                 )}
 
                 {activeTab === "integrations" && (
-                  <IntegrationsPlate
+                  <IntegrationsPanel
                     locale={locale.IntegrationsPanel}
                     updateConfig={updateConfig}
                     debouncedSaveAuthorizations={debouncedSaveAuthorizations}
@@ -278,20 +284,31 @@ const App = () => {
                   />
                 )}
 
-                {/* In future updates */}
-                {/*
-                  {activeTab === "scoreboard" && (
-                    <WidgetScoreboardPanel theme={theme}/>
-                  )} */}
+                
+                {activeTab === "widgetScoreboard" && (
+                  <WidgetScoreboardPanel
+                    locale={locale.WidgetScoreboardPanel}
+                    updateConfig={updateConfig}
+                    selectWidgetSlot={selectWidgetSlot}
+                    renameWidgetSlot={renameWidgetSlot}
+                    resetWidgetSlot={resetWidgetSlot}
+                    isProcessing={isProcessingWS}
+                    setIsProcessingWS={setIsProcessingWS}
+                    isWidgetScoreboardRunning={isWidgetScoreboardRunning}
+                    setIsWidgetScoreboardRunning={setIsWidgetScoreboardRunning}
+                    iframeRef_WidgetScoreboard={iframeRef_WidgetScoreboard}
+                  />
+                )}
               </main>
 
               <LoggerPlate
                 locale={locale.LogPanel}
               />
             </div>
-        </>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
+      </div>
   );
 };
 

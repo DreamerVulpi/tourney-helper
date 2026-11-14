@@ -6,12 +6,18 @@ import (
 	"path/filepath"
 
 	"github.com/dreamervulpi/tourney-helper/config"
+	"github.com/dreamervulpi/tourney-helper/internal/widgets/flags"
 )
 
 var themesPath = "/themes"
 
 var directories = []string{
 	"bracket" + themesPath,
+	"scoreboard" + themesPath,
+	"scoreboard/flags",
+	"scoreboard/logos",
+	"scoreboard/icons",
+	"scoreboard/planks",
 }
 
 func InitDirectories() error {
@@ -20,6 +26,10 @@ func InitDirectories() error {
 		if err := createDir(config.GetAbsPath(path)); err != nil {
 			return err
 		}
+	}
+
+	if err := flags.Init(); err != nil {
+		return err
 	}
 
 	return nil

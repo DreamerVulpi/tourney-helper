@@ -19,6 +19,7 @@ import (
 
 	entityLogger "github.com/dreamervulpi/tourney-helper/internal/entity/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/entity/startgg"
+	entityWidget "github.com/dreamervulpi/tourney-helper/internal/entity/widgets"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/logger"
 	"github.com/dreamervulpi/tourney-helper/internal/usecase/metrics"
 )
@@ -75,13 +76,34 @@ func (c *Client) RunQuery(query []byte) ([]byte, error) {
 	// Sends the request and receives the response of it.
 	res, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, errors.Join(errors.New("HTTP Response - "), err)
+		return nil, errors.Join(
+			errors.New("HTTP Response - "),
+			entityWidget.ErrExternalService,
+			err,
+		)
 	}
 	defer res.Body.Close() //nolint:errcheck
 
+	// Upstream/infrastructure failures (Cloudflare, outages, rate limits)
+	// are external and should be reported as such to the widget user.
+	if res.StatusCode >= http.StatusInternalServerError ||
+		res.StatusCode == http.StatusTooManyRequests ||
+		res.StatusCode == http.StatusForbidden ||
+		res.StatusCode == http.StatusRequestTimeout {
+		return nil, fmt.Errorf(
+			"%w: upstream responded with status %d",
+			entityWidget.ErrExternalService,
+			res.StatusCode,
+		)
+	}
+
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return nil, errors.Join(errors.New("read Data - "), err)
+		return nil, errors.Join(
+			errors.New("read Data - "),
+			entityWidget.ErrExternalService,
+			err,
+		)
 	}
 
 	validation, err := validateData(data)
@@ -105,6 +127,26 @@ func GetData[T any](c *Client, rawQuery string, variables map[string]any) (*T, e
 	rawData, err := c.RunQuery(preparedQuery)
 	if err != nil {
 		return nil, fmt.Errorf("RunQuery - %w", err)
+	}
+
+	// GraphQL может вернуть 200 с errors и частичными/пустыми data.
+	// Логируем это, иначе виджет может остаться пустым без объяснения.
+	var errEnvelope struct {
+		Errors []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
+	}
+	if json.Unmarshal(rawData, &errEnvelope) == nil && len(errEnvelope.Errors) > 0 {
+		messages := make([]string, 0, len(errEnvelope.Errors))
+		for _, item := range errEnvelope.Errors {
+			if item.Message != "" {
+				messages = append(messages, item.Message)
+			}
+		}
+		if len(messages) > 0 {
+			logger.Log(entityLogger.Warning,
+				"start.gg GraphQL errors: "+strings.Join(messages, "; "))
+		}
 	}
 
 	var results T
@@ -152,6 +194,19 @@ func GetAllPages[T any](fetch func(page int) (nodes []T, total int, err error), 
 		nodes, total, err := fetch(page)
 		if err != nil {
 			return nil, err
+		}
+
+		// Пустая страница — данных больше нет. Это также защищает от
+		// зацикливания, если pageInfo.total учитывает записи, отфильтрованные
+		// на стороне API (например, по state).
+		if len(nodes) == 0 {
+			if len(all) < total {
+				logger.Log(entityLogger.Warning, fmt.Sprintf(
+					"GetAllPages: empty page %d while collected %d of %d",
+					page, len(all), total,
+				))
+			}
+			break
 		}
 
 		all = append(all, nodes...)

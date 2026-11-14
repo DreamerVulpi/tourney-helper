@@ -50,11 +50,11 @@ type AuthClient struct {
 	CallbackServer *OAuthCallbackServer
 }
 
-func GetStartggOauth2(clientID, clientSecret string) *oauth2.Config {
+func GetStartggOauth2(clientID, clientSecret, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  "http://127.0.0.1:7310/startgg/callback",
+		RedirectURL:  redirectURL,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  startggAuthURL,
 			TokenURL: startggTokenURL,
@@ -71,11 +71,11 @@ func (a *AuthClient) GetAccessToken(filename string) (string, error) {
 	return token.AccessToken, nil
 }
 
-func GetDiscordOauth2(clientID, clientSecret string) *oauth2.Config {
+func GetDiscordOauth2(clientID, clientSecret, redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
-		RedirectURL:  "http://127.0.0.1:7310/discord/callback",
+		RedirectURL:  redirectURL,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  discordAuthURL,
 			TokenURL: discordTokenURL,
@@ -84,11 +84,11 @@ func GetDiscordOauth2(clientID, clientSecret string) *oauth2.Config {
 	}
 }
 
-func GetChallongeOauth2() *oauth2.Config {
+func GetChallongeOauth2(redirectURL string) *oauth2.Config {
 	return &oauth2.Config{
 		ClientID:     os.Getenv("CHALLONGE_CLIENT_ID"),
 		ClientSecret: os.Getenv("CHALLONGE_CLIENT_SECRET"),
-		RedirectURL:  "http://127.0.0.1:7310/challonge/callback",
+		RedirectURL:  redirectURL,
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  challongeAuthURL,
 			TokenURL: challongeTokenURL,

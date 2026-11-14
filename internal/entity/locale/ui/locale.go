@@ -10,6 +10,7 @@ type ValidationProfile struct {
 	UnableCreateProfile string
 	UnableDeleteProfile string
 	UnableCopyProfile   string
+	UnableRenameProfile string
 	UnableSwitchProfile string
 	ConfirmMsg          string
 	ConfirmButtonLabel  string
@@ -393,6 +394,13 @@ type HelpQA struct {
 type HelpPageWidgetBracket struct {
 	HowIsWorks HelpQA
 	WhatCanDo  HelpQA
+	Slots      HelpQA
+}
+
+type HelpPageWidgetScoreboard struct {
+	HowIsWorks HelpQA
+	WhatCanDo  HelpQA
+	Slots      HelpQA
 }
 
 type HelpPageIntegrations struct {
@@ -427,6 +435,7 @@ type HelpModal struct {
 	HelpPageNotificationSystem HelpPageNotificationSystem
 	HelpPageDatabase           HelpPageDatabase
 	HelpPageWidgetBracket      HelpPageWidgetBracket
+	HelpPageWidgetScoreboard   HelpPageWidgetScoreboard
 	HelpPageIntegrations       HelpPageIntegrations
 	HelpPageProfiles           HelpPageProfiles
 }

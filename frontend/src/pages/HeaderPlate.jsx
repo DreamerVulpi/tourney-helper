@@ -193,7 +193,7 @@ const HeaderPlate = ({
         <Field
           variant="select"
           value={lang}
-          width={"6.1rem"}
+          width={"6.5rem"}
           icon = {LanguagesIcon}
           themeClasses={headerThemeClasses}
           items={[

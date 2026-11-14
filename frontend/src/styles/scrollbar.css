@@ -56,3 +56,12 @@ body::-webkit-scrollbar {
   --scroll-thumb: rgba(249, 115, 22, 0.4);
   --scroll-thumb-hover: rgba(249, 115, 22, 0.8);
 }
+/* hide scrollbar for horizontal tab strips */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

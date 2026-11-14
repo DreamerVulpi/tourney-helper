@@ -37,12 +37,32 @@ func LoadWidgets(profileName string) (WidgetsCfg, error) {
 	if _, err := toml.DecodeFile(path, &cfg); err != nil {
 		return WidgetsCfg{}, err
 	}
+
+	applyWidgetsDefaults(&cfg)
 	return cfg, nil
 }
 
 func SaveWidgets(profileName string, cfg WidgetsCfg) error {
+	cfg.SyncActiveSlots()
 	path := filepath.Join(GetProfileConfigsDir(profileName), WidgetsFile)
 	return writeTOML(path, cfg)
+}
+
+func applyWidgetsDefaults(cfg *WidgetsCfg) {
+	cfg.EnsureScoreboardDefaults()
+	if cfg.Scoreboard.SideGap <= 0 {
+		cfg.Scoreboard.SideGap = 480
+	}
+	if cfg.Scoreboard.SideWidth <= 0 {
+		cfg.Scoreboard.SideWidth = 460
+	}
+	if cfg.Scoreboard.PlateMode == "" {
+		cfg.Scoreboard.PlateMode = "builtin"
+	}
+	if cfg.Scoreboard.MainFontSize <= 0 {
+		cfg.Scoreboard.MainFontSize = 24
+	}
+	cfg.EnsureSlots()
 }
 
 // ============================================================

@@ -23,7 +23,7 @@ import { Field } from "../components/ui/Field.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import { ValidationModal } from "../components/ValidationModal.jsx";
 import  NotificationMonitorModal from "../components/modals/NotificationMonitorModal.jsx"
-import { durationItems, listFT } from "../utils/NotificationSystemPanel.jsx/lists.js";
+import { durationItems, listFormats } from "../utils/NotificationSystemPanel.jsx/lists.js";
 import { listGames } from "../utils/listGames.js";
 import { ButtonFooter } from "../components/ui/ButtonFooter.jsx";
 import { NotificationButton } from "../hooks/NotificationSystemPanel/useButtonFooter.jsx";
@@ -70,8 +70,8 @@ const NotificationSystemPlate = ({
   const gameName        = notificationSystem?.game?.name ?? "tekken";
   const stage           = notificationSystem?.rules?.stage ?? "Random";
   const rules = notificationSystem?.rules ?? {
-    standardFormat: 2,
-    finalsFormat:   3,
+    standardFormat: "FT2",
+    finalsFormat:   "FT3",
     rounds:         3,
     duration:       60,
     stage,
@@ -267,22 +267,22 @@ const NotificationSystemPlate = ({
                 <div className="flex flex-col h-full min-h-0 space-y-4">
                   <div className="grid grid-cols-2 gap-x-2 gap-y-2">
                     <Field
-                      label={`${locale.RulesOfTournament.StandardFormat} (1-5)`}
+                      label={locale.RulesOfTournament.StandardFormat}
                       variant="select"
                       value={rules.standardFormat}
                       icon={Settings2}
                       themeClasses={themeClasses}
                       onChange={handleStandardFormatChange}
-                      items={listFT}
+                      items={listFormats}
                     />
                     <Field
-                      label={`${locale.RulesOfTournament.FinalFormat} (1-5)`}
+                      label={locale.RulesOfTournament.FinalFormat}
                       variant="select"
                       value={rules.finalsFormat}
                       themeClasses={themeClasses}
                       icon={Trophy}
                       onChange={handleFinalsFormatChange}
-                      items={listFT}
+                      items={listFormats}
                     />
                     <Field
                       label={`${locale.RulesOfTournament.Rounds} (1-5)`}

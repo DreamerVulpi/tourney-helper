@@ -2,14 +2,18 @@ package startgg
 
 const (
 	GetConnectionsBracket = `
-	query getConnectionsBracket($phaseGroupId: ID!, $page:Int!, $perPage:Int!, $states: [Int]){
+	query getConnectionsBracket($phaseGroupId: ID!, $page:Int!, $perPage:Int!){
 		phaseGroup(id:$phaseGroupId){
 			id
+			displayIdentifier
+			phase {
+				id
+				name
+			}
 			sets(
 				page: $page
 				perPage: $perPage
 				sortType: STANDARD
-				filters: {state: $states}
 			){
 			pageInfo{
 				total
@@ -34,14 +38,13 @@ const (
 	}
 	`
 	GetSetsWithScore = `
-	query getSetsWithScore($phaseGroupId: ID!, $page:Int!, $perPage:Int!, $states: [Int]){
+	query getSetsWithScore($phaseGroupId: ID!, $page:Int!, $perPage:Int!){
 		phaseGroup(id: $phaseGroupId) {
 			id
 			sets(
 				page: $page
 				perPage: $perPage
 				sortType: STANDARD
-				filters: { state: $states }
 			) {
 				pageInfo {
 					total
@@ -55,6 +58,9 @@ const (
 					fullRoundText
 					round
 					slots {
+						seed {
+							id
+						}
 						entrant {
 							id
 							participants {
@@ -67,6 +73,28 @@ const (
 								score {
 									value
 								}
+							}
+						}
+					}
+					winnerProgressionSeed {
+						id
+						phaseGroup {
+							id
+							displayIdentifier
+							phase {
+								id
+								name
+							}
+						}
+					}
+					loserProgressionSeed {
+						id
+						phaseGroup {
+							id
+							displayIdentifier
+							phase {
+								id
+								name
 							}
 						}
 					}

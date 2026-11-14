@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -84,19 +85,158 @@ func NewDefaultSettings() SettingsApplicationCfg {
 	}
 }
 
+// EnsureScoreboardDefaults заполняет scoreboard стандартными значениями,
+// если секция ещё ни разу не инициализировалась.
+func (c *WidgetsCfg) EnsureScoreboardDefaults() bool {
+	if c.Scoreboard.Theme != "" ||
+		c.Scoreboard.Scale != 0 ||
+		c.Scoreboard.Format != "" ||
+		c.Scoreboard.P1.Name != "" ||
+		c.Scoreboard.P2.Name != "" {
+		return false
+	}
+
+	c.Scoreboard = NewDefaultWidgets().Scoreboard
+	return true
+}
+
+const WidgetSlotCount = 5
+
 func NewDefaultWidgets() WidgetsCfg {
-	return WidgetsCfg{
-		Bracket: WidgetBracket{
-			UrlToTournament: "",
-			BracketId:       "",
-			Theme:           "Default",
-			ClearBackground: false,
-			HideStages:      false,
-			BracketMode:     "all",
-			Scale:           1.0,
-			AutoRefresh:     false,
+	bracket := WidgetBracket{
+		UrlToTournament: "",
+		BracketId:       "",
+		Theme:           "Default",
+		ClearBackground: false,
+		HideStages:      false,
+		BracketMode:     "all",
+		Scale:           1.0,
+		AutoRefresh:     false,
+	}
+
+	scoreboard := WidgetScoreboard{
+		Theme:        "default",
+		TitleMatch:   "CUSTOM NAME",
+		FontFamily:   "",
+		MainFontSize: 24,
+		HideLogos:    false,
+		HideFlags:    false,
+		Scale:        1.0,
+		SideGap:      480,
+		SideWidth:    460,
+		PlateMode:    "builtin",
+		Format:       "FT2",
+		P1: Side{
+			TeamTag:        "",
+			Name:           "Player 1",
+			ResetIcon:      "",
+			ResetIconData:  "",
+			ResetIconScale: 1,
+			LogoPath:       "",
+			Flag:           "",
+			PlateImage:     "",
+			Points:         0,
+			ScoreFontSize:  28,
+			ShowLogo:       true,
+			ShowFlag:       true,
+			ShowReset:      false,
+		},
+		P2: Side{
+			TeamTag:        "",
+			Name:           "Player 2",
+			ResetIcon:      "",
+			ResetIconData:  "",
+			ResetIconScale: 1,
+			LogoPath:       "",
+			Flag:           "",
+			PlateImage:     "",
+			Points:         0,
+			ScoreFontSize:  28,
+			ShowLogo:       true,
+			ShowFlag:       true,
+			ShowReset:      false,
 		},
 	}
+
+	cfg := WidgetsCfg{Bracket: bracket, Scoreboard: scoreboard}
+	cfg.BracketSlots = make([]WidgetBracket, WidgetSlotCount)
+	cfg.ScoreboardSlots = make([]WidgetScoreboard, WidgetSlotCount)
+	cfg.BracketSlotNames = make([]string, WidgetSlotCount)
+	cfg.ScoreboardSlotNames = make([]string, WidgetSlotCount)
+	for i := 0; i < WidgetSlotCount; i++ {
+		cfg.BracketSlots[i] = bracket
+		cfg.ScoreboardSlots[i] = scoreboard
+		cfg.BracketSlotNames[i] = fmt.Sprintf("Slot %d", i+1)
+		cfg.ScoreboardSlotNames[i] = fmt.Sprintf("Slot %d", i+1)
+	}
+
+	return cfg
+}
+
+func ensureSlotCount[T any](slots *[]T, fallback T) {
+	for len(*slots) < WidgetSlotCount {
+		*slots = append(*slots, fallback)
+	}
+	if len(*slots) > WidgetSlotCount {
+		*slots = (*slots)[:WidgetSlotCount]
+	}
+}
+
+func ensureSlotNames(names *[]string) {
+	for len(*names) < WidgetSlotCount {
+		*names = append(*names, "")
+	}
+	if len(*names) > WidgetSlotCount {
+		*names = (*names)[:WidgetSlotCount]
+	}
+	for i := range *names {
+		if strings.TrimSpace((*names)[i]) == "" {
+			(*names)[i] = fmt.Sprintf("Slot %d", i+1)
+		}
+	}
+}
+
+// EnsureSlots гарантирует ровно пять слотов для каждого виджета.
+// При миграции старых конфигов текущая конфигурация сохраняется в активный слот.
+func (c *WidgetsCfg) EnsureSlots() {
+	if c.ActiveBracketSlot < 0 || c.ActiveBracketSlot >= WidgetSlotCount {
+		c.ActiveBracketSlot = 0
+	}
+	if c.ActiveScoreboardSlot < 0 || c.ActiveScoreboardSlot >= WidgetSlotCount {
+		c.ActiveScoreboardSlot = 0
+	}
+
+	defaults := NewDefaultWidgets()
+
+	if len(c.BracketSlots) == 0 {
+		c.BracketSlots = make([]WidgetBracket, WidgetSlotCount)
+		for i := range c.BracketSlots {
+			c.BracketSlots[i] = defaults.Bracket
+		}
+		c.BracketSlots[c.ActiveBracketSlot] = c.Bracket
+	} else {
+		ensureSlotCount(&c.BracketSlots, defaults.Bracket)
+	}
+
+	if len(c.ScoreboardSlots) == 0 {
+		c.ScoreboardSlots = make([]WidgetScoreboard, WidgetSlotCount)
+		for i := range c.ScoreboardSlots {
+			c.ScoreboardSlots[i] = defaults.Scoreboard
+		}
+		c.ScoreboardSlots[c.ActiveScoreboardSlot] = c.Scoreboard
+	} else {
+		ensureSlotCount(&c.ScoreboardSlots, defaults.Scoreboard)
+	}
+
+	ensureSlotNames(&c.BracketSlotNames)
+	ensureSlotNames(&c.ScoreboardSlotNames)
+}
+
+// SyncActiveSlots сохраняет текущие активные конфигурации в соответствующие слоты.
+func (c *WidgetsCfg) SyncActiveSlots() {
+	c.EnsureSlots()
+	c.BracketSlots[c.ActiveBracketSlot] = c.Bracket
+	c.ScoreboardSlots[c.ActiveScoreboardSlot] = c.Scoreboard
 }
 
 func NewDefaultTools() ToolsCfg {
@@ -104,8 +244,8 @@ func NewDefaultTools() ToolsCfg {
 		NotificationSystem: NotificationSystem{
 			UrlToTournament: "",
 			Rules: RulesMatches{
-				StandardFormat: 2,
-				FinalsFormat:   3,
+				StandardFormat: "FT2",
+				FinalsFormat:   "FT3",
 				Stage:          "Any",
 				Rounds:         3,
 				Duration:       60,

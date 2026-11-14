@@ -7,6 +7,7 @@ type Ui struct {
 	NotificationSystemPanel NotificationSystemPanel
 	DatabasePanel           DatabasePanel
 	WidgetBracketPanel      WidgetBracketPanel
+	WidgetScoreboardPanel   WidgetScoreboardPanel
 	ProfilesPanel           ProfilesPanel
 	IntegrationsPanel       IntegrationsPanel
 	ValidationAlertModal    ValidationAlertModal
@@ -26,13 +27,16 @@ type ProfilesPanel struct {
 	Add                         string
 	Delete                      string
 	Duplicate                   string
+	Rename                      string
 	Share                       string
 	ImportProfile               string
 	Placeholder                 string
 	DuplicateProfile            string
+	RenameProfile               string
 	NameNewProfileLabel         string
 	PlaceholderProfile          string
 	ConfirmButtonDuplicateLabel string
+	ConfirmButtonRenameLabel    string
 	SearchLabel                 string
 	NoItemsLabel                string
 	ErrorFillParams             string
@@ -41,6 +45,19 @@ type ProfilesPanel struct {
 	ImportSuccessMsg            string
 	ExportSuccessTitle          string
 	ExportSuccessMsg            string
+	ExportWidgetsContent        string
+	ImportWidgetsContent        string
+	ExportWidgetsContentMsg     string
+	ImportWidgetsContentMsg     string
+	ColumnProfileName           string
+	ColumnCreatedAt             string
+	ColumnLastOpenedAt          string
+	NoProfilesTitle             string
+	NoProfilesDescription       string
+	PageLabel                   string
+	PreviousPage                string
+	NextPage                    string
+	ActiveProfileLabel          string
 	ValidationProfile           ValidationProfile
 }
 
@@ -75,6 +92,8 @@ type NotificationSystemPanel struct {
 type LogPanel struct {
 	Label                            string
 	ClearButtonLabel                 string
+	OpenLogsFolder                   string
+	ExportCurrentLog                 string
 	LocaleLoaded                     string
 	LocaleNotLoaded                  string
 	MainConfigSuccessfulLoaded       string
@@ -114,6 +133,152 @@ type WidgetBracketPanel struct {
 	FetchData             string
 	AutoRefresh           string
 	ValidationUrlBracket  ValidationUrlBracket
+	FlagsLabel            string
+	FlagPlaceholder       string
+	FlagNames             map[string]string
+	HideLogosLabel        string
+	HideFlagsLabel        string
+
+	SlotLabel              string
+	SlotNameLabel          string
+	RenameSlotTitle        string
+	ResetSlotTitle         string
+	ResetSlotModalTitle    string
+	ResetSlotModalMessage  string
+	ResetSlotConfirmButton string
+	ResetSlotNameButton    string
+	RenameSlotModalTitle   string
+	SaveButton             string
+	NameCannotBeEmpty      string
+
+	ExternalErrorTitle       string
+	ExternalErrorDescription string
+	RetryLabel               string
+}
+
+type WidgetScoreboardPanel struct {
+	Start       string
+	Stop        string
+	SearchLabel string
+	NoClients   string
+
+	ListOfThemes              string
+	Format                    string
+	FormatPlaceholder         string
+	ScaleTab                  string
+	GapTab                    string
+	PlateWidthTab             string
+	ScoreTab                  string
+	ResetTab                  string
+	SlotLabel                 string
+	SlotNameLabel             string
+	RenameSlotTitle           string
+	ResetSlotTitle            string
+	ActiveSlotResetBlocked    string
+	WidgetRunningResetBlocked string
+	ResetSlotModalTitle       string
+	ResetSlotModalMessage     string
+	ResetSlotConfirmButton    string
+	ResetSlotNameButton       string
+	RenameSlotModalTitle      string
+	ResetIconLabel            string
+	ResetIconScaleLabel       string
+	SelectResetIcon           string
+	SearchIconsPlaceholder    string
+	CustomIconsLabel          string
+	NoIconLabel               string
+	AddIconButton             string
+	AddButton                 string
+	AddIconModalTitle         string
+	AddingIcon                string
+	AddIconEmptyError         string
+	RenameIconTitle           string
+	DeleteIconTitle           string
+	DeleteIconModalTitle      string
+	DeleteIconModalMessage    string
+	DeleteIconConfirmButton   string
+	RenameIconModalTitle      string
+	ScoreOffsetReset          string
+	ScoreFontSizeLabel        string
+	FontLabel                 string
+	FontDefaultLabel          string
+	MainFontSizeLabel         string
+
+	TitleEventLabel       string
+	TitleEventPlaceholder string
+	TeamNameLabel         string
+	TeamTagPlaceholder    string
+	PlayerNamePlaceholder string
+
+	LogoLabel           string
+	LogoPlaceholder     string
+	LogoPathPlaceholder string
+	AddLogoButton       string
+
+	PlateModeLabel            string
+	BuiltInMode               string
+	CustomMode                string
+	PlankLabel                string
+	PlankPlaceholder          string
+	AddPlankButton            string
+	AddPlankModalTitle        string
+	AddingPlank               string
+	PlankRecommendedSizeLabel string
+
+	FlagsLabel      string
+	FlagPlaceholder string
+	FlagNames       map[string]string
+
+	HideLogoTitle  string
+	ShowLogoTitle  string
+	HideFlagTitle  string
+	ShowFlagTitle  string
+	HideResetTitle string
+	ShowResetTitle string
+
+	RenameLogoTitle  string
+	DeleteLogoTitle  string
+	RenamePlankTitle string
+	DeletePlankTitle string
+	SwitchSidesTitle string
+	ResetScoreTitle  string
+
+	WidgetNotRunning      string
+	ClickStartDescription string
+	LoadScoreboard        string
+	FetchData             string
+
+	// Add logo modal
+	AddLogoModalTitle string
+	ImageUrlLabel     string
+	OrLabel           string
+	ChooseFileButton  string
+	AddingLogo        string
+	AddLogoUrlHint    string
+	AddLogoEmptyError string
+
+	// Delete logo modal
+	DeleteLogoModalTitle    string
+	DeleteLogoModalMessage  string
+	DeleteLogoConfirmButton string
+
+	// Delete plank modal
+	DeletePlankModalTitle    string
+	DeletePlankModalMessage  string
+	DeletePlankConfirmButton string
+
+	// Rename plank modal
+	RenamePlankModalTitle string
+
+	// Rename logo modal
+	RenameLogoModalTitle string
+	FileNameLabel        string
+	SaveButton           string
+	NameCannotBeEmpty    string
+
+	// Validation modal
+	ErrorTitle    string
+	OkButtonLabel string
 }
 
 type IntegrationsPanel struct {

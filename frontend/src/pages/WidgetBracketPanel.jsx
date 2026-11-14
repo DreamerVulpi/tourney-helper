@@ -21,6 +21,10 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  Link2,
+  Boxes,
+  Pencil,
+  RotateCcw,
 } from "lucide-react";
 import PanelTemplate from "../components/layout/PanelTemplate.jsx";
 import { getLaunchButtonStyle } from "../utils/themeClasses.jsx";
@@ -31,7 +35,8 @@ import { useStartToggle } from "../hooks/WidgetBracketPanel/useStartToggle.jsx";
 import { ToggleSwitch } from "../components/ui/ToggleSwitch.jsx";
 import { useGetListThemes } from "../hooks/WidgetBracketPanel/useGetListThemes.jsx";
 import { EmptyState } from "../components/ui/EmptyState.jsx";
-import { SectionBlock } from "../components/ui/SectionBlock.jsx";
+import PromptModal from "../components/modals/PromptModal.jsx";
+import ConfirmModal from "../components/modals/ConfirmModal.jsx";
 import { ValidateTournamentURL, ParseTournamentURLForWidget } from "../../wailsjs/go/application/App.js"
 import { debounce } from "../utils/debounce.jsx";
 import { UrlValidationMessage } from "../hooks/App/useValidationUrl.jsx";
@@ -45,9 +50,47 @@ const clampScale = (s) => {
   return Math.max(0.5, Math.min(2.0, n));
 };
 
-const WidgetBracketPlate = ({
+// Все флаги передаём явно (0/1). Это делает инициализацию виджета
+// детерминированной и не зависит от localStorage браузера.
+const buildBracketURL = (
+  baseUrl,
+  bracketId,
+  {
+    theme,
+    lang,
+    clearBackground,
+    hideStages,
+    bracketMode,
+    scale,
+    autoRefresh,
+    preview = false,
+    cacheBust = false,
+  },
+) => {
+  if (!baseUrl || !bracketId) return "";
+
+  const params = new URLSearchParams();
+  params.set("theme", theme || "StartGG");
+  if (lang) params.set("lang", lang);
+  if (preview) params.set("preview", "1");
+
+  params.set("transparent", clearBackground ? "1" : "0");
+  params.set("hideRounds", hideStages ? "1" : "0");
+  params.set("bracketMode", bracketMode || "all");
+  params.set("scale", String(clampScale(scale)));
+  params.set("autoRefresh", autoRefresh ? "1" : "0");
+
+  if (cacheBust) params.set("_ts", String(Date.now()));
+
+  return `${baseUrl}/widgets/bracket/${bracketId}?${params.toString()}`;
+};
+
+const WidgetBracketPanel = ({
   locale,
   updateConfig,
+  selectWidgetSlot,
+  renameWidgetSlot,
+  resetWidgetSlot,
   isProcessing,
   setIsProcessingWB,
   isWidgetBracketRunning,
@@ -58,7 +101,8 @@ const WidgetBracketPlate = ({
 }) => {
      // ---- store ----
   const theme          = useAppStore((s) => s.theme);
-  const activePlatform = useAppStore((s) => s.activeTournamentPlatform);
+  const lang           = useAppStore((s) => s.lang);
+  const widgetBaseUrl  = useAppStore((s) => s.widgetBaseUrl);
   const setStatusWidgetBracket = useAppStore((s) => s.setStatusWidgetBracket);
   
   // ---- производные ----
@@ -67,6 +111,25 @@ const WidgetBracketPlate = ({
   const widgets = useAppStore((s) => s.widgets);
   const bracket = widgets?.bracket;
 
+  const activeBracketSlot = widgets?.activeBracketSlot ?? 0;
+  const bracketSlotNames = widgets?.bracketSlotNames ?? [];
+  const slotDisplayName = (index) => {
+    const stored = String(bracketSlotNames[index] ?? "").trim();
+    const fallback = `Slot ${index + 1}`;
+    if (!stored || stored === fallback) {
+      return `${locale.SlotLabel} ${index + 1}`;
+    }
+    return stored;
+  };
+  const bracketSlotItems = useMemo(
+    () =>
+      Array.from({ length: 5 }, (_, index) => ({
+        value: String(index),
+        label: slotDisplayName(index),
+      })),
+    [bracketSlotNames, locale.SlotLabel],
+  );
+
   const urlToTournament = bracket?.urlToTournament ?? "";
   const bracketId       = bracket?.bracketId       ?? "";
   const themeBracket    = bracket?.theme           ?? "StartGG";
@@ -74,6 +137,8 @@ const WidgetBracketPlate = ({
   const themeOptions = useGetListThemes();
 
   const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [slotRename, setSlotRename] = useState({ open: false, index: null });
+  const [slotReset, setSlotReset] = useState({ open: false, index: null });
 
   const clearBackground = bracket?.clearBackground ?? false;
   const hideStages      = bracket?.hideStages      ?? false;
@@ -95,6 +160,25 @@ const WidgetBracketPlate = ({
     setStatusWidgetBracket,
     { ref: bracketRef, authorizations, widgets },
   );
+
+  const handleRenameSlot = useCallback(
+    (newName) => {
+      if (slotRename.index === null) return;
+      renameWidgetSlot?.("bracket", slotRename.index, newName);
+      setSlotRename({ open: false, index: null });
+    },
+    [slotRename.index, renameWidgetSlot],
+  );
+
+  const handleResetSlot = useCallback(() => {
+    if (slotReset.index === null) return;
+    resetWidgetSlot?.(
+      "bracket",
+      slotReset.index,
+      `${locale.SlotLabel} ${slotReset.index + 1}`,
+    );
+    setSlotReset({ open: false, index: null });
+  }, [slotReset.index, resetWidgetSlot, locale.SlotLabel]);
 
   const readyScale = clampScale(scale);
 
@@ -218,72 +302,45 @@ const WidgetBracketPlate = ({
   const getButtonStyle = getLaunchButtonStyle(isWidgetBracketRunning, false);
 
   // Полный URL с флагами — нужен только для отображения в UI (LinkOfWidget)
-  const bracketUrl = useMemo(() => {
-      if (!bracketId) return "";
-
-      const params = new URLSearchParams();
-      params.set("theme", themeBracket);
-
-      if (clearBackground) params.set("transparent", "1");
-      if (hideStages) params.set("hideRounds", "1");
-      if (bracketMode !== "all") params.set("bracketMode", bracketMode);
-      if (scale !== 1.0) params.set("scale", String(scale));
-      if (autoRefresh) params.set("autoRefresh", "1");
-
-      return `http://localhost:8080/widgets/bracket/${bracketId}?${params.toString()}`;
-  }, [bracketId, themeBracket, clearBackground, hideStages, bracketMode, scale, autoRefresh]);
+  const bracketUrl = useMemo(() => buildBracketURL(widgetBaseUrl, bracketId, {
+      theme: themeBracket,
+      lang,
+      clearBackground,
+      hideStages,
+      bracketMode,
+      scale,
+      autoRefresh,
+  }), [widgetBaseUrl, bracketId, themeBracket, lang, clearBackground, hideStages, bracketMode, scale, autoRefresh]);
 
 
-  const baseIframeUrl = useMemo(() => {
-      if (!bracketId) return "";
-      return `http://localhost:8080/widgets/bracket/${bracketId}?theme=${themeBracket}`;
-  }, [bracketId, themeBracket]);
+  // ---------- URL iframe на момент старта ----------
+  // Храним в state, а не в ref: iframe должен сразу грузиться с актуальными
+  // флагами и cache-buster'ом, иначе браузер может отдать старую версию
+  // виджета (без центрирования), а повторная установка src приводила к
+  // лишней перезагрузке на baseIframeUrl.
+  const [iframeSrc, setIframeSrc] = useState("");
 
-  // ---------- Фиксируем начальный URL при старте виджета ----------
-  const initialSrcRef = useRef(null);
-
-  // Сбрасываем фиксацию при смене турнира/темы
   useEffect(() => {
-      initialSrcRef.current = null;
-  }, [bracketId, themeBracket]);
-
-  // Фиксируем начальный URL при старте (один раз)
-  useEffect(() => {
-      if (!isWidgetBracketRunning) {
-          initialSrcRef.current = null;
+      if (!isWidgetBracketRunning || !bracketId) {
+          setIframeSrc("");
           setIframeLoaded(false);
           return;
       }
 
-      if (!bracketId) return;
-
-      if (!initialSrcRef.current) {
-          const params = new URLSearchParams();
-          params.set("theme", themeBracket);
-          if (clearBackground) params.set("transparent", "1");
-          if (hideStages) params.set("hideRounds", "1");
-          if (bracketMode !== "all") params.set("bracketMode", bracketMode);
-          if (scale !== 1.0) params.set("scale", String(scale));
-          if (autoRefresh) params.set("autoRefresh", "1");
-          initialSrcRef.current = `http://localhost:8080/widgets/bracket/${bracketId}?${params.toString()}`;
-      }
-
+      setIframeSrc(buildBracketURL(widgetBaseUrl, bracketId, {
+          theme: themeBracket,
+          lang,
+          clearBackground,
+          hideStages,
+          bracketMode,
+          scale,
+          autoRefresh,
+          preview: true,
+          cacheBust: true,
+      }));
       setIframeLoaded(false);
       // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isWidgetBracketRunning, bracketId, themeBracket]);
-
-  // Обновляем src iframe при старте виджета, смене турнира или темы.
-  // Смена флагов (bracketMode, hideRounds, transparent, scale) НЕ триггерит
-  // перезагрузку — они уходят через postMessage.
-  useEffect(() => {
-      if (isWidgetBracketRunning && baseIframeUrl) {
-          initialSrcRef.current = baseIframeUrl;
-          setIframeLoaded(false);
-      } else {
-          initialSrcRef.current = null;
-          setIframeLoaded(false);
-      }
-  }, [isWidgetBracketRunning, baseIframeUrl]);
+  }, [isWidgetBracketRunning, widgetBaseUrl, bracketId, themeBracket, lang]);
 
  
 
@@ -320,8 +377,32 @@ const WidgetBracketPlate = ({
       readyScale,
       autoRefresh,
       isWidgetBracketRunning,
+      iframeSrc,
       iframeRef_WidgetBracket,
   ]);
+
+  // ---------- Синхронизация зума из виджета ----------
+  // Внутри iframe есть кнопки зума и Ctrl+колесо. Когда пользователь
+  // меняет масштаб там, виджет сообщает об этом хосту, чтобы значение
+  // сохранилось в конфиге и не сбрасывалось при следующем изменении флагов.
+  useEffect(() => {
+      if (!isWidgetBracketRunning) return;
+
+      const handleMessage = (event) => {
+          const data = event.data;
+          if (!data || data.type !== "bracket:zoom-changed") return;
+
+          const next = clampScale(data.scale);
+          if (Math.abs(next - readyScale) < 0.001) return;
+
+          updateConfig("widgets", {
+              bracket: { scale: next },
+          });
+      };
+
+      window.addEventListener("message", handleMessage);
+      return () => window.removeEventListener("message", handleMessage);
+  }, [isWidgetBracketRunning, readyScale, updateConfig]);
     // Start доступен, только если:
   //  - виджет ещё не запущен
   //  - URL валиден
@@ -350,7 +431,7 @@ const WidgetBracketPlate = ({
   return (
     <PanelTemplate themeClasses={themeClasses}>
       <div className="grid grid-cols-16 gap-8 items-stretch flex-1 min-h-0">
-        <div className="col-span-12 min-h-0">
+        <div className="col-span-12 min-h-0 h-full">
           <div className={`relative w-full h-full rounded-[0.5rem] ${themeClasses.button}`}>
             {/* ============================================================
             * 1. Ошибка валидации — приоритет №1
@@ -398,12 +479,12 @@ const WidgetBracketPlate = ({
             {/* ============================================================
             * 4. Iframe — когда виджет запущен, URL валиден, есть bracketUrl
             * ============================================================ */}
-            {urlValidation.valid !== false && isWidgetBracketRunning && bracketUrl && (
+            {urlValidation.valid !== false && isWidgetBracketRunning && bracketUrl && iframeSrc && (
                 <>
                     <iframe
-                        src={initialSrcRef.current || bracketUrl}
+                        src={iframeSrc}
                         ref={iframeRef_WidgetBracket}
-                        className="absolute inset-0 w-full h-full border-0 rounded-[0.5rem]"
+                        className="absolute inset-0 block w-full h-full border-0 rounded-[0.5rem]"
                         title="Tournament Bracket"
                         allowtransparency="true"
                         onLoad={() => setIframeLoaded(true)}
@@ -427,20 +508,16 @@ const WidgetBracketPlate = ({
                         />
                     </div>
 
-                    <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2 w-80">
+                    <div className="absolute bottom-4 left-3 z-10 w-72">
                       {isWidgetBracketRunning && bracketUrl && (
-                        <SectionBlock
+                        <Field
                           solid={true}
-                          title={locale.LinkOfWidget}
-                          titleAlign="center"
-                          theme={theme}
-                        >
-                          <Field
-                            variant="copy"
-                            value={bracketUrl}
-                            themeClasses={themeClasses}
-                          />
-                        </SectionBlock>
+                          variant="copy"
+                          icon={Link2}
+                          value={bracketUrl}
+                          height="2rem"
+                          themeClasses={themeClasses}
+                        />
                       )}
                     </div>
 
@@ -478,7 +555,61 @@ const WidgetBracketPlate = ({
 
         {/* Правая часть */}
         <div className="col-span-4 flex flex-col h-full">
-          <div className="space-y-4">
+          <div className="space-y-2">
+            <Field
+              variant="multiselect"
+              single
+              label={locale.SlotLabel}
+              icon={Boxes}
+              value={[String(activeBracketSlot)]}
+              onChange={(values) =>
+                selectWidgetSlot?.("bracket", Number(values?.[0] ?? 0))
+              }
+              items={bracketSlotItems}
+              locale={locale}
+              themeClasses={themeClasses}
+              height="1.9rem"
+              maxVisible={5}
+              renderItem={(item) => (
+                <span className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="truncate flex-1 min-w-0">
+                    {item.label}
+                  </span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    title={locale.RenameSlotTitle}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSlotRename({
+                        open: true,
+                        index: Number(item.value),
+                      });
+                    }}
+                    className="shrink-0 p-1 rounded hover:bg-white/10 cursor-pointer"
+                  >
+                    <Pencil size={12} />
+                  </span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    title={locale.ResetSlotTitle}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSlotReset({
+                        open: true,
+                        index: Number(item.value),
+                      });
+                    }}
+                    className="shrink-0 p-1 rounded text-red-400 hover:bg-red-500/10 cursor-pointer"
+                  >
+                    <RotateCcw size={12} />
+                  </span>
+                </span>
+              )}
+            />
             <div className="space-y-2">
                 <Field
                     label={locale.UrlToBracketLabel + "*"}
@@ -546,8 +677,59 @@ const WidgetBracketPlate = ({
           </ButtonFooter>
         </div>
       </div>
+
+      <PromptModal
+        isOpen={slotRename.open}
+        onClose={() => setSlotRename({ open: false, index: null })}
+        onConfirm={handleRenameSlot}
+        title={locale.RenameSlotModalTitle}
+        label={locale.SlotNameLabel}
+        defaultValue={
+          slotRename.index === null ? "" : slotDisplayName(slotRename.index)
+        }
+        confirmLabel={locale.SaveButton}
+        validate={(value) =>
+          value.trim() ? null : locale.NameCannotBeEmpty
+        }
+        resetValue={
+          slotRename.index === null
+            ? undefined
+            : `${locale.SlotLabel} ${slotRename.index + 1}`
+        }
+        resetLabel={locale.ResetSlotNameButton}
+        icon={Pencil}
+        iconColor="amber"
+        theme={theme}
+        themeClasses={themeClasses}
+      />
+
+      <ConfirmModal
+        isOpen={slotReset.open}
+        onClose={() => setSlotReset({ open: false, index: null })}
+        onConfirm={handleResetSlot}
+        title={locale.ResetSlotModalTitle}
+        message={(() => {
+          const parts = locale.ResetSlotModalMessage.split("%v");
+          const index = slotReset.index ?? 0;
+          const name = slotDisplayName(index);
+          return (
+            <>
+              {parts[0]}
+              <span className="text-red-500 font-black italic">{name}</span>
+              {parts[1]}
+            </>
+          );
+        })()}
+        confirmLabel={locale.ResetSlotConfirmButton}
+        icon={RotateCcw}
+        iconColor="red"
+        iconColorClass="text-red-500"
+        danger
+        theme={theme}
+        themeClasses={themeClasses}
+      />
     </PanelTemplate>
   );
 };
 
-export default WidgetBracketPlate;
+export default WidgetBracketPanel;

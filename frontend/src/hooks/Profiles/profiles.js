@@ -8,10 +8,15 @@ import {
   RenameProfile,
   ExportProfile,
   ImportProfile,
+  ExportWidgetsContent,
+  ImportWidgetsContent,
 } from "../../../wailsjs/go/application/App";
 
 export const exportProfile = (name) => ExportProfile(name);
 export const importProfile = () => ImportProfile();
+
+export const exportWidgetsContent = () => ExportWidgetsContent();
+export const importWidgetsContent = () => ImportWidgetsContent();
 
 export const listProfiles = () => GetListProfiles();
 export const getActiveProfile = () => GetActiveProfileName();
