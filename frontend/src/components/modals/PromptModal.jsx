@@ -80,29 +80,35 @@ const PromptModal = ({
       footer={footer}
     >
       <div className="p-8 space-y-3">
-        <Field
-          label={label}
-          value={value}
-          onChange={(v) => {
-            setValue(v);
-            if (error) setError(null);
-          }}
-          placeholder={placeholder}
-          themeClasses={themeClasses}
-        />
-        {resetValue !== undefined && (
-          <button
-            type="button"
-            onClick={() => {
-              setValue(String(resetValue));
-              setError(null);
-            }}
-            className="flex items-center gap-2 px-1 text-[10px] font-black uppercase italic opacity-60 hover:opacity-100 transition-opacity"
-          >
-            <RotateCcw size={12} />
-            {resetLabel}
-          </button>
-        )}
+        <div className="flex items-end gap-2">
+          <div className="flex-1 min-w-0">
+            <Field
+              label={label}
+              value={value}
+              onChange={(v) => {
+                setValue(v);
+                if (error) setError(null);
+              }}
+              placeholder={placeholder}
+              themeClasses={themeClasses}
+            />
+          </div>
+
+          {resetValue !== undefined && (
+            <button
+              type="button"
+              onClick={() => {
+                setValue(String(resetValue));
+                setError(null);
+              }}
+              title={resetLabel}
+              aria-label={resetLabel}
+              className={`flex shrink-0 items-center justify-center h-[2.1rem] w-[2.1rem] rounded-xl border transition-colors ${themeClasses.button}`}
+            >
+              <RotateCcw size={14} />
+            </button>
+          )}
+        </div>
 
         {error && (
           <div className="text-xs text-red-500 font-bold px-1">{error}</div>
