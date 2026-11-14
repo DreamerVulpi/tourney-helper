@@ -100,20 +100,21 @@ type WidgetBracket struct {
 
 // TODO: Add ShowLogo, ShowFlag
 type Side struct {
-	TeamTag       string `toml:"teamTag" json:"teamTag"`
-	Name          string `toml:"name" json:"name"`
-	ResetIcon     string `toml:"resetIcon" json:"resetIcon"`
-	ResetIconData string `toml:"resetIconData" json:"resetIconData"`
-	LogoPath      string `toml:"logoPath" json:"logoPath"`
-	Flag          string `toml:"flag" json:"flag"`
-	PlateImage    string `toml:"plateImage" json:"plateImage"`
-	Points        int    `toml:"points" json:"points"`
-	ScoreOffsetX  int    `toml:"scoreOffsetX" json:"scoreOffsetX"`
-	ScoreOffsetY  int    `toml:"scoreOffsetY" json:"scoreOffsetY"`
-	ScoreFontSize int    `toml:"scoreFontSize" json:"scoreFontSize"`
-	ShowLogo      bool   `toml:"showLogo" json:"showLogo"`
-	ShowFlag      bool   `toml:"showFlag" json:"showFlag"`
-	ShowReset     bool   `toml:"showReset" json:"showReset"`
+	TeamTag        string  `toml:"teamTag" json:"teamTag"`
+	Name           string  `toml:"name" json:"name"`
+	ResetIcon      string  `toml:"resetIcon" json:"resetIcon"`
+	ResetIconData  string  `toml:"resetIconData" json:"resetIconData"`
+	ResetIconScale float64 `toml:"resetIconScale" json:"resetIconScale"`
+	LogoPath       string  `toml:"logoPath" json:"logoPath"`
+	Flag           string  `toml:"flag" json:"flag"`
+	PlateImage     string  `toml:"plateImage" json:"plateImage"`
+	Points         int     `toml:"points" json:"points"`
+	ScoreOffsetX   int     `toml:"scoreOffsetX" json:"scoreOffsetX"`
+	ScoreOffsetY   int     `toml:"scoreOffsetY" json:"scoreOffsetY"`
+	ScoreFontSize  int     `toml:"scoreFontSize" json:"scoreFontSize"`
+	ShowLogo       bool    `toml:"showLogo" json:"showLogo"`
+	ShowFlag       bool    `toml:"showFlag" json:"showFlag"`
+	ShowReset      bool    `toml:"showReset" json:"showReset"`
 }
 
 type WidgetScoreboard struct {

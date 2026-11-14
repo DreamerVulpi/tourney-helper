@@ -90,11 +90,18 @@ const clampMainFontSize = (s) => {
   return Math.max(10, Math.min(72, n));
 };
 
+const clampResetIconScale = (s) => {
+  const n = parseFloat(s);
+  if (!Number.isFinite(n)) return 1;
+  return Math.max(0.5, Math.min(2.5, n));
+};
+
 const DEFAULT_SIDE = {
   teamTag: "",
   name: "Player",
   resetIcon: "",
   resetIconData: "",
+  resetIconScale: 1,
   logoPath: "",
   flag: "",
   plateImage: "",
@@ -285,10 +292,10 @@ const WidgetScoreboardPlate = ({
   // Сброс счета (Reset)
   const handleResetScore = useCallback(() => {
     patchScoreboard(updateConfig, {
-      P1: { ...DEFAULT_SIDE, name: "Player 1" },
-      P2: { ...DEFAULT_SIDE, name: "Player 2" },
+      P1: { ...p1, points: 0 },
+      P2: { ...p2, points: 0 },
     });
-  }, [updateConfig]);
+  }, [updateConfig, p1, p2]);
 
   // Обновление стороны
   const updateSide = useCallback(
@@ -996,14 +1003,41 @@ const WidgetScoreboardPlate = ({
                     themeClasses={themeClasses}
                   />
 
-                  <Field
-                    variant="button"
-                    icon={ImagePlus}
-                    labelButton={locale.AddIconButton}
-                    height="2.1rem"
-                    themeClasses={themeClasses}
-                    onClick={() => setAddIconModal({ open: true, side })}
-                  />
+                  <div className="flex flex-row items-end gap-2 w-full">
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <span
+                        className={`text-center text-[10px] font-black uppercase italic px-1 ${themeClasses.label}`}
+                      >
+                        {locale.ResetIconScaleLabel}
+                      </span>
+                      <CompactStepper
+                        value={clampResetIconScale(data.resetIconScale ?? 1)}
+                        min={0.5}
+                        max={2.5}
+                        step={0.05}
+                        onChange={(value) =>
+                          updateSide(side, {
+                            resetIconScale: clampResetIconScale(value),
+                          })
+                        }
+                        formatValue={(value) => `${Number(value).toFixed(2)}×`}
+                        resetValue={1}
+                        resetLabel={locale.ScoreOffsetReset}
+                        themeClasses={themeClasses}
+                      />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <Field
+                        variant="button"
+                        icon={ImagePlus}
+                        labelButton={locale.AddButton}
+                        height="2.1rem"
+                        themeClasses={themeClasses}
+                        onClick={() => setAddIconModal({ open: true, side })}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : tab === "score" ? (

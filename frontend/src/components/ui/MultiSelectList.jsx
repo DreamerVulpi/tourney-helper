@@ -116,7 +116,17 @@ export function MultiSelectList({
   const filtered = useMemo(() => {
     if (!searchable || !query.trim()) return items;
     const q = query.trim().toLowerCase();
-    return items.filter((i) => i.label.toLowerCase().includes(q));
+    return items.filter((i) => {
+      const haystack = [
+        i.label,
+        i.searchText,
+        i.value,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
   }, [items, query, searchable]);
 
   const toggle = (value) => {

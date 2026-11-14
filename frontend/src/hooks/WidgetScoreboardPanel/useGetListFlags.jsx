@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { GetListFlags } from "../../../wailsjs/go/application/App.js";
+import { flagCode3 } from "../../utils/flagCodes.js";
 
 const EMPTY_FLAG_NAMES = {};
 const MAX_LABEL_LENGTH = 20;
@@ -36,6 +37,7 @@ export function useGetListFlags(flagNames = EMPTY_FLAG_NAMES) {
               value: flag.code,
               label,
               shortLabel: truncateLabel(label),
+              searchText: [flag.name, flag.code, flagCode3(flag.code)].filter(Boolean).join(" "),
               dataUrl: flag.dataUrl || "",
             };
           })

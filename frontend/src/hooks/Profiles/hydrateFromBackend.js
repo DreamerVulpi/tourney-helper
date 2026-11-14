@@ -97,6 +97,7 @@ export async function hydrateFromBackend({ markLoaded = false } = {}) {
       name:       side?.name       ?? fallbackName,
       resetIcon:     side?.resetIcon     ?? "",
       resetIconData: side?.resetIconData ?? "",
+      resetIconScale: typeof side?.resetIconScale === "number" && side.resetIconScale > 0 ? side.resetIconScale : 1,
       logoPath:   side?.logoPath   ?? "",
       flag:       side?.flag       ?? "",
       plateImage:   side?.plateImage   ?? "",

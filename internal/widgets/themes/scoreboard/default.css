@@ -42,6 +42,7 @@
     --sb-plate-right: linear-gradient(135deg, rgba(0, 9, 18, 1) 0%, rgba(0, 110, 255, 1) 100%);
     --sb-plate-border: #d5edf9;
     --sb-plate-height: 64px;
+    --sb-logo-size: 42px;
     --sb-accent: #006eff;
     --sb-divider: rgba(213, 237, 249, 0.4);
     --sb-score-shadow: 0 0 10px rgba(0, 163, 255, 0.8);
@@ -136,9 +137,9 @@ html.transparent-bg .scoreboard {
  * ============================================================ */
 
 .logo {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
+    width: var(--sb-logo-size);
+    height: var(--sb-logo-size);
+    flex: 0 0 var(--sb-logo-size);
     background: var(--sb-logo-bg);
     border: 1px solid var(--sb-logo-border);
     border-radius: 4px;

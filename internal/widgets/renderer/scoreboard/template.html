@@ -124,7 +124,7 @@
         }
 
         .reset-icon {
-            --sb-reset-size: clamp(20px, calc(var(--sb-main-size, 24px) * 1.25), 48px);
+            --sb-reset-size: var(--sb-logo-size, 42px);
             position: relative;
             isolation: isolate;
             width: var(--sb-reset-size);
@@ -175,6 +175,31 @@
             width: 100%;
             height: 100%;
             object-fit: contain;
+        }
+
+        .side.reset-overflow {
+            overflow: visible;
+        }
+
+        .reset-icon.custom {
+            z-index: 2;
+            padding: 0;
+        }
+
+        .reset-icon.custom::before {
+            display: none;
+        }
+
+        .reset-icon.custom img {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: auto;
+            height: calc(var(--sb-reset-size) * 1.7);
+            max-width: none;
+            max-height: none;
+            object-fit: contain;
+            transform: translate(-50%, -50%);
         }
 
         .team-tag {
@@ -673,8 +698,24 @@
             || (resetIcon === DEFAULT_RESET_ICON ? DEFAULT_RESET_ICON_DATA : '');
         const resetIsLucide = resetIcon.startsWith('lucide:');
         const showReset = side.showReset === true && !!resetIcon && (!resetIsLucide || !!resetIconData);
+        const resetScaleValue = Number(side.resetIconScale);
+        const resetScale = Number.isFinite(resetScaleValue) && resetScaleValue > 0
+            ? resetScaleValue
+            : 1;
+        const logoSizeValue = parseFloat(
+            getComputedStyle(document.documentElement).getPropertyValue('--sb-logo-size'),
+        );
+        const baseResetSize = Number.isFinite(logoSizeValue) && logoSizeValue > 0
+            ? logoSizeValue
+            : 42;
 
-        if (resetEl) resetEl.classList.toggle('hidden', !showReset);
+        if (resetEl) {
+            resetEl.style.setProperty(
+                '--sb-reset-size',
+                (baseResetSize * resetScale).toFixed(2) + 'px',
+            );
+            resetEl.classList.toggle('hidden', !showReset);
+        }
 
         if (!showReset) {
             if (resetMask) {
@@ -734,8 +775,12 @@
 
         const sideEl = byId(prefix + '-side');
         const customPlate = plateMode === 'custom' && !!side.plateImage;
+        const customReset = showReset && !resetIsLucide;
+        const resetOverflow = showReset && (!resetIsLucide || resetScale > 1);
+        if (resetEl) resetEl.classList.toggle('custom', customReset);
         if (sideEl) {
             sideEl.classList.toggle('custom-plate', customPlate);
+            sideEl.classList.toggle('reset-overflow', resetOverflow);
 
             if (customPlate) {
                 const url = resolvePlankUrl(side.plateImage);

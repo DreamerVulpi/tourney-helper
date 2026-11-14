@@ -159,11 +159,13 @@ type WidgetScoreboardPanel struct {
 	ScoreTab                string
 	ResetTab                string
 	ResetIconLabel          string
+	ResetIconScaleLabel     string
 	SelectResetIcon         string
 	SearchIconsPlaceholder  string
 	CustomIconsLabel        string
 	NoIconLabel             string
 	AddIconButton           string
+	AddButton               string
 	AddIconModalTitle       string
 	AddingIcon              string
 	AddIconEmptyError       string

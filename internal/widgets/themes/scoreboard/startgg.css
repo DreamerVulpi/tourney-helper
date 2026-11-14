@@ -1,4 +1,4 @@
-/* scoreboard-startgg-theme-v15 */
+/* scoreboard-startgg-theme-v16 */
 /*
  * Start.gg theme for tourney-helper scoreboard widget.
  *
@@ -45,6 +45,7 @@
     --sb-plate-right: linear-gradient(135deg, #d9dde3 0%, #ffffff 100%);
     --sb-plate-border: #3b4350;
     --sb-plate-height: 64px;
+    --sb-logo-size: 42px;
     --sb-accent: #3b4350;
     --sb-divider: rgba(59, 67, 80, 0.35);
     --sb-score-shadow: none;
@@ -134,9 +135,9 @@ html.transparent-bg .scoreboard {
  * ============================================================ */
 
 .logo {
-    width: 42px;
-    height: 42px;
-    flex: 0 0 42px;
+    width: var(--sb-logo-size);
+    height: var(--sb-logo-size);
+    flex: 0 0 var(--sb-logo-size);
     background: var(--sb-logo-bg);
     border: 1px solid var(--sb-logo-border);
     border-radius: 4px;

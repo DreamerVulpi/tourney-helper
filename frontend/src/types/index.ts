@@ -24,6 +24,7 @@ export interface ScoreboardSide {
   name: string;
   resetIcon: string;
   resetIconData: string;
+  resetIconScale: number;
   logoPath: string;
   flag: string;
   plateImage: string;
